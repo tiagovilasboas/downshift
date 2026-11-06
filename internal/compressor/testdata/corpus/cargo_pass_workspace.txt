@@ -1,0 +1,40 @@
+   Compiling shared-types v0.2.1 (/home/dev/ledger/crates/shared-types)
+   Compiling ledger-core v0.2.1 (/home/dev/ledger/crates/ledger-core)
+   Compiling ledger-api v0.2.1 (/home/dev/ledger/crates/ledger-api)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.72s
+     Running unittests src/lib.rs (target/debug/deps/shared_types-0b1c2d3e4f5a6789)
+
+running 6 tests
+test money::tests::add_same_currency ... ok
+test money::tests::add_mixed_currency_is_rejected ... ok
+test money::tests::display_two_decimals ... ok
+test id::tests::parse_roundtrip ... ok
+test id::tests::reject_empty ... ok
+test id::tests::reject_overlong ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/ledger_core-9a8b7c6d5e4f3a21)
+
+running 9 tests
+test entry::tests::balanced_entry_is_valid ... ok
+test entry::tests::unbalanced_entry_is_rejected ... ok
+test entry::tests::reversal_negates_amounts ... ok
+test journal::tests::append_is_ordered ... ok
+test journal::tests::append_is_idempotent ... ok
+test journal::tests::replay_matches_snapshot ... ok
+test account::tests::balance_after_posting ... ok
+test account::tests::frozen_account_rejects_posting ... ok
+test account::tests::closed_account_rejects_posting ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/lib.rs (target/debug/deps/ledger_api-1f2e3d4c5b6a7988)
+
+running 4 tests
+test routes::tests::post_entry_returns_201 ... ok
+test routes::tests::get_unknown_account_returns_404 ... ok
+test routes::tests::malformed_body_returns_400 ... ok
+test routes::tests::health_endpoint_ok ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s

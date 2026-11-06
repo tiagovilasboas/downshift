@@ -1,0 +1,4 @@
+ok  	example.com/acme/widget/internal/api	0.212s
+FAIL	example.com/acme/widget/internal/billing	0.087s
+ok  	example.com/acme/widget/internal/cache	0.031s
+FAIL

@@ -1,0 +1,55 @@
+
+ RUN  v3.2.7 /work/app
+
+ ✓ test/math.test.js (3 tests) 1ms
+ ✓ test/unhandled.test.js (1 test) 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/broken.test.js [ test/broken.test.js ]
+Error: Cannot find module './does-not-exist.js' imported from '/work/app/test/broken.test.js'
+ ❯ test/broken.test.js:2:1
+      1| import { expect, test } from 'vitest'
+      2| import { missing } from './does-not-exist.js'
+       | ^
+      3| 
+      4| test('never runs', () => { expect(missing).toBe(1) })
+
+Caused by: Error: Failed to load url ./does-not-exist.js (resolved id: ./does-not-exist.js) in /work/app/test/broken.test.js. Does the file exist?
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: background job failed
+ ❯ test/unhandled.test.js:4:18
+      2| 
+      3| test('passes but leaks a rejection', () => {
+      4|   Promise.reject(new Error('background job failed'))
+       |                  ^
+      5|   expect(1).toBe(1)
+      6| })
+ ❯ node_modules/@vitest/runner/dist/chunk-hooks.js:155:11
+ ❯ node_modules/@vitest/runner/dist/chunk-hooks.js:752:26
+ ❯ node_modules/@vitest/runner/dist/chunk-hooks.js:1897:20
+ ❯ runWithTimeout node_modules/@vitest/runner/dist/chunk-hooks.js:1863:10
+ ❯ runTest node_modules/@vitest/runner/dist/chunk-hooks.js:1574:12
+ ❯ processTicksAndRejections node:internal/process/task_queues:104:5
+ ❯ runSuite node_modules/@vitest/runner/dist/chunk-hooks.js:1729:8
+ ❯ runFiles node_modules/@vitest/runner/dist/chunk-hooks.js:1787:3
+
+This error originated in "test/unhandled.test.js" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  4 passed (4)
+     Errors  1 error
+   Start at  12:41:09
+   Duration  179ms (transform 12ms, setup 0ms, collect 11ms, tests 2ms, environment 0ms, prepare 117ms)
+

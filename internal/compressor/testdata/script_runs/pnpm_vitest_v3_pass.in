@@ -1,0 +1,46 @@
+
+> web@1.0.0 test /work/web
+> vitest run
+
+
+ RUN  v3.2.4 /work/web
+
+ ✓ src/lib/catalog.test.ts (3 tests) 1ms
+ ✓ src/lib/checkout.test.ts (10 tests) 4ms
+ ✓ src/lib/config.test.ts (8 tests) 7ms
+ ✓ src/lib/coupon.test.ts (6 tests) 10ms
+ ✓ src/lib/currency.test.ts (4 tests) 13ms
+ ✓ src/lib/db.test.ts (11 tests) 2ms
+ ✓ src/lib/events.test.ts (9 tests) 5ms
+ ✓ src/lib/export.test.ts (7 tests) 8ms
+ ✓ src/lib/feature-flags.test.ts (5 tests) 11ms
+ ✓ src/lib/files.test.ts (3 tests) 14ms
+ ✓ src/lib/format.test.ts (10 tests) 3ms
+ ✓ src/lib/geo.test.ts (8 tests) 6ms
+ ✓ src/lib/http.test.ts (6 tests) 9ms
+ ✓ src/lib/i18n.test.ts (4 tests) 12ms
+ ✓ src/lib/import.test.ts (11 tests) 1ms
+ ✓ src/lib/invoice.test.ts (9 tests) 4ms
+ ✓ src/lib/jobs.test.ts (7 tests) 7ms
+ ✓ src/lib/locale.test.ts (5 tests) 10ms
+ ✓ src/lib/logger.test.ts (3 tests) 13ms
+ ✓ src/lib/mailer.test.ts (10 tests) 2ms
+ ✓ src/lib/money.test.ts (8 tests) 5ms
+ ✓ src/lib/notify.test.ts (6 tests) 8ms
+ ✓ src/lib/orders.test.ts (4 tests) 11ms
+ ✓ src/lib/pagination.test.ts (11 tests) 14ms
+ ✓ src/lib/payments.test.ts (9 tests) 3ms
+ ✓ src/lib/price.test.ts (7 tests) 6ms
+ ✓ src/lib/queue.test.ts (5 tests) 9ms
+ ✓ src/lib/refunds.test.ts (3 tests) 12ms
+ ✓ src/lib/reports.test.ts (10 tests) 1ms
+ ✓ src/lib/retry.test.ts (8 tests) 4ms
+ ✓ src/lib/search.test.ts (6 tests) 7ms
+ ✓ src/lib/session.test.ts (4 tests) 10ms
+ ↓ src/lib/legacy.test.ts (2 tests | 2 skipped)
+
+ Test Files  32 passed | 1 skipped (33)
+      Tests  220 passed | 2 skipped (222)
+   Start at  10:42:07
+   Duration  2.87s (transform 301ms, setup 0ms, collect 990ms, tests 305ms, environment 1ms, prepare 870ms)
+

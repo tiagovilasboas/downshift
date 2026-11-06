@@ -1,0 +1,286 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package compressor_test
+
+// Token-savings benchmark over the synthetic corpus. Report mode:
+//
+//	DOWNSHIFT_BENCH_WRITE=1 go test ./internal/compressor -run TestBenchReport
+//
+// (wrapped by `make bench`) rewrites docs/reference/bench.md and prints the
+// table. Tokens are approximated as bytes/4. Nothing here runs a build or test
+// tool: fixtures are replayed through the compressor and, only with
+// DOWNSHIFT_BENCH_RTK=1 and rtk on PATH, through `rtk log` on stdin (rtk's only
+// generic stdin filter). The per-family floor lives in bench_guard_test.go.
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
+)
+
+const benchDoc = "../../docs/reference/bench.md"
+
+type benchRow struct {
+	family   string
+	files    int
+	raw      int
+	reduced  int
+	rtkBytes int // -1 when rtk is not available
+	ccr      int // bytes after FoldRepeats on the compacted (or raw) output
+}
+
+func (r benchRow) saving() float64 { return savingPct(r.raw, r.reduced) }
+
+func savingPct(raw, reduced int) float64 {
+	if raw == 0 {
+		return 0
+	}
+	return float64(raw-reduced) / float64(raw) * 100
+}
+
+// benchCorpus compacts every corpus fixture and aggregates the ones Downshift
+// compacts, per family. The total row is last.
+//
+// withRTK replays each fixture through `rtk log` when rtk is on PATH. rtk's
+// output is not stable between runs, so the committed report and every guard
+// run with it off; only `DOWNSHIFT_BENCH_RTK=1 make bench` turns it on.
+func benchCorpus(t *testing.T, withRTK bool) []benchRow {
+	t.Helper()
+	rtk := ""
+	if withRTK {
+		rtk, _ = exec.LookPath("rtk")
+	}
+	by := map[string]*benchRow{}
+	formats := map[string]compressor.Format{}
+	for _, e := range loadManifest(t) {
+		formats[e.file] = e.format
+	}
+	for _, name := range allFixtures(t) {
+		if name == "MANIFEST" {
+			continue
+		}
+		in, err := os.ReadFile(filepath.Join(corpusDir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		res := benchCompress(in, formats[name])
+		if !res.Applied || len(res.Output) >= len(in) {
+			if f := compressor.FoldRepeats(in); f.Applied {
+				row := by[ccrOnlyFamily]
+				if row == nil {
+					row = &benchRow{family: ccrOnlyFamily, rtkBytes: -1}
+					by[ccrOnlyFamily] = row
+				}
+				row.files++
+				row.raw += len(in)
+				row.reduced += len(in)
+				row.ccr += len(f.Output) + len(execwrap.MarkerWithID(len(in), len(f.Output), benchID))
+			}
+			continue
+		}
+		fam := string(res.Format)
+		row := by[fam]
+		if row == nil {
+			row = &benchRow{family: fam, rtkBytes: -1}
+			by[fam] = row
+		}
+		row.files++
+		row.raw += len(in)
+		row.reduced += len(res.Output) + len(execwrap.Marker(len(in), len(res.Output)))
+		folded := foldedLen(res.Output)
+		row.ccr += folded + len(execwrap.MarkerWithID(len(in), folded, benchID))
+		if rtk != "" {
+			if n, ok := rtkLogBytes(rtk, in); ok {
+				row.rtkBytes = max(row.rtkBytes, 0) + n
+			}
+		}
+	}
+	rows := make([]benchRow, 0, len(by)+1)
+	total := benchRow{family: "TOTAL", rtkBytes: -1}
+	for _, r := range by {
+		rows = append(rows, *r)
+		if r.family == ccrOnlyFamily {
+			continue // not counted in TOTAL: the default columns skip these fixtures
+		}
+		total.ccr += r.ccr
+		total.files += r.files
+		total.raw += r.raw
+		total.reduced += r.reduced
+		if r.rtkBytes >= 0 {
+			total.rtkBytes = max(total.rtkBytes, 0) + r.rtkBytes
+		}
+	}
+	sort.Slice(rows, func(i, j int) bool { return rows[i].family < rows[j].family })
+	for i, r := range rows {
+		if r.family == ccrOnlyFamily { // after the families, before TOTAL
+			rows = append(append(rows[:i:i], rows[i+1:]...), r)
+			break
+		}
+	}
+	return append(rows, total)
+}
+
+// lossyFamilies lists the families whose default compaction drops content a
+// reader could want: grouped or summarised diagnostics, cut or folded lines,
+// stripped log noise. No property in internal/compressor marks this, so the
+// classification is kept here beside the table; a family not listed is lossless
+// (it keeps every failure and signal line, or replaces an all-pass transcript by
+// its summary). The raw output of a lossy family is recoverable only through CCR.
+var lossyFamilies = map[string]bool{
+	"bazel": true, "cargo_build": true, "dotnet_build": true, "eslint": true,
+	"generic": true, "gh_run_log": true, "git_log": true, "golangci_lint": true,
+	"go_build": true, "gradle": true, "lockfile_diff": true, "markdown": true,
+	"maven": true, "mypy": true, "npm_audit": true, "progress": true, "ruff": true,
+	// Column tables cut to the columns an agent acts on; build steps folded;
+	// stash entries without their branch.
+	"docker_build": true, "docker_images": true, "docker_ps": true,
+	"kubectl_pods": true, "git_stash": true,
+	// A long source file folded to its outline; zero-count rows of grep -c folded.
+	"file_read": true, "grep_counts": true,
+	// A long response cut to its key headers and the ends of its body.
+	"http_fetch": true,
+	// Secrets replaced by [redacted]; nothing else cut.
+	"glab":        true,
+	ccrOnlyFamily: true,
+}
+
+func rowClass(family string) string {
+	if family == "TOTAL" {
+		return "-"
+	}
+	return familyClass(family)
+}
+
+func familyClass(family string) string {
+	if lossyFamilies[family] {
+		return "lossy"
+	}
+	return "lossless"
+}
+
+// classTotals sums the compacted families (not TOTAL, not the CCR-only row) by class.
+func classTotals(rows []benchRow) (lossless, lossy benchRow) {
+	lossless.family, lossy.family = "lossless", "lossy"
+	for _, r := range rows {
+		if r.family == "TOTAL" || r.family == ccrOnlyFamily {
+			continue
+		}
+		dst := &lossless
+		if lossyFamilies[r.family] {
+			dst = &lossy
+		}
+		dst.files += r.files
+		dst.raw += r.raw
+		dst.reduced += r.reduced
+	}
+	return lossless, lossy
+}
+
+// ccrOnlyFamily groups fixtures the default chain leaves raw but FoldRepeats
+// shortens; it has no default saving and is excluded from TOTAL.
+const ccrOnlyFamily = "uncompacted (CCR only)"
+
+// benchID stands in for the 12-hex retrieve id, so the CCR column carries the
+// marker the compactor really emits.
+const benchID = "000000000000"
+
+// foldedLen is the size of out after FoldRepeats, or len(out) when nothing folds.
+func foldedLen(out []byte) int {
+	if f := compressor.FoldRepeats(out); f.Applied {
+		return len(f.Output)
+	}
+	return len(out)
+}
+
+// rtkLogBytes replays one fixture through `rtk log` on stdin.
+func rtkLogBytes(rtk string, in []byte) (int, bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, rtk, "log")
+	cmd.Stdin = bytes.NewReader(in)
+	out, err := cmd.Output()
+	if err != nil {
+		return 0, false
+	}
+	return len(out), true
+}
+
+func renderBench(rows []benchRow) string {
+	hasRTK := rows[len(rows)-1].rtkBytes >= 0
+	var b strings.Builder
+	b.WriteString("# Compaction benchmark\n\n")
+	b.WriteString("Generated by `make bench` from `internal/compressor/testdata/corpus`; do not edit by hand.\n")
+	b.WriteString("Only fixtures Downshift compacts (exit 0, safe mode) are counted; fixtures it preserves are excluded.\n")
+	b.WriteString("Tokens are approximated as bytes/4, not a real tokenizer.\n")
+	b.WriteString("Downshift and CCR bytes include the marker line the compactor appends at runtime; a family with one fixture is one sample, not a rate (see the Fixtures column).\n")
+	b.WriteString("`with CCR` applies `FoldRepeats` (runs of 8+ similar lines folded to 3 head, 2 tail) to the compacted output, or to the raw output for the `uncompacted (CCR only)` row, which TOTAL excludes. It is lossy and is meant to run only when the raw output is stored for retrieval.\n\n")
+	b.WriteString("| Family | Class | Fixtures | Raw bytes | Downshift bytes | Saving % | Raw tokens~ | Downshift tokens~ | with CCR bytes | with CCR saving % |")
+	if hasRTK {
+		b.WriteString(" rtk log bytes (lossy) | rtk log saving % (lossy) |")
+	}
+	b.WriteString("\n|---|---|--:|--:|--:|--:|--:|--:|--:|--:|")
+	if hasRTK {
+		b.WriteString("--:|--:|")
+	}
+	b.WriteString("\n")
+	for _, r := range rows {
+		fmt.Fprintf(&b, "| %s | %s | %d | %d | %d | %.1f | %d | %d | %d | %.1f |", r.family, rowClass(r.family), r.files, r.raw, r.reduced, r.saving(), r.raw/4, r.reduced/4, r.ccr, savingPct(r.raw, r.ccr))
+		if hasRTK {
+			if r.rtkBytes >= 0 {
+				fmt.Fprintf(&b, " %d | %.1f |", r.rtkBytes, savingPct(r.raw, r.rtkBytes))
+			} else {
+				b.WriteString(" - | - |")
+			}
+		}
+		b.WriteString("\n")
+	}
+	lossless, lossy := classTotals(rows)
+	b.WriteString("\n## Lossless and lossy split\n\n")
+	b.WriteString("`lossless` families keep every failure and signal line; `lossy` families cut, fold or summarise content, so the raw output is recoverable only through CCR. The split covers the compacted families; TOTAL is their sum.\n\n")
+	b.WriteString("| Class | Fixtures | Raw bytes | Downshift bytes | Saving % |\n|---|--:|--:|--:|--:|\n")
+	for _, r := range []benchRow{lossless, lossy} {
+		fmt.Fprintf(&b, "| %s | %d | %d | %d | %.1f |\n", r.family, r.files, r.raw, r.reduced, r.saving())
+	}
+	b.WriteString("\n## rtk column\n\n")
+	b.WriteString("rtk executes the tools it wraps, so a fixture cannot be replayed through its per-tool filters. ")
+	b.WriteString("The rtk columns, absent from the committed report because rtk output is not stable between runs and present only with `DOWNSHIFT_BENCH_RTK=1` and `rtk` on PATH, replay each fixture through `rtk log` on stdin, ")
+	b.WriteString("its one generic stdin filter, on the same files. It is NOT a like-for-like comparison: `rtk log` is a lossy error/warning counter that drops test results and file lists (often a fixed ~100-byte summary), so its saving % is an upper bound that discards facts Downshift keeps. ")
+	b.WriteString("To add per-tool numbers by hand, run the real command under rtk and under `downshift compact --` ")
+	b.WriteString("on one machine and compare output bytes.\n")
+	return b.String()
+}
+
+func TestBenchReport(t *testing.T) {
+	if os.Getenv("DOWNSHIFT_BENCH_WRITE") == "" {
+		t.Skip("report mode: set DOWNSHIFT_BENCH_WRITE=1 (make bench)")
+	}
+	rows := benchCorpus(t, os.Getenv("DOWNSHIFT_BENCH_RTK") != "")
+	doc := renderBench(rows)
+	fmt.Print(doc)
+	if err := os.WriteFile(filepath.FromSlash(benchDoc), []byte(doc), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// benchCompress is the compressor entry the wrapper uses for a fixture of
+// format f. The formats a command names, not the text (file reads and the
+// grep rows and counts), go through the command entry with the hint the
+// conformance suite uses; every other fixture is detected from its text.
+func benchCompress(in []byte, f compressor.Format) compressor.Result {
+	switch f {
+	case compressor.FormatFileRead, compressor.FormatGrepRows, compressor.FormatGrepCounts, compressor.FormatHTTPFetch, compressor.FormatGlab:
+		return compressFor(in, f, 0)
+	}
+	return compressor.CompressExit(in, compressor.ModeSafe, 0)
+}

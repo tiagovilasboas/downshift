@@ -1,0 +1,2 @@
+direnv status
+direnv: loaded /path/to/.envrc

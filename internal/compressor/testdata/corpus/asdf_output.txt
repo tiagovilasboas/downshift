@@ -1,0 +1,5 @@
+asdf list
+nodejs
+  20.10.0
+python
+  3.11.0

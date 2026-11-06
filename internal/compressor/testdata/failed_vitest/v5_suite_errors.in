@@ -1,0 +1,52 @@
+
+ RUN  v5.0.5 /work/app
+
+ ✓ test/unhandled.test.js (1 test) 1ms
+ ✓ test/math.test.js (3 tests) 2ms
+ ❯ test/broken.test.js (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/broken.test.js [ test/broken.test.js ]
+Error: Cannot find module './does-not-exist.js' imported from /work/app/test/broken.test.js
+ ❯ test/broken.test.js:2:1
+      1| import { expect, test } from 'vitest'
+      2| import { missing } from './does-not-exist.js'
+       | ^
+      3|
+      4| test('never runs', () => { expect(missing).toBe(1) })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: background job failed
+ ❯ test/unhandled.test.js:4:18
+      2|
+      3| test('passes but leaks a rejection', () => {
+      4|   Promise.reject(new Error('background job failed'))
+       |                  ^
+      5|   expect(1).toBe(1)
+      6| })
+ ❯ node_modules/vitest/dist/chunks/run.BPv-BBRv.js:1632:35
+ ❯ node_modules/vitest/dist/chunks/run.BPv-BBRv.js:2801:26
+ ❯ node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3338:20
+ ❯ runWithCancel node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3333:10
+ ❯ node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3318:20
+ ❯ runWithTimeout node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3276:10
+ ❯ node_modules/vitest/dist/chunks/run.BPv-BBRv.js:3904:64
+
+This error originated in "test/unhandled.test.js" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  4 passed (4)
+     Errors  1 error
+   Start at  12:41:11
+   Duration  87ms (import 43%, worker 28%, transform 15%, tests 14%, environment 1%)
+

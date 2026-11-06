@@ -1,0 +1,10 @@
+PASS src/cart/cart.test.ts
+PASS src/cart/totals.test.ts
+PASS src/user/profile.test.ts
+PASS src/user/session.test.ts
+
+Test Suites: 4 passed, 4 total
+Tests:       38 passed, 38 total
+Snapshots:   2 passed, 2 total
+Time:        2.907 s
+Ran all test suites.

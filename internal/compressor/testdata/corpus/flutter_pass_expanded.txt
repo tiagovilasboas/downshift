@@ -1,0 +1,6 @@
+00:00 +0: loading /home/dev/app/test/a_test.dart
+00:00 +0: one
+00:00 +1: two
+00:00 +2: g three
+00:00 +3: g skipme
+00:00 +3 ~1: All tests passed!

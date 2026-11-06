@@ -1,0 +1,5 @@
+[19:20:00] Projects in this build:
+    * tsconfig.json
+
+[19:20:01] Building project '/Users/tiago.boas/project/tsconfig.json'...
+[19:20:02] Found 0 errors. Watching for file changes.

@@ -1,0 +1,50 @@
+npm warn Unknown project config "shamefully-hoist". This will stop working in the next major version of npm.
+
+> web@1.0.0 test
+> vitest run
+
+
+ RUN  v1.6.0 /work/web
+
+ ✓ test/auth.test.ts (3)
+ ✓ test/billing.test.ts (4)
+ ✓ test/cart.test.ts (5)
+ ✓ test/catalog.test.ts (6)
+ ✓ test/checkout.test.ts (7)
+ ✓ test/config.test.ts (3)
+ ✓ test/coupon.test.ts (4)
+ ✓ test/currency.test.ts (5)
+ ✓ test/db.test.ts (6)
+ ✓ test/events.test.ts (7)
+ ✓ test/export.test.ts (3)
+ ✓ test/feature-flags.test.ts (4)
+ ✓ test/files.test.ts (5)
+ ✓ test/format.test.ts (6)
+ ✓ test/geo.test.ts (7)
+ ✓ test/http.test.ts (3)
+ ✓ test/i18n.test.ts (4)
+ ✓ test/import.test.ts (5)
+ ✓ test/invoice.test.ts (6)
+ ✓ test/jobs.test.ts (7)
+ ✓ test/locale.test.ts (3)
+ ✓ test/logger.test.ts (4)
+ ✓ test/mailer.test.ts (5)
+ ✓ test/money.test.ts (6)
+ ✓ test/notify.test.ts (7)
+ ✓ test/orders.test.ts (3)
+ ✓ test/pagination.test.ts (4)
+ ✓ test/payments.test.ts (5)
+ ✓ test/price.test.ts (6)
+ ✓ test/queue.test.ts (7)
+ ✓ test/refunds.test.ts (3)
+ ✓ test/reports.test.ts (4)
+ ✓ test/retry.test.ts (5)
+ ✓ test/search.test.ts (6)
+ ✓ test/session.test.ts (7)
+ ✓ test/shipping.test.ts (3)
+
+ Test Files  36 passed (36)
+      Tests  178 passed (178)
+   Start at  19:20:00
+   Duration  2.12s (transform 145ms, setup 0ms, collect 532ms, tests 210ms, environment 3ms, prepare 972ms)
+

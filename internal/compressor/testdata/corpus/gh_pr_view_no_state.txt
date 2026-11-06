@@ -1,0 +1,6 @@
+title:	docs: fix a typo
+author:	tiagovilasboas
+number:	702
+--
+A trivial change with no state header line, so the view detector declines it
+and the raw output is preserved byte for byte.

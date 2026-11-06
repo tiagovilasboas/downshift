@@ -1,0 +1,512 @@
+# Corpus manifest: how each fixture is classified for the family conformance suite
+# (conformance_test.go). One line per file: <kind> <format> <file>.
+#   clean     compacts on exit 0 as <format>; the output must be strictly shorter.
+#   preserve  must come back byte-identical (failures, warnings, truncation,
+#             CRLF, terminal escapes other than colour, binary, or any shape
+#             a summary would drop facts from).
+# <format> is the compressor.Format the fixture belongs to ("unknown" when no
+# family owns it). A new family adds its fixtures here; the test needs no edit.
+# Every file in this directory must be listed, and every line must name a file.
+preserve  unknown     binary_nul.bin
+preserve  cargo_test  cargo_fail.txt
+clean     cargo_test  cargo_pass_clean.txt
+preserve  cypress     cypress_fail_actionable.txt
+clean     cypress     cypress_pass_clean.txt
+# git log (owner decision 2026-11-04): default-format logs compact to one line per
+# commit. body_mentions_fail compacts too: its subject is kept verbatim and the
+# body (where fail/panic appear) is dropped on purpose. Oneline input is not a
+# default-format log (no FormatGitLog), and a gpg-signed log is an unrecognised
+# shape: both stay byte-identical.
+clean     git_log     gitlog_body_mentions_fail.txt
+clean     git_log     gitlog_merge.txt
+preserve  unknown     gitlog_oneline.txt
+clean     git_log     gitlog_plain.txt
+preserve  git_log     gitlog_signed.txt
+clean     git_log     gitlog_squash_repeated_body.txt
+clean     git_log     gitlog_default_real.txt
+clean     git_diff    gitdiff_unstaged_change.txt
+clean     git_remote  remote_hook_pass_clean.txt
+preserve  git_remote  remote_up_to_date.txt
+preserve  git_diff    gitdiff_danger_word.txt
+clean     progress       progress_clean.txt
+preserve  progress       progress_shrinking.txt
+preserve  progress       progress_danger.txt
+clean     npm_audit      npm_audit_clean.txt
+preserve  npm_audit      npm_audit_warn.txt
+clean     npm_install    npm_install_clean.txt
+preserve  npm_install    npm_install_warn.txt
+clean     bazel          bazel_build_clean.txt
+clean     bazel          bazel_test_clean.txt
+preserve  bazel          bazel_warn.txt
+clean     turbo          turbo_clean.txt
+preserve  turbo          turbo_output_line.txt
+clean     nx             nx_clean.txt
+preserve  nx             nx_output_line.txt
+clean     lockfile_diff  lockfile_diff_clean.txt
+preserve  lockfile_diff  lockfile_diff_danger.txt
+clean     git_show    gitshow_head.txt
+preserve  git_show    gitshow_danger_word.txt
+preserve  git_status  gitstatus_ansi.txt
+preserve  git_status  gitstatus_clean_ahead.txt
+preserve  git_status  gitstatus_clean_behind.txt
+preserve  git_status  gitstatus_clean_bisecting.txt
+preserve  git_status  gitstatus_clean_crlf.txt
+preserve  git_status  gitstatus_clean_detached.txt
+preserve  git_status  gitstatus_clean_diverged.txt
+clean     git_status  gitstatus_clean_no_upstream.txt
+preserve  git_status  gitstatus_clean_stash.txt
+preserve  git_status  gitstatus_clean_upstream_gone.txt
+clean     git_status  gitstatus_clean_uptodate.txt
+preserve  git_status  gitstatus_conflict.txt
+preserve  git_status  gitstatus_detached_dirty.txt
+preserve  git_status  gitstatus_merge_concluding.txt
+preserve  git_status  gitstatus_modified_staged.txt
+preserve  git_status  gitstatus_porcelain_v2.txt
+preserve  git_status  gitstatus_rebase_in_progress.txt
+preserve  git_status  gitstatus_short.txt
+preserve  git_status  gitstatus_untracked.txt
+preserve  go_test     go_verbose_fail.txt
+clean     go_test     go_verbose_pass.txt
+clean     go_test     go_verbose_subtests_pass.txt
+clean     go_test     go_verbose_subtests_log.txt
+clean     go_test     gotest_ansi.txt
+preserve  go_test     gotest_build_failed.txt
+preserve  go_test     gotest_crlf.txt
+preserve  go_test     gotest_fail_mixed_no_test_files.txt
+preserve  go_test     gotest_fail_mixed_ok.txt
+preserve  go_test     gotest_fail_repeated_log.txt
+preserve  go_test     gotest_fail_summary_only.txt
+clean     go_test     gotest_no_test_files.txt
+preserve  go_test     gotest_no_tests_to_run.txt
+preserve  go_test     gotest_panic.txt
+preserve  go_test     gotest_panic_mixed_no_test_files.txt
+clean     go_test     gotest_pass_cached.txt
+clean     go_test     gotest_pass_coverage.txt
+clean     go_test     gotest_pass_mixed_no_test_files.txt
+preserve  go_test     gotest_pass_no_trailing_newline.txt
+clean     go_test     gotest_pass_plain.txt
+preserve  go_test     gotest_pass_with_log_line.txt
+preserve  go_test     gotest_race.txt
+preserve  go_test     gotest_race_no_fail_line.txt
+preserve  go_test     gotest_truncated_last_line.txt
+preserve  go_test     gotest_two_short_pkgs.txt
+preserve  go_test     gotest_verbose.txt
+preserve  go_test     gotest_vet_error.txt
+preserve  jest        jest_fail.txt
+clean     jest        jest_pass_clean.txt
+clean     next_build  next_build_pass.txt
+preserve  next_build  next_build_truncated.txt
+preserve  next_build  next_build_unknown_output.txt
+preserve  next_build  next_build_warning.txt
+preserve  unknown     non_utf8.bin
+preserve  phpunit     phpunit_fail_actionable.txt
+clean     phpunit     phpunit_pass_default.txt
+preserve  playwright  playwright_fail.txt
+clean     playwright  playwright_pass_clean.txt
+preserve  pytest      pytest_fail.txt
+clean     pytest      pytest_pass_clean.txt
+preserve  tsc         tsc_fail.txt
+clean     tsc         tsc_pass_clean.txt
+preserve  vitest      vitest_fail.txt
+clean     vitest      vitest_pass_clean.txt
+clean     vitest      vitest_v5_colour_clean.txt
+clean     vitest      vitest_v4_notices_clean.txt
+clean     vitest      vitest_console_log_clean.txt
+clean     flutter_test  dart_pass_compact.txt
+clean     flutter_test  dart_pass_ansi.txt
+clean     flutter_test  dart_pass_expanded.txt
+preserve  flutter_test  flutter_fail.txt
+clean     flutter_test  flutter_pass_compact.txt
+clean     flutter_test  flutter_pass_expanded.txt
+preserve  flutter_test  flutter_print_output.txt
+preserve  flutter_test  flutter_pub_get_noise.txt
+clean     gradle        gradle_ansi.txt
+preserve  gradle        gradle_deprecation.txt
+preserve  gradle        gradle_fail.txt
+preserve  gradle        gradle_kotlin_warning.txt
+clean     gradle        gradle_pass_build.txt
+clean     gradle        gradle_pass_test.txt
+clean     gradle        gradle_pass_uptodate.txt
+preserve  gradle        gradle_test_output.txt
+clean     maven         maven_ansi.txt
+preserve  maven         maven_downloads.txt
+preserve  maven         maven_fail_test.txt
+preserve  maven         maven_multimodule.txt
+clean     maven         maven_pass_package.txt
+clean     maven         maven_pass_test.txt
+preserve  maven         maven_skipped.txt
+preserve  maven         maven_warning.txt
+# Pass-through families (execwrap): never compacted, so no clean fixture. The format column is the family name.
+preserve  git-branch       gitbranch_verbose.txt
+preserve  git-fetch        gitfetch_new_commits.txt
+preserve  git-fetch        gitfetch_up_to_date.txt
+preserve  git-pull         gitpull_fast_forward.txt
+preserve  git-pull         gitpull_up_to_date.txt
+preserve  git-push         gitpush_new_commit.txt
+preserve  git-push         gitpush_up_to_date.txt
+preserve  git-commit       gitcommit_summary.txt
+preserve  git-add          gitadd_verbose.txt
+preserve  git-stash        gitstash_push.txt
+preserve  git-remote       gitremote_verbose.txt
+preserve  git-tag          gittag_list.txt
+preserve  git-config-read  gitconfig_list_local.txt
+preserve  git-other        gitother_ls_files.txt
+
+# Package manager wrappers (pass-through)
+preserve  npm-test       npm_test_output.txt
+preserve  npm-build      npm_build_output.txt
+preserve  pnpm-test      pnpm_test_output.txt
+preserve  pnpm-test      pnpm_test_fail.txt
+preserve  pnpm-build     pnpm_build_output.txt
+preserve  yarn-test      yarn_test_output.txt
+preserve  yarn-test      yarn_test_fail.txt
+preserve  yarn-build     yarn_build_output.txt
+preserve  bun-test       bun_test_output.txt
+preserve  bun-build      bun_build_output.txt
+
+# PHP ecosystem (pass-through)
+preserve  composer       composer_output.txt
+preserve  artisan        artisan_output.txt
+preserve  phpstan        phpstan_output.txt
+preserve  psalm          psalm_output.txt
+preserve  php-cs-fixer   php_cs_fixer_output.txt
+preserve  pint           pint_output.txt
+
+# Linters (pass-through)
+preserve  eslint         eslint_output.txt
+preserve  prettier       prettier_output.txt
+preserve  biome          biome_output.txt
+
+# Kubernetes (pass-through)
+preserve  kubectl-get       kubectl_get_output.txt
+preserve  kubectl-describe  kubectl_describe_output.txt
+preserve  kubectl-logs      kubectl_logs_output.txt
+
+# Helm (pass-through)
+preserve  helm-list      helm_list_output.txt
+preserve  helm-status    helm_status_output.txt
+
+# Terraform (pass-through)
+preserve  terraform-plan terraform_plan_output.txt
+preserve  terraform-fmt  terraform_fmt_output.txt
+
+# Azure CLI (pass-through)
+preserve  az-list        az_list_output.txt
+preserve  az-show        az_show_output.txt
+
+# AWS CLI (pass-through)
+preserve  aws-describe   aws_describe_output.txt
+preserve  aws-list       aws_list_output.txt
+preserve  aws-get        aws_get_output.txt
+preserve  aws-s3-ls      aws_s3_ls_output.txt
+preserve  aws-s3-cp      aws_s3_cp_output.txt
+preserve  aws-logs       aws_logs_output.txt
+
+# Docker (pass-through)
+preserve  docker-ps      docker_ps_output.txt
+preserve  docker-logs    docker_logs_output.txt
+preserve  docker-images  docker_images_output.txt
+preserve  docker-build   docker_build_output.txt
+# GitOps (pass-through)
+preserve  argocd-list    argocd_list_output.txt
+preserve  argocd-get     argocd_get_output.txt
+preserve  argocd-diff    argocd_diff_output.txt
+
+# Kustomize / Azure Pipelines (pass-through)
+preserve  kustomize-build  kustomize_build_output.txt
+
+# Azure Pipelines
+preserve  az-pipelines   az_pipelines_output.txt
+
+# Database (pass-through)
+preserve  mysql-query    mysql_query_output.txt
+
+# Redis
+preserve  redis-read     redis_read_output.txt
+# Observability (pass-through)
+preserve  logcli         logcli_output.txt
+
+preserve  sentry-cli     sentry_cli_output.txt
+preserve  grafana-cli    grafana_cli_output.txt
+preserve  datadog-ci     datadog_ci_output.txt
+
+# Vite / Turborepo / PHP extras (pass-through)
+preserve  vite-build     vite_build_output.txt
+preserve  vite-preview   vite_preview_output.txt
+preserve  turbo-run      turbo_run_output.txt
+preserve  pest           pest_output.txt
+preserve  sail-test      sail_test_output.txt
+preserve  sail-artisan   sail_artisan_output.txt
+preserve  rector         rector_output.txt
+
+# GitHub CLI (compacted) — gh-pr covers pr view/checks, gh-run covers run list/log
+clean     gh_pr        gh_pr_view_clean.txt
+preserve  gh_pr        gh_pr_view_no_state.txt
+clean     gh_checks    gh_checks_clean.txt
+preserve  gh_checks    gh_checks_extra_line.txt
+clean     gh_run_list  gh_run_list_clean.txt
+preserve  gh_run_list  gh_run_list_extra_line.txt
+clean     gh_run_log   gh_run_log_clean.txt
+clean     gh_run_log   gh_run_log_benign_warning.txt
+preserve  gh_run_log   gh_run_log_danger.txt
+
+# Go toolchain (pass-through)
+preserve  go-build     go_build_output.txt
+preserve  go-run       go_run_output.txt
+preserve  go-mod       go_mod_output.txt
+preserve  go-vet       go_vet_output.txt
+preserve  go-fmt       go_fmt_output.txt
+preserve  go-version   go_version_output.txt
+preserve  go-env       go_env_output.txt
+preserve  go-list      go_list_output.txt
+
+# Go linters (pass-through)
+preserve  staticcheck    staticcheck_output.txt
+preserve  golangci_lint  golangci_lint_output.txt
+preserve  govulncheck    govulncheck_output.txt
+
+# Cargo/Rust toolchain (pass-through)
+preserve  cargo-build    cargo_build_output.txt
+preserve  cargo-run      cargo_run_output.txt
+preserve  cargo-check    cargo_check_output.txt
+preserve  cargo-clippy   cargo_clippy_output.txt
+preserve  cargo-tree     cargo_tree_output.txt
+
+# Python tooling (pass-through)
+preserve  pip-list   pip_list_output.txt
+preserve  pip-show   pip_show_output.txt
+preserve  ruff       ruff_output.txt
+preserve  mypy       mypy_output.txt
+preserve  pyright    pyright_output.txt
+preserve  poetry     poetry_output.txt
+
+# Build systems (pass-through)
+preserve  make     make_output.txt
+preserve  cmake    cmake_output.txt
+preserve  ninja    ninja_output.txt
+preserve  bazel    bazel_output.txt
+preserve  just     just_output.txt
+preserve  task     task_output.txt
+preserve  nx       nx_output.txt
+
+# Version managers (pass-through)
+preserve  mise     mise_output.txt
+preserve  fnm      fnm_output.txt
+preserve  volta    volta_output.txt
+
+# GitHub CLI extras (pass-through)
+preserve  gh-auth    gh_auth_output.txt
+preserve  gh-repo    gh_repo_output.txt
+preserve  gh-issue   gh_issue_output.txt
+preserve  gh-api     gh_api_output.txt
+preserve  gh-search  gh_search_output.txt
+
+# Go extras (pass-through)
+preserve  go-doc       go_doc_output.txt
+preserve  go-get       go_get_output.txt
+preserve  go-work      go_work_output.txt
+preserve  go-install   go_install_output.txt
+preserve  go-generate  go_generate_output.txt
+
+# Cargo extras (pass-through)
+preserve  cargo-fmt       cargo_fmt_output.txt
+preserve  cargo-add       cargo_add_output.txt
+preserve  cargo-doc       cargo_doc_output.txt
+preserve  cargo-audit     cargo_audit_output.txt
+preserve  cargo-outdated  cargo_outdated_output.txt
+
+# Python extras (pass-through)
+preserve  pip-freeze   pip_freeze_output.txt
+preserve  pip-check    pip_check_output.txt
+preserve  uv-pip       uv_pip_output.txt
+preserve  uv-run       uv_run_output.txt
+preserve  black        black_output.txt
+preserve  isort        isort_output.txt
+preserve  bandit       bandit_output.txt
+preserve  pdm          pdm_output.txt
+
+# Version managers extras (pass-through)
+preserve  nvm      nvm_output.txt
+preserve  rbenv    rbenv_output.txt
+preserve  pyenv    pyenv_output.txt
+preserve  asdf     asdf_output.txt
+preserve  rtx      rtx_output.txt
+preserve  proto    proto_output.txt
+preserve  direnv   direnv_output.txt
+
+# Build systems extras (pass-through)
+preserve  lerna       lerna_output.txt
+preserve  changesets  changesets_output.txt
+preserve  cargo-update  cargo_update_output.txt
+preserve  dart-analyze    dart_analyze_clean.txt
+preserve  dart-pub        dart_pub_clean.txt
+preserve  dart-run        dart_run_clean.txt
+preserve  flutter-pub     flutter_pub_clean.txt
+preserve  flutter-doctor  flutter_doctor_clean.txt
+preserve  flutter-clean   flutter_clean_clean.txt
+preserve  flutter-build   flutter_build_clean.txt
+preserve  flutter-run     flutter_run_clean.txt
+preserve  flutter-analyze flutter_analyze_clean.txt
+preserve  flutter-devices flutter_devices_clean.txt
+preserve  dart-compile    dart_compile_clean.txt
+preserve  dart-format     dart_format_clean.txt
+preserve  dart-fix        dart_fix_clean.txt
+preserve  npm-install   npm_install_error.txt
+
+# Mobile/Native build (pass-through) — added for stack coverage
+preserve  xcodebuild      xcodebuild_output.txt
+preserve  pod             pod_output.txt
+preserve  expo            expo_output.txt
+preserve  react-native    react_native_output.txt
+preserve  adb             adb_output.txt
+
+# .NET toolchain (pass-through)
+preserve  dotnet-build  dotnet_build_output.txt
+preserve  dotnet-test   dotnet_test_output.txt
+preserve  dotnet-run    dotnet_run_output.txt
+
+# Ruby ecosystem (pass-through)
+preserve  rspec    rspec_output.txt
+preserve  rubocop  rubocop_output.txt
+
+# Cloud CLI (pass-through)
+preserve  gcloud  gcloud_output.txt
+preserve  psql    psql_output.txt
+
+# System diagnostics (pass-through)
+preserve  journalctl  journalctl_output.txt
+preserve  systemctl   systemctl_output.txt
+
+# Kubernetes extended (pass-through)
+preserve  kubectl-top  kubectl_top_output.txt
+
+# Filesystem commands (pass-through, tracked for safety)
+preserve  mkdir  mkdir_output.txt
+preserve  touch  touch_output.txt
+preserve  cp     cp_output.txt
+preserve  mv     mv_output.txt
+preserve  rm     rm_output.txt
+
+# AST tools (pass-through)
+preserve  ast-grep  ast_grep_output.txt
+
+# Package managers install (pass-through)
+preserve  pip_install  pip_install_output.txt
+clean     pip_install  pip_install_clean.txt
+preserve  pip_install  pip_install_warning.txt
+
+# Other languages (pass-through)
+preserve  mix    mix_output.txt
+preserve  swift  swift_output.txt
+preserve  sbt    sbt_output.txt
+
+# Linters — failure transcripts (compressed: grouped by file, counts + rule codes kept)
+clean     eslint         eslint_violations.txt
+clean     ruff           ruff_violations.txt
+clean     mypy           mypy_violations.txt
+clean     golangci_lint  golangci_lint_violations.txt
+
+# Builds — failure transcripts (compressed: compiler diagnostics grouped by file)
+clean     go_build       go_build_violations.txt
+preserve  go_build       go_build_panic_preserved.txt
+clean     cargo_build    cargo_build_violations.txt
+preserve  cargo_build    cargo_build_panic_preserved.txt
+clean     dotnet_build   dotnet_build_violations.txt
+preserve  dotnet_build   dotnet_build_crash_preserved.txt
+clean     go_test_runs  make_check_clean.txt
+clean     go_test_runs  git_push_hooks_clean.txt
+clean     go_test_runs  git_commit_hooks_clean.txt
+preserve  go_test_runs  make_short_run_preserve.txt
+preserve  go_test_runs  make_check_fail.txt
+preserve  go_test_runs  git_push_progress_preserve.txt
+clean     markdown  gh_issue_view_clean.txt
+clean     markdown  gh_release_view_clean.txt
+preserve  markdown  gh_issue_view_error_text.txt
+preserve  markdown  gh_issue_view_open_fence_preserve.txt
+preserve  ls_listing  ls_listing_long_clean.txt
+clean     ls_listing  ls_listing_plain_clean.txt
+preserve  ls_listing  ls_listing_danger.txt
+preserve  ls_listing  ls_listing_headers.txt
+clean     find_tree   find_tree_clean.txt
+preserve  find_tree   find_tree_duplicate.txt
+clean     grep_group  grep_group_clean.txt
+preserve  grep_group  grep_group_context.txt
+# File reads (cat, head, tail, sed -n of one source file): a long file folds to its
+# outline; a file with no declarations stays whole. grep/rg rows without line
+# numbers group under their path operand, bare text (one file operand) stays raw.
+clean     file_read   file_read_clean.txt
+preserve  file_read   file_read_no_outline.txt
+clean     grep_rows   grep_rows_clean.txt
+preserve  grep_rows   grep_rows_bare_text.txt
+clean     grep_counts grep_counts_clean.txt
+preserve  grep_counts grep_counts_lone.txt
+preserve  wc          wc_output.txt
+clean     generic     deno_check_many_files_clean.txt
+clean     generic     zig_build_summary_clean.txt
+preserve  generic     deno_test_summary_preserve.txt
+preserve  generic     zig_build_warning_preserve.txt
+clean     generic  generic_stack_fold_clean.txt
+preserve  generic  generic_stack_fold_error.txt
+clean     generic     django_test_many_ok_clean.txt
+preserve  generic     django_check_warning_preserve.txt
+# Failed jest and pytest runs (failed_jest.go, failed_pytest.go). Each keeps every
+# failure, so on exit 0 the output must come back identical; the failed-run cut is
+# tested in failed_jest_test.go and failed_pytest_test.go.
+preserve  jest        jest_fail_many_suites.txt
+preserve  jest        jest_fail_all.txt
+preserve  jest        jest_fail_verbose_colour.txt
+preserve  jest        jest_fail_npm_console.txt
+preserve  jest        jest_fail_suite_error.txt
+preserve  pytest      pytest_fail_all.txt
+preserve  pytest      pytest_fail_verbose_colour.txt
+preserve  pytest      pytest_fail_warnings_rA.txt
+preserve  pytest      pytest_fail_tb_no.txt
+preserve  pytest      pytest_fail_tb_line.txt
+preserve  cargo_test  cargo_failed_multi_crate.txt
+preserve  cargo_test  cargo_failed_lib_only.txt
+
+# Bench depth (several fixtures per measured family): plausible clean runs
+clean     cargo_test  cargo_pass_workspace.txt
+clean     cargo_test  cargo_pass_doctests.txt
+clean     tsc         tsc_pass_build_mode.txt
+clean     tsc         tsc_pass_vite_app.txt
+clean     eslint      eslint_violations_react.txt
+clean     eslint      eslint_violations_warnings.txt
+# BN-7: failing runner fixtures and a second clean sample for single-sample families (all synthetic).
+preserve  nx            nx_failed_target.txt
+preserve  turbo         turbo_failed_task.txt
+clean     pytest        pytest_pass_clean_verbose.txt
+clean     jest          jest_pass_clean_workers.txt
+clean     playwright    playwright_pass_clean_two_projects.txt
+clean     grep_group    grep_group_clean_nested.txt
+clean     go_build      go_build_violations_vet.txt
+clean     golangci_lint golangci_lint_violations_style.txt
+clean     git_diff      gitdiff_two_files.txt
+clean     gh_pr         gh_pr_view_clean_merged.txt
+clean     ruff          ruff_violations_imports.txt
+clean     mypy          mypy_violations_optional.txt
+# Wired compressors (docs/reference/harness-matrix.md): a clean run compacts, a run that
+# carries failures or another shape stays byte-identical.
+clean     rspec         rspec_pass_clean.txt
+preserve  rspec         rspec_fail.txt
+clean     dotnet_test   dotnet_test_pass_clean.txt
+preserve  dotnet_test   dotnet_test_fail.txt
+clean     phpstan       phpstan_clean.txt
+preserve  phpstan       phpstan_version_banner.txt
+clean     docker_build  docker_build_clean.txt
+preserve  docker_build  docker_build_daemon_error.txt
+clean     docker_ps     docker_ps_clean.txt
+preserve  docker_ps     docker_ps_quiet_ids.txt
+clean     docker_images docker_images_clean.txt
+preserve  docker_images docker_images_quiet_ids.txt
+clean     kubectl_pods  kubectl_pods_clean.txt
+preserve  kubectl_pods  kubectl_get_services.txt
+clean     git_stash     stash_list_clean.txt
+preserve  git_stash     stash_push_saved.txt
+clean     rubocop        rubocop_clean.txt
+clean     rubocop        rubocop_offenses.txt
+clean     http_fetch    http_fetch_clean.txt
+preserve  http_fetch    http_fetch_error_status.txt
+clean     glab          glab_mr_view_token.txt
+clean     glab          glab_issue_view_header.txt
+preserve  glab          glab_ci_list_plain.txt

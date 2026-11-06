@@ -1,0 +1,3 @@
+cargo outdated
+Name    Project  Latest
+serde   1.0.0    1.0.100

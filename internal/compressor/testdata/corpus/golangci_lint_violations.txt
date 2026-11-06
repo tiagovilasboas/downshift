@@ -1,0 +1,4 @@
+internal/foo/bar.go:12:6: `x` is unused (unused)
+internal/foo/bar.go:30:2: ineffectual assignment to err (ineffassign)
+cmd/main.go:8:1: File is not `gofmt`-ed (gofmt)
+cmd/main.go:19:14: Error return value is not checked (errcheck)

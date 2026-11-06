@@ -1,0 +1,8 @@
+PASS src/auth.test.ts
+PASS src/billing.test.ts
+
+Test Suites: 1 skipped, 2 passed, 3 total
+Tests:       1 skipped, 1 todo, 25 passed, 27 total
+Snapshots:   0 total
+Time:        1.234 s
+Ran all test suites.

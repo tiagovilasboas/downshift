@@ -1,0 +1,10 @@
+Running 6 tests using 2 workers
+
+  ✓  1 [chromium] › e2e/search.spec.ts:6:5 › finds a product (1.1s)
+  ✓  2 [firefox] › e2e/search.spec.ts:6:5 › finds a product (1.4s)
+  ✓  3 [chromium] › e2e/cart.spec.ts:9:5 › adds an item (900ms)
+  ✓  4 [firefox] › e2e/cart.spec.ts:9:5 › adds an item (1.0s)
+  ✓  5 [chromium] › e2e/cart.spec.ts:20:5 › removes an item (640ms)
+  ✓  6 [firefox] › e2e/cart.spec.ts:20:5 › removes an item (710ms)
+
+  6 passed (5.3s)

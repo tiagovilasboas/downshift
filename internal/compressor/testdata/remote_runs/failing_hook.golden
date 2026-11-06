@@ -1,0 +1,16 @@
+│ 🥊 lefthook v1.7.18  hook: pre-push │
+┃  vet ❯
+
+┃  test ❯
+
+--- FAIL: TestCheckoutTotal (0.00s)
+    --- FAIL: TestCheckoutTotal/discount_over_100 (0.00s)
+        total_test.go:58: got 1999, want 0
+FAIL
+FAIL	github.com/acme/widget/internal/checkout	0.276s
+FAIL
+
+summary: (done in 9.80 seconds)
+✔️ vet (3.10 seconds)
+🥊 test (6.70 seconds)
+error: failed to push some refs to 'github.com:acme/widget.git'

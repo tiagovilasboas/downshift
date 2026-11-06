@@ -1,0 +1,13 @@
+gofmt -l .
+go vet ./...
+go test -count=1 ./...
+ok  	github.com/acme/widget/cmd/widget	0.012s
+ok  	github.com/acme/widget/internal/api	1.137s
+ok  	github.com/acme/widget/internal/auth	0.204s
+--- FAIL: TestCharge (0.00s)
+    billing_test.go:42: got 100, want 110
+FAIL
+FAIL	github.com/acme/widget/internal/billing	0.087s
+ok  	github.com/acme/widget/internal/store	0.331s
+FAIL
+make: *** [Makefile:21: check] Error 1

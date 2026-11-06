@@ -1,0 +1,19 @@
+ PASS  src/cart/totals.test.ts
+ PASS  src/cart/coupons.test.ts
+ PASS  src/checkout/tax.test.ts (3.102 s)
+ PASS  src/checkout/address.test.ts
+ FAIL  src/checkout/broken.test.ts
+  ● Test suite failed to run
+
+    Cannot find module './tax' from 'src/checkout/broken.test.ts'
+
+    > 1 | import { tax } from './tax';
+        | ^
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:800:11)
+
+Test Suites: 1 failed, 4 passed, 5 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        1.91 s
+Ran all test suites.

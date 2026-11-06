@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.8, pytest-8.2.0, pluggy-1.5.0
+rootdir: /home/dev/project
+configfile: pyproject.toml
+collected 12 items
+
+tests/test_orders.py ......                                              [ 50%]
+tests/test_users.py ....                                                 [ 83%]
+tests/test_utils.py ..                                                   [100%]
+
+============================== 12 passed in 1.07s ==============================

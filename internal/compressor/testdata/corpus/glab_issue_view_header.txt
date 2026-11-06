@@ -1,0 +1,13 @@
+title:	Webhook delivery fails behind the corporate proxy
+state:	opened
+author:	joao.lima
+assignees:	
+labels:	bug, networking
+comments:	2
+number:	311
+url:	https://gitlab.example.com/platform/webhooks/-/issues/311
+--
+Deliveries time out when HTTPS_PROXY points at http://svc-proxy:pr0xyS3cretValue@proxy.corp.example.com:3128
+and the request is sent with `PRIVATE-TOKEN: example-deploy-secret`.
+
+Expected: the sender honours NO_PROXY and retries once through the direct route.

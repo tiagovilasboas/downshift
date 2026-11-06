@@ -1,0 +1,8 @@
+=== RUN   TestLoadConfiguration
+--- PASS: TestLoadConfiguration (0.00s)
+=== RUN   TestValidateConfiguration
+--- PASS: TestValidateConfiguration (0.00s)
+=== RUN   TestFormatConfiguration
+--- PASS: TestFormatConfiguration (0.00s)
+PASS
+ok  example.test/internal/config  0.004s

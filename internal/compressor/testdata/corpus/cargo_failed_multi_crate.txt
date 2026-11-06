@@ -1,0 +1,81 @@
+   Compiling billing-core v0.4.2 (/home/dev/billing-core)
+warning: unused variable: `rate`
+  --> src/tax.rs:22:9
+   |
+22 |     let rate = lookup(region);
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_rate`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: `billing-core` (lib test) generated 1 warning (run `cargo fix --lib -p billing-core --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.02s
+     Running unittests src/lib.rs (target/debug/deps/billing_core-5f2a9c1d7e3b4a60)
+
+running 8 tests
+test billing::tests::invoice_rounds_half_up ... ok
+test billing::tests::invoice_zero_items ... ok
+test billing::tests::proration_mid_month ... ok
+test config::tests::load_defaults ... ok
+test config::tests::env_overrides_file ... ok
+test currency::tests::convert_same_currency ... ok
+test tax::tests::vat_standard_rate ... ok
+test tax::tests::us_sales_tax_by_state ... ignored, needs network
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/main.rs (target/debug/deps/billing_cli-0a1b2c3d4e5f6071)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/api.rs (target/debug/deps/api-9c8b7a6f5e4d3c2b)
+
+running 6 tests
+test create_invoice_returns_201 ... ok
+test create_invoice_rejects_negative_amount ... ok
+test get_invoice_not_found ... ok
+test list_invoices_paginates ... ok
+test refund_twice_is_conflict ... FAILED
+test void_invoice_is_idempotent ... ok
+
+failures:
+
+---- refund_twice_is_conflict stdout ----
+thread 'refund_twice_is_conflict' panicked at tests/api.rs:204:5:
+expected status 409, got 200
+stack backtrace:
+   0: rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: api::refund_twice_is_conflict
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+
+
+failures:
+    refund_twice_is_conflict
+
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+error: test failed, to rerun pass `--test api`
+     Running tests/ledger.rs (target/debug/deps/ledger-1122334455667788)
+
+running 5 tests
+test append_entry_is_ordered ... ok
+test balance_after_reversal ... ok
+test concurrent_appends_keep_order ... ok
+test snapshot_is_stable ... ok
+test replay_from_snapshot ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+   Doc-tests billing_core
+
+running 3 tests
+test src/lib.rs - (line 4) ... ok
+test src/money.rs - money::Money::checked_add (line 31) ... ok
+test src/money.rs - money::Money::from_cents (line 12) ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
+
+error: 1 target failed:
+    `--test api`

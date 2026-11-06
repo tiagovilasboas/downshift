@@ -1,0 +1,25 @@
+   Compiling downshift-core v0.1.0 (/Users/tiago.boas/rust/downshift)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.92s
+     Running unittests src/lib.rs (target/debug/deps/downshift_core-a1b2c3d4)
+
+running 25 tests
+test auth::tests::test_token_validation ... ok
+test billing::tests::test_invoice_calc ... FAILED
+test config::tests::test_load_defaults ... ok
+test store::tests::test_cache_hit ... ok
+
+failures:
+
+---- billing::tests::test_invoice_calc stdout ----
+thread 'billing::tests::test_invoice_calc' panicked at src/billing.rs:42:9:
+assertion `left == right` failed
+  left: 100
+ right: 110
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+failures:
+    billing::tests::test_invoice_calc
+
+test result: FAILED. 24 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+error: test failed, to rerun pass `--lib`

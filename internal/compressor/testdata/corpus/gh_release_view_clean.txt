@@ -1,0 +1,18 @@
+title:	v0.6.0
+tag:	v0.6.0
+draft:	false
+prerelease:	false
+author:	bot
+url:	https://github.com/o/r/releases/tag/v0.6.0
+asset:	checksums.txt
+--
+<!-- notes -->
+
+
+## What's Changed
+
+
+* Add compaction by @x in https://github.com/o/r/pull/1
+
+
+**Full Changelog**: https://github.com/o/r/compare/v0.5.0...v0.6.0

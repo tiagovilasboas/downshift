@@ -1,0 +1,22 @@
+╭───────────────────────────────────────╮
+│ 🥊 lefthook v1.7.18  hook: pre-push │
+╰───────────────────────────────────────╯
+┃  test ❯
+
+ok  	github.com/acme/widget/internal/agents	0.318s
+ok  	github.com/acme/widget/internal/billing	0.207s
+ok  	github.com/acme/widget/internal/cache	0.511s
+ok  	github.com/acme/widget/internal/core	0.833s
+ok  	github.com/acme/widget/internal/store	0.314s
+?   	github.com/acme/widget/internal/version	[no test files]
+
+  ────────────────────────────────────
+summary: (done in 3.90 seconds)
+✔️ test (3.90 seconds)
+Enumerating objects: 1, done.
+Counting objects: 100% (1/1), done.
+Writing objects: 100% (1/1), 160 bytes | 160.00 KiB/s, done.
+Total 1 (delta 0), reused 0 (delta 0), pack-reused 0
+To github.com:acme/widget.git
+ * [new tag]         v0.5.4 -> v0.5.4
+ + 5d6e7f8...9a8b7c6 main -> main (forced update)

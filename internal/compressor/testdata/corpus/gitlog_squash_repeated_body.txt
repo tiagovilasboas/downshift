@@ -1,0 +1,19 @@
+commit 4f2a9c1e0b7d6a5c4b3a2918f7e6d5c4b3a29185
+Author: Dev Example <dev@example.com>
+Date:   Mon Oct 19 10:00:00 2026 +0000
+
+    feat: squash of review fixes
+
+    * fixup
+    * fixup
+    * fixup
+    * fixup
+    * fixup
+    * fixup
+
+commit 4f2a9c1e0b7d6a5c4b3a2918f7e6d5c4b3a29186
+Author: Dev Example <dev@example.com>
+Date:   Sun Oct 18 09:00:00 2026 +0000
+
+    chore: init
+

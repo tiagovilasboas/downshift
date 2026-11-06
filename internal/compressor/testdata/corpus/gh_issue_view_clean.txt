@@ -1,0 +1,45 @@
+title:	Phase 3: Content Transformation
+state:	OPEN
+author:	tiagovilasboas (Tiago Vilas Boas)
+labels:	enhancement
+comments:	0
+assignees:	
+projects:	
+milestone:	
+number:	812
+--
+<!-- template: roadmap phase -->
+[![CI](https://img.shields.io/github/actions/workflow/status/o/r/ci.yml)](https://github.com/o/r/actions)
+[![Go](https://img.shields.io/badge/go-1.22-blue)](https://go.dev)
+
+
+## Goal
+## Goal
+Structure-aware compaction for content that needs transformation.
+
+
+
+## Tasks
+
+- [ ] **3.1 md-slim** - see [the design](https://example.com/design?a=1&b=2)
+- [ ] **3.2 web-md** - convert pages
+
+
+| Task | Estimate |
+|------|----------|
+| 3.1  | ~60 LOC  |
+
+```go
+func main() {
+
+
+	run()
+}
+```
+
+    indented code
+
+
+    stays as is
+
+See [roadmap](docs/roadmap.md).

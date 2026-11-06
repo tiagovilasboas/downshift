@@ -1,0 +1,4 @@
+CONTAINER ID   IMAGE            COMMAND                  CREATED         STATUS         PORTS                    NAMES
+3f1c6e7a9b21   postgres:16      "docker-entrypoint.s…"   2 hours ago     Up 2 hours     0.0.0.0:5432->5432/tcp   db
+8a5d2c4f1e07   redis:7-alpine   "docker-entrypoint.s…"   2 hours ago     Up 2 hours     0.0.0.0:6379->6379/tcp   cache
+5b9e0d3c7a12   api:latest       "node server.js"         10 minutes ago  Up 10 minutes  0.0.0.0:3000->3000/tcp   api

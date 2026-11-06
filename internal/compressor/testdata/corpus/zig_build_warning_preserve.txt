@@ -1,0 +1,4 @@
+src/main.zig:12:5: warning: unused local constant
+    const x = 1;
+    ^~~~~
+Build Summary: 3/3 steps succeeded; 1 warning

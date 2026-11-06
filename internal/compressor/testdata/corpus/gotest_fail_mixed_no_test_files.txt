@@ -1,0 +1,9 @@
+?   	github.com/tiagovilasboas/downshift/cmd/dsmon-server	[no test files]
+ok  	github.com/tiagovilasboas/downshift/internal/catalog	0.150s
+--- FAIL: TestCharge (0.01s)
+    billing_test.go:42: got 100, want 110
+FAIL
+FAIL	github.com/tiagovilasboas/downshift/internal/billing	0.087s
+?   	github.com/tiagovilasboas/downshift/internal/session	[no test files]
+ok  	github.com/tiagovilasboas/downshift/internal/execwrap	0.180s
+FAIL

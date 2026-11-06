@@ -1,0 +1,13 @@
+│ 🥊 lefthook v1.7.18  hook: pre-push │
+┃  test ❯
+
+summary: (done in 4.20 seconds)
+(skip) vet
+✔️ test (4.20 seconds)
+To github.com:acme/widget.git
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'github.com:acme/widget.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.

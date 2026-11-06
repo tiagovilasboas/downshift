@@ -1,0 +1,2 @@
+cargo add serde
+    Adding serde v1.0 to dependencies

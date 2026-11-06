@@ -1,0 +1,18 @@
+..F.
+
+Failures:
+
+  1) Invoice#total sums the line items
+     Failure/Error: expect(invoice.total).to eq(110)
+
+       expected: 110
+            got: 100
+
+     # ./spec/models/invoice_spec.rb:16:in `block (3 levels) in <top (required)>'
+
+Finished in 0.21 seconds (files took 0.9 seconds to load)
+4 examples, 1 failure
+
+Failed examples:
+
+rspec ./spec/models/invoice_spec.rb:14 # Invoice#total sums the line items

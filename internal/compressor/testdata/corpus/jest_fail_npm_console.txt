@@ -1,0 +1,32 @@
+> shop@2.4.0 test
+> jest
+
+ PASS  src/cart/totals.test.ts
+  console.log
+    totals: 3 lines
+
+      at log (src/cart/totals.test.ts:9:11)
+
+ PASS  src/cart/coupons.test.ts
+ PASS  src/cart/shipping.test.ts
+  console.warn
+    retrying payment gateway
+
+      at warn (src/checkout/pay.ts:40:7)
+
+ FAIL  src/checkout/pay.test.ts
+  ● pay › charges the card
+
+    Card declined
+
+      21 |   const res = await charge(card);
+    > 22 |   if (!res.ok) throw new Error('Card declined');
+         |                ^
+
+      at charge (src/checkout/pay.ts:22:9)
+
+Test Suites: 1 failed, 3 passed, 4 total
+Tests:       1 failed, 14 passed, 15 total
+Snapshots:   0 total
+Time:        4.311 s
+Ran all test suites.

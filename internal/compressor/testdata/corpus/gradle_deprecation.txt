@@ -1,0 +1,9 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:assembleDebug
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+BUILD SUCCESSFUL in 12s
+14 actionable tasks: 9 executed, 5 up-to-date

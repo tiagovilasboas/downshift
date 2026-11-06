@@ -1,0 +1,16 @@
+  (Run Starting)
+  Cypress: 13.6.0
+  Browser: Electron 118
+
+  (Run Finished)
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        25
+  │ Passing:      24
+  │ Failing:      0
+  │ Pending:      1
+  │ Skipped:      0
+  │ Screenshots:  0
+  │ Video:        false
+  │ Duration:     8 seconds
+  │ Spec Ran:     cypress/e2e/accounting.cy.ts
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘

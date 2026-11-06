@@ -1,0 +1,3 @@
+  120 src/a.go
+   80 src/b.go
+  200 total

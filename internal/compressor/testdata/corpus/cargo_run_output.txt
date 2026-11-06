@@ -1,0 +1,5 @@
+cargo run
+   Compiling myapp v0.1.0
+    Finished dev target(s) in 0.5s
+     Running `target/debug/myapp`
+Hello, World!

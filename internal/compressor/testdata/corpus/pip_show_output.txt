@@ -1,0 +1,4 @@
+pip show requests
+Name: requests
+Version: 2.28.0
+Summary: Python HTTP library

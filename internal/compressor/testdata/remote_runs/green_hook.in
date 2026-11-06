@@ -1,0 +1,61 @@
+╭───────────────────────────────────────╮
+│ 🥊 lefthook v1.7.18  hook: pre-push │
+╰───────────────────────────────────────╯
+┃  vet ❯
+
+┃  test ❯
+
+ok  	github.com/acme/widget/cmd/widget	0.412s
+ok  	github.com/acme/widget/internal/agents	0.318s
+ok  	github.com/acme/widget/internal/archtest	1.204s
+ok  	github.com/acme/widget/internal/billing	0.207s
+ok  	github.com/acme/widget/internal/cache	0.511s
+ok  	github.com/acme/widget/internal/catalog	0.093s
+ok  	github.com/acme/widget/internal/checkout	0.276s
+ok  	github.com/acme/widget/internal/classifier	0.644s
+ok  	github.com/acme/widget/internal/config	0.121s
+ok  	github.com/acme/widget/internal/core	0.833s
+ok  	github.com/acme/widget/internal/doctor	0.402s
+ok  	github.com/acme/widget/internal/events	0.187s
+ok  	github.com/acme/widget/internal/execwrap	2.917s
+ok  	github.com/acme/widget/internal/hooks	0.355s
+ok  	github.com/acme/widget/internal/inventory	0.162s
+ok  	github.com/acme/widget/internal/mcp	1.026s
+ok  	github.com/acme/widget/internal/metrics	0.098s
+ok  	github.com/acme/widget/internal/models	0.231s
+ok  	github.com/acme/widget/internal/notify	0.074s
+ok  	github.com/acme/widget/internal/outcome	0.589s
+ok  	github.com/acme/widget/internal/paths	0.143s
+ok  	github.com/acme/widget/internal/policyfile	0.219s
+ok  	github.com/acme/widget/internal/quota	0.366s
+ok  	github.com/acme/widget/internal/registry	0.129s
+ok  	github.com/acme/widget/internal/router	0.478s
+ok  	github.com/acme/widget/internal/sessions	0.251s
+ok  	github.com/acme/widget/internal/setup	1.342s
+ok  	github.com/acme/widget/internal/shellwrap	0.690s
+ok  	github.com/acme/widget/internal/store	0.314s
+ok  	github.com/acme/widget/internal/telemetry	0.427s
+ok  	github.com/acme/widget/internal/tokens	0.176s
+ok  	github.com/acme/widget/internal/tui	0.533s
+ok  	github.com/acme/widget/internal/updater	0.202s
+ok  	github.com/acme/widget/internal/usage	0.118s
+?   	github.com/acme/widget/internal/version	[no test files]
+?   	github.com/acme/widget/internal/testutil	[no test files]
+ok  	github.com/acme/widget/internal/wire	0.261s
+ok  	github.com/acme/widget/internal/workers	0.384s
+ok  	github.com/acme/widget/internal/zones	0.139s
+ok  	github.com/acme/widget/examples/smoke	0.945s
+
+  ────────────────────────────────────
+summary: (done in 21.48 seconds)
+✔️ vet (3.10 seconds)
+✔️ test (18.38 seconds)
+Enumerating objects: 24, done.
+Counting objects: 100% (24/24), done.
+Delta compression using up to 10 threads
+Compressing objects: 100% (12/12), done.
+Writing objects: 100% (13/13), 2.41 KiB | 2.41 MiB/s, done.
+Total 13 (delta 9), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (9/9), completed with 8 local objects.
+To github.com:acme/widget.git
+   1a2b3c4..5d6e7f8  feat/cache -> feat/cache

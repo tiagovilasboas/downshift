@@ -1,0 +1,15 @@
+Go test: ok: 3 packages, 1 passing tests cut (failures kept verbatim)
+=== RUN   TestSlow
+panic: test timed out after 30s
+	running tests:
+		TestSlow (30s)
+
+goroutine 33 [running]:
+testing.(*M).startAlarm.func1()
+	/usr/local/go/src/testing/testing.go:2259 +0x3b9
+
+goroutine 1 [chan receive, 30 minutes]:
+testing.(*T).Run(0xc0001a2000, {0x1, 0x2}, 0x3)
+	/usr/local/go/src/testing/testing.go:1750 +0x3f3
+FAIL	example.com/acme/widget/internal/slow	30.012s
+FAIL

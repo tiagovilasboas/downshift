@@ -1,0 +1,2 @@
+go get example.com/pkg@latest
+go: downloading example.com/pkg v1.2.3

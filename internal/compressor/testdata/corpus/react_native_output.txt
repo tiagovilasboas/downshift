@@ -1,0 +1,1 @@
+# Sample output for react_native_output - pass-through

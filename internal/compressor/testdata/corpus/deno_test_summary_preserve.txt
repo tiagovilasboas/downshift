@@ -1,0 +1,7 @@
+running 3 tests from ./math_test.ts
+add ... ok (1ms)
+sub ... ok (0ms)
+mul ... ok (0ms)
+
+ok | 3 passed | 0 failed (12ms)
+

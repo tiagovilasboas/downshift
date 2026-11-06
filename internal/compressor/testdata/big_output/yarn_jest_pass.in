@@ -1,0 +1,32 @@
+yarn run v1.22.19
+$ jest
+PASS src/m0.test.js
+PASS src/m1.test.js
+PASS src/m2.test.js
+PASS src/m3.test.js
+PASS src/m4.test.js
+PASS src/m5.test.js
+PASS src/m6.test.js
+PASS src/m7.test.js
+PASS src/m8.test.js
+PASS src/m9.test.js
+PASS src/m10.test.js
+PASS src/m11.test.js
+PASS src/m12.test.js
+PASS src/m13.test.js
+PASS src/m14.test.js
+PASS src/m15.test.js
+PASS src/m16.test.js
+PASS src/m17.test.js
+PASS src/m18.test.js
+PASS src/m19.test.js
+  console.error
+    Error: simulated network failure (expected)
+      at fetchAll (src/net.js:12:9)
+
+Test Suites: 20 passed, 20 total
+Tests:       88 passed, 88 total
+Snapshots:   0 total
+Time:        2.9 s
+Ran all test suites.
+Done in 3.40s.

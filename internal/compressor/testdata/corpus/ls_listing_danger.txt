@@ -1,0 +1,6 @@
+total 16
+drwxr-xr-x  6 tiago.boas  staff  192 Nov  4 10:00 .
+drwxr-xr-x  5 tiago.boas  staff  160 Nov  4 09:12 ..
+-rw-r--r--  1 tiago.boas  staff  812 Nov  4 10:00 errors.go
+-rw-r--r--  1 tiago.boas  staff  640 Nov  4 10:00 main.go
+-rw-r--r--  1 tiago.boas  staff  233 Nov  4 10:00 retry_policy.go

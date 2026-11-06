@@ -1,0 +1,4 @@
+Collecting somepkg
+  Downloading somepkg-1.0-py3-none-any.whl (10 kB)
+WARNING: The script somepkg is installed in '/home/user/.local/bin' which is not on PATH.
+Successfully installed somepkg-1.0

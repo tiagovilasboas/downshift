@@ -1,0 +1,6 @@
+Collecting requests==2.31.0
+  Downloading requests-2.31.0-py3-none-any.whl (62 kB)
+Collecting idna<4,>=2.5
+  Using cached idna-3.7-py3-none-any.whl (66 kB)
+Installing collected packages: idna, requests
+Successfully installed idna-3.7 requests-2.31.0

@@ -1,0 +1,16 @@
+commit abc123def4567890abc123def4567890abc12345
+Author: Test User <test@example.com>
+Date:   Mon Oct 21 10:00:00 2026 -0300
+
+    fix: wrap handler error
+
+diff --git a/handler.go b/handler.go
+index abc123..def456 100644
+--- a/handler.go
++++ b/handler.go
+@@ -10,7 +10,7 @@ func handle() {
+ 	ctx := context.Background()
+ 	client := newClient(ctx)
+-	return client.do()
++	return fmt.Errorf("request failed: %w", client.do())
+ }

@@ -1,0 +1,101 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.12 [39m[90m/work/app[39m
+
+[90mstdout[2m | test/slow.test.js[2m > [22m[2mfinishes in time
+[22m[39mwaiting for the gateway
+
+ [32m✓[39m test/ok.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 1[2mms[22m[39m
+ [32m✓[39m test/math.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [31m❯[39m test/billing.test.js [2m([22m[2m8 tests[22m[2m | [22m[31m3 failed[39m[2m | [22m[33m1 skipped[39m[2m | [22m[90m1 todo[39m[2m)[22m[32m 7[2mms[22m[39m
+     [32m✓[39m charges the amount[32m 1[2mms[22m[39m
+[31m     [31m×[31m applies the discount[39m[32m 3[2mms[22m[39m
+[31m     [31m×[31m builds the receipt[39m[32m 1[2mms[22m[39m
+[31m     [31m×[31m rejects a negative amount[39m[32m 0[2mms[22m[39m
+     [2m[90m↓[39m[22m refunds
+     [2m[90m□[39m[22m splits the payment
+       [32m✓[39m sums the entries[32m 0[2mms[22m[39m
+       [32m✓[39m keeps the order[32m 0[2mms[22m[39m
+ [31m❯[39m test/slow.test.js [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 54[2mms[22m[39m
+[31m   [31m×[31m finishes in time[39m[32m 54[2mms[22m[39m
+   [32m✓[39m keeps a plain pass[32m 0[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 4 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/billing.test.js[2m > [22mbilling[2m > [22mapplies the discount
+[31m[1mAssertionError[22m: expected 100 to be 110 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 110[39m
+[31m+ 100[39m
+
+[36m [2m❯[22m test/billing.test.js:[2m7:67[22m[39m
+    [90m  5|[39m [34mdescribe[39m([32m'billing'[39m[33m,[39m () [33m=>[39m {
+    [90m  6|[39m   test('charges the amount', () => { expect(charge(100).amount).toBe(1…
+    [90m  7|[39m   test('applies the discount', () => { expect(charge(100).amount).toBe…
+    [90m   |[39m                                                                   [31m^[39m
+    [90m  8|[39m   [34mtest[39m([32m'builds the receipt'[39m[33m,[39m () [33m=>[39m {
+    [90m  9|[39m     expect(charge(100)).toEqual({ amount: 100, currency: 'USD', items:…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/billing.test.js[2m > [22mbilling[2m > [22mbuilds the receipt
+[31m[1mAssertionError[22m: expected { amount: 100, currency: 'BRL', …(1) } to deeply equal { amount: 100, currency: 'USD', …(1) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "amount": 100,[22m
+[32m-   "currency": "USD",[39m
+[31m+   "currency": "BRL",[39m
+[2m    "items": [[22m
+[2m      1,[22m
+[2m      2,[22m
+[32m-     4,[39m
+[31m+     3,[39m
+[2m    ],[22m
+[2m  }[22m
+
+[36m [2m❯[22m test/billing.test.js:[2m9:25[22m[39m
+    [90m  7|[39m   test('applies the discount', () => { expect(charge(100).amount).toBe…
+    [90m  8|[39m   [34mtest[39m([32m'builds the receipt'[39m[33m,[39m () [33m=>[39m {
+    [90m  9|[39m     expect(charge(100)).toEqual({ amount: 100, currency: 'USD', items:…
+    [90m   |[39m                         [31m^[39m
+    [90m 10|[39m   })
+    [90m 11|[39m   [34mtest[39m([32m'rejects a negative amount'[39m[33m,[39m () [33m=>[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/billing.test.js[2m > [22mbilling[2m > [22mrejects a negative amount
+[31m[1mError[22m: negative amount not allowed[39m
+[36m [2m❯[22m test/billing.test.js:[2m12:11[22m[39m
+    [90m 10|[39m   })
+    [90m 11|[39m   [34mtest[39m([32m'rejects a negative amount'[39m[33m,[39m () [33m=>[39m {
+    [90m 12|[39m     [35mthrow[39m [35mnew[39m [33mError[39m([32m'negative amount not allowed'[39m)
+    [90m   |[39m           [31m^[39m
+    [90m 13|[39m   })
+    [90m 14|[39m   test[33m.[39m[34mskip[39m([32m'refunds'[39m[33m,[39m () [33m=>[39m {})
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/slow.test.js[2m > [22mfinishes in time
+[31m[1mError[22m: Test timed out in 50ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m test/slow.test.js:[2m3:1[22m[39m
+    [90m  1|[39m [35mimport[39m { expect[33m,[39m test } [35mfrom[39m [32m'vitest'[39m
+    [90m  2|[39m
+    [90m  3|[39m [34mtest[39m([32m'finishes in time'[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m   |[39m [31m^[39m
+    [90m  4|[39m   console[33m.[39m[34mlog[39m([32m'waiting for the gateway'[39m)
+    [90m  5|[39m   [35mawait[39m [35mnew[39m [33mPromise[39m((r) [33m=>[39m [34msetTimeout[39m(r[33m,[39m [34m300[39m))
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m9 passed[39m[22m[2m | [22m[33m1 skipped[39m[2m | [22m[90m1 todo[39m[90m (15)[39m
+[2m   Start at [22m 12:43:55
+[2m   Duration [22m 161ms[2m (transform 45ms, setup 0ms, import 73ms, tests 64ms, environment 0ms)[22m
+

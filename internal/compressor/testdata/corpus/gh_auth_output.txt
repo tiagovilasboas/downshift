@@ -1,0 +1,3 @@
+gh auth status
+github.com
+  ✓ Logged in to github.com as user

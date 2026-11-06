@@ -1,0 +1,16 @@
+Sending build context to Docker daemon  4.608kB
+Step 1/5 : FROM node:20-alpine
+ ---> 3f1c6e7a9b21
+Step 2/5 : WORKDIR /app
+ ---> Using cache
+ ---> 8a5d2c4f1e07
+Step 3/5 : COPY package.json .
+ ---> Using cache
+ ---> 5b9e0d3c7a12
+Step 4/5 : RUN npm ci
+ ---> Using cache
+ ---> 1c7f4a8e2b36
+Step 5/5 : COPY . .
+ ---> 9d2e6b1a4c58
+Successfully built 9d2e6b1a4c58
+Successfully tagged api:latest

@@ -1,0 +1,34 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] shop-parent                                                        [pom]
+[INFO] shop-core                                                          [jar]
+[INFO] shop-web                                                           [jar]
+[INFO]
+[INFO] ----------------------< com.acme:shop-parent >-----------------------
+[INFO] Building shop-parent 2.0.0                                         [1/3]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO]
+[INFO] ------------------------< com.acme:shop-core >------------------------
+[INFO] Building shop-core 2.0.0                                           [2/3]
+[INFO]   from shop-core/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] -------------------------< com.acme:shop-web >------------------------
+[INFO] Building shop-web 2.0.0                                            [3/3]
+[INFO]   from shop-web/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for shop-parent 2.0.0:
+[INFO]
+[INFO] shop-parent ........................................ SUCCESS [  0.210 s]
+[INFO] shop-core .......................................... SUCCESS [  1.870 s]
+[INFO] shop-web ........................................... SUCCESS [  1.102 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.401 s
+[INFO] Finished at: 2026-10-20T10:30:00-03:00
+[INFO] ------------------------------------------------------------------------

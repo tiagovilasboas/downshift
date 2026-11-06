@@ -1,0 +1,92 @@
+
+Running 10 tests using 2 workers
+
+  ✓   1 tests/math.spec.js:4:3 › math › adds (2ms)
+  ✓   2 tests/billing.spec.js:6:3 › billing › charges the amount (2ms)
+  ✓   3 tests/math.spec.js:5:3 › math › multiplies (0ms)
+  ✓   5 tests/math.spec.js:6:3 › math › subtracts (0ms)
+  ✘   4 tests/billing.spec.js:7:3 › billing › applies the discount (2ms)
+waiting for the gateway
+  ✘   6 tests/slow.spec.js:3:1 › finishes in time (101ms)
+  ✘   7 tests/billing.spec.js:8:3 › billing › builds the receipt (4ms)
+  ✓   8 tests/slow.spec.js:10:1 › keeps a plain pass (2ms)
+  ✘   9 tests/billing.spec.js:11:3 › billing › rejects a negative amount (1ms)
+  -  10 tests/billing.spec.js:14:8 › billing › refunds
+
+
+  1) tests/billing.spec.js:7:3 › billing › applies the discount ────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 110
+    Received: 100
+
+       5 | test.describe('billing', () => {
+       6 |   test('charges the amount', async () => { expect(charge(100).amount).toBe(100) })
+    >  7 |   test('applies the discount', async () => { expect(charge(100).amount).toBe(110) })
+         |                                                                         ^
+       8 |   test('builds the receipt', async () => {
+       9 |     expect(charge(100)).toEqual({ amount: 100, currency: 'USD', items: [1, 2, 4] })
+      10 |   })
+        at /work/app/tests/billing.spec.js:7:73
+
+    Error Context: test-results/billing-billing-applies-the-discount/error-context.md
+
+  2) tests/billing.spec.js:8:3 › billing › builds the receipt ──────────────────────────────────────
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+        "amount": 100,
+    -   "currency": "USD",
+    +   "currency": "BRL",
+        "items": Array [
+          1,
+          2,
+    -     4,
+    +     3,
+        ],
+      }
+
+       7 |   test('applies the discount', async () => { expect(charge(100).amount).toBe(110) })
+       8 |   test('builds the receipt', async () => {
+    >  9 |     expect(charge(100)).toEqual({ amount: 100, currency: 'USD', items: [1, 2, 4] })
+         |                         ^
+      10 |   })
+      11 |   test('rejects a negative amount', async () => {
+      12 |     throw new Error('negative amount not allowed')
+        at /work/app/tests/billing.spec.js:9:25
+
+    Error Context: test-results/billing-billing-builds-the-receipt/error-context.md
+
+  3) tests/billing.spec.js:11:3 › billing › rejects a negative amount ──────────────────────────────
+
+    Error: negative amount not allowed
+
+      10 |   })
+      11 |   test('rejects a negative amount', async () => {
+    > 12 |     throw new Error('negative amount not allowed')
+         |           ^
+      13 |   })
+      14 |   test.skip('refunds', async () => {})
+      15 | })
+        at /work/app/tests/billing.spec.js:12:11
+
+    Error Context: test-results/billing-billing-rejects-a-negative-amount/error-context.md
+
+  4) tests/slow.spec.js:3:1 › finishes in time ─────────────────────────────────────────────────────
+
+    Test timeout of 100ms exceeded.
+
+    Error Context: test-results/slow-finishes-in-time/error-context.md
+
+  4 failed
+    tests/billing.spec.js:7:3 › billing › applies the discount ─────────────────────────────────────
+    tests/billing.spec.js:8:3 › billing › builds the receipt ───────────────────────────────────────
+    tests/billing.spec.js:11:3 › billing › rejects a negative amount ───────────────────────────────
+    tests/slow.spec.js:3:1 › finishes in time ──────────────────────────────────────────────────────
+  1 skipped
+  5 passed (699ms)

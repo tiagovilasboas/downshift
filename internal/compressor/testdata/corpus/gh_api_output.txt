@@ -1,0 +1,2 @@
+gh api repos/owner/repo
+{"id": 12345, "name": "repo"}

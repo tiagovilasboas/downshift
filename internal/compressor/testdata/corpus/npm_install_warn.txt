@@ -1,0 +1,4 @@
+npm warn deprecated inflight@1.0.6: This module is not supported
+added 120 packages, and audited 121 packages in 4s
+
+found 0 vulnerabilities

@@ -1,0 +1,4 @@
+REPOSITORY   TAG         IMAGE ID       CREATED         SIZE
+api          latest      9d2e6b1a4c58   5 minutes ago   187MB
+postgres     16          3f1c6e7a9b21   3 weeks ago     432MB
+redis        7-alpine    8a5d2c4f1e07   4 weeks ago     41.2MB

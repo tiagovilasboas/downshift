@@ -1,0 +1,1 @@
+# Sample output for mix_output - pass-through

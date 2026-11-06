@@ -1,0 +1,9 @@
+?   	github.com/tiagovilasboas/downshift/cmd/dsmon-server	[no test files]
+ok  	github.com/tiagovilasboas/downshift/internal/adapt	0.210s	coverage: 80.5% of statements
+ok  	github.com/tiagovilasboas/downshift/internal/catalog	0.150s
+?   	github.com/tiagovilasboas/downshift/internal/session	[no test files]
+ok  	github.com/tiagovilasboas/downshift/internal/classify	(cached)
+ok  	github.com/tiagovilasboas/downshift/internal/compressor	0.095s	coverage: 91.2% of statements
+ok  	github.com/tiagovilasboas/downshift/internal/core	0.350s	coverage: 87.4% of statements
+?   	github.com/tiagovilasboas/downshift/internal/testrace	[no test files]
+ok  	github.com/tiagovilasboas/downshift/internal/execwrap	0.180s

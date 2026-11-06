@@ -1,0 +1,5 @@
+internal/compressor/listing_ls.go:14:	reLsRow = regexp.MustCompile(`^([-bcdlpsDCMnP?])`)
+internal/compressor/listing_ls.go:31:	if linesHaveDangerWord(input, nil) {
+internal/compressor/find_tree.go:12:func compressFind(input []byte) ([]byte, bool, string) {
+internal/compressor/find_tree.go:44:func (n *findNode) write(b *strings.Builder, depth int) {
+internal/compressor/grep_group.go:18:func compressGrep(input []byte) ([]byte, bool, string) {

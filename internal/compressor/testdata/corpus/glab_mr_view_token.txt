@@ -1,0 +1,36 @@
+title:	Add retry with backoff to the webhook sender
+state:	opened
+draft:	false
+author:	maria.santos
+assignees:	maria.santos
+reviewers:	joao.lima
+labels:	backend, reliability
+milestone:	2026.11
+number:	482
+url:	https://gitlab.example.com/platform/webhooks/-/merge_requests/482
+source_branch:	feat/webhook-retry
+target_branch:	main
+--
+Retries a failed webhook delivery up to five times with exponential backoff.
+
+To reproduce the failure locally I cloned with the deploy credentials:
+
+    git clone https://deploy:example-deploy-secret@gitlab.example.com/platform/webhooks.git
+
+and called the API with `PRIVATE-TOKEN: example-api-secret`. The staging
+sender uses `Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJl`.
+
+Pipeline trigger token (revoked): stored in CI variables
+Runner token (revoked): stored in the runner config
+
+## Changes
+
+- `sender/retry.go`: backoff schedule 1s, 2s, 4s, 8s, 16s with jitter
+- `sender/queue.go`: requeue on 5xx and on network errors, never on 4xx
+- `sender/metrics.go`: counter `webhook_retry_total` by status class
+
+## Test plan
+
+- [x] unit tests for the schedule
+- [x] integration test against the stub receiver
+- [ ] load test on staging

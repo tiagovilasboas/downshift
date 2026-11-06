@@ -1,0 +1,8 @@
+• Packages in scope: web
+• Running build in 1 packages
+web:build: cache miss, executing 9f8e7d6c5b4a3921
+web:build: > web@0.0.0 build /work/apps/web
+web:build: dist/index.js  12.3 kB
+ Tasks:    1 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    2.1s 

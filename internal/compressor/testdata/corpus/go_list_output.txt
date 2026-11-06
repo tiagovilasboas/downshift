@@ -1,0 +1,3 @@
+go list ./...
+example.com/myapp
+example.com/myapp/internal/core

@@ -1,0 +1,2 @@
+gh search repos golang
+Showing 30 of 10000 repositories

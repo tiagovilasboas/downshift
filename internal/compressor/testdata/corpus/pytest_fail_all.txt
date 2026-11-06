@@ -1,0 +1,35 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.2, pluggy-1.5.0
+rootdir: /home/ci/ledger
+collected 3 items
+
+tests/test_entries.py FFF                                                [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_entry_balances_sum ___________________________
+
+    def test_entry_balances_sum():
+>       assert total([1, 2]) == 4
+E       assert 3 == 4
+E        +  where 3 = total([1, 2])
+
+tests/test_entries.py:6: AssertionError
+_____________________________ test_negative_rejected ___________________________
+
+    def test_negative_rejected():
+>       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_entries.py:11: Failed
+__________________________________ test_empty ___________________________________
+
+    def test_empty():
+>       total(None)
+E       TypeError: 'NoneType' object is not iterable
+
+tests/test_entries.py:15: TypeError
+=========================== short test summary info ============================
+FAILED tests/test_entries.py::test_entry_balances_sum - assert 3 == 4
+FAILED tests/test_entries.py::test_negative_rejected - Failed: DID NOT RAISE
+FAILED tests/test_entries.py::test_empty - TypeError: 'NoneType' object is not iterable
+=============================== 3 failed in 0.11s ==============================

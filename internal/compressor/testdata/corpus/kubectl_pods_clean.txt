@@ -1,0 +1,4 @@
+NAME                     READY   STATUS    RESTARTS   AGE
+api-7d9c8b6f54-4xk2p     1/1     Running   0          3h
+api-7d9c8b6f54-9mq7z     1/1     Running   0          3h
+worker-5c6d4f8b7-2hn8t   1/1     Running   2          1d

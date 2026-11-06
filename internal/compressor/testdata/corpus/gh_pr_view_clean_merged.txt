@@ -1,0 +1,32 @@
+title:	fix: retry flaky upload on timeout
+state:	MERGED
+author:	example-dev
+labels:	bug
+assignees:
+reviewers:
+projects:
+milestone:
+number:	342
+url:	https://github.com/example-org/example-repo/pull/342
+additions:	58
+deletions:	9
+auto-merge:	disabled
+--
+Retries the upload up to three times with backoff when the storage service
+answers with a timeout.
+
+Adds a test with a fake clock so the backoff is not slept in CI. No change to
+the public API. The longer description lives in the linked issue, which an
+agent does not need to decide what to do next.
+
+## Testing
+
+- Added unit tests for the retry loop with a fake clock.
+- Ran the upload integration suite against a local storage emulator, with the
+  emulator configured to time out on the first two attempts and succeed on the
+  third, and again with it timing out on every attempt to check the give-up case.
+
+## Rollout
+
+Safe to ship behind the existing upload flag. If the retries mask a real
+outage, the upload metric still counts each give-up once.

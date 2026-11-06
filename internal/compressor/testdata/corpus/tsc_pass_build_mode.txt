@@ -1,0 +1,13 @@
+[10:41:07] Projects in this build: 
+    * packages/shared/tsconfig.json
+    * packages/api/tsconfig.json
+    * packages/web/tsconfig.json
+    * tsconfig.json
+
+[10:41:08] Building project '/home/dev/monorepo/packages/shared/tsconfig.json'...
+
+[10:41:09] Building project '/home/dev/monorepo/packages/api/tsconfig.json'...
+
+[10:41:11] Building project '/home/dev/monorepo/packages/web/tsconfig.json'...
+
+[10:41:15] Found 0 errors. Watching for file changes.

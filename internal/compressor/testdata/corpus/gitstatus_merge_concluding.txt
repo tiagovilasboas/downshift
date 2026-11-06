@@ -1,0 +1,5 @@
+On branch main
+All conflicts fixed but you are still merging.
+  (use "git commit" to conclude merge)
+
+nothing to commit, working tree clean

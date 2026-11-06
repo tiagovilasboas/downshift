@@ -1,0 +1,19 @@
+▲ Next.js 15.4.2
+✓ Compiled successfully in 8.2s
+✓ Linting and checking validity of types
+✓ Collecting page data
+✓ Generating static pages (4/4)
+✓ Finalizing page optimization
+✓ Collecting build traces
+Route (app)
+┌ ○ / 5.14 kB 102 kB
+├ ○ /_not-found 995 B 97.8 kB
+└ ƒ /api/health 0 B 0 B
+Route (pages)
+┌ ○ /about 1.25 kB 101 kB
+└ ○ /legacy 2.11 kB 103 kB
++ First Load JS shared by all 96.7 kB
+  ├ chunks/abc.js 45.3 kB
+  └ other shared chunks (total) 1.8 kB
+○ (Static) prerendered as static content
+ƒ (Dynamic) server-rendered on demand

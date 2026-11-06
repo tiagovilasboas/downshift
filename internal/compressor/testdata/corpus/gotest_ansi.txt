@@ -1,0 +1,5 @@
+[32mok[0m  	example.com/acme/widget/cmd/widget	0.100s
+[32mok[0m  	example.com/acme/widget/internal/api	0.101s
+[32mok[0m  	example.com/acme/widget/internal/auth	0.102s
+[32mok[0m  	example.com/acme/widget/internal/billing	0.103s
+[32mok[0m  	example.com/acme/widget/internal/cache	0.104s

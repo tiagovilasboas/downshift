@@ -1,0 +1,4 @@
+app/main.py:10: error: Incompatible return value type (got "int", expected "str")  [return-value]
+app/main.py:18: error: Argument 1 to "handle" has incompatible type "None"; expected "str"  [arg-type]
+app/svc.py:22: error: Name "foo" is not defined  [name-defined]
+Found 3 errors in 2 files (checked 42 source files)

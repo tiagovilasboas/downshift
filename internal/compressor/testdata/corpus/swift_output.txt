@@ -1,0 +1,1 @@
+# Sample output for swift_output - pass-through

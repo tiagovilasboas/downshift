@@ -1,0 +1,4 @@
+internal/compressor/listing_ls.go:31:	if linesHaveDangerWord(input, nil) {
+internal/compressor/listing_ls.go-32-		return input, false, "ls_danger_word_preserved"
+--
+internal/compressor/find_tree.go:12:func compressFind(input []byte) ([]byte, bool, string) {

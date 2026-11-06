@@ -1,0 +1,26 @@
+   Compiling textwrap-lite v1.3.0 (/Users/dev/src/textwrap-lite)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.18s
+     Running unittests src/lib.rs (target/debug/deps/textwrap_lite-7d6c5b4a39281706)
+
+running 8 tests
+test wrap::tests::wraps_at_width ... ok
+test wrap::tests::keeps_long_words ... ok
+test wrap::tests::preserves_blank_lines ... ok
+test indent::tests::indents_every_line ... ok
+test indent::tests::skips_empty_lines ... ok
+test unicode::tests::counts_wide_chars ... ok
+test unicode::tests::counts_combining_marks ... ok
+test unicode::tests::tab_width_is_four ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests textwrap-lite
+
+running 5 tests
+test src/lib.rs - (line 12) ... ok
+test src/wrap.rs - wrap::wrap (line 31) ... ok
+test src/wrap.rs - wrap::fill (line 58) ... ok
+test src/indent.rs - indent::indent (line 20) ... ok
+test src/unicode.rs - unicode::display_width (line 9) ... ok
+
+test result: ok. 5 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.31s

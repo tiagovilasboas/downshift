@@ -1,0 +1,1 @@
+# Sample output for touch_output - pass-through

@@ -1,0 +1,10 @@
+[16:55:20] Projects in this build: 
+    * tsconfig.node.json
+    * tsconfig.app.json
+    * tsconfig.json
+
+[16:55:21] Building project '/Users/dev/dashboard/tsconfig.node.json'...
+
+[16:55:22] Building project '/Users/dev/dashboard/tsconfig.app.json'...
+
+[16:55:27] Found 0 errors. Watching for file changes.

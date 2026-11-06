@@ -1,0 +1,3 @@
+fnm list
+* v20.10.0 default
+  v18.19.0

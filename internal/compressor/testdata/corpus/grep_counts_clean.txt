@@ -1,0 +1,14 @@
+src/pkg0/a.go:0
+src/pkg1/a.go:0
+src/pkg2/a.go:0
+src/pkg3/a.go:0
+src/pkg4/a.go:0
+src/pkg5/a.go:0
+src/pkg6/a.go:0
+src/pkg7/a.go:0
+src/pkg8/a.go:0
+src/pkg9/a.go:0
+src/pkg10/a.go:0
+src/pkg11/a.go:0
+src/pkg3/b.go:7
+src/pkg4/b.go:2

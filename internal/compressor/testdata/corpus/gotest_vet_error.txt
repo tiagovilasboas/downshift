@@ -1,0 +1,3 @@
+# example.com/acme/widget/internal/httpx
+# [example.com/acme/widget/internal/httpx]
+internal/httpx/log.go:12:2: fmt.Printf format %d has arg name of wrong type string

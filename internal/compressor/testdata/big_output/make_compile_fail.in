@@ -1,0 +1,6 @@
+cc -c -o a.o a.c
+cc -c -o b.o b.c
+b.c:7:5: error: unknown type name widget
+    7 |     widget w;
+      |     ^~~~~~
+make: *** [Makefile:9: b.o] Error 1

@@ -1,0 +1,33 @@
+ FAIL  src/cart/totals.test.ts
+  ● totals › sums line items
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 30
+    Received: 25
+
+      8 |   const items = [{ price: 10 }, { price: 15 }];
+    > 9 |   expect(sum(items)).toBe(30);
+        |                     ^
+
+      at Object.<anonymous> (src/cart/totals.test.ts:9:21)
+
+ FAIL  src/cart/coupons.test.ts
+  ● coupons › rejects expired codes
+
+    expect(received).toThrow(expected)
+
+    Expected message: "coupon expired"
+    Received function did not throw
+
+      22 |   const apply = () => redeem('SUMMER10', new Date('2026-09-01'));
+    > 23 |   expect(apply).toThrow('coupon expired');
+         |                 ^
+
+      at Object.<anonymous> (src/cart/coupons.test.ts:23:17)
+
+Test Suites: 2 failed, 2 total
+Tests:       2 failed, 2 total
+Snapshots:   0 total
+Time:        1.021 s
+Ran all test suites.

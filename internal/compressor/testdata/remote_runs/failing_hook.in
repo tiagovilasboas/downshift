@@ -1,0 +1,26 @@
+╭───────────────────────────────────────╮
+│ 🥊 lefthook v1.7.18  hook: pre-push │
+╰───────────────────────────────────────╯
+┃  vet ❯
+
+┃  test ❯
+
+ok  	github.com/acme/widget/internal/agents	0.318s
+ok  	github.com/acme/widget/internal/billing	0.207s
+ok  	github.com/acme/widget/internal/cache	0.511s
+--- FAIL: TestCheckoutTotal (0.00s)
+    --- FAIL: TestCheckoutTotal/discount_over_100 (0.00s)
+        total_test.go:58: got 1999, want 0
+FAIL
+FAIL	github.com/acme/widget/internal/checkout	0.276s
+ok  	github.com/acme/widget/internal/classifier	0.644s
+ok  	github.com/acme/widget/internal/config	0.121s
+ok  	github.com/acme/widget/internal/core	0.833s
+?   	github.com/acme/widget/internal/version	[no test files]
+FAIL
+
+  ────────────────────────────────────
+summary: (done in 9.80 seconds)
+✔️ vet (3.10 seconds)
+🥊 test (6.70 seconds)
+error: failed to push some refs to 'github.com:acme/widget.git'

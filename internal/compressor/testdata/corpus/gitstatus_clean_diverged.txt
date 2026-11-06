@@ -1,0 +1,6 @@
+On branch release/1.4
+Your branch and 'origin/release/1.4' have diverged,
+and have 1 and 4 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+
+nothing to commit, working tree clean

@@ -1,0 +1,25 @@
+╭───────────────────────────────────────╮
+│ 🥊 lefthook  v2.2.2   hook:  pre-push │
+╰───────────────────────────────────────╯
+┃  check-fast ❯ 
+
+[1/4] gofmt -l .
+[2/4] go vet ./...  (host)
+
+┃  test-changed ❯ 
+
+[test-changed] ./cmd/widget ./internal/api ./internal/auth ./internal/billing ./internal/cache
+ok  	github.com/acme/widget/cmd/widget	0.000s
+ok  	github.com/acme/widget/internal/api	7.137s
+ok  	github.com/acme/widget/internal/auth	14.274s
+ok  	github.com/acme/widget/internal/billing	21.411s
+ok  	github.com/acme/widget/internal/cache	28.548s
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 70.62 seconds)
+✔ check-fast (2.89 seconds)
+✔ test-changed (68.20 seconds)
+Enumerating objects: 9, done.
+Writing objects:  50% (2/4)Writing objects: 100% (4/4), 1.21 KiB | 1.21 MiB/s, done.
+To github.com:acme/widget.git
+   1a2b3c4..5d6e7f8  feature/cache -> feature/cache

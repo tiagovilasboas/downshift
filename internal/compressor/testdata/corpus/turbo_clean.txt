@@ -1,0 +1,18 @@
+• Packages in scope: @repo/ui, web
+• Running build in 2 packages
+• Remote caching disabled
+@repo/ui:build: cache miss, executing 1a2b3c4d5e6f7a8b
+@repo/ui:build: 
+@repo/ui:build: > @repo/ui@0.0.0 build /work/packages/ui
+@repo/ui:build: > tsc
+@repo/ui:build: 
+web:build: cache hit, replaying logs 9f8e7d6c5b4a3921
+web:build: 
+web:build: > web@0.0.0 build /work/apps/web
+web:build: > vite build
+web:build: 
+
+ Tasks:    2 successful, 2 total
+Cached:    1 cached, 2 total
+  Time:    4.213s 
+

@@ -1,0 +1,9 @@
+Test run for /src/Billing.Tests/bin/Debug/net8.0/Billing.Tests.dll (.NETCoreApp,Version=v8.0)
+Starting test execution, please wait...
+  Failed Billing.Tests.InvoiceTests.Total_SumsLines [4 ms]
+  Error Message:
+   Assert.Equal() Failure: Expected 110, Actual 100
+  Stack Trace:
+     at Billing.Tests.InvoiceTests.Total_SumsLines() in /src/Billing.Tests/InvoiceTests.cs:line 21
+
+Failed!  - Failed:     1, Passed:    57, Skipped:     0, Total:    58, Duration: 1 s - Billing.Tests.dll (net8.0)

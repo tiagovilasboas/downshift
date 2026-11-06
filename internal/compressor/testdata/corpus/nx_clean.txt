@@ -1,0 +1,12 @@
+
+> nx run myapp:build
+
+> myapp@0.0.0 build
+> tsc
+
+
+——————————————————————————————————————————————————
+
+ NX   Successfully ran target build for project myapp (2s)
+
+Nx read the output from the cache instead of running the command for 0 out of 1 tasks.

@@ -1,0 +1,39 @@
+
+> web@1.0.0 test /home/dev/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/dev/web
+
+ ✓ src/lib/format.test.ts (4 tests) 3ms
+ ❯ src/lib/price.test.ts (3 tests | 1 failed) 6ms
+   × applies the coupon discount 4ms
+     → expected 90 to be 81 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/price.test.ts > applies the coupon discount
+AssertionError: expected 90 to be 81 // Object.is equality
+
+- Expected
++ Received
+
+- 81
++ 90
+
+ ❯ src/lib/price.test.ts:18:31
+     16|   it('applies the coupon discount', () => {
+     17|     const total = applyCoupon(100, { percent: 10, extra: 9 })
+     18|     expect(total).toBe(81)
+       |                   ^
+     19|   })
+     20| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 6 passed (7)
+   Start at  10:42:07
+   Duration  412ms (transform 61ms, setup 0ms, collect 88ms, tests 9ms, environment 0ms, prepare 151ms)
+
+ ELIFECYCLE  Test failed. See above for more details.

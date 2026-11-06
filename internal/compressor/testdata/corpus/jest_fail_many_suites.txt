@@ -1,0 +1,28 @@
+ PASS  src/cart/totals.test.ts
+ PASS  src/cart/coupons.test.ts
+ PASS  src/checkout/address.test.ts (5.412 s)
+ FAIL  src/billing/invoice.test.ts
+ PASS  src/checkout/payment.test.ts
+ PASS  src/shipping/rates.test.ts
+ PASS  src/users/profile.test.ts
+  ● invoice › applies the regional tax
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 110
+    Received: 100
+
+      14 |   const total = invoice({ amount: 100, region: 'BR' });
+      15 |
+    > 16 |   expect(total).toBe(110);
+         |                 ^
+      17 | });
+      18 |
+
+      at Object.<anonymous> (src/billing/invoice.test.ts:16:17)
+
+Test Suites: 1 failed, 6 passed, 7 total
+Tests:       1 failed, 41 passed, 42 total
+Snapshots:   0 total
+Time:        3.876 s
+Ran all test suites.

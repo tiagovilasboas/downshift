@@ -1,0 +1,10 @@
+INFO: Analyzed 3 targets (0 packages loaded, 0 targets configured).
+INFO: Found 3 test targets...
+INFO: Elapsed time: 4.2s, Critical Path: 2.10s
+INFO: 7 processes: 3 internal, 4 linux-sandbox.
+INFO: Build completed successfully, 7 total actions
+//app:a_test                                                    (cached) PASSED in 0.3s
+//app:b_test                                                             PASSED in 1.1s
+//app:c_test                                                             PASSED in 0.9s
+
+Executed 2 out of 3 tests: 3 tests pass.

@@ -1,0 +1,2 @@
+Sending build context to Docker daemon  4.608kB
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?

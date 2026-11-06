@@ -1,0 +1,4 @@
+gh issue list
+Showing 5 of 42 issues in owner/repo
+
+#123  Bug: something broken  bug  OPEN

@@ -1,0 +1,10 @@
+total 40
+drwxr-xr-x  12 tiago.boas  staff   384 Nov  4 10:00 .
+drwxr-xr-x   5 tiago.boas  staff   160 Nov  4 09:12 ..
+-rw-r--r--@  1 tiago.boas  staff  1518 Nov  4 10:00 AGENTS.md
+-rw-r--r--   1 tiago.boas  staff  1102 Nov  4 10:00 Makefile
+drwxr-xr-x   9 tiago.boas  staff   288 Nov  4 10:00 cmd
+drwxr-xr-x  14 tiago.boas  staff   448 Nov  4 10:00 internal
+lrwxr-xr-x   1 tiago.boas  staff     7 Nov  4 10:00 current -> cmd/app
+-rw-r--r--   1 tiago.boas  staff  2290 Mar  2  2025 go.sum
+-rw-r--r--   1 tiago.boas  staff  4102 2026-11-04 10:00 notes.md

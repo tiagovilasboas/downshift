@@ -1,0 +1,7 @@
+Found 2 test(s).
+System check identified some issues:
+
+WARNINGS:
+shop.Order: (models.W042) Auto-created primary key used when not defining a primary key type.
+
+System check identified 1 issue (0 silenced).

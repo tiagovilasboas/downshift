@@ -1,0 +1,8 @@
+[1/4] gofmt -l .
+[2/4] go vet ./...  (host)
+[3/4] go vet ./...  (GOOS=windows)
+[4/4] go vet ./...  (GOOS=linux)
+[5/5] go test -count=1 ./...
+go test -count=1 ./...
+ok  	github.com/acme/widget/cmd/widget	0.000s
+ok  	github.com/acme/widget/internal/api	7.137s

@@ -1,0 +1,37 @@
+Scope: 2 of 3 workspace projects
+packages/web test$ vitest run
+packages/web test:  RUN  v2.1.4 /work/web
+packages/web test:  ✓ src/f0.test.ts (6 tests) 2ms
+packages/web test:  ✓ src/f1.test.ts (6 tests) 3ms
+packages/web test:  ✓ src/f2.test.ts (6 tests) 4ms
+packages/web test:  ✓ src/f3.test.ts (6 tests) 5ms
+packages/web test:  ✓ src/f4.test.ts (6 tests) 6ms
+packages/web test:  ✓ src/f5.test.ts (6 tests) 7ms
+packages/web test:  ✓ src/f6.test.ts (6 tests) 8ms
+packages/web test:  ✓ src/f7.test.ts (6 tests) 9ms
+packages/web test:  ✓ src/f8.test.ts (6 tests) 10ms
+packages/web test:  ✓ src/f9.test.ts (6 tests) 11ms
+packages/web test:  ✓ src/f10.test.ts (6 tests) 12ms
+packages/web test:  ✓ src/f11.test.ts (6 tests) 13ms
+packages/web test:  ✓ src/f12.test.ts (6 tests) 14ms
+packages/web test:  ✓ src/f13.test.ts (6 tests) 15ms
+packages/web test:  ✓ src/f14.test.ts (6 tests) 16ms
+packages/web test:  ✓ src/f15.test.ts (6 tests) 17ms
+packages/web test:  ✓ src/f16.test.ts (6 tests) 18ms
+packages/web test:  ✓ src/f17.test.ts (6 tests) 19ms
+packages/web test:  ✓ src/f18.test.ts (6 tests) 20ms
+packages/web test:  ✓ src/f19.test.ts (6 tests) 21ms
+packages/web test:  ✓ src/f20.test.ts (6 tests) 22ms
+packages/web test:  ✓ src/f21.test.ts (6 tests) 23ms
+packages/web test:  ✓ src/f22.test.ts (6 tests) 24ms
+packages/web test:  ✓ src/f23.test.ts (6 tests) 25ms
+packages/web test:  ✓ src/f24.test.ts (6 tests) 26ms
+packages/web test: stderr | src/f3.test.ts > rejects bad input
+packages/web test: Error: invalid input (expected in this test)
+packages/web test:     at parse (src/parse.ts:9:11)
+packages/web test:
+packages/web test:  Test Files  25 passed (25)
+packages/web test:       Tests  150 passed (150)
+packages/web test:    Start at  10:00:00
+packages/web test:    Duration  3.40s
+packages/web test: Done

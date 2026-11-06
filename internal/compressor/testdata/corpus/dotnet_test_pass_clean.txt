@@ -1,0 +1,7 @@
+Test run for /src/Billing.Tests/bin/Debug/net8.0/Billing.Tests.dll (.NETCoreApp,Version=v8.0)
+VSTest version 17.8.0 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    58, Skipped:     2, Total:    60, Duration: 1 s - Billing.Tests.dll (net8.0)

@@ -1,0 +1,5 @@
+src/billing/invoice.py:21: error: Item "None" of "Optional[Order]" has no attribute "total"  [union-attr]
+src/billing/invoice.py:40: error: Missing return statement  [return]
+src/users/models.py:9: error: Function is missing a return type annotation  [no-untyped-def]
+src/users/models.py:33: error: Too many arguments for "save"  [call-arg]
+Found 4 errors in 2 files (checked 31 source files)

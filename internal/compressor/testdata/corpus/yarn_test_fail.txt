@@ -1,0 +1,25 @@
+yarn run v1.22.22
+$ jest
+PASS src/utils/slug.test.js
+FAIL src/utils/money.test.js
+  ● formatMoney › rounds half up
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "R$ 10,01"
+    Received: "R$ 10,00"
+
+      12 |   it('rounds half up', () => {
+      13 |     expect(formatMoney(10.005)).toBe('R$ 10,01')
+         |                                 ^
+      14 |   })
+
+      at Object.toBe (src/utils/money.test.js:13:33)
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       1 failed, 7 passed, 8 total
+Snapshots:   0 total
+Time:        1.204 s
+Ran all test suites.
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

@@ -1,0 +1,40 @@
+
+> web@1.0.0 test
+> jest
+
+PASS src/auth.test.js
+PASS src/billing.test.js
+PASS src/cart.test.js
+PASS src/catalog.test.js
+PASS src/checkout.test.js
+PASS src/config.test.js
+PASS src/coupon.test.js
+PASS src/currency.test.js
+PASS src/db.test.js
+PASS src/events.test.js
+PASS src/export.test.js
+PASS src/feature-flags.test.js
+PASS src/files.test.js
+PASS src/format.test.js
+PASS src/geo.test.js
+PASS src/http.test.js
+PASS src/i18n.test.js
+PASS src/import.test.js
+PASS src/invoice.test.js
+PASS src/jobs.test.js
+PASS src/locale.test.js
+PASS src/logger.test.js
+PASS src/mailer.test.js
+PASS src/money.test.js
+PASS src/notify.test.js
+PASS src/orders.test.js
+PASS src/pagination.test.js
+PASS src/payments.test.js
+PASS src/price.test.js
+PASS src/queue.test.js
+
+Test Suites: 30 passed, 30 total
+Tests:       214 passed, 214 total
+Snapshots:   0 total
+Time:        4.512 s
+Ran all test suites.

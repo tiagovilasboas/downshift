@@ -1,0 +1,1 @@
+# Sample output for cp_output - pass-through

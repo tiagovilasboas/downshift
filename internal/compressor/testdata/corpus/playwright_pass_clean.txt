@@ -1,0 +1,9 @@
+Running 25 tests using 4 workers
+
+  ✓  1 [chromium] › e2e/auth.spec.ts:10:5 › login flow (1.2s)
+  ✓  2 [chromium] › e2e/auth.spec.ts:25:5 › logout flow (850ms)
+  ✓  3 [chromium] › e2e/billing.spec.ts:12:5 › invoice generation (1.5s)
+  ✓  4 [chromium] › e2e/billing.spec.ts:30:5 › stripe checkout (2.1s)
+  ✓  5 [chromium] › e2e/dashboard.spec.ts:8:5 › load metrics (920ms)
+
+  25 passed (4.2s)

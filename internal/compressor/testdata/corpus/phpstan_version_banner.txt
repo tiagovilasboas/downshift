@@ -1,0 +1,1 @@
+PHPStan - PHP Static Analysis Tool 1.10.50

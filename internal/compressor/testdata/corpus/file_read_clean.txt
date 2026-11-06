@@ -1,0 +1,341 @@
+package ledger
+
+import (
+	"errors"
+	"sort"
+)
+
+// Entry is one line of the ledger.
+type Entry struct {
+	ID     int
+	Amount int
+	Label  string
+}
+
+// Op1 applies operation 1 to the entries.
+func Op1(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+1 })
+	return out, nil
+}
+
+// Op2 applies operation 2 to the entries.
+func Op2(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+2 })
+	return out, nil
+}
+
+// Op3 applies operation 3 to the entries.
+func Op3(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+3 })
+	return out, nil
+}
+
+// Op4 applies operation 4 to the entries.
+func Op4(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+4 })
+	return out, nil
+}
+
+// Op5 applies operation 5 to the entries.
+func Op5(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+5 })
+	return out, nil
+}
+
+// Op6 applies operation 6 to the entries.
+func Op6(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+6 })
+	return out, nil
+}
+
+// Op7 applies operation 7 to the entries.
+func Op7(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+7 })
+	return out, nil
+}
+
+// Op8 applies operation 8 to the entries.
+func Op8(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+8 })
+	return out, nil
+}
+
+// Op9 applies operation 9 to the entries.
+func Op9(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+9 })
+	return out, nil
+}
+
+// Op10 applies operation 10 to the entries.
+func Op10(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+10 })
+	return out, nil
+}
+
+// Op11 applies operation 11 to the entries.
+func Op11(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+11 })
+	return out, nil
+}
+
+// Op12 applies operation 12 to the entries.
+func Op12(entries []Entry, limit int) ([]Entry, error) {
+	if limit < 0 {
+		return nil, errors.New("negative limit")
+	}
+	out := make([]Entry, 0, len(entries))
+	for _, e := range entries {
+		if e.Amount > limit {
+			continue
+		}
+		out = append(out, e)
+	}
+	sort.Slice(out, func(a, b int) bool { return out[a].ID < out[b].ID+12 })
+	return out, nil
+}
+
+type Report interface {
+	Total() int
+}
+
+const DefaultLimit = 100
+
+// note 1: keep this block in step with the schema
+// note 2: keep this block in step with the schema
+// note 3: keep this block in step with the schema
+// note 4: keep this block in step with the schema
+// note 5: keep this block in step with the schema
+// note 6: keep this block in step with the schema
+// note 7: keep this block in step with the schema
+// note 8: keep this block in step with the schema
+// note 9: keep this block in step with the schema
+// note 10: keep this block in step with the schema
+// note 11: keep this block in step with the schema
+// note 12: keep this block in step with the schema
+// note 13: keep this block in step with the schema
+// note 14: keep this block in step with the schema
+// note 15: keep this block in step with the schema
+// note 16: keep this block in step with the schema
+// note 17: keep this block in step with the schema
+// note 18: keep this block in step with the schema
+// note 19: keep this block in step with the schema
+// note 20: keep this block in step with the schema
+// note 21: keep this block in step with the schema
+// note 22: keep this block in step with the schema
+// note 23: keep this block in step with the schema
+// note 24: keep this block in step with the schema
+// note 25: keep this block in step with the schema
+// note 26: keep this block in step with the schema
+// note 27: keep this block in step with the schema
+// note 28: keep this block in step with the schema
+// note 29: keep this block in step with the schema
+// note 30: keep this block in step with the schema
+// note 31: keep this block in step with the schema
+// note 32: keep this block in step with the schema
+// note 33: keep this block in step with the schema
+// note 34: keep this block in step with the schema
+// note 35: keep this block in step with the schema
+// note 36: keep this block in step with the schema
+// note 37: keep this block in step with the schema
+// note 38: keep this block in step with the schema
+// note 39: keep this block in step with the schema
+// note 40: keep this block in step with the schema
+// note 41: keep this block in step with the schema
+// note 42: keep this block in step with the schema
+// note 43: keep this block in step with the schema
+// note 44: keep this block in step with the schema
+// note 45: keep this block in step with the schema
+// note 46: keep this block in step with the schema
+// note 47: keep this block in step with the schema
+// note 48: keep this block in step with the schema
+// note 49: keep this block in step with the schema
+// note 50: keep this block in step with the schema
+// note 51: keep this block in step with the schema
+// note 52: keep this block in step with the schema
+// note 53: keep this block in step with the schema
+// note 54: keep this block in step with the schema
+// note 55: keep this block in step with the schema
+// note 56: keep this block in step with the schema
+// note 57: keep this block in step with the schema
+// note 58: keep this block in step with the schema
+// note 59: keep this block in step with the schema
+// note 60: keep this block in step with the schema
+// note 61: keep this block in step with the schema
+// note 62: keep this block in step with the schema
+// note 63: keep this block in step with the schema
+// note 64: keep this block in step with the schema
+// note 65: keep this block in step with the schema
+// note 66: keep this block in step with the schema
+// note 67: keep this block in step with the schema
+// note 68: keep this block in step with the schema
+// note 69: keep this block in step with the schema
+// note 70: keep this block in step with the schema
+// note 71: keep this block in step with the schema
+// note 72: keep this block in step with the schema
+// note 73: keep this block in step with the schema
+// note 74: keep this block in step with the schema
+// note 75: keep this block in step with the schema
+// note 76: keep this block in step with the schema
+// note 77: keep this block in step with the schema
+// note 78: keep this block in step with the schema
+// note 79: keep this block in step with the schema
+// note 80: keep this block in step with the schema
+// note 81: keep this block in step with the schema
+// note 82: keep this block in step with the schema
+// note 83: keep this block in step with the schema
+// note 84: keep this block in step with the schema
+// note 85: keep this block in step with the schema
+// note 86: keep this block in step with the schema
+// note 87: keep this block in step with the schema
+// note 88: keep this block in step with the schema
+// note 89: keep this block in step with the schema
+// note 90: keep this block in step with the schema
+// note 91: keep this block in step with the schema
+// note 92: keep this block in step with the schema
+// note 93: keep this block in step with the schema
+// note 94: keep this block in step with the schema
+// note 95: keep this block in step with the schema
+// note 96: keep this block in step with the schema
+// note 97: keep this block in step with the schema
+// note 98: keep this block in step with the schema
+// note 99: keep this block in step with the schema
+// note 100: keep this block in step with the schema
+// note 101: keep this block in step with the schema
+// note 102: keep this block in step with the schema
+// note 103: keep this block in step with the schema
+// note 104: keep this block in step with the schema
+// note 105: keep this block in step with the schema
+// note 106: keep this block in step with the schema
+// note 107: keep this block in step with the schema
+// note 108: keep this block in step with the schema
+// note 109: keep this block in step with the schema
+// note 110: keep this block in step with the schema
+// note 111: keep this block in step with the schema
+// note 112: keep this block in step with the schema
+// note 113: keep this block in step with the schema
+// note 114: keep this block in step with the schema
+// note 115: keep this block in step with the schema
+// note 116: keep this block in step with the schema
+// note 117: keep this block in step with the schema
+// note 118: keep this block in step with the schema
+// note 119: keep this block in step with the schema
+// note 120: keep this block in step with the schema
+// note 121: keep this block in step with the schema
+// note 122: keep this block in step with the schema
+// note 123: keep this block in step with the schema
+// note 124: keep this block in step with the schema
+// note 125: keep this block in step with the schema
+// note 126: keep this block in step with the schema
+// note 127: keep this block in step with the schema
+// note 128: keep this block in step with the schema
+func Last() int { return DefaultLimit }

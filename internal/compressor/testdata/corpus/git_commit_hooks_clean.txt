@@ -1,0 +1,21 @@
+╭───────────────────────────────────────╮
+│ 🥊 lefthook  v2.2.2   hook:  pre-commit │
+╰───────────────────────────────────────╯
+┃  gofmt ❯ 
+
+┃  tests ❯ 
+
+[test-staged] ./internal/api ./internal/auth ./internal/cache ./internal/store
+ok  	github.com/acme/widget/internal/api	0.000s
+ok  	github.com/acme/widget/internal/auth	7.137s
+ok  	github.com/acme/widget/internal/cache	14.274s
+ok  	github.com/acme/widget/internal/store	21.411s
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 21.24 seconds)
+✔ gofmt (0.03 seconds)
+✔ vet (1.87 seconds)
+✔ tests (21.23 seconds)
+[feature/cache 5d6e7f8] Cache billing lookups
+ 3 files changed, 42 insertions(+), 7 deletions(-)
+ create mode 100644 internal/cache/lookup.go

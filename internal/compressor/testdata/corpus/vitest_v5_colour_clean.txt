@@ -1,0 +1,12 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90m/home/dev/web[39m
+
+ [2m[90m↓[39m[22m src/b.test.ts [2m([22m[2m2 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m
+ [32m✓[39m src/a.test.ts [2m([22m[2m2 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 1[2mms[22m[39m
+ [32m✓[39m src/c.test.ts [2m([22m[2m2 tests[22m[2m | [22m[90m1 todo[39m[2m)[22m[32m 1[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m2 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (3)[39m
+[2m      Tests [22m [1m[32m2 passed[39m[22m[2m | [22m[33m3 skipped[39m[2m | [22m[90m1 todo[39m[90m (6)[39m
+[2m   Start at [22m 12:41:10
+[2m   Duration [22m 74ms[2m (import 36%, worker 34%, transform 20%, tests 10%, environment 1%)[22m
+

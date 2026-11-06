@@ -1,0 +1,1 @@
+# Sample output for rspec_output - pass-through

@@ -1,0 +1,16 @@
+/srv/app/lib/format.js
+   5:7   warning  'moment' is defined but never used  no-unused-vars
+  17:12  warning  Unexpected var, use let or const instead  no-var
+  17:12  warning  Unexpected var, use let or const instead  no-var
+  44:1   warning  Prefer default export  import/prefer-default-export
+
+/srv/app/lib/http.js
+  11:3   warning  Unexpected var, use let or const instead  no-var
+  29:20  warning  Expected '===' and instead saw '=='  eqeqeq
+  63:9   warning  Unexpected var, use let or const instead  no-var
+
+/srv/app/lib/session.js
+   3:1   warning  'use strict' is unnecessary inside of modules  strict
+  21:5   warning  Unexpected var, use let or const instead  no-var
+
+✖ 9 problems (0 errors, 9 warnings)

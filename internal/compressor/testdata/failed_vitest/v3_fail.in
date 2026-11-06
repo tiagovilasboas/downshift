@@ -1,0 +1,106 @@
+
+ RUN  v3.2.7 /work/app
+
+stdout | test/slow.test.js > finishes in time
+waiting for the gateway
+
+ ✓ test/ok.test.js (2 tests) 1ms
+ ✓ test/math.test.js (3 tests) 1ms
+ ❯ test/billing.test.js (8 tests | 3 failed | 2 skipped) 7ms
+   ✓ billing > charges the amount 1ms
+   × billing > applies the discount 4ms
+     → expected 100 to be 110 // Object.is equality
+   × billing > builds the receipt 2ms
+     → expected { amount: 100, currency: 'BRL', …(1) } to deeply equal { amount: 100, currency: 'USD', …(1) }
+   × billing > rejects a negative amount 0ms
+     → negative amount not allowed
+   ↓ billing > refunds
+   ↓ billing > splits the payment
+   ✓ ledger > entries > sums the entries 0ms
+   ✓ ledger > entries > keeps the order 0ms
+ ❯ test/slow.test.js (2 tests | 1 failed) 55ms
+   × finishes in time 54ms
+     → Test timed out in 50ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   ✓ keeps a plain pass 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/billing.test.js > billing > applies the discount
+AssertionError: expected 100 to be 110 // Object.is equality
+
+- Expected
++ Received
+
+- 110
++ 100
+
+ ❯ test/billing.test.js:7:67
+      5| describe('billing', () => {
+      6|   test('charges the amount', () => { expect(charge(100).amount).toBe(1…
+      7|   test('applies the discount', () => { expect(charge(100).amount).toBe…
+       |                                                                   ^
+      8|   test('builds the receipt', () => {
+      9|     expect(charge(100)).toEqual({ amount: 100, currency: 'USD', items:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  test/billing.test.js > billing > builds the receipt
+AssertionError: expected { amount: 100, currency: 'BRL', …(1) } to deeply equal { amount: 100, currency: 'USD', …(1) }
+
+- Expected
++ Received
+
+  {
+    "amount": 100,
+-   "currency": "USD",
++   "currency": "BRL",
+    "items": [
+      1,
+      2,
+-     4,
++     3,
+    ],
+  }
+
+ ❯ test/billing.test.js:9:25
+      7|   test('applies the discount', () => { expect(charge(100).amount).toBe…
+      8|   test('builds the receipt', () => {
+      9|     expect(charge(100)).toEqual({ amount: 100, currency: 'USD', items:…
+       |                         ^
+     10|   })
+     11|   test('rejects a negative amount', () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/billing.test.js > billing > rejects a negative amount
+Error: negative amount not allowed
+ ❯ test/billing.test.js:12:11
+     10|   })
+     11|   test('rejects a negative amount', () => {
+     12|     throw new Error('negative amount not allowed')
+       |           ^
+     13|   })
+     14|   test.skip('refunds', () => {})
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/slow.test.js > finishes in time
+Error: Test timed out in 50ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/slow.test.js:3:5
+      1| import { expect, test } from 'vitest'
+      2| 
+      3| test('finishes in time', async () => {
+       |     ^
+      4|   console.log('waiting for the gateway')
+      5|   await new Promise((r) => setTimeout(r, 300))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  4 failed | 9 passed | 1 skipped | 1 todo (15)
+   Start at  12:41:09
+   Duration  258ms (transform 24ms, setup 0ms, collect 32ms, tests 64ms, environment 0ms, prepare 213ms)
+

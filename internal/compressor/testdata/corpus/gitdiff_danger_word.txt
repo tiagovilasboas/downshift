@@ -1,0 +1,10 @@
+diff --git a/handler.go b/handler.go
+index abc123..def456 100644
+--- a/handler.go
++++ b/handler.go
+@@ -10,7 +10,7 @@ func handle() {
+ 	ctx := context.Background()
+ 	client := newClient(ctx)
+-	return client.do()
++	return fmt.Errorf("request failed: %w", client.do())
+ }

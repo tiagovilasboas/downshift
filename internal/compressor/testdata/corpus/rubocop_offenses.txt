@@ -1,0 +1,19 @@
+Inspecting 3 files
+.CWE
+
+Offenses:
+
+app/a.rb:1:1: C: [Correctable] Style/FrozenStringLiteralComment: Missing frozen string literal comment.
+puts 'x'
+^
+app/a.rb:5:3: W: Lint/UselessAssignment: Useless assignment to variable - `y`.
+  y = 1
+  ^
+app/b.rb:9:1: C: [Correctable] Style/FrozenStringLiteralComment: Missing frozen string literal comment.
+puts 'z'
+^
+app/b.rb:12:7: E: Lint/Syntax: unexpected token tRPAREN
+  foo(1))
+       ^
+
+3 files inspected, 4 offenses detected, 2 offenses autocorrectable

@@ -1,0 +1,10 @@
+npm ERR! code ERESOLVE
+npm ERR! ERESOLVE could not resolve
+npm ERR! 
+npm ERR! While resolving: @angular/core@15.0.0
+npm ERR! Found: typescript@5.0.0
+npm ERR! node_modules/typescript
+npm ERR!   dev typescript@"^5.0.0" from the root project
+npm ERR! 
+npm ERR! Could not resolve dependency:
+npm ERR! peer typescript@">=4.8.2 <5.0" from @angular/compiler-cli@15.0.0

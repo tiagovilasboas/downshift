@@ -1,0 +1,28 @@
+[1m[42m[30m PASS [39m[49m[22m  src/cart/totals.test.ts
+  totals
+    [32m✓[39m sums line items [2m(3 ms)[22m
+    [32m✓[39m applies free shipping over the threshold [2m(1 ms)[22m
+    [32m✓[39m keeps cents [2m(0 ms)[22m
+[1m[41m[30m FAIL [39m[49m[22m  src/billing/invoice.test.ts
+  invoice
+    [32m✓[39m rounds half up [2m(2 ms)[22m
+    [31m✕[39m applies the regional tax [2m(8 ms)[22m
+    ○ skipped applies the surcharge
+  ● invoice › applies the regional tax
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 110
+    Received: 100
+
+      14 |   const total = invoice({ amount: 100, region: 'BR' });
+    > 16 |   expect(total).toBe(110);
+         |                 ^
+
+      at Object.<anonymous> (src/billing/invoice.test.ts:16:17)
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       1 failed, 1 skipped, 4 passed, 6 total
+Snapshots:   0 total
+Time:        2.104 s
+Ran all test suites.

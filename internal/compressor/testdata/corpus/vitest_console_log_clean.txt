@@ -1,0 +1,16 @@
+
+ RUN  v5.0.5 /home/dev/web
+
+ ↓ src/b.test.ts (2 tests | 2 skipped)
+ ✓ src/c.test.ts (2 tests | 1 todo) 1ms
+stdout | src/d.test.ts > logs
+hello from the test
+
+ ✓ src/a.test.ts (2 tests | 1 skipped) 1ms
+ ✓ src/d.test.ts (1 test) 2ms
+
+ Test Files  3 passed | 1 skipped (4)
+      Tests  3 passed | 3 skipped | 1 todo (7)
+   Start at  12:40:55
+   Duration  98ms (transform 66%, import 15%, worker 13%, tests 5%)
+

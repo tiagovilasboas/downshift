@@ -1,0 +1,14 @@
+Randomized with seed 41873
+..........................................................................
+
+Top 5 slowest examples (1.92 seconds, 61.4% of total time):
+  Invoice#total sums the line items
+    0.61 seconds ./spec/models/invoice_spec.rb:14
+  Checkout creates an order
+    0.52 seconds ./spec/services/checkout_spec.rb:31
+
+Finished in 3.13 seconds (files took 1.21 seconds to load)
+74 examples, 0 failures
+
+Randomized with seed 41873
+

@@ -1,0 +1,7 @@
+> Task :app:testDebugUnitTest
+
+MainTest > addsNumbers() STANDARD_OUT
+    hello from test
+
+BUILD SUCCESSFUL in 12s
+14 actionable tasks: 9 executed, 5 up-to-date

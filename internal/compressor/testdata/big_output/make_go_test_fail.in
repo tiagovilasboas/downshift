@@ -1,0 +1,23 @@
+go vet ./...
+go build -o bin/shop ./cmd/shop
+go test -count=1 ./...
+ok  	example.com/shop/cart	0.00s
+ok  	example.com/shop/pricing	0.01s
+ok  	example.com/shop/catalog	0.02s
+ok  	example.com/shop/search	0.03s
+ok  	example.com/shop/users	0.04s
+ok  	example.com/shop/auth	0.05s
+ok  	example.com/shop/mail	0.06s
+ok  	example.com/shop/queue	0.07s
+ok  	example.com/shop/cache	0.08s
+ok  	example.com/shop/ledger	0.00s
+ok  	example.com/shop/tax	0.01s
+ok  	example.com/shop/ship	0.02s
+?   	example.com/shop/cmd/shop	[no test files]
+--- FAIL: TestCase4 (0.00s)
+    case_test.go:55: got 3, want 4
+FAIL
+FAIL	example.com/shop/orders	0.05s
+ok  	example.com/shop/billing	0.04s
+FAIL
+make: *** [Makefile:14: test] Error 1

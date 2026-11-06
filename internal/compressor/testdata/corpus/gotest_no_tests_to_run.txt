@@ -1,0 +1,4 @@
+ok  	example.com/acme/widget/cmd/widget	0.010s [no tests to run]
+ok  	example.com/acme/widget/internal/api	0.011s [no tests to run]
+ok  	example.com/acme/widget/internal/auth	0.012s [no tests to run]
+ok  	example.com/acme/widget/internal/billing	0.013s [no tests to run]

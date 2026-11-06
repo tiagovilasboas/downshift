@@ -1,0 +1,37 @@
+
+ RUN  v2.1.8 /work/web
+
+ ✓ test/config.test.ts (3 tests) 1ms
+ ✓ test/coupon.test.ts (10 tests) 4ms
+ ✓ test/currency.test.ts (8 tests) 7ms
+ ✓ test/db.test.ts (6 tests) 10ms
+ ✓ test/events.test.ts (4 tests) 13ms
+ ✓ test/export.test.ts (11 tests) 2ms
+ ✓ test/feature-flags.test.ts (9 tests) 5ms
+ ✓ test/files.test.ts (7 tests) 8ms
+ ✓ test/format.test.ts (5 tests) 11ms
+ ✓ test/geo.test.ts (3 tests) 14ms
+ ✓ test/http.test.ts (10 tests) 3ms
+ ✓ test/i18n.test.ts (8 tests) 6ms
+ ✓ test/import.test.ts (6 tests) 9ms
+ ✓ test/invoice.test.ts (4 tests) 12ms
+ ✓ test/jobs.test.ts (11 tests) 1ms
+ ✓ test/locale.test.ts (9 tests) 4ms
+ ✓ test/logger.test.ts (7 tests) 7ms
+ ✓ test/mailer.test.ts (5 tests) 10ms
+ ✓ test/money.test.ts (3 tests) 13ms
+ ✓ test/notify.test.ts (10 tests) 2ms
+ ✓ test/orders.test.ts (8 tests) 5ms
+ ✓ test/pagination.test.ts (6 tests) 8ms
+ ✓ test/payments.test.ts (4 tests) 11ms
+ ✓ test/price.test.ts (11 tests) 14ms
+ ✓ test/queue.test.ts (9 tests) 3ms
+ ✓ test/refunds.test.ts (7 tests) 6ms
+ ✓ test/reports.test.ts (5 tests) 9ms
+ ✓ test/retry.test.ts (3 tests) 12ms
+
+ Test Files  28 passed (28)
+      Tests  192 passed (192)
+   Start at  09:15:41
+   Duration  1.94s (transform 120ms, setup 0ms, collect 610ms, tests 188ms, environment 1ms, prepare 801ms)
+

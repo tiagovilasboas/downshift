@@ -1,0 +1,13 @@
+▲ Next.js 15.4.2
+⚠ Invalid next.config.js options detected
+✓ Compiled successfully in 8.2s
+✓ Linting and checking validity of types
+✓ Collecting page data
+✓ Generating static pages (4/4)
+✓ Finalizing page optimization
+✓ Collecting build traces
+Route (app)
+┌ ○ / 5.14 kB 102 kB
++ First Load JS shared by all 96.7 kB
+  └ other shared chunks (total) 1.8 kB
+○ (Static) prerendered as static content

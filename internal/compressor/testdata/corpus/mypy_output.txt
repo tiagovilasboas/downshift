@@ -1,0 +1,2 @@
+mypy .
+Success: no issues found in 42 source files

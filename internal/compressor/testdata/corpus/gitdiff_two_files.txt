@@ -1,0 +1,17 @@
+diff --git a/README.md b/README.md
+index 1a2b3c4..5d6e7f8 100644
+--- a/README.md
++++ b/README.md
+@@ -3,4 +3,4 @@
+ A small example service.
+ 
+-Run it with `make run`.
++Run it with `make serve`.
+diff --git a/Makefile b/Makefile
+index 9a8b7c6..0f1e2d3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,3 +1,3 @@
+-run:
++serve:
+ 	go run ./cmd/api

@@ -1,0 +1,42 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.9, pytest-8.2.0, pluggy-1.5.0
+rootdir: /home/ci/shop
+configfile: pytest.ini
+plugins: cov-5.0.0, xdist-3.6.1
+collected 12 items
+
+tests/test_cart.py ......                                                [ 50%]
+tests/test_checkout.py .F....                                            [100%]
+
+=================================== FAILURES ===================================
+__________________________ test_pay_declines_bad_card __________________________
+
+    def test_pay_declines_bad_card():
+>       assert charge(card="4000") == "declined"
+E       AssertionError: assert 'approved' == 'declined'
+E         - declined
+E         + approved
+
+tests/test_checkout.py:31: AssertionError
+=============================== warnings summary ===============================
+tests/test_cart.py::test_totals
+tests/test_cart.py::test_discount
+tests/test_checkout.py::test_pay_total
+  /home/ci/shop/shop/tax.py:12: DeprecationWarning: round_half_even is deprecated
+    return round_half_even(value)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+PASSED tests/test_cart.py::test_totals
+PASSED tests/test_cart.py::test_discount
+PASSED tests/test_cart.py::test_rounding
+PASSED tests/test_cart.py::test_free_shipping
+PASSED tests/test_cart.py::test_coupon_stack
+PASSED tests/test_cart.py::test_currency
+PASSED tests/test_checkout.py::test_tax_zero
+PASSED tests/test_checkout.py::test_tax_reverse
+PASSED tests/test_checkout.py::test_ship_region
+PASSED tests/test_checkout.py::test_weight_limit
+PASSED tests/test_checkout.py::test_refund_partial
+FAILED tests/test_checkout.py::test_pay_declines_bad_card - AssertionError: assert 'approved' == 'declined'
+=========== 1 failed, 11 passed, 1 warning in 0.31s ============

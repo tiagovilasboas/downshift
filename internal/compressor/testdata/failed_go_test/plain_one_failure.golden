@@ -1,0 +1,6 @@
+Go test: ok: 30 packages (failures kept verbatim)
+--- FAIL: TestCharge (0.01s)
+    billing_test.go:42: got 100, want 110
+FAIL
+FAIL	example.com/acme/widget/internal/billing	0.087s
+FAIL

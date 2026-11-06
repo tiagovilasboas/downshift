@@ -1,0 +1,4 @@
+internal/store/db.go:15:2: SA4006: this value of `ctx` is never used (staticcheck)
+internal/store/db.go:52:12: Error return value of `rows.Close` is not checked (errcheck)
+internal/api/handler.go:88:1: cyclomatic complexity 24 of func `route` is high (> 15) (gocyclo)
+internal/api/handler.go:130:6: func `unusedHelper` is unused (unused)

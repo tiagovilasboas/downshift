@@ -1,0 +1,14 @@
+
+> app@1.0.0 test
+> vitest run
+
+
+ RUN  v3.2.7 /work/app
+
+ ✓ test/ok.test.js (2 tests) 1ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  14:03:10
+   Duration  175ms (transform 12ms, setup 0ms, collect 6ms, tests 1ms, environment 0ms, prepare 38ms)
+

@@ -1,0 +1,11 @@
+┃  vet ❯
+
+┃  test ❯
+
+go test: 38 packages ok
+summary: (done in 21.48 seconds)
+✔️ vet (3.10 seconds)
+✔️ test (18.38 seconds)
+remote: Resolving deltas: 100% (9/9), completed with 8 local objects.
+To github.com:acme/widget.git
+   1a2b3c4..5d6e7f8  feat/cache -> feat/cache

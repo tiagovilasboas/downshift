@@ -1,0 +1,53 @@
+
+> web@1.0.0 test
+> vitest run
+
+
+ RUN  v3.2.4 /work/web
+
+ ✓ src/lib/auth.test.ts (3 tests) 1ms
+ ✓ src/lib/billing.test.ts (10 tests) 4ms
+ ✓ src/lib/cart.test.ts (8 tests) 7ms
+ ✓ src/lib/catalog.test.ts (6 tests) 10ms
+ ✓ src/lib/checkout.test.ts (4 tests) 13ms
+ ✓ src/lib/config.test.ts (11 tests) 2ms
+ ✓ src/lib/coupon.test.ts (9 tests) 5ms
+ ✓ src/lib/currency.test.ts (7 tests) 8ms
+ ✓ src/lib/db.test.ts (5 tests) 11ms
+ ✓ src/lib/events.test.ts (3 tests) 14ms
+ ✓ src/lib/export.test.ts (10 tests) 3ms
+ ✓ src/lib/feature-flags.test.ts (8 tests) 6ms
+ ✓ src/lib/files.test.ts (6 tests) 9ms
+ ✓ src/lib/format.test.ts (4 tests) 12ms
+ ✓ src/lib/geo.test.ts (11 tests) 1ms
+ ✓ src/lib/http.test.ts (9 tests) 4ms
+ ✓ src/lib/i18n.test.ts (7 tests) 7ms
+ ✓ src/lib/import.test.ts (5 tests) 10ms
+ ✓ src/lib/invoice.test.ts (3 tests) 13ms
+ ✓ src/lib/jobs.test.ts (10 tests) 2ms
+ ✓ src/lib/locale.test.ts (8 tests) 5ms
+ ✓ src/lib/logger.test.ts (6 tests) 8ms
+ ✓ src/lib/mailer.test.ts (4 tests) 11ms
+ ✓ src/lib/money.test.ts (11 tests) 14ms
+ ✓ src/lib/notify.test.ts (9 tests) 3ms
+ ✓ src/lib/orders.test.ts (7 tests) 6ms
+ ✓ src/lib/pagination.test.ts (5 tests) 9ms
+ ✓ src/lib/payments.test.ts (3 tests) 12ms
+ ✓ src/lib/price.test.ts (10 tests) 1ms
+ ✓ src/lib/queue.test.ts (8 tests) 4ms
+ ✓ src/lib/refunds.test.ts (6 tests) 7ms
+ ✓ src/lib/reports.test.ts (4 tests) 10ms
+ ✓ src/lib/retry.test.ts (11 tests) 13ms
+ ✓ src/lib/search.test.ts (9 tests) 2ms
+ ✓ src/lib/session.test.ts (7 tests) 5ms
+ ✓ src/lib/shipping.test.ts (5 tests) 8ms
+ ✓ src/lib/slug.test.ts (3 tests) 11ms
+ ✓ src/lib/store.test.ts (10 tests) 14ms
+ ✓ src/lib/tax.test.ts (8 tests) 3ms
+ ✓ src/lib/users.test.ts (6 tests) 6ms
+
+ Test Files  40 passed (40)
+      Tests  279 passed (279)
+   Start at  10:42:07
+   Duration  3.41s (transform 410ms, setup 0ms, collect 1.20s, tests 388ms, environment 2ms, prepare 1.10s)
+

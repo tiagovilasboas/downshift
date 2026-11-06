@@ -1,0 +1,23 @@
+commit 53a145c26dfe37de4fb32fd47ee1f6b9aa57833c
+Author: FixtureAuthor <fixture@example.com>
+Date:   Tue Oct 20 15:17:12 2026 -0300
+
+    Tweak-team-greeting
+
+commit caa2f146defff7d1660c70d946c6a955d1b61e61
+Author: FixtureAuthor <fixture@example.com>
+Date:   Tue Oct 20 15:16:39 2026 -0300
+
+    Say-hello-to-the-world
+
+commit baf227e94413d57eee9196116fdf862e6ebfd84b
+Author: FixtureAuthor <fixture@example.com>
+Date:   Tue Oct 20 15:16:32 2026 -0300
+
+    Document-usage
+
+commit bcda83f75996b87a1535347b824c0b8e48dd3b52
+Author: FixtureAuthor <fixture@example.com>
+Date:   Tue Oct 20 15:16:19 2026 -0300
+
+    Initial-commit

@@ -1,0 +1,4 @@
+2 connected devices:
+
+iPhone 14 Pro (mobile) • 00008030-000E1C8A1234 • ios            • iOS 16.1
+Chrome (web)          • chrome                 • web-javascript • Google Chrome 119

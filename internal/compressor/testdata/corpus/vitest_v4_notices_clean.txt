@@ -1,0 +1,34 @@
+(node:41201) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+ RUN  v4.1.11 /home/dev/web
+
+(node:41205) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/features/cart/CartPanel.test.tsx (4 tests) 193ms
+(node:41210) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/features/cart/useCart.test.ts (14 tests) 761ms
+(node:41208) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/features/checkout/AddressForm.test.tsx (6 tests) 309ms
+(node:41203) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/features/checkout/PaymentStep.test.tsx (9 tests) 399ms
+(node:41206) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/features/orders/OrderList.test.tsx (7 tests) 318ms
+ ✓ src/features/orders/useOrders.test.ts (27 tests) 1747ms
+ ✓ src/features/profile/ProfilePage.test.tsx (3 tests) 216ms
+Not implemented: navigation to another Document
+ ✓ src/features/profile/AvatarUpload.test.tsx (2 tests) 183ms
+ ✓ src/features/shared/Tooltip.test.tsx (3 tests) 201ms
+ ✓ src/features/shared/MoneyField.test.tsx (8 tests) 203ms
+ ✓ src/features/shared/format.test.ts (5 tests) 2ms
+ ✓ src/features/shared/config.test.ts (2 tests) 2ms
+
+ Test Files  12 passed (12)
+      Tests  90 passed (90)
+   Start at  12:35:32
+   Duration  9.14s (transform 3.10s, setup 9.12s, import 9.98s, tests 11.43s, environment 46.62s)
+

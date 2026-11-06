@@ -1,0 +1,9 @@
+.
+..
+.github/
+AGENTS.md
+Makefile
+cmd/
+internal/
+go.sum
+notes.md

@@ -1,0 +1,46 @@
+   Compiling billing-core v0.4.2 (/home/dev/billing-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.41s
+     Running unittests src/lib.rs (target/debug/deps/billing_core-5f2a9c1d7e3b4a60)
+
+running 24 tests
+test auth::tests::rejects_expired_token ... ok
+test auth::tests::rejects_unknown_issuer ... ok
+test auth::tests::accepts_valid_token ... ok
+test billing::tests::invoice_rounds_half_up ... ok
+test billing::tests::invoice_total_with_discount ... FAILED
+test billing::tests::invoice_zero_items ... ok
+test billing::tests::proration_mid_month ... ok
+test billing::tests::proration_leap_year ... ok
+test config::tests::load_defaults ... ok
+test config::tests::env_overrides_file ... ok
+test config::tests::missing_file_is_error ... ok
+test currency::tests::convert_same_currency ... ok
+test currency::tests::convert_rounds_to_cents ... ok
+test currency::tests::unknown_currency_is_error ... ok
+test store::tests::cache_hit ... ok
+test store::tests::cache_miss ... ok
+test store::tests::cache_eviction_order ... ok
+test store::tests::roundtrip_serialization ... ok
+test tax::tests::vat_standard_rate ... ok
+test tax::tests::vat_reduced_rate ... ok
+test tax::tests::vat_exempt ... ok
+test tax::tests::us_sales_tax_by_state ... ignored, needs network
+test util::tests::slugify_unicode ... ok
+test util::tests::slugify_empty ... ok
+
+failures:
+
+---- billing::tests::invoice_total_with_discount stdout ----
+thread 'billing::tests::invoice_total_with_discount' panicked at src/billing.rs:118:9:
+assertion `left == right` failed: discount applied twice
+  left: 9000
+ right: 9500
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    billing::tests::invoice_total_with_discount
+
+test result: FAILED. 22 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+error: test failed, to rerun pass `--lib`

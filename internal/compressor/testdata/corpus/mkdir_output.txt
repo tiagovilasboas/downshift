@@ -1,0 +1,1 @@
+# Sample output for mkdir_output - pass-through

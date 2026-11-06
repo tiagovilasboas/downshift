@@ -1,0 +1,12 @@
+ok  	example.com/acme/widget/cmd/widget	0.200s
+ok  	example.com/acme/widget/internal/api	0.201s
+ok  	example.com/acme/widget/internal/auth	0.202s
+ok  	example.com/acme/widget/internal/billing	0.203s
+ok  	example.com/acme/widget/internal/cache	0.204s
+ok  	example.com/acme/widget/internal/config	0.205s
+ok  	example.com/acme/widget/internal/db	0.206s
+ok  	example.com/acme/widget/internal/events	0.207s
+ok  	example.com/acme/widget/internal/httpx	0.208s
+ok  	example.com/acme/widget/internal/metrics	0.209s
+ok  	example.com/acme/widget/internal/queue	0.210s
+ok  	example.com/acme/widget/internal/store	0.211s

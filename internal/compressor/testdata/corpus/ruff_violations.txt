@@ -1,0 +1,5 @@
+app/main.py:10:1: F401 [*] `os` imported but unused
+app/main.py:22:5: E722 Do not use bare `except`
+app/svc/handler.py:5:1: F811 Redefinition of unused `foo`
+app/svc/handler.py:40:80: E501 Line too long (92 > 88)
+Found 4 errors.

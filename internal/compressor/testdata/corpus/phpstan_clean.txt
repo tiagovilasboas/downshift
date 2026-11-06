@@ -1,0 +1,6 @@
+Note: Using configuration file /app/phpstan.neon.
+ 12/12 [============================] 100%
+
+
+ [OK] No errors
+

@@ -1,0 +1,1 @@
+# Sample output for kubectl_top_output - pass-through

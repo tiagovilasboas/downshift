@@ -1,0 +1,13 @@
+> Task :app:compileDebugKotlin UP-TO-DATE
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:processDebugUnitTestJavaRes NO-SOURCE
+> Task :app:testDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///proj/app/build/reports/tests/testDebugUnitTest/index.html
+
+BUILD FAILED in 9s
+5 actionable tasks: 2 executed, 3 up-to-date

@@ -1,0 +1,8 @@
+Starting local Bazel server and connecting to it...
+INFO: Analyzed target //app:main (45 packages loaded, 312 targets configured).
+INFO: Found 1 target...
+Target //app:main up-to-date:
+  bazel-bin/app/main
+INFO: Elapsed time: 12.345s, Critical Path: 3.21s
+INFO: 25 processes: 12 internal, 13 linux-sandbox.
+INFO: Build completed successfully, 25 total actions
