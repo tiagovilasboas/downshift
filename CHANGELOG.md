@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-06
+
+First public beta. The repository starts a fresh history at this release. Release notes: [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).
+
 ### Security
 
 - Compact refused nothing on `cargo clippy`, so `cargo clippy --fix` (which writes source files) was wrapped. `--fix`, `--allow-dirty`, `--allow-staged` and `--allow-no-vcs` now keep it unwrapped.
