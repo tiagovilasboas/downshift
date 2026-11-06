@@ -1,0 +1,194 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package telemetry_test
+
+import (
+	"bytes"
+	"strings"
+	"testing"
+
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookport"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
+)
+
+func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
+	t.Run("port with honor and usage", func(t *testing.T) {
+		const decisionID = "dec-claude"
+		var recorded []telemetry.Event
+		port := hookport.Port{
+			ID: "claude-code",
+			Honor: func(raw []byte, binaryVersion string, r core.Resolver) (any, string) {
+				recorded = append(recorded, telemetry.Event{
+					Harness:        "claude-code",
+					Outcome:        telemetry.OutcomeResolved,
+					LinkedDecision: decisionID,
+					RewriteHonored: boolPtr(true),
+				})
+				return map[string]string{"model": "small"}, "honored"
+			},
+			Usage: func(raw []byte, binaryVersion string, r core.Resolver) string {
+				recorded = append(recorded, telemetry.Event{
+					Harness:        "claude-code",
+					Outcome:        telemetry.OutcomeUsage,
+					LinkedDecision: decisionID,
+					InputTokens:    i64Ptr(120),
+					OutputTokens:   i64Ptr(30),
+				})
+				return "usage"
+			},
+		}
+
+		honorObs := hookport.ObserveHonor(port, []byte(`{"child":true}`), "v-test", nil)
+		if !honorObs.Observed {
+			t.Fatal("Honor func ran but ObserveHonor reported unobserved")
+		}
+		usageObs := hookport.ObserveUsage(port, []byte(`{"usage":true}`), "v-test", nil)
+		if !usageObs.Observed {
+			t.Fatal("Usage func ran but ObserveUsage reported unobserved")
+		}
+
+		decision := appliedDownshift("claude-code", decisionID, "available", false)
+		events := append([]telemetry.Event{decision}, recorded...)
+		assertSurface(t, events, decision, telemetry.HonorObserved, telemetry.QuotaAvailable, telemetry.UsageObserved)
+
+		stats := telemetry.Aggregate(events)
+		if stats.HonorObserved != 1 || stats.UsageObserved != 1 {
+			t.Fatalf("aggregate honor=%d usage=%d, want 1 and 1", stats.HonorObserved, stats.UsageObserved)
+		}
+	})
+
+	t.Run("nil honor and usage stay unobserved", func(t *testing.T) {
+		for _, id := range []string{"cursor", "codex", "antigravity", "kirocrew", "grok"} {
+			port := hookport.Port{ID: id}
+			if hookport.ObserveHonor(port, []byte(`{}`), "v-test", nil).Observed {
+				t.Fatalf("%s nil Honor was observed", id)
+			}
+			if hookport.ObserveUsage(port, []byte(`{}`), "v-test", nil).Observed {
+				t.Fatalf("%s nil Usage was observed", id)
+			}
+		}
+
+		const (
+			decisionID = "dec-cursor"
+			sessionID  = "sess-cursor"
+			written    = "claude-haiku-4-5"
+		)
+		decision := appliedDownshift("cursor", decisionID, "unknown", false)
+		decision.SessionID = sessionID
+		decision.FromModel = "model-frontier"
+		decision.ToModel = written
+
+		// A later spawn that repeats the written model is not a link.
+		later := telemetry.Event{
+			CorrelationID: "later-cursor",
+			Harness:       "cursor",
+			SessionID:     sessionID,
+			Outcome:       telemetry.OutcomeAllow,
+			Verdict:       "OK",
+			FromModel:     written,
+			ToModel:       written,
+		}
+		// rewrite_emitted is not honor, even with rewrite_honored set.
+		emitted := telemetry.Event{
+			CorrelationID:  "emit-cursor",
+			Harness:        "cursor",
+			Outcome:        telemetry.OutcomeRewriteEmitted,
+			Verdict:        "DOWNSHIFT",
+			LinkedDecision: decisionID,
+			RewriteHonored: boolPtr(true),
+			QuotaStatus:    "unknown",
+			FromModel:      "model-frontier",
+			ToModel:        written,
+		}
+		// A usage record without token counts is not usage.
+		catalog := telemetry.Event{
+			Harness:        "cursor",
+			Outcome:        telemetry.OutcomeUsage,
+			LinkedDecision: decisionID,
+		}
+		resolvedFalse := telemetry.Event{
+			Harness:        "cursor",
+			Outcome:        telemetry.OutcomeResolved,
+			LinkedDecision: decisionID,
+			RewriteHonored: boolPtr(false),
+		}
+		held := appliedDownshift("cursor", "held-cursor", "available", true)
+
+		events := []telemetry.Event{decision, later, emitted, catalog, resolvedFalse, held}
+		assertSurface(t, events, decision, telemetry.HonorUnobserved, telemetry.QuotaUnknown, telemetry.UsageUnobserved)
+
+		honor, usage := telemetry.ObservedLinks(events)
+		if honor[telemetry.SurfaceKey(decision)] || usage[telemetry.SurfaceKey(decision)] {
+			t.Fatalf("nil harness links honor=%v usage=%v, want both false", honor[telemetry.SurfaceKey(decision)], usage[telemetry.SurfaceKey(decision)])
+		}
+
+		// resolvedFalse refutes the shift, so the later spawn no longer infers it.
+		shifted, inferred := telemetry.CountInferredHonored(events)
+		if shifted < 1 || inferred != 0 {
+			t.Fatalf("inference fixture shifted=%d honored=%d, want the refuted shift not inferred", shifted, inferred)
+		}
+
+		stats := telemetry.Aggregate(events)
+		if stats.HonorObserved != 0 || stats.UsageObserved != 0 {
+			t.Fatalf("nil harness aggregate honor=%d usage=%d, want 0 and 0", stats.HonorObserved, stats.UsageObserved)
+		}
+
+		var report bytes.Buffer
+		telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true}, &report)
+		if !strings.Contains(report.String(), "Honor                 observed 0  unobserved") {
+			t.Fatalf("report printed inference as honor:\n%s", report.String())
+		}
+	})
+}
+
+func TestProjectQuota(t *testing.T) {
+	cases := []struct {
+		name       string
+		status     string
+		creditHeld bool
+		wantQuota  string
+	}{
+		{name: "available", status: "available", wantQuota: telemetry.QuotaAvailable},
+		{name: "available but credit held", status: "available", creditHeld: true, wantQuota: telemetry.QuotaHeld},
+		{name: "exhausted", status: "exhausted", wantQuota: telemetry.QuotaHeld},
+		{name: "stale", status: "stale", wantQuota: telemetry.QuotaHeld},
+		{name: "unknown", status: "unknown", wantQuota: telemetry.QuotaUnknown},
+		{name: "empty", status: "", wantQuota: telemetry.QuotaUnknown},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := telemetry.ProjectQuota(tc.status, tc.creditHeld); got != tc.wantQuota {
+				t.Fatalf("ProjectQuota(%q, %v) = %q, want %q", tc.status, tc.creditHeld, got, tc.wantQuota)
+			}
+		})
+	}
+}
+
+func appliedDownshift(harness, id, quota string, creditHeld bool) telemetry.Event {
+	return telemetry.Event{
+		CorrelationID: id,
+		Harness:       harness,
+		Verdict:       "DOWNSHIFT",
+		Outcome:       telemetry.OutcomeRewriteEmitted,
+		QuotaStatus:   quota,
+		CreditHeld:    creditHeld,
+		FromModel:     "model-frontier",
+		ToModel:       "claude-haiku-4-5",
+	}
+}
+
+func assertSurface(t *testing.T, events []telemetry.Event, decision telemetry.Event, honor, quota, usage string) {
+	t.Helper()
+	honored, used := telemetry.ObservedLinks(events)
+	key := telemetry.SurfaceKey(decision)
+	surface := telemetry.SurfaceFor(decision, honored[key], used[key])
+	if surface.Honor != honor || surface.Quota != quota || surface.Usage != usage {
+		t.Fatalf("surface = %+v, want honor %s quota %s usage %s", surface, honor, quota, usage)
+	}
+}
+
+func boolPtr(v bool) *bool { return &v }
+
+func i64Ptr(v int64) *int64 { return &v }

@@ -1,0 +1,412 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package telemetry_test
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
+)
+
+// tmpLog returns a fresh temp file path for a test event log.
+func tmpLog(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	return filepath.Join(dir, "events.jsonl")
+}
+
+// makeEvent constructs a minimal Event for testing.
+func makeEvent(harness, complexity, verdict string) telemetry.Event {
+	return telemetry.Event{
+		Timestamp:  time.Now().UTC().Format(time.RFC3339),
+		Harness:    harness,
+		Complexity: complexity,
+		FromModel:  "model-frontier",
+		ToModel:    "claude-haiku-4-5",
+		Verdict:    verdict,
+	}
+}
+
+// --- AppendTo / ReadEventsFrom round-trip ---
+
+func TestAppendAndRead_RoundTrip(t *testing.T) {
+	path := tmpLog(t)
+	ev := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")
+
+	if err := telemetry.AppendTo(path, ev); err != nil {
+		t.Fatalf("AppendTo: %v", err)
+	}
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len(events) = %d, want 1", len(got))
+	}
+	if got[0].Harness != ev.Harness {
+		t.Errorf("Harness = %q, want %q", got[0].Harness, ev.Harness)
+	}
+	if got[0].Complexity != ev.Complexity {
+		t.Errorf("Complexity = %q, want %q", got[0].Complexity, ev.Complexity)
+	}
+	if got[0].Verdict != ev.Verdict {
+		t.Errorf("Verdict = %q, want %q", got[0].Verdict, ev.Verdict)
+	}
+}
+
+// TestReadLegacyPriceFieldsStillParses proves the event decoder is not strict:
+// a real old events.jsonl line carries the removed price fields
+// (estimated_savings, gateway_price, upshift_cost_ratio), and the reader must
+// ignore those unknown keys, decode the line, and let it enter the report. The
+// owner removed those fields from the event format on 2026-10-31; the millions
+// of lines already on disk must keep being read.
+func TestReadLegacyPriceFieldsStillParses(t *testing.T) {
+	path := tmpLog(t)
+	legacy := `{"timestamp":"2026-10-15T10:00:00Z","harness":"claude-code","complexity":"TRIVIAL","verdict":"DOWNSHIFT","tier":"SMALL","requested_model":"claude-opus-5-5","final_model":"claude-haiku-4-5","outcome":"rewrite_emitted","estimated_savings":0.85,"gateway_price":"snapshot","upshift_cost_ratio":1.4}` + "\n"
+	if err := os.WriteFile(path, []byte(legacy), 0o600); err != nil {
+		t.Fatalf("write legacy log: %v", err)
+	}
+
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom on legacy line: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len(events) = %d, want 1 (unknown price keys must not drop the line)", len(got))
+	}
+	if got[0].Verdict != "DOWNSHIFT" || got[0].Outcome != telemetry.OutcomeRewriteEmitted {
+		t.Errorf("legacy line decoded wrong: %+v", got[0])
+	}
+
+	// The decoded legacy decision still enters the report.
+	if stats := telemetry.Aggregate(got); stats.Total != 1 || stats.Downshifted != 1 {
+		t.Errorf("legacy line not in report: Total=%d Downshifted=%d, want 1 and 1", stats.Total, stats.Downshifted)
+	}
+}
+
+// Lines written before the multilingual E5 code was removed (2026-10-17) can
+// carry e5_shadow and e5_fuse objects. The Event struct no longer has those
+// fields, so the reader must skip them and keep the line.
+func TestReadLegacyE5FieldsStillParses(t *testing.T) {
+	path := tmpLog(t)
+	legacy := `{"timestamp":"2026-10-10T10:00:00Z","harness":"claude-code","complexity":"TRIVIAL","verdict":"DOWNSHIFT","tier":"SMALL","requested_model":"claude-opus-5-5","final_model":"claude-haiku-4-5","outcome":"rewrite_emitted","e5_shadow":{"model_id":"e5-small","nearest_label":"TRIVIAL","similarity":0.91,"would_lift":false},"e5_fuse":{"model_id":"e5-small","action":"abstain","latency_ms":3.2}}` + "\n"
+	if err := os.WriteFile(path, []byte(legacy), 0o600); err != nil {
+		t.Fatalf("write legacy log: %v", err)
+	}
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom on legacy line: %v", err)
+	}
+	if len(got) != 1 || got[0].Verdict != "DOWNSHIFT" {
+		t.Fatalf("legacy E5 line decoded wrong: %+v", got)
+	}
+	if stats := telemetry.Aggregate(got); stats.Total != 1 || stats.Downshifted != 1 {
+		t.Errorf("legacy E5 line not in report: Total=%d Downshifted=%d, want 1 and 1", stats.Total, stats.Downshifted)
+	}
+}
+
+func TestUntrustedIdentifiersAreBoundedBeforePersistence(t *testing.T) {
+	if got := telemetry.ModelOrUnknown("model; private prompt"); got != "unknown" {
+		t.Fatalf("ModelOrUnknown = %q", got)
+	}
+	if got := telemetry.EffortOrUnknown("ignore-guardrails"); got != "unknown" {
+		t.Fatalf("EffortOrUnknown = %q", got)
+	}
+	for in, want := range map[string]string{"": telemetry.EffortUnobserved, "inherit": telemetry.EffortInherit, "xhigh": "xhigh"} {
+		if got := telemetry.EffortOrUnknown(in); got != want {
+			t.Fatalf("EffortOrUnknown(%q) = %q, want %q", in, got, want)
+		}
+	}
+	if got := telemetry.HashSessionID(strings.Repeat("x", 257)); got != "" {
+		t.Fatalf("HashSessionID oversized = %q", got)
+	}
+	if got := telemetry.HashSessionID("session id containing spaces"); got != "" {
+		t.Fatalf("HashSessionID unvalidated = %q", got)
+	}
+	if got := telemetry.HashSessionID("session-safe_123"); got == "" {
+		t.Fatal("HashSessionID rejected a valid opaque identifier")
+	}
+}
+
+func TestAppendTo_UsesPrivateFilePermissions(t *testing.T) {
+	path := tmpLog(t)
+	if err := telemetry.AppendTo(path, makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := info.Mode().Perm(); got != 0o600 {
+		t.Errorf("event log permissions = %04o, want 0600", got)
+	}
+}
+
+func TestAppendMultiple_AllPresent(t *testing.T) {
+	path := tmpLog(t)
+	for i := 0; i < 5; i++ {
+		ev := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")
+		if err := telemetry.AppendTo(path, ev); err != nil {
+			t.Fatalf("AppendTo[%d]: %v", i, err)
+		}
+	}
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom: %v", err)
+	}
+	if len(got) != 5 {
+		t.Errorf("len(events) = %d, want 5", len(got))
+	}
+}
+
+// --- Missing file ---
+
+func TestReadEventsFrom_MissingFile_ReturnsEmpty(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "nonexistent.jsonl")
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("expected nil error for missing file, got %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("expected empty slice, got %d events", len(got))
+	}
+}
+
+// --- Corrupted JSONL ---
+
+func TestReadEventsFrom_CorruptedLines_SkippedGracefully(t *testing.T) {
+	path := tmpLog(t)
+
+	good := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")
+	if err := telemetry.AppendTo(path, good); err != nil {
+		t.Fatal(err)
+	}
+
+	// Inject a corrupted line directly.
+	f, _ := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o644)
+	fmt.Fprintln(f, `{not valid json at all`)
+	fmt.Fprintln(f, `{"incomplete":`)
+	f.Close()
+
+	// Append a second good event after the corrupt lines.
+	if err := telemetry.AppendTo(path, good); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom: %v", err)
+	}
+	// Corrupted lines are skipped; the two good events survive.
+	if len(got) != 2 {
+		t.Errorf("expected 2 good events, got %d", len(got))
+	}
+}
+
+// --- FilterByDays ---
+
+func TestFilterByDays_ZeroReturnsAll(t *testing.T) {
+	events := []telemetry.Event{
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
+		makeEvent("cc", "COMPLEX", "OK"),
+	}
+	got := telemetry.FilterByDays(events, 0)
+	if len(got) != 2 {
+		t.Errorf("days=0 should return all events, got %d", len(got))
+	}
+}
+
+func TestFilterByDays_FiltersOldEvents(t *testing.T) {
+	old := telemetry.Event{
+		Timestamp:  time.Now().UTC().Add(-48 * time.Hour).Format(time.RFC3339),
+		Harness:    "cc",
+		Complexity: "TRIVIAL",
+		Verdict:    "DOWNSHIFT",
+	}
+	recent := makeEvent("cc", "TRIVIAL", "DOWNSHIFT")
+
+	got := telemetry.FilterByDays([]telemetry.Event{old, recent}, 1)
+	if len(got) != 1 {
+		t.Errorf("expected 1 recent event, got %d", len(got))
+	}
+}
+
+func TestFilterByDays_NegativeReturnsAll(t *testing.T) {
+	events := []telemetry.Event{
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
+	}
+	got := telemetry.FilterByDays(events, -7)
+	if len(got) != 1 {
+		t.Errorf("negative days should return all events, got %d", len(got))
+	}
+}
+
+func TestFilterByDays_TimestampFormats(t *testing.T) {
+	// Fixed reference times with margins avoid flakiness: 6d23h is safely
+	// inside a 7-day window, 7d1h is safely outside.
+	now := time.Now().UTC()
+	insideNano := now.Add(-(6*24*time.Hour + 23*time.Hour)).Format(time.RFC3339Nano)
+	outsideNano := now.Add(-(7*24*time.Hour + 1*time.Hour)).Format(time.RFC3339Nano)
+	insideLegacy := now.Add(-(6*24*time.Hour + 23*time.Hour)).Format(time.RFC3339)
+	outsideLegacy := now.Add(-(7*24*time.Hour + 1*time.Hour)).Format(time.RFC3339)
+
+	mk := func(ts string) telemetry.Event {
+		return telemetry.Event{
+			Timestamp:  ts,
+			Harness:    "cc",
+			Complexity: "TRIVIAL",
+			Verdict:    "DOWNSHIFT",
+		}
+	}
+
+	tests := []struct {
+		name   string
+		events []telemetry.Event
+		days   int
+		want   int
+	}{
+		{name: "nano timestamp inside window kept", events: []telemetry.Event{mk(insideNano)}, days: 7, want: 1},
+		{name: "nano timestamp outside window excluded", events: []telemetry.Event{mk(outsideNano)}, days: 7, want: 0},
+		{name: "legacy RFC3339 inside window kept", events: []telemetry.Event{mk(insideLegacy)}, days: 7, want: 1},
+		{name: "legacy RFC3339 outside window excluded", events: []telemetry.Event{mk(outsideLegacy)}, days: 7, want: 0},
+		{name: "garbage timestamp excluded", events: []telemetry.Event{mk("not-a-timestamp")}, days: 7, want: 0},
+		{name: "empty timestamp excluded", events: []telemetry.Event{mk("")}, days: 7, want: 0},
+		{name: "days<=0 returns all including garbage", events: []telemetry.Event{mk(insideNano), mk(outsideNano), mk("garbage")}, days: 0, want: 3},
+		{name: "days<0 returns all including garbage", events: []telemetry.Event{mk(outsideNano), mk("garbage")}, days: -1, want: 2},
+		{name: "mixed window keeps only inside", events: []telemetry.Event{mk(insideNano), mk(outsideNano), mk(insideLegacy), mk(outsideLegacy), mk("garbage")}, days: 7, want: 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := telemetry.FilterByDays(tt.events, tt.days)
+			if len(got) != tt.want {
+				t.Errorf("FilterByDays(%q, days=%d) = %d events, want %d", tt.name, tt.days, len(got), tt.want)
+			}
+		})
+	}
+}
+
+// --- Aggregate ---
+
+func TestAggregate_CountsVerdicts(t *testing.T) {
+	events := []telemetry.Event{
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
+		makeEvent("cc", "COMPLEX", "UPSHIFT"),
+		makeEvent("cc", "MEDIUM", "OK"),
+		makeEvent("cc", "MEDIUM", "UNKNOWN"),
+	}
+	s := telemetry.Aggregate(events)
+	if s.Total != 5 {
+		t.Errorf("Total = %d, want 5", s.Total)
+	}
+	if s.Downshifted != 2 {
+		t.Errorf("Downshifted = %d, want 2", s.Downshifted)
+	}
+	if s.Upshifted != 1 {
+		t.Errorf("Upshifted = %d, want 1", s.Upshifted)
+	}
+	if s.OK != 1 {
+		t.Errorf("OK = %d, want 1", s.OK)
+	}
+	if s.Unknown != 1 {
+		t.Errorf("Unknown = %d, want 1", s.Unknown)
+	}
+}
+
+func TestAggregate_EmptySlice(t *testing.T) {
+	s := telemetry.Aggregate(nil)
+	if s.Total != 0 {
+		t.Errorf("Total = %d, want 0", s.Total)
+	}
+}
+
+// --- PrintStats ---
+
+func TestPrintStats_Detail_NoMoneyOrPriceLens(t *testing.T) {
+	events := []telemetry.Event{
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
+	}
+	var buf strings.Builder
+	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true, Days: 30}, &buf)
+	out := buf.String()
+
+	if strings.Contains(out, "$") {
+		t.Error("stats must not show dollar signs")
+	}
+	if strings.Contains(out, "Normalised") {
+		t.Error("the normalised cost lens is gone; savings are tokens, not units")
+	}
+	if strings.Contains(out, "money") {
+		t.Error("stats must not mention money")
+	}
+}
+
+func TestPrintStats_AllTimeLabel(t *testing.T) {
+	events := []telemetry.Event{makeEvent("cc", "TRIVIAL", "DOWNSHIFT")}
+	var buf strings.Builder
+	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
+	if !strings.Contains(buf.String(), "All time") {
+		t.Error("days=0 should show 'All time' label")
+	}
+}
+
+// --- Concurrent writes ---
+
+func TestAppendTo_ConcurrentWrites_NoDataLoss(t *testing.T) {
+	path := tmpLog(t)
+	const goroutines = 20
+	const eventsEach = 10
+
+	var wg sync.WaitGroup
+	for g := 0; g < goroutines; g++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < eventsEach; i++ {
+				ev := makeEvent("cc", "TRIVIAL", "DOWNSHIFT")
+				if err := telemetry.AppendTo(path, ev); err != nil {
+					t.Errorf("AppendTo: %v", err)
+				}
+			}
+		}()
+	}
+	wg.Wait()
+
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom: %v", err)
+	}
+	want := goroutines * eventsEach
+	if len(got) != want {
+		t.Errorf("concurrent writes: got %d events, want %d", len(got), want)
+	}
+}
+
+func TestAppendAndRead_RewriteHonored(t *testing.T) {
+	path := tmpLog(t)
+	honored := true
+	ev := makeEvent("antigravity", "TRIVIAL", "DOWNSHIFT")
+	ev.RewriteHonored = &honored
+
+	if err := telemetry.AppendTo(path, ev); err != nil {
+		t.Fatalf("AppendTo: %v", err)
+	}
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len(events) = %d, want 1", len(got))
+	}
+	if got[0].RewriteHonored == nil || !*got[0].RewriteHonored {
+		t.Errorf("RewriteHonored = %v, want true", got[0].RewriteHonored)
+	}
+}
