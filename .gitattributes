@@ -1,0 +1,7 @@
+# Fixtures are byte-exact inputs: some carry CRLF or bare CR on purpose.
+# Never let git normalise their line endings.
+internal/compressor/testdata/** -text
+
+# Skills are embedded into the binary and their frontmatter is parsed by line:
+# keep them LF on every checkout, Windows included.
+skills/** text eol=lf
