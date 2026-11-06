@@ -1,0 +1,67 @@
+exit: 0
+--- stdout ---
+# Downshift report (last 7 days)
+
+## Compaction savings per harness
+
+Tokens kept out of the context by the Compactor.
+
+| harness | tokens avoided |
+|---|--:|
+
+_No events: antigravity, claude-code, codex, cursor, kirocrew, opencode._
+
+
+## Routing: tokens on a lighter model, per harness
+
+No subagent tokens observed in this window.
+
+## Efficiency per harness
+
+More work done, less premium intelligence consumed. Compactor tokens: see the section above.
+
+No routed spawns in this window.
+
+## Routed spawns (last 7 days)
+
+No routed spawn in this window.
+
+### Completion measurable, by harness
+
+| harness | completion |
+|---|---|
+| claude-code | not yet measurable: no end record seen from SubagentStop (usage from transcript) |
+| cursor | not yet measurable: no end record seen from subagentStop (usage from none) |
+| codex | not yet measurable: no end record seen from PostToolUse (usage from none) |
+| kirocrew | not yet measurable: no end record seen from postToolUse (usage from none) |
+| antigravity | no end event known; completion is not measurable |
+| opencode | not yet measurable: no end record seen from child_done (usage from payload) |
+
+_Billable tokens = input, output and cache write tokens of the same tasks; cache reads are left out. The figures count tokens that ran, per harness, never summed. Prompt-free._
+
+## Why spawns changed
+
+No routing events in this window.
+
+## Main session mechanical work
+
+Read, search and shell calls a small-tier subagent could take.
+
+| harness | calls |
+|---|---|
+| claude-code | main session: 0 read/search/shell calls, 0 on a frontier model |
+| cursor | unobserved |
+| codex | unobserved |
+| kirocrew | unobserved |
+| antigravity | unobserved |
+| opencode | unobserved |
+
+## Quota used per harness
+
+| harness | 5h · week |
+|---|---|
+
+## Planner and workers
+
+Planner and workers: no calls yet
+--- stderr ---

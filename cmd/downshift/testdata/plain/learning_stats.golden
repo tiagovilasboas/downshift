@@ -1,0 +1,9 @@
+exit: 0
+--- stdout ---
+Compressor Learning Stats
+─────────────────────────
+Unique signatures:  0
+Total commands:     0
+Total bytes:        0.0 KB
+Ready to suggest:   0
+--- stderr ---

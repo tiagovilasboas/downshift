@@ -1,0 +1,5 @@
+exit: 1
+--- stdout ---
+--- stderr ---
+warning: setup: this binary (<BIN>) is not a safe hook target: it is under the temporary directory <TMP>, which is cleaned
+setup: no supported harness found (looked for ~/.claude, ~/.cursor, ~/.config/opencode, ~/.codex, ~/.gemini, ~/.kiro)

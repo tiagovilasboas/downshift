@@ -1,0 +1,945 @@
+{
+  "version": "dev",
+  "commands": [
+    {
+      "name": "--help",
+      "summary": "Show the common commands",
+      "alias_of": "help",
+      "legacy": true
+    },
+    {
+      "name": "--version",
+      "summary": "Print the binary version",
+      "alias_of": "version",
+      "legacy": true
+    },
+    {
+      "name": "-h",
+      "summary": "Show the common commands",
+      "alias_of": "help",
+      "legacy": true
+    },
+    {
+      "name": "accept",
+      "summary": "Record developer acceptance for code delivered by subagents",
+      "flags": [
+        {
+          "name": "--session"
+        },
+        {
+          "name": "--used"
+        },
+        {
+          "name": "--discarded"
+        }
+      ]
+    },
+    {
+      "name": "antigravity",
+      "summary": "Antigravity PreToolUse hook: rewrites a subagent's model"
+    },
+    {
+      "name": "claude-code",
+      "summary": "Claude Code PreToolUse hook: rewrites a subagent's model"
+    },
+    {
+      "name": "claude-code-post-tool-use",
+      "summary": "Claude Code post-spawn observation",
+      "hidden": true,
+      "legacy": true
+    },
+    {
+      "name": "claude-code-session-start",
+      "summary": "Claude Code session-start hook",
+      "hidden": true,
+      "legacy": true
+    },
+    {
+      "name": "claude-code-subagent-stop",
+      "summary": "Claude Code subagent-stop observation",
+      "hidden": true,
+      "legacy": true
+    },
+    {
+      "name": "codex",
+      "summary": "Codex PreToolUse hook: rewrites a subagent's model"
+    },
+    {
+      "name": "compact",
+      "summary": "Cut a test, build or status command's output to its PASS/FAIL summary",
+      "flags": [
+        {
+          "name": "--session"
+        },
+        {
+          "name": "--allowlisted"
+        },
+        {
+          "name": "--discard-stderr"
+        },
+        {
+          "name": "--exit-zero"
+        }
+      ]
+    },
+    {
+      "name": "compactor",
+      "summary": "Product name of compact",
+      "alias_of": "compact",
+      "legacy": true
+    },
+    {
+      "name": "config",
+      "summary": "Every effective setting with its value and source",
+      "flags": [
+        {
+          "name": "--json"
+        }
+      ]
+    },
+    {
+      "name": "context",
+      "summary": "Context optimisation status, providers and compression (experimental)"
+    },
+    {
+      "name": "context compress",
+      "summary": "Compress tool output read from stdin (experimental)",
+      "flags": [
+        {
+          "name": "--exit"
+        },
+        {
+          "name": "--observe"
+        },
+        {
+          "name": "--safe"
+        },
+        {
+          "name": "--off"
+        }
+      ]
+    },
+    {
+      "name": "context enable",
+      "summary": "Enable the native compactor, or record a companion provider",
+      "flags": [
+        {
+          "name": "--exec"
+        },
+        {
+          "name": "--no-exec"
+        }
+      ]
+    },
+    {
+      "name": "cursor",
+      "summary": "Cursor preToolUse hook: rewrites a subagent's model"
+    },
+    {
+      "name": "cursor-touch",
+      "summary": "Cursor session hooks: remembers the composer model",
+      "hidden": true
+    },
+    {
+      "name": "dci",
+      "summary": "Removed: code intelligence is gone"
+    },
+    {
+      "name": "discover",
+      "summary": "Find commands the compactor would have changed but that ran bare",
+      "flags": [
+        {
+          "name": "--since"
+        },
+        {
+          "name": "--harness"
+        },
+        {
+          "name": "--top"
+        },
+        {
+          "name": "--json"
+        }
+      ]
+    },
+    {
+      "name": "docs-manifest",
+      "summary": "Print the documentation manifest as JSON",
+      "hidden": true
+    },
+    {
+      "name": "doctor",
+      "summary": "Checklist: binary, hooks per harness, state, with a fix per failure",
+      "flags": [
+        {
+          "name": "--verbose"
+        },
+        {
+          "name": "--json"
+        },
+        {
+          "name": "--quiet"
+        },
+        {
+          "name": "--check-latest"
+        }
+      ]
+    },
+    {
+      "name": "enable",
+      "summary": "Print shell aliases for transparent compaction"
+    },
+    {
+      "name": "end",
+      "summary": "Child-end observation: marks a subagent as finished"
+    },
+    {
+      "name": "eval-outcome",
+      "summary": "Outcome eval: executable checks, small vs frontier pass rate",
+      "flags": [
+        {
+          "name": "--verify"
+        },
+        {
+          "name": "--record"
+        },
+        {
+          "name": "--tier"
+        },
+        {
+          "name": "--model"
+        },
+        {
+          "name": "--solver"
+        },
+        {
+          "name": "--report"
+        },
+        {
+          "name": "--write"
+        },
+        {
+          "name": "--check"
+        },
+        {
+          "name": "--tasks"
+        },
+        {
+          "name": "--runs"
+        }
+      ]
+    },
+    {
+      "name": "exec",
+      "summary": "Old name of compact",
+      "alias_of": "compact",
+      "legacy": true
+    },
+    {
+      "name": "export",
+      "summary": "Counts and token totals an outside operator can share",
+      "flags": [
+        {
+          "name": "--days"
+        }
+      ]
+    },
+    {
+      "name": "gateway",
+      "summary": "Check local companion routers (9router)",
+      "flags": [
+        {
+          "name": "--json"
+        },
+        {
+          "name": "--endpoint"
+        }
+      ]
+    },
+    {
+      "name": "help",
+      "summary": "Show the common commands, or every command with --all",
+      "flags": [
+        {
+          "name": "--all",
+          "short": "-a"
+        }
+      ]
+    },
+    {
+      "name": "honor",
+      "summary": "Post-spawn observation: records whether the routing was honored"
+    },
+    {
+      "name": "kirocrew",
+      "summary": "KiroCrew preToolUse hook: policy mode, exit 0 allow or 2 block"
+    },
+    {
+      "name": "learning",
+      "summary": "Compressor learning status"
+    },
+    {
+      "name": "loop",
+      "summary": "Run an engineering loop with sensor verification and cascade auto-upgrade",
+      "flags": [
+        {
+          "name": "--task"
+        },
+        {
+          "name": "--sensor"
+        },
+        {
+          "name": "--iterations"
+        },
+        {
+          "name": "--timeout"
+        },
+        {
+          "name": "--session"
+        },
+        {
+          "name": "--model"
+        },
+        {
+          "name": "--batch"
+        },
+        {
+          "name": "--continue-on-error"
+        },
+        {
+          "name": "--json"
+        }
+      ]
+    },
+    {
+      "name": "mcp",
+      "summary": "Run the MCP server the orchestrator can ask"
+    },
+    {
+      "name": "models",
+      "summary": "The effective catalog and what each harness can use"
+    },
+    {
+      "name": "models available",
+      "summary": "The models a spawn can use now on a harness",
+      "flags": [
+        {
+          "name": "--harness"
+        },
+        {
+          "name": "--json"
+        }
+      ]
+    },
+    {
+      "name": "models check",
+      "summary": "Query provider APIs and report new or untiered models"
+    },
+    {
+      "name": "models discover",
+      "summary": "Ask each harness which models the account can use",
+      "flags": [
+        {
+          "name": "--harness"
+        },
+        {
+          "name": "--dry-run"
+        },
+        {
+          "name": "--json"
+        }
+      ]
+    },
+    {
+      "name": "models list",
+      "summary": "Show the effective catalog (embedded or override)"
+    },
+    {
+      "name": "models pull",
+      "summary": "Write the user catalog.json under the state dir"
+    },
+    {
+      "name": "opencode",
+      "summary": "OpenCode subagent_spawn_intent route hook (wire v1)"
+    },
+    {
+      "name": "plan",
+      "summary": "Validate a delegation plan and print it as a table",
+      "flags": [
+        {
+          "name": "--json"
+        }
+      ]
+    },
+    {
+      "name": "playbook",
+      "summary": "Edit the working rules a delegated worker receives"
+    },
+    {
+      "name": "policy",
+      "summary": "Validate the routing policy without routing anything",
+      "flags": [
+        {
+          "name": "--dry-run"
+        },
+        {
+          "name": "--yes",
+          "short": "-y"
+        },
+        {
+          "name": "--harness"
+        }
+      ]
+    },
+    {
+      "name": "probe",
+      "summary": "Record a payload's field names (never prompts or paths) in probe.jsonl"
+    },
+    {
+      "name": "quota",
+      "summary": "Inspect, import or collect budget evidence for a harness",
+      "flags": [
+        {
+          "name": "--harness"
+        },
+        {
+          "name": "--source"
+        },
+        {
+          "name": "--ttl"
+        },
+        {
+          "name": "--transcript"
+        },
+        {
+          "name": "--model"
+        }
+      ]
+    },
+    {
+      "name": "report",
+      "summary": "Measured: routed spawns, tokens per completed task, rework per verdict",
+      "flags": [
+        {
+          "name": "--days"
+        },
+        {
+          "name": "--json"
+        },
+        {
+          "name": "--text"
+        },
+        {
+          "name": "--markdown"
+        },
+        {
+          "name": "--daily"
+        },
+        {
+          "name": "--history"
+        },
+        {
+          "name": "--by"
+        }
+      ]
+    },
+    {
+      "name": "report clear",
+      "summary": "Move every measurement log to a backup so the measurement starts from zero",
+      "flags": [
+        {
+          "name": "--dry-run"
+        },
+        {
+          "name": "--yes",
+          "short": "-y"
+        }
+      ]
+    },
+    {
+      "name": "retrieve",
+      "summary": "Print the full output the compactor kept for an id",
+      "flags": [
+        {
+          "name": "--grep"
+        },
+        {
+          "name": "--head"
+        },
+        {
+          "name": "--tail"
+        },
+        {
+          "name": "--lines"
+        }
+      ]
+    },
+    {
+      "name": "route",
+      "summary": "Show what would be applied for one spawn",
+      "flags": [
+        {
+          "name": "--harness"
+        },
+        {
+          "name": "--model"
+        },
+        {
+          "name": "--effort"
+        },
+        {
+          "name": "--tier"
+        },
+        {
+          "name": "--agent-type"
+        },
+        {
+          "name": "--dir"
+        },
+        {
+          "name": "--json"
+        }
+      ]
+    },
+    {
+      "name": "session",
+      "summary": "This session's subagents as a tree (every harness)",
+      "flags": [
+        {
+          "name": "--tree"
+        },
+        {
+          "name": "--why"
+        },
+        {
+          "name": "--pause"
+        },
+        {
+          "name": "--resume"
+        },
+        {
+          "name": "--session"
+        },
+        {
+          "name": "--json"
+        },
+        {
+          "name": "--panel"
+        },
+        {
+          "name": "--no-report"
+        },
+        {
+          "name": "--brief"
+        }
+      ]
+    },
+    {
+      "name": "setup",
+      "summary": "Wire the hooks into every harness found (backup, diff, --undo)",
+      "flags": [
+        {
+          "name": "--tui"
+        },
+        {
+          "name": "--no-tui"
+        },
+        {
+          "name": "--dry-run"
+        },
+        {
+          "name": "--undo"
+        },
+        {
+          "name": "--yes",
+          "short": "-y"
+        },
+        {
+          "name": "--no-session-policy"
+        },
+        {
+          "name": "--you-should-know"
+        },
+        {
+          "name": "--no-plugin"
+        },
+        {
+          "name": "--no-mods"
+        },
+        {
+          "name": "--no-mcp"
+        },
+        {
+          "name": "--no-skills"
+        },
+        {
+          "name": "--no-steering"
+        },
+        {
+          "name": "--no-policy"
+        },
+        {
+          "name": "--keep-binaries"
+        },
+        {
+          "name": "--workers"
+        },
+        {
+          "name": "--allow-unsafe-binary"
+        },
+        {
+          "name": "--mcp",
+          "deprecated": true
+        }
+      ]
+    },
+    {
+      "name": "shell-init",
+      "summary": "Deprecated alias of enable",
+      "alias_of": "enable",
+      "legacy": true
+    },
+    {
+      "name": "stats",
+      "summary": "Decisions and the tiers spawns ran on",
+      "flags": [
+        {
+          "name": "--days"
+        },
+        {
+          "name": "--by-harness"
+        },
+        {
+          "name": "--detail"
+        },
+        {
+          "name": "--export"
+        }
+      ]
+    },
+    {
+      "name": "uninstall",
+      "summary": "Restore harness hook configurations and remove wrappers",
+      "flags": [
+        {
+          "name": "--dry-run"
+        },
+        {
+          "name": "--yes",
+          "short": "-y"
+        },
+        {
+          "name": "--purge"
+        }
+      ]
+    },
+    {
+      "name": "usage",
+      "summary": "Post-spawn usage observation: records tokens"
+    },
+    {
+      "name": "version",
+      "summary": "Print the binary version"
+    },
+    {
+      "name": "watch",
+      "summary": "Live session tree, redrawn every interval",
+      "flags": [
+        {
+          "name": "--session"
+        },
+        {
+          "name": "--interval"
+        },
+        {
+          "name": "--once"
+        }
+      ]
+    }
+  ],
+  "env_vars": [
+    "DOWNSHIFT_BUDGET_TOKENS",
+    "DOWNSHIFT_CCR",
+    "DOWNSHIFT_CCR_FAILURES",
+    "DOWNSHIFT_CURSOR_NATIVE_FILE",
+    "DOWNSHIFT_DISCOVERED",
+    "DOWNSHIFT_DISCOVERY",
+    "DOWNSHIFT_DISCOVERY_OPENROUTER",
+    "DOWNSHIFT_DISCOVERY_TTL",
+    "DOWNSHIFT_DOMAIN_DEDUP",
+    "DOWNSHIFT_DOMAIN_INTERACTIONS",
+    "DOWNSHIFT_DOMAIN_SIGNALS",
+    "DOWNSHIFT_EVENT_LOG",
+    "DOWNSHIFT_EXEC",
+    "DOWNSHIFT_EXEC_DEPTH",
+    "DOWNSHIFT_HOOK_TEST_P",
+    "DOWNSHIFT_KIROCREW_DIR",
+    "DOWNSHIFT_LEARNING",
+    "DOWNSHIFT_LOG_MAX_BACKUPS",
+    "DOWNSHIFT_LOG_MAX_MB",
+    "DOWNSHIFT_MANAGED",
+    "DOWNSHIFT_MAX_PARALLEL",
+    "DOWNSHIFT_MINILM",
+    "DOWNSHIFT_PLAIN",
+    "DOWNSHIFT_QUIET",
+    "DOWNSHIFT_QUOTA_FILE",
+    "DOWNSHIFT_QUOTA_MODE",
+    "DOWNSHIFT_QUOTA_STOP_PCT",
+    "DOWNSHIFT_SEMANTIC_BOOST",
+    "DOWNSHIFT_SESSION_MODELS",
+    "DOWNSHIFT_STATE_DIR",
+    "DOWNSHIFT_TEST_TIMEOUT_SCALE",
+    "DOWNSHIFT_TEST_TIMING",
+    "DOWNSHIFT_WORKER",
+    "DOWNSHIFT_WORKERS",
+    "DOWNSHIFT_WORKER_ENV",
+    "DOWNSHIFT_WORKER_TOKEN_BUDGET"
+  ],
+  "mcp_tools": [
+    "apply",
+    "cancel",
+    "collect",
+    "delegate",
+    "diff",
+    "plan",
+    "playbook",
+    "providers",
+    "release",
+    "retrieve",
+    "send",
+    "status",
+    "steer"
+  ],
+  "default_endpoints": {
+    "9router": "http://localhost:20128"
+  },
+  "harness_capabilities": {
+    "antigravity": {
+      "CanRewriteModel": true,
+      "CanApplyEffort": false,
+      "RewritePreservesInput": true,
+      "StrictModelName": false,
+      "ModelOverrideEnv": "",
+      "ModelForceEnv": "",
+      "NativeSessionEnv": "",
+      "NativeUsageSource": "",
+      "TranscriptQuota": false,
+      "SingleModelReasoning": false,
+      "SessionFromCatalog": false,
+      "CanShowChildLine": false,
+      "CanReturnNote": false,
+      "SessionEnv": "",
+      "ShellEnv": "",
+      "AgentEnv": null,
+      "ChildEndEvent": "",
+      "UsageSource": "",
+      "HookEntries": null,
+      "PayloadMarkers": null,
+      "CanRewriteShellCommand": true,
+      "RewriteImpliesApproval": false,
+      "UnknownUserRules": true,
+      "ShellDialect": "posix",
+      "CanAdviseShellWrap": false,
+      "AgentTypeHints": null,
+      "SquadAgentPrefix": "",
+      "MainToolEvent": "",
+      "MainToolCategories": null,
+      "MaxParallel": 0,
+      "WorkerAgent": "",
+      "WorkerReadOnlyVerified": false
+    },
+    "claude-code": {
+      "CanRewriteModel": true,
+      "CanApplyEffort": false,
+      "RewritePreservesInput": true,
+      "StrictModelName": true,
+      "ModelOverrideEnv": "CLAUDE_CODE_SUBAGENT_MODEL",
+      "ModelForceEnv": "CLAUDE_CODE_SUBAGENT_MODEL_FORCE",
+      "NativeSessionEnv": "",
+      "NativeUsageSource": "",
+      "TranscriptQuota": false,
+      "SingleModelReasoning": false,
+      "SessionFromCatalog": true,
+      "CanShowChildLine": true,
+      "CanReturnNote": true,
+      "SessionEnv": "CLAUDE_CODE_SESSION_ID",
+      "ShellEnv": "",
+      "AgentEnv": null,
+      "ChildEndEvent": "SubagentStop",
+      "UsageSource": "transcript",
+      "HookEntries": [
+        "settings-hook",
+        "mod"
+      ],
+      "PayloadMarkers": null,
+      "CanRewriteShellCommand": true,
+      "RewriteImpliesApproval": false,
+      "UnknownUserRules": false,
+      "ShellDialect": "posix",
+      "CanAdviseShellWrap": false,
+      "AgentTypeHints": {
+        "Explore": 0,
+        "Plan": 1
+      },
+      "SquadAgentPrefix": "downshift:",
+      "MainToolEvent": "PostToolUse",
+      "MainToolCategories": {
+        "Bash": "shell",
+        "Edit": "edit",
+        "Glob": "search",
+        "Grep": "search",
+        "MultiEdit": "edit",
+        "NotebookEdit": "edit",
+        "NotebookRead": "read",
+        "Read": "read",
+        "Write": "edit"
+      },
+      "MaxParallel": 0,
+      "WorkerAgent": "claude",
+      "WorkerReadOnlyVerified": true
+    },
+    "codex": {
+      "CanRewriteModel": true,
+      "CanApplyEffort": true,
+      "RewritePreservesInput": true,
+      "StrictModelName": false,
+      "ModelOverrideEnv": "",
+      "ModelForceEnv": "",
+      "NativeSessionEnv": "",
+      "NativeUsageSource": "",
+      "TranscriptQuota": true,
+      "SingleModelReasoning": false,
+      "SessionFromCatalog": false,
+      "CanShowChildLine": false,
+      "CanReturnNote": false,
+      "SessionEnv": "",
+      "ShellEnv": "CODEX_THREAD_ID",
+      "AgentEnv": null,
+      "ChildEndEvent": "PostToolUse",
+      "UsageSource": "none",
+      "HookEntries": null,
+      "PayloadMarkers": null,
+      "CanRewriteShellCommand": true,
+      "RewriteImpliesApproval": true,
+      "UnknownUserRules": true,
+      "ShellDialect": "posix",
+      "CanAdviseShellWrap": false,
+      "AgentTypeHints": null,
+      "SquadAgentPrefix": "",
+      "MainToolEvent": "",
+      "MainToolCategories": null,
+      "MaxParallel": 0,
+      "WorkerAgent": "codex",
+      "WorkerReadOnlyVerified": false
+    },
+    "cursor": {
+      "CanRewriteModel": true,
+      "CanApplyEffort": false,
+      "RewritePreservesInput": true,
+      "StrictModelName": false,
+      "ModelOverrideEnv": "",
+      "ModelForceEnv": "",
+      "NativeSessionEnv": "DOWNSHIFT_CURSOR_NATIVE_FILE",
+      "NativeUsageSource": "cursor-usage",
+      "TranscriptQuota": false,
+      "SingleModelReasoning": false,
+      "SessionFromCatalog": false,
+      "CanShowChildLine": false,
+      "CanReturnNote": false,
+      "SessionEnv": "",
+      "ShellEnv": "",
+      "AgentEnv": null,
+      "ChildEndEvent": "subagentStop",
+      "UsageSource": "none",
+      "HookEntries": null,
+      "PayloadMarkers": [
+        "cursor_version",
+        "conversation_id",
+        "generation_id",
+        "workspace_roots"
+      ],
+      "CanRewriteShellCommand": true,
+      "RewriteImpliesApproval": false,
+      "UnknownUserRules": true,
+      "ShellDialect": "posix",
+      "CanAdviseShellWrap": true,
+      "AgentTypeHints": null,
+      "SquadAgentPrefix": "",
+      "MainToolEvent": "",
+      "MainToolCategories": null,
+      "MaxParallel": 0,
+      "WorkerAgent": "",
+      "WorkerReadOnlyVerified": false
+    },
+    "kirocrew": {
+      "CanRewriteModel": false,
+      "CanApplyEffort": false,
+      "RewritePreservesInput": false,
+      "StrictModelName": false,
+      "ModelOverrideEnv": "",
+      "ModelForceEnv": "",
+      "NativeSessionEnv": "",
+      "NativeUsageSource": "",
+      "TranscriptQuota": false,
+      "SingleModelReasoning": false,
+      "SessionFromCatalog": false,
+      "CanShowChildLine": false,
+      "CanReturnNote": false,
+      "SessionEnv": "KIRO_SESSION_ID",
+      "ShellEnv": "",
+      "AgentEnv": null,
+      "ChildEndEvent": "postToolUse",
+      "UsageSource": "none",
+      "HookEntries": null,
+      "PayloadMarkers": null,
+      "CanRewriteShellCommand": false,
+      "RewriteImpliesApproval": false,
+      "UnknownUserRules": false,
+      "ShellDialect": "",
+      "CanAdviseShellWrap": true,
+      "AgentTypeHints": null,
+      "SquadAgentPrefix": "",
+      "MainToolEvent": "",
+      "MainToolCategories": null,
+      "MaxParallel": 0,
+      "WorkerAgent": "",
+      "WorkerReadOnlyVerified": false
+    },
+    "opencode": {
+      "CanRewriteModel": true,
+      "CanApplyEffort": false,
+      "RewritePreservesInput": false,
+      "StrictModelName": false,
+      "ModelOverrideEnv": "",
+      "ModelForceEnv": "",
+      "NativeSessionEnv": "",
+      "NativeUsageSource": "",
+      "TranscriptQuota": false,
+      "SingleModelReasoning": false,
+      "SessionFromCatalog": false,
+      "CanShowChildLine": false,
+      "CanReturnNote": false,
+      "SessionEnv": "",
+      "ShellEnv": "OPENCODE_SESSION_ID",
+      "AgentEnv": [
+        "OPENCODE"
+      ],
+      "ChildEndEvent": "child_done",
+      "UsageSource": "payload",
+      "HookEntries": null,
+      "PayloadMarkers": null,
+      "CanRewriteShellCommand": true,
+      "RewriteImpliesApproval": false,
+      "UnknownUserRules": false,
+      "ShellDialect": "posix",
+      "CanAdviseShellWrap": false,
+      "AgentTypeHints": null,
+      "SquadAgentPrefix": "",
+      "MainToolEvent": "",
+      "MainToolCategories": null,
+      "MaxParallel": 0,
+      "WorkerAgent": "",
+      "WorkerReadOnlyVerified": false
+    }
+  }
+}

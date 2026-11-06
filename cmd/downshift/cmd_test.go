@@ -1,0 +1,349 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+// Package-level tests for cmd/downshift. These call the internal functions
+// directly so go test -cover can instrument them, unlike the subprocess-based
+// main_test.go which builds and runs a separate binary.
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
+	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
+)
+
+// captureStdout redirects os.Stdout to a buffer for the duration of fn.
+func captureStdout(fn func()) string {
+	r, w, _ := os.Pipe()
+	old := os.Stdout
+	os.Stdout = w
+	fn()
+	w.Close()
+	os.Stdout = old
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	return buf.String()
+}
+
+var cmdCat = catalog.Load()
+
+type delayedReader struct{ release <-chan struct{} }
+
+func (r delayedReader) Read(_ []byte) (int, error) {
+	<-r.release
+	return 0, io.EOF
+}
+
+func setSessionAllowlist(t *testing.T, harness string, ids []string) {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "session-models.json")
+	data, err := json.Marshal(map[string][]string{harness: ids})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DOWNSHIFT_SESSION_MODELS", path)
+}
+
+func claudeCodeFrontierID() string { return cmdCat.ModelFor("claude-code", core.TierFrontier).ID }
+
+// --- runModels ---
+
+func TestRunModels_NoArgs(t *testing.T) {
+	if rc := runModels(cmdCat, nil); rc != 2 {
+		t.Errorf("no args rc = %d, want 2", rc)
+	}
+}
+
+func TestRunModels_UnknownSubcommand(t *testing.T) {
+	if rc := runModels(cmdCat, []string{"unknown-subcmd"}); rc != 2 {
+		t.Errorf("unknown subcommand rc = %d, want 2", rc)
+	}
+}
+
+func TestRunModels_List(t *testing.T) {
+	out := captureStdout(func() {
+		if rc := runModels(cmdCat, []string{"list"}); rc != 0 {
+			t.Errorf("rc = %d, want 0", rc)
+		}
+	})
+	for _, want := range []string{"claude-code", "codex", "Catalog source:"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("expected %q in list output; got:\n%s", want, out)
+		}
+	}
+}
+
+func TestRunModels_Check_NoKeys(t *testing.T) {
+	t.Setenv("ANTHROPIC_API_KEY", "")
+	t.Setenv("OPENAI_API_KEY", "")
+	t.Setenv("XAI_API_KEY", "")
+	out := captureStdout(func() {
+		if rc := runModels(cmdCat, []string{"check"}); rc != 0 {
+			t.Errorf("rc = %d, want 0", rc)
+		}
+	})
+	if !strings.Contains(out, "No providers checked") {
+		t.Errorf("expected 'No providers checked'; got:\n%s", out)
+	}
+}
+
+func TestRunModels_Pull_NoKeys(t *testing.T) {
+	t.Setenv("ANTHROPIC_API_KEY", "")
+	t.Setenv("OPENAI_API_KEY", "")
+	t.Setenv("XAI_API_KEY", "")
+	captureStdout(func() {
+		if rc := runModels(cmdCat, []string{"pull"}); rc != 0 {
+			t.Errorf("pull with no keys rc = %d, want 0", rc)
+		}
+	})
+}
+
+// --- runHookAdapter ---
+
+// hookEvent builds a minimal PreToolUse JSON event for the given harness.
+func hookEvent(toolName, modelID, prompt string) []byte {
+	return []byte(`{"hook_event_name":"PreToolUse","tool_name":"` + toolName +
+		`","model":"` + modelID + `","tool_input":{"prompt":"` + prompt +
+		`","model":"` + modelID + `"}}`)
+}
+
+func TestRunHookAdapter_ClaudeCode_Downshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
+	frontierID := claudeCodeFrontierID()
+	setSessionAllowlist(t, "claude-code", []string{
+		cmdCat.ModelFor("claude-code", core.TierSmall).ID,
+		cmdCat.ModelFor("claude-code", core.TierMid).ID,
+		frontierID,
+	})
+	event := hookEvent("Task", frontierID, "rename the userId variable")
+
+	out := captureStdout(func() {
+		rc := runHookAdapter(
+			"claude-code",
+			bytes.NewReader(event),
+			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
+			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
+			printAllow,
+		)
+		if rc != 0 {
+			t.Errorf("rc = %d, want 0", rc)
+		}
+	})
+	if !strings.Contains(out, `"permissionDecision":"allow"`) {
+		t.Errorf("expected allow decision; got:\n%s", out)
+	}
+	if !strings.Contains(out, `"updatedInput"`) {
+		t.Errorf("expected updatedInput (downshift); got:\n%s", out)
+	}
+}
+
+func TestRunHookAdapter_Cursor_Downshift(t *testing.T) {
+	frontierID := claudeCodeFrontierID() // cursor also uses claude-code catalog
+	event := []byte(`{"hook_event_name":"preToolUse","tool_name":"Task","model_id":"` +
+		frontierID + `","tool_input":{"task":"rename the userId variable","model":"` + frontierID + `"}}`)
+
+	out := captureStdout(func() {
+		runHookAdapter(
+			"cursor",
+			bytes.NewReader(event),
+			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
+			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },
+			printCursorAllow,
+		)
+	})
+	if !strings.Contains(out, `"permission":"allow"`) {
+		t.Errorf("expected cursor allow; got:\n%s", out)
+	}
+}
+
+func TestRunHookAdapter_Codex_Downshift(t *testing.T) {
+	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
+	setSessionAllowlist(t, "codex", []string{
+		cmdCat.ModelFor("codex", core.TierSmall).ID,
+		cmdCat.ModelFor("codex", core.TierMid).ID,
+		frontierID,
+	})
+	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"` +
+		frontierID + `","tool_input":{"message":"rename the userId variable","model":"` + frontierID + `"}}`)
+
+	out := captureStdout(func() {
+		runHookAdapter(
+			"codex",
+			bytes.NewReader(event),
+			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
+			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
+			printAllow,
+		)
+	})
+	if !strings.Contains(out, `"permissionDecision":"allow"`) {
+		t.Errorf("expected codex allow decision; got:\n%s", out)
+	}
+	if !strings.Contains(out, `"updatedInput"`) {
+		t.Errorf("expected updatedInput (downshift); got:\n%s", out)
+	}
+	if !strings.Contains(out, `"reasoning_effort"`) {
+		t.Errorf("expected reasoning_effort in codex output; got:\n%s", out)
+	}
+}
+
+func TestHookTelemetryEndToEnd(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "hook-events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
+	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
+	setSessionAllowlist(t, "codex", []string{
+		cmdCat.ModelFor("codex", core.TierSmall).ID,
+		cmdCat.ModelFor("codex", core.TierMid).ID,
+		frontierID,
+	})
+	privatePrompt := "private customer incident secret-should-not-persist"
+	correlationID := "0123456789abcdef0123456789abcdef"
+	event := []byte(`{"hook_event_name":"PreToolUse","correlation_id":"` + correlationID + `","session_id":"session-e2e","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"` + privatePrompt + `","model":"` + frontierID + `","reasoning_effort":"high"}}`)
+	captureStdout(func() {
+		if rc := runHookAdapter(
+			"codex",
+			bytes.NewReader(event),
+			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
+			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
+			printAllow,
+		); rc != 0 {
+			t.Fatalf("hook rc = %d", rc)
+		}
+	})
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), privatePrompt) || strings.Contains(string(data), "secret-should-not-persist") {
+		t.Fatal("hook telemetry persisted task content")
+	}
+	var recorded telemetry.Event
+	if err := json.Unmarshal(bytes.TrimSpace(data), &recorded); err != nil {
+		t.Fatal(err)
+	}
+	if recorded.CorrelationID != correlationID || recorded.Timestamp == "" || recorded.Source != "hook" || recorded.Agent != "subagent" {
+		t.Fatalf("missing hook correlation metadata: %#v", recorded)
+	}
+	if recorded.Harness != "codex" || recorded.SessionID != telemetry.HashSessionID("session-e2e") || recorded.FromModel != frontierID || recorded.ToModel == "" {
+		t.Fatalf("unexpected model/harness telemetry: %#v", recorded)
+	}
+	if recorded.RequestedEffort != "high" || recorded.FinalEffort == "" || recorded.Tier == "" || recorded.Verdict == "" || recorded.PolicyVersion == "" || recorded.BinaryVersion == "" || recorded.Outcome != "allow" || recorded.ToModel != recorded.FromModel {
+		t.Fatalf("missing routing decision telemetry: %#v", recorded)
+	}
+}
+
+// Requested model provenance must remain unknown when the hook did not supply
+// a catalog-allowlisted original value. The policy recommendation is not an
+// observation and must never fill this field.
+func TestHookTelemetryDoesNotBackfillRequestedModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
+	path := filepath.Join(t.TempDir(), "hook-events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
+	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
+	setSessionAllowlist(t, "codex", []string{frontierID})
+	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"untrusted-model","tool_input":{"message":"review a small change"}}`)
+	captureStdout(func() {
+		runHookAdapter(
+			"codex",
+			bytes.NewReader(event),
+			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
+			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
+			printAllow,
+		)
+	})
+	events, err := telemetry.ReadEventsFrom(path)
+	if err != nil || len(events) != 1 {
+		t.Fatalf("events=%#v err=%v", events, err)
+	}
+	if events[0].FromModel != "unknown" {
+		t.Fatalf("requested_model = %q, want unknown without allowlisted input", events[0].FromModel)
+	}
+	// The spawn was left unchanged: final_model is what the child runs on
+	// (unknown here) and the policy output moves to recommended_model.
+	if events[0].Outcome != "allow" || events[0].ToModel != "unknown" || events[0].RecommendedModel == "" {
+		t.Fatalf("allow event must record the unchanged model and keep the recommendation: %#v", events[0])
+	}
+}
+
+func TestRunHookAdapter_InputDeadlineFailsOpenAndRecordsNoPayload(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "timeout-events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
+	previousTimeout := hookReadTimeout
+	hookReadTimeout = 10 * time.Millisecond
+	t.Cleanup(func() { hookReadTimeout = previousTimeout })
+	release := make(chan struct{})
+	out := captureStdout(func() {
+		if rc := runHookAdapter(
+			"claude-code",
+			delayedReader{release: release},
+			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
+			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
+			printAllow,
+		); rc != 0 {
+			t.Fatalf("timeout rc = %d", rc)
+		}
+	})
+	close(release)
+	if strings.TrimSpace(out) != `{}` {
+		t.Fatalf("timeout must fail open with a neutral {}: %s", out)
+	}
+	events, err := telemetry.ReadEventsFrom(path)
+	if err != nil || len(events) != 1 {
+		t.Fatalf("timeout events=%#v err=%v", events, err)
+	}
+	if events[0].Outcome != "error" || events[0].ErrorCode != "INPUT_TIMEOUT" || events[0].CorrelationID == "" {
+		t.Fatalf("unexpected timeout telemetry: %#v", events[0])
+	}
+}
+
+func TestRunHookAdapter_MalformedJSON_FailOpen(t *testing.T) {
+	out := captureStdout(func() {
+		rc := runHookAdapter(
+			"claude-code",
+			bytes.NewReader([]byte(`{not valid json`)),
+			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
+			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
+			printAllow,
+		)
+		if rc != 0 {
+			t.Errorf("malformed JSON must fail-open (rc=0), got %d", rc)
+		}
+	})
+	if strings.TrimSpace(out) != `{}` {
+		t.Errorf("fail-open must print a neutral {}; got:\n%s", out)
+	}
+}
+
+func TestRunHookAdapter_OversizedPayload_FailOpen(t *testing.T) {
+	payload := bytes.Repeat([]byte("x"), (1<<20)+1)
+	out := captureStdout(func() {
+		rc := runHookAdapter(
+			"claude-code",
+			bytes.NewReader(payload),
+			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
+			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
+			printAllow,
+		)
+		if rc != 0 {
+			t.Errorf("oversized payload must fail-open (rc=0), got %d", rc)
+		}
+	})
+	if strings.TrimSpace(out) != `{}` {
+		t.Errorf("oversized payload must print a neutral {}; got:\n%s", out)
+	}
+}

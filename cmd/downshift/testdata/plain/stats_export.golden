@@ -1,0 +1,32 @@
+exit: 0
+--- stdout ---
+{
+  "schema_version": 4,
+  "window_days": 30,
+  "generated_at": "<TIME>",
+  "total": 0,
+  "downshifted": 0,
+  "upshifted": 0,
+  "ok": 0,
+  "unknown": 0,
+  "corrected": 0,
+  "not_applied": 0,
+  "policy_floor": 0,
+  "usage_records": 0,
+  "usage_linked": 0,
+  "baseline_no_route": 0,
+  "rewrite_shifted": 0,
+  "rewrite_honored_inferred": 0,
+  "by_complexity": {},
+  "downshift_rate": 0,
+  "observed_child_tokens": 0,
+  "observed_child_usage": 0,
+  "child_status": {},
+  "routing_tokens": {},
+  "note": "Single-user dogfood: directional only, not billing. Compare your provider dashboard before/after deploying downshift.",
+  "token_ledger": {
+    "compactor_saved": 0,
+    "compactor_estimate": "estimate: saved bytes / 4"
+  }
+}
+--- stderr ---

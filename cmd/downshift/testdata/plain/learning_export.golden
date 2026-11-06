@@ -1,0 +1,8 @@
+exit: 0
+--- stdout ---
+{
+  "version": 2,
+  "entries": {},
+  "updated_at": ""
+}
+--- stderr ---

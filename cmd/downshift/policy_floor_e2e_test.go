@@ -1,0 +1,96 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
+)
+
+// TestHookE2E_ProjectFloorThroughSharedRunner proves the floor arrives through
+// the shared runner (payload cwd -> project context -> core), not through any
+// adapter-specific code: a Cursor payload with a cwd holding a policy file is
+// routed to the floor tier instead of the small tier.
+func TestHookE2E_ProjectFloorThroughSharedRunner(t *testing.T) {
+	decidertest.Use(t, routingDecider{now: time.Now})
+	testenv.SetHome(t, t.TempDir())
+	eventLog := filepath.Join(t.TempDir(), "events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
+	smallID := cmdCat.ModelFor("cursor", core.TierSmall).ID
+	midID := cmdCat.ModelFor("cursor", core.TierMid).ID
+	frontierID := cmdCat.ModelFor("cursor", core.TierFrontier).ID
+	setSessionAllowlist(t, "cursor", []string{smallID, midID, frontierID})
+
+	proj := t.TempDir()
+	p := filepath.Join(proj, ".downshift", "policy.json")
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(`{"version":1,"min_tier":"mid"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	run := func(cwd string) string {
+		payload := map[string]any{
+			"hook_event_name": "preToolUse",
+			"tool_name":       "Task",
+			"model_id":        frontierID,
+			"tool_input":      map[string]any{"task": "rename the userId variable to userIdentifier", "model": frontierID},
+		}
+		if cwd != "" {
+			payload["cwd"] = cwd
+		}
+		stdin, _ := json.Marshal(payload)
+		out := captureStdout(func() {
+			runHookAdapter(
+				"cursor",
+				bytes.NewReader(stdin),
+				func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
+				func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },
+				printCursorAllow,
+			)
+		})
+		var o struct {
+			UpdatedInput map[string]any `json:"updated_input"`
+		}
+		if err := json.Unmarshal([]byte(out), &o); err != nil || o.UpdatedInput == nil {
+			t.Fatalf("no rewrite in %q (%v)", out, err)
+		}
+		model, _ := o.UpdatedInput["model"].(string)
+		return model
+	}
+
+	if got := run(proj); got != midID {
+		t.Errorf("with policy cwd: model = %s, want mid %s", got, midID)
+	}
+	if got := run(t.TempDir()); got != smallID {
+		t.Errorf("without policy: model = %s, want small %s", got, smallID)
+	}
+
+	// Telemetry marks only the decision the floor raised.
+	raw, err := os.ReadFile(eventLog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := bytes.Split(bytes.TrimSpace(raw), []byte("\n"))
+	if len(lines) != 2 {
+		t.Fatalf("want 2 events, got %d", len(lines))
+	}
+	if !bytes.Contains(lines[0], []byte(`"policy_floor":true`)) || bytes.Contains(lines[1], []byte("policy_floor")) {
+		t.Errorf("policy_floor must be recorded only on the raised decision:\n%s", raw)
+	}
+	// The shared runner records the decision trace for every harness.
+	if !bytes.Contains(lines[0], []byte(`"routing_policy":"deterministic-v1"`)) || !bytes.Contains(lines[0], []byte(`"TIER_FLOOR"`)) || bytes.Contains(lines[1], []byte(`"TIER_FLOOR"`)) {
+		t.Errorf("decision trace must carry TIER_FLOOR only on the raised decision:\n%s", raw)
+	}
+}

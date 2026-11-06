@@ -1,0 +1,4 @@
+{"ts":"2026-11-01T10:00:00Z","harness":"claude-code","tool":"Read","category":"read","tier":"frontier"}
+{"ts":"2026-11-01T10:00:01Z","harness":"claude-code","tool":"Grep","category":"search","tier":"frontier"}
+{"ts":"2026-11-01T10:00:02Z","harness":"claude-code","tool":"Bash","category":"shell","tier":"mid"}
+{"ts":"2026-11-01T10:00:03Z","harness":"claude-code","tool":"Edit","category":"edit","tier":"frontier"}

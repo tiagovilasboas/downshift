@@ -1,0 +1,6 @@
+exit: 0
+--- stdout ---
+project file: none
+user file:    none
+policy ok: 0 profiles, 0 rules; critical threshold 80, both critical ask, quota TTL 5m0s
+--- stderr ---

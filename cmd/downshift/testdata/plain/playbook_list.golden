@@ -1,0 +1,22 @@
+exit: 0
+--- stdout ---
+  General        default     912 chars
+  Backend        default     350 chars
+  Frontend       default     370 chars
+  Research       default    1245 chars
+  Implementation default    1298 chars
+  Review         default    1394 chars
+  TDD Verification default    1305 chars
+  Documentation  default    1072 chars
+  Incident Rescue default    1154 chars
+  Scout then Build default    1043 chars
+  Cascade        default    1011 chars
+  Audit at Scale default    1082 chars
+  Best of N      default    1073 chars
+  tdd-verification removed        
+  docs           removed        
+  incident-rescue removed        
+  scout-then-build removed        
+  audit-at-scale removed        
+  best-of-n      removed        
+--- stderr ---

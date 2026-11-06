@@ -1,0 +1,89 @@
+COMPACTION SAVINGS PER HARNESS (all time; tokens kept out of the context, per harness, never summed)
+   harness        tokens avoided (Compactor)
+   claude-code    1.0k
+   no events: antigravity, cursor, kirocrew, opencode
+Current harness: claude-code
+
+Routed spawns, all time
+
+group      spawns   ended  completed  billable/completed    rework
+routed          6       1          1                1.5k      0.0%
+
+Rework by routing verdict, routed spawns
+verdict                   spawns   ended  completed    rework  policy key that turns it off
+hint_down                      1       0          0         -  No policy key turns this verdict off
+kept                           1       0          0         -  No policy key turns this verdict off
+not_recorded                   1       0          0         -  No policy key turns this verdict off
+profile                        1       0          0         -  routing.profiles (remove the profile)
+refused_config                 1       0          0         -  No policy key turns this verdict off
+rule                           1       1          1      0.0%  routing.rules[].enabled: false
+  Downshift does not change the policy: the key is in policy.json.
+
+Routing tokens, by harness (billable = input + output + cache write)
+  claude-code
+    below the requested model  1.5k of 1.5k billable (1 spawn, no session model; a different baseline)
+
+Completion measurable, by harness
+  claude-code  measurable: 1 end record from SubagentStop, usage from transcript
+  cursor       not yet measurable: no end record seen from subagentStop (usage from none)
+  codex        not yet measurable: no end record seen from PostToolUse (usage from none)
+  kirocrew     not yet measurable: no end record seen from postToolUse (usage from none)
+  antigravity  no end event known; completion is not measurable
+  opencode     not yet measurable: no end record seen from child_done (usage from payload)
+
+Billable tokens = input, output and cache write tokens of the same tasks.
+Cache reads are left out of them: they follow the context a child rereads, not the tier it ran on.
+A cheaper tier is not fewer tokens: the figures count tokens that ran, per harness, never summed.
+Completed tasks include the failed attempts they redid (respawn in the same session within 10 minutes). Prompt-free.
+Other harnesses
+
+codex
+group      spawns   ended  completed  billable/completed    rework
+routed          2       0          0                   -         -
+Routing tokens, by harness (billable = input + output + cache write)
+  tokens not observed in this window
+
+📦 COMPACTOR (all time)
+   Commands: 1 · Compacted: 1
+
+COMPACTION DETAIL PER HARNESS (tokens are bytes / 4, an estimate)
+   claude-code: 1 commands, 1 compacted
+      family             commands compacted output tokens tokens avoided
+      other                     1         1          1.1k           1.0k
+
+EFFICIENCY PER HARNESS (all time)
+   More work done, less premium intelligence consumed. Compactor tokens: see the section above.
+   claude-code: 6 spawns
+      premium preserved: 100% (1 of 1 completed tasks ran below frontier)
+      completed: 1 of 1 ended · rework: 0% (0 of 1 ended)
+      by tier: small 2 (33%) · mid 1 (17%) · frontier 3 (50%) · unknown 0 (0%)
+   codex: 2 spawns
+      premium preserved: unobserved
+      completed: 0 of 0 ended · rework: unobserved (no spawn ended)
+      by tier: small 0 (0%) · mid 0 (0%) · frontier 0 (0%) · unknown 2 (100%)
+
+WHY SPAWNS CHANGED (all time)
+   claude-code: 6 spawns
+      by verdict: hint_down 1 · kept 1 · profile 1 · refused_config 1 · rule 1
+      top reasons: hint_down 1 · kept 1 · profile:cheap-reader 1 · refused_config:unknown_profile 1 · rule:fast-lane 1
+      1 without a routing note (written before it was recorded)
+   codex: 2 spawns
+      by verdict: held_unknown 1 · kept 1
+      top reasons: held_unknown:no_candidate 1 · kept 1
+   no events: antigravity, cursor, kirocrew, opencode
+
+MAIN SESSION MECHANICAL WORK (all time; read/search/shell calls a small-tier subagent could take, per harness, never added)
+   claude-code    main session: 0 read/search/shell calls, 0 on a frontier model
+   cursor         unobserved
+   codex          unobserved
+   kirocrew       unobserved
+   antigravity    unobserved
+   opencode       unobserved
+
+QUOTA USED PER HARNESS (all time)
+   harness        quota used (5h · week)
+   claude-code    unknown
+   codex          unknown
+   no events: antigravity, cursor, kirocrew, opencode
+
+Planner and workers: no calls yet

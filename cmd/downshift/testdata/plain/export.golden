@@ -1,0 +1,20 @@
+exit: 0
+--- stdout ---
+{
+  "schema": 3,
+  "window_days": 30,
+  "generated_at": "<TIME>",
+  "routed": {
+    "spawns": 0,
+    "ended": 0,
+    "completed": 0,
+    "reworked": 0
+  },
+  "tokens": {
+    "routed_billable": 0,
+    "compactor_avoided": 0
+  },
+  "harnesses": [],
+  "note": "Counts and token totals only: no prompts, paths, ids, model names, hostnames or usernames. Single-user dogfood, directional, not billing."
+}
+--- stderr ---

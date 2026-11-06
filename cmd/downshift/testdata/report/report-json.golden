@@ -1,0 +1,744 @@
+{
+  "days": 0,
+  "routed": {
+    "spawns": 8,
+    "ended": 1,
+    "completed_tasks": 1,
+    "tokens": {
+      "records": 0,
+      "input": 1000,
+      "output": 500,
+      "cache_read": 0,
+      "cache_write": 0,
+      "total": 1500
+    },
+    "billable_tokens_per_completed_task": 1500,
+    "tokens_per_completed_task": 1500,
+    "reworked": 0,
+    "rework_rate": 0
+  },
+  "excluded_unrouted": 0,
+  "rework_by_verdict": [
+    {
+      "verdict": "kept",
+      "spawns": 2,
+      "ended": 0,
+      "completed_tasks": 0,
+      "reworked": 0,
+      "rework_rate": 0
+    },
+    {
+      "verdict": "held_unknown",
+      "spawns": 1,
+      "ended": 0,
+      "completed_tasks": 0,
+      "reworked": 0,
+      "rework_rate": 0
+    },
+    {
+      "verdict": "hint_down",
+      "spawns": 1,
+      "ended": 0,
+      "completed_tasks": 0,
+      "reworked": 0,
+      "rework_rate": 0
+    },
+    {
+      "verdict": "not_recorded",
+      "spawns": 1,
+      "ended": 0,
+      "completed_tasks": 0,
+      "reworked": 0,
+      "rework_rate": 0
+    },
+    {
+      "verdict": "profile",
+      "spawns": 1,
+      "ended": 0,
+      "completed_tasks": 0,
+      "reworked": 0,
+      "rework_rate": 0,
+      "turn_off": "routing.profiles (remove the profile)"
+    },
+    {
+      "verdict": "refused_config",
+      "spawns": 1,
+      "ended": 0,
+      "completed_tasks": 0,
+      "reworked": 0,
+      "rework_rate": 0
+    },
+    {
+      "verdict": "rule",
+      "spawns": 1,
+      "ended": 1,
+      "completed_tasks": 1,
+      "reworked": 0,
+      "rework_rate": 0,
+      "turn_off": "routing.rules[].enabled: false"
+    }
+  ],
+  "completion": [
+    {
+      "harness": "claude-code",
+      "end_event": "SubagentStop",
+      "usage_source": "transcript",
+      "end_records": 1,
+      "measurable": true
+    },
+    {
+      "harness": "cursor",
+      "end_event": "subagentStop",
+      "usage_source": "none",
+      "end_records": 0,
+      "measurable": false
+    },
+    {
+      "harness": "codex",
+      "end_event": "PostToolUse",
+      "usage_source": "none",
+      "end_records": 0,
+      "measurable": false
+    },
+    {
+      "harness": "kirocrew",
+      "end_event": "postToolUse",
+      "usage_source": "none",
+      "end_records": 0,
+      "measurable": false
+    },
+    {
+      "harness": "antigravity",
+      "usage_source": "none",
+      "end_records": 0,
+      "measurable": false
+    },
+    {
+      "harness": "opencode",
+      "end_event": "child_done",
+      "usage_source": "payload",
+      "end_records": 0,
+      "measurable": false
+    }
+  ],
+  "routing_tokens": {
+    "by_harness": {
+      "claude-code": {
+        "spawns": 0,
+        "below_spawns": 0,
+        "billable": 0,
+        "below_billable": 0,
+        "rewritten_spawns": 0,
+        "rewritten_billable": 0,
+        "fallback_spawns": 1,
+        "fallback_billable": 1500,
+        "fallback_below_billable": 1500,
+        "unobserved_spawns": 0,
+        "cache_read": 0
+      }
+    },
+    "by_agent_type": {
+      "untyped": {
+        "spawns": 0,
+        "below_spawns": 0,
+        "billable": 0,
+        "below_billable": 0,
+        "rewritten_spawns": 0,
+        "rewritten_billable": 0,
+        "fallback_spawns": 1,
+        "fallback_billable": 1500,
+        "fallback_below_billable": 1500,
+        "unobserved_spawns": 0,
+        "cache_read": 0
+      }
+    }
+  },
+  "compactor_saved_bytes": 4000,
+  "compactor_tokens_estimate": 1000,
+  "tokens_saved_estimate": 1000,
+  "numbers": {
+    "scope": {
+      "kind": "days"
+    },
+    "routing": {
+      "by_harness": {
+        "claude-code": {
+          "spawns": 0,
+          "below_spawns": 0,
+          "billable": 0,
+          "below_billable": 0,
+          "rewritten_spawns": 0,
+          "rewritten_billable": 0,
+          "fallback_spawns": 1,
+          "fallback_billable": 1500,
+          "fallback_below_billable": 1500,
+          "unobserved_spawns": 0,
+          "cache_read": 0
+        }
+      },
+      "by_agent_type": {
+        "untyped": {
+          "spawns": 0,
+          "below_spawns": 0,
+          "billable": 0,
+          "below_billable": 0,
+          "rewritten_spawns": 0,
+          "rewritten_billable": 0,
+          "fallback_spawns": 1,
+          "fallback_billable": 1500,
+          "fallback_below_billable": 1500,
+          "unobserved_spawns": 0,
+          "cache_read": 0
+        }
+      }
+    },
+    "compactor": {
+      "commands": 1,
+      "compacted": 1,
+      "raw_bytes": 4400,
+      "saved_bytes": 4000,
+      "tokens": 1000
+    },
+    "model_switched": 3,
+    "effort_changed": 0,
+    "held": 0,
+    "held_guardrail": 0,
+    "upshift_not_applied": 0,
+    "tokens_saved_estimate": 1000,
+    "ledger": {
+      "compactor_saved": 1000,
+      "compactor_estimate": "estimate: saved bytes / 4"
+    },
+    "display": {
+      "tokens_saved": "Tokens saved (estimate): 1.0k (all time: compactor)",
+      "tokens_saved_short": "1.0k",
+      "scope_label": "all time",
+      "routing": "claude-code: 1.5k of 1.5k billable below the requested model (1 spawn, no session model)",
+      "compactor": "Commands: 1 · Compacted: 1",
+      "ledger": "Token ledger (all time): 1.0k cut by the compactor (estimate: saved bytes / 4)"
+    }
+  },
+  "current_harness": "claude-code",
+  "by_harness": [
+    {
+      "harness": "claude-code",
+      "current": true,
+      "report": {
+        "days": 0,
+        "routed": {
+          "spawns": 6,
+          "ended": 1,
+          "completed_tasks": 1,
+          "tokens": {
+            "records": 0,
+            "input": 1000,
+            "output": 500,
+            "cache_read": 0,
+            "cache_write": 0,
+            "total": 1500
+          },
+          "billable_tokens_per_completed_task": 1500,
+          "tokens_per_completed_task": 1500,
+          "reworked": 0,
+          "rework_rate": 0
+        },
+        "excluded_unrouted": 0,
+        "rework_by_verdict": [
+          {
+            "verdict": "hint_down",
+            "spawns": 1,
+            "ended": 0,
+            "completed_tasks": 0,
+            "reworked": 0,
+            "rework_rate": 0
+          },
+          {
+            "verdict": "kept",
+            "spawns": 1,
+            "ended": 0,
+            "completed_tasks": 0,
+            "reworked": 0,
+            "rework_rate": 0
+          },
+          {
+            "verdict": "not_recorded",
+            "spawns": 1,
+            "ended": 0,
+            "completed_tasks": 0,
+            "reworked": 0,
+            "rework_rate": 0
+          },
+          {
+            "verdict": "profile",
+            "spawns": 1,
+            "ended": 0,
+            "completed_tasks": 0,
+            "reworked": 0,
+            "rework_rate": 0,
+            "turn_off": "routing.profiles (remove the profile)"
+          },
+          {
+            "verdict": "refused_config",
+            "spawns": 1,
+            "ended": 0,
+            "completed_tasks": 0,
+            "reworked": 0,
+            "rework_rate": 0
+          },
+          {
+            "verdict": "rule",
+            "spawns": 1,
+            "ended": 1,
+            "completed_tasks": 1,
+            "reworked": 0,
+            "rework_rate": 0,
+            "turn_off": "routing.rules[].enabled: false"
+          }
+        ],
+        "completion": [
+          {
+            "harness": "claude-code",
+            "end_event": "SubagentStop",
+            "usage_source": "transcript",
+            "end_records": 1,
+            "measurable": true
+          },
+          {
+            "harness": "cursor",
+            "end_event": "subagentStop",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "codex",
+            "end_event": "PostToolUse",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "kirocrew",
+            "end_event": "postToolUse",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "antigravity",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "opencode",
+            "end_event": "child_done",
+            "usage_source": "payload",
+            "end_records": 0,
+            "measurable": false
+          }
+        ],
+        "routing_tokens": {
+          "by_harness": {
+            "claude-code": {
+              "spawns": 0,
+              "below_spawns": 0,
+              "billable": 0,
+              "below_billable": 0,
+              "rewritten_spawns": 0,
+              "rewritten_billable": 0,
+              "fallback_spawns": 1,
+              "fallback_billable": 1500,
+              "fallback_below_billable": 1500,
+              "unobserved_spawns": 0,
+              "cache_read": 0
+            }
+          },
+          "by_agent_type": {
+            "untyped": {
+              "spawns": 0,
+              "below_spawns": 0,
+              "billable": 0,
+              "below_billable": 0,
+              "rewritten_spawns": 0,
+              "rewritten_billable": 0,
+              "fallback_spawns": 1,
+              "fallback_billable": 1500,
+              "fallback_below_billable": 1500,
+              "unobserved_spawns": 0,
+              "cache_read": 0
+            }
+          }
+        },
+        "compactor_saved_bytes": 0,
+        "compactor_tokens_estimate": 0,
+        "tokens_saved_estimate": 0
+      }
+    },
+    {
+      "harness": "codex",
+      "report": {
+        "days": 0,
+        "routed": {
+          "spawns": 2,
+          "ended": 0,
+          "completed_tasks": 0,
+          "tokens": {
+            "records": 0,
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0,
+            "total": 0
+          },
+          "billable_tokens_per_completed_task": 0,
+          "tokens_per_completed_task": 0,
+          "reworked": 0,
+          "rework_rate": 0
+        },
+        "excluded_unrouted": 0,
+        "rework_by_verdict": [
+          {
+            "verdict": "held_unknown",
+            "spawns": 1,
+            "ended": 0,
+            "completed_tasks": 0,
+            "reworked": 0,
+            "rework_rate": 0
+          },
+          {
+            "verdict": "kept",
+            "spawns": 1,
+            "ended": 0,
+            "completed_tasks": 0,
+            "reworked": 0,
+            "rework_rate": 0
+          }
+        ],
+        "completion": [
+          {
+            "harness": "claude-code",
+            "end_event": "SubagentStop",
+            "usage_source": "transcript",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "cursor",
+            "end_event": "subagentStop",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "codex",
+            "end_event": "PostToolUse",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "kirocrew",
+            "end_event": "postToolUse",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "antigravity",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "opencode",
+            "end_event": "child_done",
+            "usage_source": "payload",
+            "end_records": 0,
+            "measurable": false
+          }
+        ],
+        "routing_tokens": {
+          "by_harness": {}
+        },
+        "compactor_saved_bytes": 0,
+        "compactor_tokens_estimate": 0,
+        "tokens_saved_estimate": 0
+      }
+    }
+  ],
+  "why_spawns_changed": {
+    "scope": {
+      "kind": "days"
+    },
+    "decisions": 8,
+    "harnesses": [
+      {
+        "harness": "claude-code",
+        "decisions": 6,
+        "recorded": 5,
+        "not_recorded": 1,
+        "by_verdict": [
+          {
+            "key": "hint_down",
+            "count": 1
+          },
+          {
+            "key": "kept",
+            "count": 1
+          },
+          {
+            "key": "profile",
+            "count": 1
+          },
+          {
+            "key": "refused_config",
+            "count": 1
+          },
+          {
+            "key": "rule",
+            "count": 1
+          }
+        ],
+        "top_reasons": [
+          {
+            "key": "hint_down",
+            "count": 1
+          },
+          {
+            "key": "kept",
+            "count": 1
+          },
+          {
+            "key": "profile:cheap-reader",
+            "count": 1
+          },
+          {
+            "key": "refused_config:unknown_profile",
+            "count": 1
+          },
+          {
+            "key": "rule:fast-lane",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "harness": "codex",
+        "decisions": 2,
+        "recorded": 2,
+        "not_recorded": 0,
+        "by_verdict": [
+          {
+            "key": "held_unknown",
+            "count": 1
+          },
+          {
+            "key": "kept",
+            "count": 1
+          }
+        ],
+        "top_reasons": [
+          {
+            "key": "held_unknown:no_candidate",
+            "count": 1
+          },
+          {
+            "key": "kept",
+            "count": 1
+          }
+        ]
+      }
+    ]
+  },
+  "tokens_by_harness": [
+    {
+      "harness": "claude-code",
+      "routing_observed": true,
+      "routing": {
+        "spawns": 0,
+        "below_spawns": 0,
+        "billable": 0,
+        "below_billable": 0,
+        "rewritten_spawns": 0,
+        "rewritten_billable": 0,
+        "fallback_spawns": 1,
+        "fallback_billable": 1500,
+        "fallback_below_billable": 1500,
+        "unobserved_spawns": 0,
+        "cache_read": 0
+      },
+      "quota_used": {
+        "status": "unknown",
+        "observed_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "harness": "codex",
+      "routing_observed": false,
+      "routing": {
+        "spawns": 0,
+        "below_spawns": 0,
+        "billable": 0,
+        "below_billable": 0,
+        "rewritten_spawns": 0,
+        "rewritten_billable": 0,
+        "fallback_spawns": 0,
+        "fallback_billable": 0,
+        "fallback_below_billable": 0,
+        "unobserved_spawns": 0,
+        "cache_read": 0
+      },
+      "quota_used": {
+        "status": "unknown",
+        "observed_at": "0001-01-01T00:00:00Z"
+      }
+    }
+  ],
+  "compaction_by_harness": [
+    {
+      "harness": "claude-code",
+      "compactor_tokens_avoided": 1000
+    },
+    {
+      "harness": "codex",
+      "compactor_tokens_avoided": 0
+    }
+  ],
+  "compaction_detail": {
+    "harnesses": [
+      {
+        "harness": "claude-code",
+        "commands": 1,
+        "compacted": 1,
+        "families": [
+          {
+            "family": "other",
+            "commands": 1,
+            "compacted": 1,
+            "raw_tokens": 1100,
+            "avoided_tokens": 1000
+          }
+        ],
+        "not_compacted": [],
+        "skipped": []
+      }
+    ]
+  },
+  "main_session_work": [
+    {
+      "harness": "claude-code",
+      "observed": true,
+      "mechanical_calls": 0,
+      "mechanical_on_frontier": 0
+    },
+    {
+      "harness": "cursor",
+      "observed": false,
+      "mechanical_calls": 0,
+      "mechanical_on_frontier": 0
+    },
+    {
+      "harness": "codex",
+      "observed": false,
+      "mechanical_calls": 0,
+      "mechanical_on_frontier": 0
+    },
+    {
+      "harness": "kirocrew",
+      "observed": false,
+      "mechanical_calls": 0,
+      "mechanical_on_frontier": 0
+    },
+    {
+      "harness": "antigravity",
+      "observed": false,
+      "mechanical_calls": 0,
+      "mechanical_on_frontier": 0
+    },
+    {
+      "harness": "opencode",
+      "observed": false,
+      "mechanical_calls": 0,
+      "mechanical_on_frontier": 0
+    }
+  ],
+  "efficiency": {
+    "scope": {
+      "kind": "days"
+    },
+    "harnesses": [
+      {
+        "harness": "claude-code",
+        "spawns": 6,
+        "spawns_by_tier": {
+          "small": {
+            "count": 2,
+            "pct": 33.333333333333336
+          },
+          "mid": {
+            "count": 1,
+            "pct": 16.666666666666668
+          },
+          "frontier": {
+            "count": 3,
+            "pct": 50
+          },
+          "unknown": {
+            "count": 0,
+            "pct": 0
+          }
+        },
+        "ended": 1,
+        "completed_tasks": 1,
+        "reworked": 0,
+        "rework_ratio": 0,
+        "completed_tier_known": 1,
+        "completed_non_frontier": 1,
+        "completed_tier_unknown": 0,
+        "premium_observed": true,
+        "premium_preserved_pct": 100
+      },
+      {
+        "harness": "codex",
+        "spawns": 2,
+        "spawns_by_tier": {
+          "small": {
+            "count": 0,
+            "pct": 0
+          },
+          "mid": {
+            "count": 0,
+            "pct": 0
+          },
+          "frontier": {
+            "count": 0,
+            "pct": 0
+          },
+          "unknown": {
+            "count": 2,
+            "pct": 100
+          }
+        },
+        "ended": 0,
+        "completed_tasks": 0,
+        "reworked": 0,
+        "rework_ratio": 0,
+        "completed_tier_known": 0,
+        "completed_non_frontier": 0,
+        "completed_tier_unknown": 0,
+        "premium_observed": false,
+        "premium_preserved_pct": 0
+      }
+    ]
+  },
+  "adoption": {
+    "plans": 0,
+    "steps": 0,
+    "spawn_steps": 0,
+    "delegate_steps": 0,
+    "delegated": 0,
+    "done": 0,
+    "gateway_routed": 0
+  }
+}

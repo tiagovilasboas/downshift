@@ -1,0 +1,4 @@
+exit: 0
+--- stdout ---
+--- stderr ---
+no events recorded yet: spawn a subagent in a new harness session, or run `downshift doctor` to check the hooks.
