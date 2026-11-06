@@ -1,0 +1,17 @@
+{
+  "_comment": "Example only. Replace with IDs THIS session can select, ordered least-to-most capable. Downshift does not embed model IDs or infer this order.",
+  "_cursor_observed": "Illustrative IDs only; sort the actual session choices by capability before use.",
+  "cursor": [
+    "inherit",
+    "session-model-small",
+    "session-model-mid",
+    "session-model-frontier"
+  ],
+  "quota": {
+    "cursor": {
+      "included": ["session-model-small"]
+    }
+  },
+  "claude-code": [],
+  "codex": []
+}
