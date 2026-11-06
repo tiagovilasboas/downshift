@@ -1,0 +1,70 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package models
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"sort"
+	"strings"
+
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+)
+
+// List prints the effective catalog as a formatted table to w.
+// Shows harness, tier, model ID, effort scale, and
+// which source is active (embedded or user override).
+func List(cat CatalogReader, w io.Writer) {
+	// Sort a copy: the reader may hand us a live catalog shared with other
+	// readers in the same process, and List must not reorder it under them.
+	entries := append([]catalog.Entry(nil), cat.Entries()...)
+	if len(entries) == 0 {
+		fmt.Fprintln(w, "catalog is empty")
+		return
+	}
+
+	// Sort: harness → tier order (small, mid, frontier, unknown).
+	tierOrder := map[string]int{"small": 0, "mid": 1, "frontier": 2, "unknown": 3}
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Harness != entries[j].Harness {
+			return entries[i].Harness < entries[j].Harness
+		}
+		oi := tierOrder[strings.ToLower(entries[i].Tier)]
+		oj := tierOrder[strings.ToLower(entries[j].Tier)]
+		return oi < oj
+	})
+
+	fmt.Fprintln(w, "HARNESS        TIER       MODEL                  EFFORT SCALE")
+	fmt.Fprintln(w, "─────────────  ─────────  ─────────────────────  ────────────")
+
+	for _, e := range entries {
+		// Skip section comment entries (id or harness is empty).
+		if e.ID == "" || e.Harness == "" {
+			continue
+		}
+		fmt.Fprintf(w, "%-13s  %-9s  %-21s  %s\n",
+			e.Harness,
+			e.Tier,
+			e.ID,
+			e.EffortScale,
+		)
+	}
+
+	fmt.Fprintln(w)
+	fmt.Fprintf(w, "Catalog source: %s\n", catalogSource())
+}
+
+// catalogSource returns a human-readable description of which catalog is active.
+func catalogSource() string {
+	override, err := paths.CatalogPath()
+	if err != nil {
+		return "embedded (default)"
+	}
+	if _, err := os.Stat(override); err == nil {
+		return fmt.Sprintf("user override (%s)", override)
+	}
+	return fmt.Sprintf("embedded (default) — override at %s", override)
+}

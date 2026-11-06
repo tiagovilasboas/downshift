@@ -1,0 +1,49 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package models
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
+)
+
+func TestWriteOverride_AtomicallyWritesPrivateCatalog(t *testing.T) {
+	home := t.TempDir()
+	state := filepath.Join(home, ".downshift")
+	testenv.SetHome(t, home)
+	t.Setenv("DOWNSHIFT_STATE_DIR", state)
+	entries := []catalog.Entry{{ID: "test-model", Harness: "codex", Tier: "small"}}
+
+	if err := writeOverride(entries); err != nil {
+		t.Fatalf("writeOverride() error: %v", err)
+	}
+
+	dir, err := paths.StateDir()
+	if err != nil {
+		t.Fatalf("StateDir(): %v", err)
+	}
+	path, err := paths.CatalogPath()
+	if err != nil {
+		t.Fatalf("CatalogPath(): %v", err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("Stat(%q): %v", path, err)
+	}
+	if got := info.Mode().Perm(); got != 0o600 {
+		t.Errorf("catalog permissions = %o, want 600", got)
+	}
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("ReadDir(%q): %v", dir, err)
+	}
+	if len(files) != 1 || files[0].Name() != "catalog.json" {
+		t.Errorf("temporary catalog files left behind: %#v", files)
+	}
+}
