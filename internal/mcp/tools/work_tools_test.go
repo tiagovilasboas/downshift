@@ -1,0 +1,274 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package tools
+
+import (
+	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/workers"
+)
+
+// stubProc is a worker that finishes at once, so a delegate test never touches
+// a real CLI or a git worktree. It records the dir it was launched in.
+type stubProc struct{}
+
+func (stubProc) Wait() error             { return nil }
+func (stubProc) Kill() error             { return nil }
+func (stubProc) Report() string          { return "done" }
+func (stubProc) Stderr() string          { return "" }
+func (stubProc) Tokens() *workers.Tokens { return nil }
+
+// stubLauncher records the spec of every launch and returns a finished stub.
+type stubLauncher struct{ specs []workers.Spec }
+
+func (l *stubLauncher) Launch(s workers.Spec) (workers.Process, error) {
+	l.specs = append(l.specs, s)
+	return stubProc{}, nil
+}
+
+// delegateDeps wires a real queue over a stub launcher, with write enabled, so
+// delegate exercises the whole write path except the real worker.
+func delegateDeps(root string, broad bool, broadDir func(string) bool) (Deps, *stubLauncher) {
+	l := &stubLauncher{}
+	d := Deps{
+		Models:       fakeModels{list: ModelList{Harness: "claude-code"}},
+		Strain:       fakeStrain{},
+		Harnesses:    func() []string { return []string{"claude-code", "codex"} },
+		Work:         workers.New(l, 4, time.Now),
+		WriteEnabled: true,
+		Root:         root,
+		Broad:        broad,
+		BroadDir:     broadDir,
+	}
+	return d, l
+}
+
+// Write is the owner's switch: off, a write request is refused before anything
+// starts, and read is always allowed.
+func TestWantsWriteRefusesWriteUnlessTheOwnerEnablesIt(t *testing.T) {
+	if w, err := wantsWrite("read", false); err != nil || w {
+		t.Fatalf("read = %v, %v", w, err)
+	}
+	if _, err := wantsWrite("write", false); err == nil {
+		t.Fatal("write must be refused while the owner has not enabled it")
+	}
+	if w, err := wantsWrite("write", true); err != nil || !w {
+		t.Fatalf("write when enabled = %v, %v", w, err)
+	}
+	if _, err := wantsWrite("delete", true); err == nil {
+		t.Fatal("an unknown mode must be refused")
+	}
+}
+
+// workerDir defaults a missing dir to the server's resolved project root, keeps
+// an explicit dir, and refuses a missing dir when the root is broad so a worker
+// never starts in a directory a containment check cannot protect. These cases
+// are read jobs, whose behavior does not change with this fix.
+func TestWorkerDirDefaultsToRootUnlessBroad(t *testing.T) {
+	d := Deps{Root: "/proj"}
+	if got, err := d.workerDir("", false); err != nil || got != "/proj" {
+		t.Fatalf("empty dir = %q, %v; want the root", got, err)
+	}
+	if got, err := d.workerDir("  ", false); err != nil || got != "/proj" {
+		t.Fatalf("blank dir = %q, %v; want the root", got, err)
+	}
+	if got, err := d.workerDir("/proj/other", false); err != nil || got != "/proj/other" {
+		t.Fatalf("explicit dir = %q, %v; want it kept", got, err)
+	}
+
+	broad := Deps{Root: "/", Broad: true}
+	if _, err := broad.workerDir("", false); err == nil {
+		t.Fatal("a missing dir must be refused when the root is broad")
+	}
+	none := Deps{}
+	if _, err := none.workerDir("", false); err == nil {
+		t.Fatal("a missing dir must be refused when no root was resolved")
+	}
+}
+
+// Under write, a broad server root refuses the job even when an explicit dir is
+// given: the explicit dir cannot opt out of a broad root. A non-broad root
+// keeps the explicit write dir, exactly like a read job.
+func TestWorkerDirWriteRefusesBroadServerRoot(t *testing.T) {
+	broad := Deps{Root: "/", Broad: true}
+	_, err := broad.workerDir("/proj", true)
+	if err == nil {
+		t.Fatal("a write job must be refused when the server root is broad, even with an explicit dir")
+	}
+	if !strings.Contains(err.Error(), "broad") || !strings.Contains(err.Error(), "project dir") {
+		t.Fatalf("the refusal must name the reason and the fix, got %q", err)
+	}
+
+	ok := Deps{Root: "/proj"}
+	if got, err := ok.workerDir("/proj/sub", true); err != nil || got != "/proj/sub" {
+		t.Fatalf("write explicit dir under a non-broad root = %q, %v; want it kept", got, err)
+	}
+}
+
+// Under write, an explicit dir that is itself broad is refused even when the
+// server root is a safe project directory. The BroadDir port decides; a read
+// job with the same dir is kept.
+func TestWorkerDirWriteRefusesBroadExplicitDir(t *testing.T) {
+	isBroad := func(dir string) bool { return dir == "/" || dir == "/home" || dir == "/home/me" }
+	d := Deps{Root: "/proj", BroadDir: isBroad}
+
+	for _, dir := range []string{"/", "/home", "/home/me"} {
+		if _, err := d.workerDir(dir, true); err == nil {
+			t.Fatalf("a write job with broad explicit dir %q must be refused", dir)
+		}
+	}
+	if _, err := d.workerDir("/", true); err != nil {
+		if !strings.Contains(err.Error(), "broad") || !strings.Contains(err.Error(), "project dir") {
+			t.Fatalf("the refusal must name the reason and the fix, got %q", err)
+		}
+	}
+	// A safe explicit dir is kept under write.
+	if got, err := d.workerDir("/proj/sub", true); err != nil || got != "/proj/sub" {
+		t.Fatalf("write explicit safe dir = %q, %v; want it kept", got, err)
+	}
+	// A read job with a broad dir outside the root is refused by containment.
+	if _, err := d.workerDir("/home/me", false); err == nil || !strings.Contains(err.Error(), "fix:") {
+		t.Fatalf("read job with a dir outside the root = %v; want a refusal with a fix line", err)
+	}
+}
+
+// Under bypass (write enabled), delegate refuses a write job when the server
+// root is broad and when an explicit dir is broad, but still runs a write job
+// pointed at a real project dir. Read behavior is covered by the workerDir
+// tests above.
+func TestDelegateWriteUnderBypassRefusesBroadRunsProject(t *testing.T) {
+	isBroad := func(dir string) bool { return dir == "/home/me" }
+
+	// bypass + broad server root: refused before any worker starts.
+	d, l := delegateDeps("/", true, isBroad)
+	if _, err := d.delegate(context.Background(), json.RawMessage(
+		`{"tasks":["do x"],"agent":"claude","mode":"write"}`)); err == nil {
+		t.Fatal("bypass write with a broad server root must be refused")
+	}
+	if len(l.specs) != 0 {
+		t.Fatalf("a worker started despite a broad root: %+v", l.specs)
+	}
+
+	// bypass + explicit broad dir: refused.
+	d, l = delegateDeps("/proj", false, isBroad)
+	if _, err := d.delegate(context.Background(), json.RawMessage(
+		`{"tasks":["do x"],"agent":"claude","mode":"write","dir":"/home/me"}`)); err == nil {
+		t.Fatal("bypass write with a broad explicit dir must be refused")
+	}
+	if len(l.specs) != 0 {
+		t.Fatalf("a worker started despite a broad explicit dir: %+v", l.specs)
+	}
+
+	// bypass + project dir: runs, and the worker is a write worker in that dir.
+	d, l = delegateDeps("/proj", false, isBroad)
+	if _, err := d.delegate(context.Background(), json.RawMessage(
+		`{"tasks":["do x"],"agent":"claude","mode":"write","dir":"/proj/sub"}`)); err != nil {
+		t.Fatalf("bypass write with a project dir must run: %v", err)
+	}
+	d.Work.Close()
+	if len(l.specs) != 1 || l.specs[0].Dir != "/proj/sub" || !l.specs[0].Write {
+		t.Fatalf("expected one write job in /proj/sub, got %+v", l.specs)
+	}
+}
+
+// The collect schema tells the client the timeout cap, so a request for more
+// is not silently clamped behind its back.
+func TestCollectSchemaStatesTheTimeoutCap(t *testing.T) {
+	var collect Tool
+	for _, tl := range WorkTools(Deps{}) {
+		if tl.Name == "collect" {
+			collect = tl
+		}
+	}
+	if collect.Name == "" {
+		t.Fatal("no collect tool")
+	}
+	var schema struct {
+		Properties struct {
+			TimeoutSeconds struct {
+				Maximum int `json:"maximum"`
+			} `json:"timeout_seconds"`
+		} `json:"properties"`
+	}
+	if err := json.Unmarshal(collect.InputSchema, &schema); err != nil {
+		t.Fatalf("collect schema is not JSON: %v", err)
+	}
+	if schema.Properties.TimeoutSeconds.Maximum != maxCollectSeconds {
+		t.Fatalf("timeout_seconds maximum = %d, want %d", schema.Properties.TimeoutSeconds.Maximum, maxCollectSeconds)
+	}
+	if !strings.Contains(collectDesc, "45") {
+		t.Fatal("the collect description must state the 45-second cap")
+	}
+}
+
+func TestWorkToolsAreValidAndNamed(t *testing.T) {
+	ts := WorkTools(Deps{})
+	if err := Validate(ts); err != nil {
+		t.Fatal(err)
+	}
+	titles := map[string]string{
+		"delegate": "Start delegated workers",
+		"collect":  "Read worker results",
+		"cancel":   "Stop workers",
+		"diff":     "Read a worker's diff",
+		"send":     "Give a worker more work",
+		"steer":    "Correct a worker mid-turn",
+		"release":  "Let go of finished workers",
+	}
+	for _, tl := range ts {
+		if want, ok := titles[tl.Name]; !ok || tl.Title != want {
+			t.Errorf("%s: Title = %q, want %q", tl.Name, tl.Title, want)
+		}
+	}
+}
+
+// Under a broad root a read job may not name a broad dir or a dir below a hidden
+// directory (~/.aws, ~/.ssh); a non-broad root keeps every explicit dir inside it.
+func TestWorkerDirReadUnderBroadRoot(t *testing.T) {
+	home, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, sub := range []string{".aws", "proj/.github/x", "proj/src", "proj/.hidden"} {
+		if err := os.MkdirAll(filepath.Join(home, filepath.FromSlash(sub)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	isBroad := func(dir string) bool { return dir == home }
+	at := func(sub string) string { return filepath.Join(home, filepath.FromSlash(sub)) }
+	broad := Deps{Root: home, Broad: true, BroadDir: isBroad}
+	narrow := Deps{Root: at("proj"), BroadDir: isBroad}
+
+	cases := []struct {
+		name string
+		d    Deps
+		dir  string
+		want string // substring of the refusal; empty means allowed
+	}{
+		{"broad root, hidden dir", broad, at(".aws"), "hidden directory (.aws)"},
+		{"broad root, hidden below project", broad, at("proj/.github/x"), "hidden directory (.github)"},
+		{"broad root, project", broad, at("proj"), ""},
+		{"broad root, project subdir", broad, at("proj/src"), ""},
+		{"broad root, broad dir", broad, home, "broad directory"},
+		{"non-broad root, hidden dir inside", narrow, at("proj/.hidden"), ""},
+		{"non-broad root, outside", narrow, at(".aws"), "outside"},
+	}
+	for _, c := range cases {
+		got, err := c.d.workerDir(c.dir, false)
+		switch {
+		case c.want == "" && (err != nil || got != c.dir):
+			t.Errorf("%s: got %q, %v; want the dir kept", c.name, got, err)
+		case c.want != "" && (err == nil || !strings.Contains(err.Error(), c.want)):
+			t.Errorf("%s: err = %v; want it to contain %q", c.name, err, c.want)
+		case c.want != "" && !strings.Contains(err.Error(), broadFix) && c.want != "outside":
+			t.Errorf("%s: refusal %q lacks the fix line", c.name, err)
+		}
+	}
+}
