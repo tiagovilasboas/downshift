@@ -1,0 +1,81 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package core_test
+
+import (
+	"path/filepath"
+	"testing"
+
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+)
+
+func upshiftTestEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv("DOWNSHIFT_MINILM", "0")
+	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "absent.json"))
+}
+
+// A confident upshift writes the least session model at the needed tier, the
+// same model a downshift of the same task lands on.
+func TestUpshift_WritesLeastModelAtNeededTier(t *testing.T) {
+	upshiftTestEnv(t)
+	sess := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1"})
+	cases := []struct {
+		name, prompt, current, want string
+		tier                        core.Tier
+	}{
+		{"medium from haiku", "implement the feature to export sales as CSV", "claude-haiku-4-5", "claude-sonnet-5-5", core.TierMid},
+		{"medium from opus (same task, downshift)", "implement the feature to export sales as CSV", "claude-opus-5-5", "claude-sonnet-5-5", core.TierMid},
+		{"complex from haiku", "rearchitect the analytics pipeline to support multi-tenant organisations", "claude-haiku-4-5", "claude-fable-5-1", core.TierFrontier},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			decidertest.Use(t, decidertest.Tier(tc.tier))
+			d := core.Route(tc.prompt, "claude-code", tc.current, cat)
+			d.Baseline.RequestedID = tc.current
+			if !d.Confident {
+				t.Fatalf("precondition: want a confident decision, got %+v", d)
+			}
+			plan := d.PlanForSession(core.ClaudeCodeCaps, cat, sess)
+			if !plan.RewriteModel || plan.Model.ID != tc.want {
+				t.Fatalf("verdict %s tier %s: plan %q (rewrite %v), want %q", d.Verdict, d.Tier, plan.Model.ID, plan.RewriteModel, tc.want)
+			}
+		})
+	}
+}
+
+func TestUpshift_NeededTierMissingOrExhausted(t *testing.T) {
+	upshiftTestEnv(t)
+	d := core.Decision{
+		Harness: "claude-code", Verdict: core.VerdictUpshift, Confident: true, Tier: core.TierMid,
+		Baseline: core.Baseline{
+			CurrentModel: core.Model{ID: "claude-haiku-4-5", Harness: "claude-code", Tier: core.TierSmall},
+			RequestedID:  "claude-haiku-4-5",
+		},
+	}
+	noMid := core.KnownSession([]string{"claude-haiku-4-5", "claude-opus-5-5"})
+	if plan := d.PlanForSession(core.ClaudeCodeCaps, cat, noMid); !plan.RewriteModel || plan.Model.ID != "claude-opus-5-5" {
+		t.Fatalf("no mid model: plan %+v, want opus", plan)
+	}
+	midOut := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
+	midOut.Exhausted = []string{"claude-sonnet-5-5"}
+	if plan := d.PlanForSession(core.ClaudeCodeCaps, cat, midOut); !plan.RewriteModel || plan.Model.ID != "claude-opus-5-5" {
+		t.Fatalf("mid exhausted: plan %+v, want opus", plan)
+	}
+}
+
+func TestUpshift_GuessedBaselineKeepsNeededTier(t *testing.T) {
+	upshiftTestEnv(t)
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
+	sess := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
+	d := core.Route("implement the feature to export sales as CSV", "claude-code", "claude-haiku-4-5", cat)
+	d.Baseline.RequestedID = "claude-haiku-4-5"
+	d.Baseline.Guessed = true
+	// Guessed baseline must not jump blindly to Frontier (Opus); it lifts only
+	// to the needed tier (Sonnet). Downshift never reaches for the strongest.
+	if plan := d.PlanForSession(core.ClaudeCodeCaps, cat, sess); !plan.RewriteModel || plan.Model.ID != "claude-sonnet-5-5" {
+		t.Fatalf("guessed baseline: plan %+v, want sonnet", plan)
+	}
+}
