@@ -24,20 +24,21 @@ var HoldBound time.Duration
 // or HoldBound (when positive) releases the held bytes first, in write order,
 // and from then on both streams pass straight through and nothing is compacted.
 type gate struct {
-	mu         sync.Mutex
-	out, err   io.Writer
-	buf        bytes.Buffer
-	merge      bool    // stderr is part of the held report (stderrIsReport)
-	chunks     []chunk // held writes in order, kept only when merge is set
-	streaming  bool
-	timer      *time.Timer
-	nOut       int64
-	nErr       int64
-	argv       []string                        // for learning hook
-	family     Family                          // for learning hook
-	keep       func(raw []byte) (string, bool) // Options.Keep, nil when off
-	keepFailed func(raw []byte) (string, bool) // Options.KeepFailed
-	detail     string                          // passthrough detail set by finish
+	mu              sync.Mutex
+	out, err        io.Writer
+	buf             bytes.Buffer
+	merge           bool    // stderr is part of the held report (stderrIsReport)
+	chunks          []chunk // held writes in order, kept only when merge is set
+	streaming       bool
+	timer           *time.Timer
+	nOut            int64
+	nErr            int64
+	argv            []string                        // for learning hook
+	family          Family                          // for learning hook
+	keep            func(raw []byte) (string, bool) // Options.Keep, nil when off
+	keepFailed      func(raw []byte) (string, bool) // Options.KeepFailed
+	detail          string                          // passthrough detail set by finish
+	skipObservation bool
 }
 
 func newGate(out, err io.Writer, hold bool, argv []string, family Family) *gate {
@@ -172,7 +173,7 @@ func (g *gate) finish(exitCode int, family Family) (raw, emitted int64, compacte
 	// The output is already written and the exit code already known, so the
 	// learning hook runs here, under a deadline, and its write is on disk
 	// when Run returns instead of being cut off by process exit.
-	if !compacted && ObserveUncompactedHook != nil && len(data) > 0 {
+	if !g.skipObservation && !compacted && ObserveUncompactedHook != nil && len(data) > 0 {
 		observeUncompacted(ObserveUncompactedHook, g.argv, data, g.family)
 	}
 

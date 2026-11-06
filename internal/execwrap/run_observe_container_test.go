@@ -6,6 +6,7 @@
 package execwrap
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,24 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
+
+func TestRun_SkipObservationForSyntheticCommands(t *testing.T) {
+	fakeBin(t, "go", "printf 'unrecognised output\\n'")
+	previous := ObserveUncompactedHook
+	defer func() { ObserveUncompactedHook = previous }()
+	var calls atomic.Int32
+	ObserveUncompactedHook = func([]string, []byte, Family) { calls.Add(1) }
+	for _, skip := range []bool{false, true} {
+		var out, stderr bytes.Buffer
+		result := Run([]string{"go", "test"}, Options{Stdout: &out, Stderr: &stderr, Compact: true, SkipObservation: skip})
+		if result.ExitCode != 0 || out.String() != "unrecognised output\n" {
+			t.Fatalf("result %+v, output %q", result, out.String())
+		}
+	}
+	if got := calls.Load(); got != 1 {
+		t.Fatalf("observation calls = %d, want 1", got)
+	}
+}
 
 func TestRun_WaitsForObserveHookUnderDeadline(t *testing.T) {
 	fakeBin(t, "go", "printf 'not a go test output\\n'")

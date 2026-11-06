@@ -49,6 +49,8 @@ type Options struct {
 	// Compact allows compaction. False runs the command as a plain
 	// passthrough (the DOWNSHIFT_EXEC=0 kill switch).
 	Compact bool
+	// SkipObservation keeps synthetic commands out of learning.
+	SkipObservation bool
 	// Keep, when set, receives the raw output of a run that was really
 	// compacted and may store it; ok makes the marker carry the id. It never
 	// fails the run: a panic or false keeps the plain marker.
@@ -128,6 +130,7 @@ func Run(argv []string, o Options) (res Result) {
 	}
 
 	g := newGate(o.Stdout, o.Stderr, o.Compact && readCompactible(res.Family, argv), argv, res.Family)
+	g.skipObservation = o.SkipObservation
 	g.keep, g.keepFailed = o.Keep, o.KeepFailed
 	cmd := exec.Command(path, argv[1:]...)
 	cmd.Args[0] = argv[0]
