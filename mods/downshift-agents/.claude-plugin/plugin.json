@@ -1,0 +1,10 @@
+{
+  "name": "downshift-agents",
+  "version": "0.1.0",
+  "description": "Downshift Agents: live task progress, subagent monitor, and Downshift Compactor and routing figures in a band and a pane. Observation only, no model calls.",
+  "author": { "name": "Tiago Vilas Boas", "url": "https://github.com/tiagovilasboas" },
+  "homepage": "https://github.com/tiagovilasboas/downshift",
+  "repository": "https://github.com/tiagovilasboas/downshift",
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts"
+}
