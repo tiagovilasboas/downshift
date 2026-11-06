@@ -1,0 +1,76 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package core
+
+// Resolver maps a (harness, tier) pair to the concrete model the harness
+// should use, and computes the savings ratio between two models.
+//
+// The interface lives in core so that policy.go can accept it without
+// importing the catalog package — keeping the dependency direction clean:
+// catalog → core, never core → catalog.
+//
+// The default implementation is in internal/catalog. The catalog package
+// loads model data from an embedded JSON file (with an optional user
+// override at ~/.harness-downshift/catalog.json) and implements Resolver.
+type Resolver interface {
+	// ModelFor returns the Model to use for the given harness and tier.
+	// If the harness is unknown it must return a safe fallback (not zero).
+	ModelFor(harness string, tier Tier) Model
+
+	// LookupByID resolves a model ID to a catalog entry using three strategies:
+	// 1. Exact match (full ID string).
+	// 2. Alias match (declared aliases for the entry).
+	// 3. Family prefix match — case-insensitive HasPrefix against the entry's
+	//    family field, making routing version-agnostic. A model whose ID starts
+	//    with a known family prefix (e.g. "claude-opus") will match even if the
+	//    exact version (e.g. "claude-opus-4-9") is not yet in the catalog.
+	//
+	// Implementations must also normalise "provider/model-id" format (gateway)
+	// by stripping the provider prefix before matching, so routing works
+	// transparently for users who route subagents through a meta-provider.
+	//
+	// Implementations must return (Model{}, false) for empty or unrecognised IDs.
+	LookupByID(harness, modelID string) (Model, bool)
+
+	// EffortFor translates a core.Effort level to the harness-native string
+	// for the given model ID (e.g. Codex "low"/"medium"/"high", Claude
+	// thinking budget "0"/"8000"/"16000"). Falls back to effort.String()
+	// when no mapping is found — adapters can always call this safely.
+	EffortFor(harness, modelID string, effort Effort) string
+
+	// IsExplicitOnly returns true when the given model ID is marked
+	// routing:"explicit_only" in the catalog. Explicit-only models are valid
+	// current selections but must never be chosen as an automatic routing
+	// target. When the ID is unknown, returns false (fail-open).
+	IsExplicitOnly(harness, modelID string) bool
+}
+
+// ExactIDResolver is an optional extension of Resolver.
+// IsExactID reports an exact id or a declared alias for this harness.
+// A family-prefix match must return false: another harness's version string
+// is not ownership.
+type ExactIDResolver interface {
+	IsExactID(harness, id string) bool
+}
+
+// FamilyEffortResolver is an optional extension of Resolver for
+// effort-based routing inside one model family (Option A).
+//
+// Instead of mapping (harness, tier) to a versioned model ID, callers keep
+// the current model's family and only switch the effort level — e.g. stay
+// on claude-opus but move from a high-effort to a medium-effort variant.
+// Catalog data (not Go source) owns the family → effort → model ID mapping.
+//
+// Adapters must type-assert to this interface and fall back to plain
+// ModelFor when the resolver does not implement it, so harnesses adopt
+// family+effort routing incrementally without breaking other harnesses.
+type FamilyEffortResolver interface {
+	Resolver
+
+	// FamilyModelFor returns the automatic routing target for the given
+	// harness, model family, and reasoning effort. Explicit-only entries
+	// are never returned. Returns false when the family has no variant
+	// for that effort (caller falls back to ModelFor).
+	FamilyModelFor(harness, family string, effort Effort) (Model, bool)
+}

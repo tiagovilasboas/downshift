@@ -1,0 +1,142 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+// Package core is the harness-agnostic brain of Downshift.
+// It classifies a task by complexity and maps it to the cheapest model tier
+// that can handle it. Adapters translate this decision into each harness's
+// own mechanism (Claude Code hook, Cursor frontmatter, etc).
+package core
+
+// Tier is a capability/cost bucket. Lower tiers are cheaper; higher tiers are
+// stronger. The whole point of downshift is to run each subagent on the
+// lowest tier that still does the job.
+type Tier int
+
+const (
+	// TierSmall — cheap, fast models for mechanical work.
+	TierSmall Tier = iota
+	// TierMid — balanced models for everyday implementation.
+	TierMid
+	// TierFrontier — the strongest models, for genuinely hard work.
+	TierFrontier
+)
+
+// String returns the human-readable tier name.
+func (t Tier) String() string {
+	switch t {
+	case TierSmall:
+		return "small"
+	case TierMid:
+		return "mid"
+	case TierFrontier:
+		return "frontier"
+	default:
+		return "unknown"
+	}
+}
+
+// Model is a concrete model offered by a harness, with its tier and rough cost.
+// Model IDs and costs live in the catalog package (internal/catalog/catalog.json),
+// not in Go source. This struct is the value type shared between core and catalog.
+type Model struct {
+	ID      string // canonical model id used by the harness
+	Family  string // stable family prefix (version-agnostic); empty when unknown
+	Native  string // name the harness's own schema accepts for this model (e.g. a family alias); empty when the id itself is accepted
+	Tier    Tier   // capability/cost bucket
+	Harness string // which harness this model id belongs to
+	// Gateway names the model gateway that serves the id, so the harness can
+	// address it as provider/model. Empty for a harness-native model.
+	Gateway string
+	// PoolGated marks a model whose token pool the hook may trust only with
+	// positive evidence on this call (catalog flag pool_gated). See session_pool.go.
+	PoolGated bool
+	// RejectedName is a name for this model that the harness's spawn tool
+	// refuses (catalog field rejected_name); the id is written instead.
+	RejectedName string
+}
+
+// WriteName is the string a hook writes into the harness's model field: the
+// harness-native name when the catalog declares one, otherwise the id.
+func (m Model) WriteName() string {
+	if m.Native != "" {
+		return m.Native
+	}
+	return m.ID
+}
+
+// Effort is the reasoning/compute intensity for a task. It is harness-agnostic:
+// each adapter translates this to the native scale its harness accepts
+// (e.g. Codex "low/medium/high", Grok "low/medium/high").
+type Effort int
+
+const (
+	// EffortLow — minimal reasoning; for mechanical, deterministic work.
+	EffortLow Effort = iota
+	// EffortMid — standard reasoning; for routine implementation tasks.
+	EffortMid
+	// EffortHigh — deep reasoning; for architecture, debugging, migrations.
+	EffortHigh
+)
+
+// String returns the effort level as the canonical lowercase string.
+// Adapters use this to translate to their harness-native scale.
+func (e Effort) String() string {
+	switch e {
+	case EffortLow:
+		return "low"
+	case EffortMid:
+		return "medium"
+	case EffortHigh:
+		return "high"
+	default:
+		return "medium"
+	}
+}
+
+// EffortFor returns the recommended effort level for a tier. Cheaper tiers get
+// lower effort so a trivial subagent is cheap on both model and reasoning axes.
+func EffortFor(t Tier) Effort {
+	switch t {
+	case TierSmall:
+		return EffortLow
+	case TierMid:
+		return EffortMid
+	case TierFrontier:
+		return EffortHigh
+	default:
+		return EffortMid
+	}
+}
+
+// EffortLister is an optional Resolver extension exposing the effort levels a
+// model is known to accept. A nil list means unknown: no restriction applies.
+type EffortLister interface {
+	AllowedEfforts(harness, modelID string) []string
+}
+
+// RuleEffortUnsupported is the Decision correction recorded when the
+// recommended effort is not in the model's allowed list.
+const RuleEffortUnsupported = "effort_unsupported"
+
+// ConstrainEffort fits e to the model's allowed list. It returns the effort to
+// use, ok=false when no allowed level at or below e exists (omit the effort),
+// and changed=true when e was lowered or dropped. With no resolver, no list or
+// an empty list the effort is returned unchanged.
+func ConstrainEffort(res Resolver, harness, modelID string, e Effort) (out Effort, ok, changed bool) {
+	l, isLister := res.(EffortLister)
+	if !isLister {
+		return e, true, false
+	}
+	allowed := l.AllowedEfforts(harness, modelID)
+	if len(allowed) == 0 {
+		return e, true, false
+	}
+	for c := e; c >= EffortLow; c-- {
+		for _, a := range allowed {
+			if a == c.String() {
+				return c, true, c != e
+			}
+		}
+	}
+	return e, false, true
+}
