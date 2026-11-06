@@ -1,0 +1,250 @@
+[
+ {
+  "id": "HARD-01",
+  "prompt": "Design a Raft-based consensus layer for our metadata store so that leader election, log compaction and membership changes survive network partitions. Document the failure modes and write the TLA+ sketch.",
+  "want_tier": "frontier",
+  "note": "distributed consensus design"
+ },
+ {
+  "id": "HARD-02",
+  "prompt": "Os pedidos duplicados aparecem só em produção, sob carga, e envolvem o serviço de checkout, a fila e o worker de pagamento. Encontre a causa raiz da race condition entre os três serviços e proponha uma correção que garanta idempotência.",
+  "want_tier": "frontier",
+  "note": "cross-service race root cause"
+ },
+ {
+  "id": "HARD-03",
+  "prompt": "Redesign the data model for our orders domain: currently a single 200-column table with JSON blobs. Propose a normalized schema with event history, plan the backfill, and keep the API backward compatible during the transition.",
+  "want_tier": "frontier",
+  "note": "data-model redesign"
+ },
+ {
+  "id": "HARD-04",
+  "prompt": "Plan and implement a zero-downtime migration of the primary Postgres cluster from v11 to v16 with logical replication, including cutover, rollback strategy and verification of replication lag under peak writes.",
+  "want_tier": "frontier",
+  "note": "zero-downtime migration"
+ },
+ {
+  "id": "HARD-05",
+  "prompt": "Our Go ingestion service leaks memory slowly over 3 days and only when the Kafka consumer rebalances. Trace the leak across the consumer, the batcher and the gRPC client pool and find the root cause.",
+  "want_tier": "frontier",
+  "note": "memory leak across components"
+ },
+ {
+  "id": "HARD-06",
+  "prompt": "Redesenhe a arquitetura multi-tenant do nosso SaaS: hoje todos os clientes dividem o mesmo schema com tenant_id. Precisamos de isolamento forte de dados, limites de recursos por tenant e migração sem parar o serviço.",
+  "want_tier": "frontier",
+  "note": "multi-tenant redesign pt"
+ },
+ {
+  "id": "HARD-07",
+  "prompt": "Implement a new SSA-based optimization pass in the compiler that performs loop-invariant code motion with alias analysis, and prove it preserves semantics for volatile accesses and exceptions.",
+  "want_tier": "frontier",
+  "note": "compiler optimizer",
+  "known_gap": true
+ },
+ {
+  "id": "HARD-08",
+  "prompt": "Audit the entire authentication flow: OAuth callback, session handling, refresh token rotation, password reset and JWT signing. Produce a threat model and a prioritized list of vulnerabilities with fixes.",
+  "want_tier": "frontier",
+  "note": "full auth security audit"
+ },
+ {
+  "id": "HARD-09",
+  "prompt": "Design the payment ledger for our marketplace: double-entry accounting, idempotent charges, partial refunds, multi-currency settlement and reconciliation with the PSP. Consider exactly-once semantics and failure recovery.",
+  "want_tier": "frontier",
+  "note": "payment design"
+ },
+ {
+  "id": "HARD-10",
+  "prompt": "p99 latency of the search API tripled after we added sharding. Profile across the gateway, the query planner and the shard fan-out, and design a performance architecture (caching, hedged requests, partial results) to bring it back.",
+  "want_tier": "frontier",
+  "note": "perf architecture"
+ },
+ {
+  "id": "HARD-11",
+  "prompt": "Projete uma estratégia de cache distribuído com invalidação consistente entre 12 microsserviços, evitando thundering herd e leituras obsoletas, e discuta os trade-offs entre write-through e event-driven invalidation.",
+  "want_tier": "frontier",
+  "note": "distributed cache design pt"
+ },
+ {
+  "id": "HARD-12",
+  "prompt": "Investigate a deadlock that happens once a week in the job scheduler. It involves a mutex in the scheduler, a database advisory lock and a channel in the worker pool. Find the lock-ordering problem and redesign the locking.",
+  "want_tier": "frontier",
+  "note": "subtle concurrency"
+ },
+ {
+  "id": "HARD-13",
+  "prompt": "Migrate our monolith to an event-driven architecture. Define service boundaries, the event schema evolution policy, the outbox pattern for consistency and a strangler-fig rollout plan across 40 teams.",
+  "want_tier": "frontier",
+  "note": "large architecture migration"
+ },
+ {
+  "id": "HARD-14",
+  "prompt": "Implement a CRDT-based collaborative editing backend with offline support, causal ordering and garbage collection of tombstones. Explain the convergence argument.",
+  "want_tier": "frontier",
+  "note": "CRDT design",
+  "known_gap": true
+ },
+ {
+  "id": "HARD-15",
+  "prompt": "Reescreva o motor de consultas para usar execução vetorizada com otimizador baseado em custo, incluindo reordenação de joins e estatísticas de histograma.",
+  "want_tier": "frontier",
+  "note": "query engine optimizer pt"
+ },
+ {
+  "id": "HARD-16",
+  "prompt": "Design a sharding and rebalancing scheme for our 40TB key-value store with consistent hashing, hot-key mitigation and online resharding without dropping writes.",
+  "want_tier": "frontier",
+  "note": "sharding design"
+ },
+ {
+  "id": "HARD-17",
+  "prompt": "We see occasional lost updates in the inventory service when two regions write simultaneously. Analyze the replication topology and conflict resolution, identify why last-write-wins is corrupting stock counts, and propose a fix.",
+  "want_tier": "frontier",
+  "note": "multi-region consistency"
+ },
+ {
+  "id": "HARD-18",
+  "prompt": "Architect end-to-end encryption for the chat product: key exchange, forward secrecy, multi-device key sync, group membership changes and key recovery. Review against the Signal protocol.",
+  "want_tier": "frontier",
+  "note": "crypto design"
+ },
+ {
+  "id": "HARD-19",
+  "prompt": "Faça a migração do banco de dados de MySQL para Postgres com 3 TB de dados, sem janela de manutenção, com dual-write, validação de consistência e plano de rollback.",
+  "want_tier": "frontier",
+  "note": "large risky migration pt"
+ },
+ {
+  "id": "HARD-20",
+  "prompt": "Root-cause the intermittent 502s that appear only during deploys. It could be connection draining in the load balancer, the sidecar proxy lifecycle, or the app's graceful shutdown. Trace all three and fix the ordering.",
+  "want_tier": "frontier",
+  "note": "cross-component root cause"
+ },
+ {
+  "id": "HARD-21",
+  "prompt": "Design a rate limiting and quota system that works globally across regions with eventual consistency, bounded overshoot and per-tenant fairness. Provide the algorithm and prove the overshoot bound.",
+  "want_tier": "frontier",
+  "note": "distributed rate limit"
+ },
+ {
+  "id": "HARD-22",
+  "prompt": "Refactor the JIT's register allocator to linear scan with live range splitting, and make sure it works with the existing deoptimization metadata.",
+  "want_tier": "frontier",
+  "note": "compiler backend",
+  "known_gap": true
+ },
+ {
+  "id": "HARD-23",
+  "prompt": "Plan the zero-downtime schema change that splits the users table into accounts and profiles across 15 services that read it directly, with expand/contract phases and feature flags.",
+  "want_tier": "frontier",
+  "note": "zero-downtime schema",
+  "known_gap": true
+ },
+ {
+  "id": "HARD-24",
+  "prompt": "Nosso consumidor de eventos processa mensagens fora de ordem e às vezes duas vezes depois de um failover do broker. Redesenhe o pipeline para garantir ordenação por chave e processamento exactly-once de ponta a ponta.",
+  "want_tier": "frontier",
+  "note": "exactly-once pipeline pt"
+ },
+ {
+  "id": "HARD-25",
+  "prompt": "Find why heap usage grows unboundedly in the Node gateway under websocket churn. It spans the connection registry, the pub/sub adapter and a third-party middleware. Produce heap snapshots analysis and the fix.",
+  "want_tier": "frontier",
+  "note": "memory leak root cause"
+ },
+ {
+  "id": "HARD-26",
+  "prompt": "Design the disaster recovery architecture for our platform: multi-region active-active, RPO under 1 minute, RTO under 5, including data replication, DNS failover and game-day testing plan.",
+  "want_tier": "frontier",
+  "note": "DR architecture"
+ },
+ {
+  "id": "HARD-27",
+  "prompt": "Build a distributed lock service with fencing tokens on top of etcd, and analyze clock skew and GC pause scenarios that could violate mutual exclusion.",
+  "want_tier": "frontier",
+  "note": "distributed locks"
+ },
+ {
+  "id": "HARD-28",
+  "prompt": "Redesign our feature-flag evaluation to be consistent across edge, backend and mobile clients while handling stale config, partial rollouts and sticky bucketing at 1M rps.",
+  "want_tier": "frontier",
+  "note": "system design"
+ },
+ {
+  "id": "HARD-29",
+  "prompt": "Implement escape analysis and scalar replacement in our bytecode optimizer, handling inlined frames and ensuring correctness with concurrent publication of objects.",
+  "want_tier": "frontier",
+  "note": "compiler optimization"
+ },
+ {
+  "id": "HARD-30",
+  "prompt": "Review the whole multi-tenant permission system for privilege escalation and cross-tenant data leaks: row-level security, cached authorization decisions and admin impersonation. Deliver a security audit report.",
+  "want_tier": "frontier",
+  "note": "security audit multi-tenant"
+ },
+ {
+  "id": "HARD-31",
+  "prompt": "Reprojete o modelo de dados de faturamento para suportar planos híbridos (assinatura + consumo), prorrata, créditos retroativos e auditoria completa, mantendo os relatórios financeiros existentes funcionando.",
+  "want_tier": "frontier",
+  "note": "data model redesign pt"
+ },
+ {
+  "id": "HARD-32",
+  "prompt": "Our streaming job produces incorrect aggregates after restarts. Investigate watermark handling, checkpoint alignment and state backend compaction across the Flink job and the Kafka source, and find the root cause.",
+  "want_tier": "frontier",
+  "note": "streaming correctness"
+ },
+ {
+  "id": "HARD-33",
+  "prompt": "Design a saga-based orchestration for booking flights, hotels and payments across three partner APIs, including compensating actions, timeouts and operator-visible recovery.",
+  "want_tier": "frontier",
+  "note": "saga design"
+ },
+ {
+  "id": "HARD-34",
+  "prompt": "Propose and prototype an architecture for reducing cold start and tail latency of our serverless inference platform, covering model loading, placement, batching and autoscaling signals.",
+  "want_tier": "frontier",
+  "note": "perf architecture"
+ },
+ {
+  "id": "HARD-35",
+  "prompt": "Add a mutex around the counter map in cache.go because the race detector flags a concurrent map write in TestStats. Keep the change local to that struct.",
+  "want_tier": "mid",
+  "note": "scary race but local fix",
+  "known_gap": true
+ },
+ {
+  "id": "HARD-36",
+  "prompt": "Write a migration that adds a nullable column last_login_at to the users table and a down migration, plus update the user model and its tests.",
+  "want_tier": "mid",
+  "note": "scary migration but single column",
+  "known_gap": true
+ },
+ {
+  "id": "HARD-37",
+  "prompt": "Review the login handler for obvious security issues like missing input validation or verbose error messages and list what you find in that file.",
+  "want_tier": "mid",
+  "note": "scary security but one file"
+ },
+ {
+  "id": "HARD-38",
+  "prompt": "Explique como funciona o algoritmo Raft em linhas gerais e resuma como o nosso pacote consensus/ usa o líder, sem alterar código.",
+  "want_tier": "mid",
+  "note": "scary consensus but explanation",
+  "known_gap": true
+ },
+ {
+  "id": "HARD-39",
+  "prompt": "Fix the memory leak in the image resizer: the bytes.Buffer is created inside the loop and a file handle is never closed in resize.go. Add a regression test.",
+  "want_tier": "mid",
+  "note": "scary leak but obvious local cause",
+  "known_gap": true
+ },
+ {
+  "id": "HARD-40",
+  "prompt": "Refatore o módulo de pagamentos para extrair a função de cálculo de juros em um arquivo separado e adicionar testes unitários para ela.",
+  "want_tier": "mid",
+  "note": "scary payments but plain refactor"
+ }
+]

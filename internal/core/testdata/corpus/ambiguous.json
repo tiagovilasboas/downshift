@@ -1,0 +1,283 @@
+[
+ {
+  "id": "AMB-01",
+  "prompt": "ok",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "single word, no task"
+ },
+ {
+  "id": "AMB-02",
+  "prompt": "look at this",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "no referent"
+ },
+ {
+  "id": "AMB-03",
+  "prompt": "continue",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "depends on lost context"
+ },
+ {
+  "id": "AMB-04",
+  "prompt": "faz isso pra mim",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "pt-BR, no object"
+ },
+ {
+  "id": "AMB-05",
+  "prompt": "can you help",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "no task stated"
+ },
+ {
+  "id": "AMB-06",
+  "prompt": "fix it",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "unknown target"
+ },
+ {
+  "id": "AMB-07",
+  "prompt": "dá uma olhada nisso aqui e me diz o que acha",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "pt-BR vague review"
+ },
+ {
+  "id": "AMB-08",
+  "prompt": "thanks, now the other one",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "conversational, referent missing"
+ },
+ {
+  "id": "AMB-09",
+  "prompt": "same as before but for the other module",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "relies on prior context"
+ },
+ {
+  "id": "AMB-10",
+  "prompt": "???",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "no content"
+ },
+ {
+  "id": "AMB-11",
+  "prompt": "Hey! Quick one, are you free to look into something for me? It's a bit of a mess and I'm not sure where to start.",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "chatty, no concrete task"
+ },
+ {
+  "id": "AMB-12",
+  "prompt": "arruma o bug",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "pt-BR, which bug unknown"
+ },
+ {
+  "id": "AMB-13",
+  "prompt": "make it better",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "unbounded vague"
+ },
+ {
+  "id": "AMB-14",
+  "prompt": "vai, pode seguir com o que a gente combinou",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "pt-BR, agreement not in prompt"
+ },
+ {
+  "id": "AMB-15",
+  "prompt": "<system-reminder>\nThe task tools haven't been used recently. Consider using TaskCreate.\n</system-reminder>\n\ncontinue",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "boilerplate around no-signal word"
+ },
+ {
+  "id": "AMB-16",
+  "prompt": "[Tool result truncated]\n[Subagent started: general-purpose]\n\nDo the thing we discussed.",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "harness wrapper, vague task"
+ },
+ {
+  "id": "AMB-17",
+  "prompt": "Traceback (most recent call last):\n  File \"app/main.py\", line 88, in <module>\n    run()\n  File \"app/main.py\", line 61, in run\n    cfg = load()\nKeyError: 'DATABASE_URL'\n\n???",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "log pasted, ask unstated"
+ },
+ {
+  "id": "AMB-18",
+  "prompt": "deu isso aqui: ERROR 2026-10-11T22:14:03Z worker-3 connection reset by peer; ERROR 2026-10-11T22:14:04Z worker-3 retry 1/3; ERROR 2026-10-11T22:14:09Z worker-3 giving up",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "pt-BR, just a log"
+ },
+ {
+  "id": "AMB-19",
+  "prompt": "Why is this slow? I don't know, it just feels off since last week.",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "no target, no data"
+ },
+ {
+  "id": "AMB-20",
+  "prompt": "tem algo estranho no deploy, vê se descobre",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "pt-BR vague investigation"
+ },
+ {
+  "id": "AMB-21",
+  "prompt": "<command-message>review is running</command-message>\n<command-name>/review</command-name>\n\nRename the variable `tmp` to `buffer` in utils/io.go.",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "boilerplate around trivial rename"
+ },
+ {
+  "id": "AMB-22",
+  "prompt": "[Subagent context: repo=acme/web, branch=main, cwd=/work]\n\nFix the typo 'recieve' to 'receive' in README.md.",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "wrapper plus typo fix"
+ },
+ {
+  "id": "AMB-23",
+  "prompt": "<system-reminder>Plan mode is not active.</system-reminder>\nTroca o nome da função getUsr para getUser em src/api/users.ts.",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "pt-BR rename behind boilerplate"
+ },
+ {
+  "id": "AMB-24",
+  "prompt": "ok, so: run gofmt on internal/ and commit with message 'chore: fmt'.",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "conversational but mechanical"
+ },
+ {
+  "id": "AMB-25",
+  "prompt": "Delete the unused import of `os` in scripts/seed.py.",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "one-line edit"
+ },
+ {
+  "id": "AMB-26",
+  "prompt": "--- begin forwarded message ---\nFrom: lead\nSubject: small thing\n--- end ---\n\nBump the version in package.json from 1.4.2 to 1.4.3.",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "forwarded wrapper, one-line change"
+ },
+ {
+  "id": "AMB-27",
+  "prompt": "muda a cor do botão de submit pra #0a7d3b no arquivo styles/form.css",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "pt-BR one-line css"
+ },
+ {
+  "id": "AMB-28",
+  "prompt": "Add the missing newline at end of file to docs/setup.md and nothing else.",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "trivial"
+ },
+ {
+  "id": "AMB-29",
+  "prompt": "<system-reminder>Claude Code context: 3 files modified.</system-reminder>\n\nImplement pagination on the GET /orders endpoint (limit/offset, default 50) and add unit tests for the handler.",
+  "want_tier": "mid",
+  "want_hold": false,
+  "note": "clear feature behind boilerplate"
+ },
+ {
+  "id": "AMB-30",
+  "prompt": "Here is the failing output:\n\n--- FAIL: TestParseDuration (0.00s)\n    parse_test.go:41: got 0s, want 90s for input \"1m30s\"\nFAIL\n\nFind why ParseDuration in pkg/timeutil/parse.go drops the seconds part after minutes and fix it, adding a regression test.",
+  "want_tier": "mid",
+  "want_hold": false,
+  "note": "log quoted but task explicit"
+ },
+ {
+  "id": "AMB-31",
+  "prompt": "Resume e explica pra mim o que o módulo internal/billing/invoice.go faz, quais são as funções principais e como elas se conectam.",
+  "want_tier": "mid",
+  "want_hold": false,
+  "note": "pt-BR explain code"
+ },
+ {
+  "id": "AMB-32",
+  "prompt": "Refactor the notification service to extract the email sender into its own interface so we can mock it in tests; update the three call sites in services/notify/.",
+  "want_tier": "mid",
+  "want_hold": false,
+  "note": "scoped refactor"
+ },
+ {
+  "id": "AMB-33",
+  "prompt": "[auto] Previous agent output omitted.\n\nEscreve testes unitários para a função calcularFrete em src/frete.ts cobrindo CEP inválido, peso zero e frete grátis.",
+  "want_tier": "mid",
+  "want_hold": false,
+  "note": "pt-BR test writing, boilerplate"
+ },
+ {
+  "id": "AMB-34",
+  "prompt": "Read the attached CHANGELOG and docs/migration-v3.md and summarise the breaking changes in under ten bullets.",
+  "want_tier": "mid",
+  "want_hold": false,
+  "note": "doc summary",
+  "known_gap": true
+ },
+ {
+  "id": "AMB-35",
+  "prompt": "Add a retry with exponential backoff to the HTTP client in pkg/fetch, configurable max attempts, with tests.",
+  "want_tier": "mid",
+  "want_hold": false,
+  "note": "normal feature"
+ },
+ {
+  "id": "AMB-36",
+  "prompt": "<system-reminder>You are a subagent. Be concise.</system-reminder>\n\nDesign the architecture for splitting our monolith into services: define service boundaries, the data ownership model, cross-service transactions (saga vs 2PC), and a migration plan that keeps the payment flow online throughout.",
+  "want_tier": "frontier",
+  "want_hold": false,
+  "note": "real architecture task behind boilerplate"
+ },
+ {
+  "id": "AMB-37",
+  "prompt": "Segue o log abaixo. Em produção, ~1 a cada 5000 requisições o contador de saldo fica negativo sob carga; suspeito de race condition entre o worker de estorno e o de captura. Investigue a causa raiz no código de concorrência (locks, transações, ordem de commit) e proponha uma correção sem perder throughput.\n\nWARN balance=-12.00 acct=8841 tx=capture-a1 refund-b7 interleaved",
+  "want_tier": "frontier",
+  "want_hold": false,
+  "note": "pt-BR concurrency root cause with log"
+ },
+ {
+  "id": "AMB-38",
+  "prompt": "Do a full security audit of our authentication and session handling: password hashing, token signing and rotation, OAuth flows, CSRF, and the payment webhook verification. Produce a prioritised list of vulnerabilities with fixes.",
+  "want_tier": "frontier",
+  "want_hold": false,
+  "note": "security audit"
+ },
+ {
+  "id": "AMB-39",
+  "prompt": "Plan and carry out the migration of our 4TB Postgres cluster to a sharded setup with zero downtime: dual writes, backfill, cutover and rollback strategy.",
+  "want_tier": "frontier",
+  "want_hold": false,
+  "note": "large risky migration"
+ },
+ {
+  "id": "AMB-40",
+  "prompt": "Projete o sistema de autenticação e pagamentos multi-tenant: isolamento de dados entre tenants, rotação de chaves criptográficas, idempotência de cobranças e reconciliação entre serviços.",
+  "want_tier": "frontier",
+  "want_hold": false,
+  "note": "pt-BR auth/crypto/payment design"
+ }
+]

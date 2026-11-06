@@ -1,0 +1,20 @@
+{
+  "measured_at_commit": "a3978e2d",
+  "command": "go test -count=1 -v -run TestRoutingQualityBaseline ./internal/core",
+  "metric": "tier the classifier recommends (ClassifyWithSemantic, production defaults) against hand-labelled want_tier; tier_correct counts exact matches, under_routed counts a recommended tier below the label",
+  "tolerance_pp": 0.5,
+  "sets": {
+    "corpus_200": {
+      "cases": 200,
+      "tier_correct": 141,
+      "under_routed": 25,
+      "digest_sha256": "89c384e38673951cb8b9bf6882edbe990712d76402796125d963a634630bcafe"
+    },
+    "domain_precision_90": {
+      "cases": 90,
+      "tier_correct": 84,
+      "under_routed": 0,
+      "digest_sha256": "8529ed7af36dae3bdddfd8593762c6fcee9895c93f055255c9769a5c75b574bd"
+    }
+  }
+}
