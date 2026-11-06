@@ -1,0 +1,187 @@
+# Beta exit — task map
+
+This document tracks everything required to remove the **beta** label from
+`downshift`. Criteria match [README.md § Status](../../README.md#status).
+Update checkboxes as work lands; link PRs/commits in the **Done** column when
+closing a task.
+
+The current runtime, quota, cost and evidence queue is [gap-tasks.md](../internal/gap-tasks.md),
+with acceptance criteria, dependencies and dated validation status. Close a
+checkbox here only after its corresponding acceptance evidence is verified.
+
+**Legend:** `[ ]` open · `[~]` in progress · `[x]` done · `—` blocked on external harness/vendor
+
+---
+
+## Pillar 1 — Real-spawn verification (rewrite **honored**)
+
+Proof that the harness executor applied the hook’s model, not only that
+`outcome: "rewrite_emitted"` was logged.
+
+| ID | Task | Owner | Done |
+|----|------|-------|------|
+| P1.1 | Document “emission vs honored” in install guide (`docs/reference/session-models.md` + matrix) | eng | [x] |
+| P1.2 | Hook-layer E2E in CI (`TestHookE2E_RewriteEventStats`) | eng | [x] |
+| P1.3 | **Manual protocol**: one paid Claude Code session, trivial Task, capture stderr + child model in UI/logs | dogfood | [x] `docs/evidence/claude-code-rewrite-honored-2026-10-06.md` (child ran on Haiku 4.5 per the API-reported model in its transcript, under a Sonnet 5.5 parent; billing cross-check still open under P3) |
+| P1.4 | **Automated smoke** (CI gate): script that runs `downshift try` + adapter golden JSON payloads (`scripts/smoke-test.sh`) | eng | [x] |
+| P1.5 | Codex `multi_agent_v2`: repeat P1.3 on a known-good build; record in `docs/reference/harness-matrix.md` | dogfood | [x] `docs/evidence/codex-rewrite-honored-2026-10-02.md` |
+| P1.6 | Cursor Pro/Ultra usage-based: repeat P1.3; update matrix row | dogfood | [ ] |
+| P1.7 | Telemetry field `rewrite_honored: bool` (only when harness exposes post-spawn model) — schema + privacy review | eng | [x] |
+
+**Exit:** at least **one** harness with P1.3 write-up + matrix row **Yes** with date; P1.7 optional until upstream exposes signal.
+
+Codex P1.5 write-up landed 2026-10-02. Claude Code P1.3 landed 2026-10-06 after a schema-rejection bug (full id vs family name) was found and fixed; its evidence is the API-reported model in the child transcript, not billing.
+
+---
+
+## Pillar 2 — Multi-user evidence
+
+Graduation needs independent operators, not only one `events.jsonl`.
+
+| ID | Task | Owner | Done |
+|----|------|-------|------|
+| P2.1 | `downshift stats --export` JSON (no prompts) for sharing aggregates | eng | [x] |
+| P2.2 | Contributor guide: how to paste export into issue/PR without leaking paths | docs | [x] |
+| P2.3 | **2+ external contributors** (or teammates) run hooks 1 week; aggregate exports | community | [ ] |
+| P2.4 | README “Real session data” table updated with multi-source note + date | docs | [ ] |
+| P2.5 | Optional: anonymised `stats --export` CI artifact from maintainer machine (directional) | eng | [x] |
+
+**Exit:** README cites **≥3 distinct session sources** OR **≥2 non-maintainer exports** in a release note.
+
+**P2 status (2026-10-15):** open, unchanged since 2026-10-06 (no external export yet).
+
+**P2 status (2026-10-06):** open. It needs independent operators, not more data from one machine. If you run Downshift for a week, a `downshift export --days=7` is the contribution: counts and token totals only, allowlist-checked. See the [operator guide](../guides/operator.md) for the full week; `downshift stats --export` is the older, larger maintainer format.
+
+---
+
+## Pillar 3 — Routed-versus-control comparison (tokens only)
+
+**Status 2026-11-02:** the control arm was removed by owner decision, so the design below cannot be measured. See the P3 status after the table. The text stays as the record of what was planned.
+
+**Changed 2026-10-31 (owner decision):** this pillar was "Billing before/after
+(real dollars)". Downshift does not control cost and does not measure money, and
+routing does not use price, only tier/complexity and the LLM choice. The pillar
+now requires a real seven-day routed-versus-control comparison in tokens on
+three metrics, not a provider-invoice comparison. The earlier dollar/invoice
+criteria are kept below as struck-through history, not deleted.
+
+Prove routing's value in production on three metrics, with no money:
+
+- **Effect:** share of the routed group's billable tokens (input + output +
+  cache written) that ran on a tier lower than the one requested after
+  Downshift applied a rewrite; 0 in the control group by construction. Cache
+  reads are excluded. A routed child with verdict OK and no applied rewrite that
+  still ran lower (its own agent definition or the harness chose the tier) is
+  kept out of the Effect and shown apart (`billable_tokens_without_rewrite`),
+  because the control group never counts such children and counting them would
+  credit the routing with a difference it did not make (final review, 2026-11-01).
+- **Guard 1:** billable tokens per completed task, routed against control, 95%
+  bootstrap interval, minimum 20 completed tasks per group. Cache reads excluded.
+- **Guard 2:** rework rate (respawn in the same session within 10 minutes),
+  routed against control.
+
+Routing is worth it when the effect goes up and neither guard gets worse.
+Replaces directional normalised units with a production comparison in tokens.
+
+| ID | Task | Owner | Done |
+|----|------|-------|------|
+| P3.1 | Event schema with token usage per decision (the `CostUSD` / `FillRealCost` money plumbing was removed on 2026-10-31, owner decision) | eng | [x] |
+| P3.2 | Claude Code **PostToolUse** hook + usage linkage | eng | [x] |
+| P3.3 | Wire PostToolUse in maintainer `settings.json` + document in README quickstart | dogfood | [x] |
+| P3.4 | **≥50** `outcome: "usage"` events linked to prior PreToolUse decisions | dogfood | [x] 2026-11-01: 365 usage events linked to 315 distinct prior decisions (each `linked_decision` matches a decision's `correlation_id`) between 2026-10-21 and 2026-11-01 in the maintainer's event log; 12 of 377 usage events had no link |
+| P3.5 | Non-zero token-derived savings, known baseline and native provenance: [2026-10-09 audit](../evidence/billing-gap-audit.md), QA PASS; not an invoice or controlled-period comparison | dogfood | [x] |
+| P3.6 | **Control group**: `DOWNSHIFT_NO_ROUTE=1` / `--no-route` baseline events | eng | [x] shipped; **removed 2026-11-02 (owner decision)**: no control group or no-route switch exists any more |
+| P3.7 | ~~Report template: same calendar week, Anthropic/OpenAI dashboard vs `stats --export`~~ **(2026-10-31, owner decision)** Real seven-day routed-versus-control comparison in tokens: effect, Guard 1, Guard 2, published at `docs/evidence/real-seven-day-<date>.md` (issue #103) | docs | [ ] **cannot be measured as designed (2026-11-02): the control arm was removed by owner decision and issue #103 is closed** |
+| P3.8 | PostToolUse for Codex/Cursor when harness exposes usage (track upstream) | eng | — |
+
+**Exit:** P3.4 + P3.5 + P3.7 filled for **one** seven-day window (maintainer sign-off). Still open: no completed seven-day routed-versus-control comparison (P3.7). Since 2026-11-02 that comparison cannot be run (control arm removed, see the P3 status below). P3.5 alone does not close the pillar. ~~Earlier exit required one filled billing period against the provider dashboard (changed 2026-10-31, owner decision).~~
+
+**P3 status (2026-11-02; owner decision):** P3 cannot be measured as designed. The control arm was removed from the product on 2026-11-02: every spawn is routed, and `DOWNSHIFT_CONTROL_SHARE` and `DOWNSHIFT_NO_ROUTE` do nothing. There is no unrouted side to compare with, so Guard 1 and Guard 2 as written (routed against control) cannot be computed. Issue #103 was closed on 2026-11-02. P3.6 is removed and P3.7 cannot be filled. `downshift report` is routed-only now.
+
+**Earlier P3 status (2026-10-31; superseded 2026-11-02):** open. The pillar no longer measures money; Downshift does not control cost and routing does not use price. The control group is on by default (`DOWNSHIFT_CONTROL_SHARE`, default 0.10). `downshift report` compares routed and control tokens per completed task and rework. P3.7 is now a real seven-day routed-versus-control comparison in tokens on three metrics (effect, Guard 1 tokens per completed task with a 95% bootstrap interval and a 20-per-group floor, Guard 2 rework rate), published at `docs/evidence/real-seven-day-<date>.md` and tracked in issue #103. It is not a provider-billing comparison. The controlled routed-versus-control run at list prices (one operator, 2026-10-15) in [evidence/subagent-routing-ab-2026-10-15.md](../evidence/subagent-routing-ab-2026-10-15.md) is historical and does not close P3.7. ~~Earlier status (2026-10-15/2026-10-20): P3.7 required a same-period comparison with the provider dashboard using the billing comparison template; that criterion was retired on 2026-10-31.~~
+
+Historical P3.4 finding (2026-10-06; superseded counts and current provenance in the [2026-10-09 audit](../evidence/billing-gap-audit.md)): the Claude Code PostToolUse payload for an async `Agent` launch carries no token usage (`tool_response` is launch metadata only, `duration_ms` is a few ms), which is why the log has no `usage` events. The subagent transcript at `tool_response.outputFile` does carry per-message `message.model` and `message.usage` (input, output, cache creation/read; the same message id repeats while streaming, so take the last per id). It is not complete at launch time, so usage is read when the subagent stops: the SubagentStop hook (`downshift claude-code-subagent-stop`, payload `agent_id` + `agent_transcript_path`) prices it from that transcript and links it to the decision through the hashed agent id. Verified 2026-10-06 against a real transcript (18 input, 311 output, 82,900 cache tokens). It is not enabled in the maintainer `settings.json` yet, and savings stay zero while the decision's `requested_model` is `unknown`. The launch payload does carry `resolvedModel`, now recorded as an `outcome: "resolved"` honor observation (P1.7).
+
+---
+
+## Pillar 4 — Benchmark & classifier quality
+
+| ID | Task | Owner | Done |
+|----|------|-------|------|
+| P4.1 | Seed dataset health checks (`LoadDataset` refuses duplicates; the `DatasetHealth` report was removed on 2026-11-02 with no caller) | eng | [x] |
+| P4.2 | Expand curated set **30 → 108** tasks | eng | [x] |
+| P4.3 | Graphify library | eng | [x] removed from the product 2026-10-17 |
+| P4.4 | Grow to **200** tasks (real prompts, rubric in `docs/benchmark/README.md`) | curation | [x] |
+| P4.5 | 500-task seed+holdout net existed (200+300); datasets moved to **downshift-labs** since v0.1.0-beta.7; public [benchmark/report.md](../benchmark/report.md). | curation | [x] |
+| P4.6 | `downshift benchmark --report` + `--gate` (command removed 2026-10-26). They gated the burned net, not unseen traffic. | eng | [x] |
+| P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
+| P4.8 | ~~Graphify MCP fetcher~~ | eng | [x] removed 2026-10-17 (out of product scope) |
+| P4.9 | **Hash semantic boost on by default** (`DOWNSHIFT_SEMANTIC_BOOST=0` opts out, legacy `DOWNSHIFT_MINILM=0` — `docs/design/minilm-semantic.md`) | eng | [x] |
+| P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout (`benchmark/minilm-holdout.json`) | eng | [x] |
+
+**Exit (not met on this dataset):** P4.5 regression files live in private **downshift-labs** (`ci-eval` gates). The public repo ships [benchmark/report.md](../benchmark/report.md) only. Historical note (2026-10-04, `eb116ed`): holdout was a burned regression net (template stems, post-holdout signal tuning to 100% tier accuracy), not proof of generalization. Do not remove the beta label on that dataset alone.
+
+**P4 status (2026-10-15):** open. The beta.14 hardening audit leaves every split's classifier output unchanged (before and after); the abstention split is reported separately, see [evidence/hardening-audit-2026-10-15.md](../evidence/hardening-audit-2026-10-15.md). The seed and the shared-memory floor are recomputed at 37/40 (the floor moved from 38/40 on purpose when the semantic boost stopped lifting prompts with no regex signal). Two eval-only splits are published as aggregates in [benchmark/report.md](../benchmark/report.md) (`fresh` 50.0%, `heldout2` 40.0%, classifier commit `5a888e7`, 2026-10-10). Still missing: a new blind set of 200 or more tasks that is never tuned against.
+
+P4.3 Graphify was removed from the product on 2026-10-17 to keep the hook lean (regex + hash semantic boost only).
+
+---
+
+## Pillar 5 — Harness coverage (external + docs)
+
+| ID | Task | Owner | Done |
+|----|------|-------|------|
+| P5.1 | `docs/reference/harness-matrix.md` maintained per release | docs | [x] |
+| P5.2 | Antigravity catalog entries (`flash_lite` / `flash` / `pro`) | eng | [x] |
+| P5.3 | Revalidate Cursor free/legacy discard quarterly | dogfood | [ ] |
+| P5.4 | Revalidate Codex `multi_agent_v2` schema quarterly | dogfood | [ ] |
+| P5.5 | Antigravity real child observed on desktop 2.21.1, 2026-10-09; [native evidence](../evidence/antigravity-executor-ack.md), QA PASS, build-specific scope | dogfood | [x] |
+| P5.6 | Issue template: “plan compatibility” checklist for bug reports | docs | [x] |
+
+**Exit:** matrix has **no stale TBD** for harnesses you ship support for; known “No” rows stay honest.
+
+---
+
+## Adapt tier memory (2026-10-10)
+
+Local `adapt-memory.json` and `AdjustTier` shipped on `main` (`internal/adapt`,
+wired by `internal/routeadapt`); both were removed in wave A (2026-10-26), see [routing v2](../design/routing-v2.md). Offline efficacy on the maintainer 40-task suite
+is in [benchmark/report.md](../benchmark/report.md) (sections A/B, runs
+2026-10-03). Shared-shape aggregation **underperforms** the classifier on that
+suite; per-task contrafactual is an upper bound only.
+
+This does **not** close beta exit: **P1.6**, **P2.3**, **P3.4**, **P3.7** stay
+open, and the product remains **beta**.
+
+---
+
+## Infrastructure & honesty (supports all pillars)
+
+| ID | Task | Owner | Done |
+|----|------|-------|------|
+| I1 | Multi-process JSONL lock (`LockFile` in `AppendTo`) | eng | [x] |
+| I2 | Log rotation wired on append (`RotationPolicy`) | eng | [x] |
+| I3 | Commit `go.sum` + CI cache (silenced in CI since zero external modules in `go.mod`) | eng | [x] |
+| I4 | README “What’s missing” table synced with this doc | docs | [x] |
+| I5 | `ExportSummary` includes `baseline` + `usage_linked` counts | eng | [x] |
+| I6 | Session route cache persistence audit (multi-process: stateless hooks + in-memory memo documented) | eng | [x] |
+
+---
+
+## Suggested execution order (sprints)
+
+1. **Code done:** P4.9 default local hash boost, P4.10 neural holdout measurement, P3.3 PostToolUse command shipped, inferred honor in stats, Graphify command fetcher.
+2. **Dogfood now:** P3.7 is not runnable since 2026-11-02 (control arm removed). P3.4 was met on 2026-11-01. P3.5 technical token-derived criterion passed on 2026-10-09; the period exit remains open.
+3. **Community:** P2.3–P2.4 exports from other operators.
+4. **Before label removal:** P1.6, P5.3–P5.4, all five pillar exit checks signed in a release note. P5.5 observed 2026-10-09 on desktop 2.21.1; Codex P1.5 remains inferred, recorded 2026-10-02.
+
+---
+
+## Release checklist (flip beta → stable)
+
+- [ ] All five **Exit** lines above satisfied.
+- [ ] README badge + Status section updated (remove beta; link here).
+- [ ] CHANGELOG entry with evidence links (exports, benchmark numbers, matrix date).
+- [ ] No open **P1** or **P3** blockers tagged `release-critical`.
+
+When in doubt, keep **beta** — the label is a promise to new installers.
