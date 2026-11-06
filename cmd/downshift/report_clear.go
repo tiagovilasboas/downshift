@@ -23,7 +23,9 @@ var reportClearFiles = []string{
 	"events.jsonl",
 	"agents.jsonl",
 	"exec-events.jsonl",
-	"exec-events.jsonl.1", // rotated generation: readers sum it with the current file
+	"exec-events.jsonl.1",   // rotated generation: readers sum it with the current file
+	"exec-retrievals.jsonl", // bytes fetched back with retrieve; read with exec-events.jsonl
+	"exec-retrievals.jsonl.1",
 	"exec-skips.jsonl",
 	"exec-skips.jsonl.1",
 	"context-compactions.jsonl",

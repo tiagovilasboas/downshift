@@ -129,6 +129,9 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	// appended here rather than inside telemetry.PrintReport.
 	fmt.Fprintf(stdout, "\n📦 COMPACTOR (%s)\n", nums.Scope.Label())
 	fmt.Fprintf(stdout, "   %s\n", nums.Display.Compactor)
+	if nums.Display.Retrieved != "" {
+		fmt.Fprintf(stdout, "   %s\n", nums.Display.Retrieved)
+	}
 	printCompactionDetailText(stdout, detail)
 	printEfficiencyText(stdout, efficiency)
 

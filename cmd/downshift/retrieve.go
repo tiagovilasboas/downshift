@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/ccr"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 )
 
 // runRetrieve prints the raw output the compactor kept for an id, optionally
@@ -61,7 +62,7 @@ func retrieveRun(id string, q ccr.Query, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "downshift retrieve: the store is unavailable")
 		return 1
 	}
-	data, err := store.Get(id)
+	out, _, err := execwrap.Retrieve(store, id, q, 0)
 	switch {
 	case errors.Is(err, ccr.ErrInvalidID):
 		return retrieveUsage(stderr, "the id must be 12 lowercase hex characters")
@@ -71,13 +72,11 @@ func retrieveRun(id string, q ccr.Query, stdout, stderr io.Writer) int {
 	case errors.Is(err, ccr.ErrExpired):
 		fmt.Fprintf(stderr, "downshift retrieve: the kept output for %s has expired\n", id)
 		return 1
+	case errors.As(err, new(*execwrap.QueryError)):
+		return retrieveUsage(stderr, err.Error())
 	case err != nil:
 		fmt.Fprintln(stderr, "downshift retrieve: could not read the kept output")
 		return 1
-	}
-	out, err := ccr.Slice(data, q)
-	if err != nil {
-		return retrieveUsage(stderr, err.Error())
 	}
 	_, _ = stdout.Write(out)
 	return 0

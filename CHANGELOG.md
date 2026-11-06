@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Compaction savings now subtract the bytes the agent fetches back with `downshift retrieve` (the CLI and the MCP tool `retrieve`). Before, a run whose raw output was retrieved still counted `raw - emitted` as saved in `downshift report`, `downshift session`, the panel and the context summary. A compacted run's saving is now `raw - emitted - retrieved`, floored at zero per run, so a run fetched back in full reports 0 saved bytes. The bytes fetched back show on their own line (`Fetched back with retrieve: N bytes`; `retrieved_bytes` in JSON, the panel and `exec_metrics`), and the per-harness tokens, compaction detail and `--daily`/`--history` figures use the net number too. A compacted run's exec row now carries its CCR `kept_id`, and each retrieval writes `{ts, id, bytes}` to the new `exec-retrievals.jsonl` (no command, output, query, path or prompt; rotated and cleared like the exec log). Logs written before this change sum exactly as before. See [ccr.md](docs/guides/ccr.md#retrieved-bytes-are-subtracted-from-the-savings) and [report.md](docs/guides/report.md).
+
 ## [0.9.0] - 2026-11-06
 
 First public beta. The repository starts a fresh history at this release. Release notes: [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).

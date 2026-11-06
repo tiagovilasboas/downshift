@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/ccr"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -81,5 +82,24 @@ func TestRetrieveExitCodes(t *testing.T) {
 func TestRetrieveHelpTopicExists(t *testing.T) {
 	if !strings.Contains(helpTopics["retrieve"], "downshift retrieve <id>") {
 		t.Error("retrieve has no help entry")
+	}
+}
+
+// The CLI records the bytes it printed through the shared execwrap.Retrieve:
+// the id, the byte count and nothing else; a failed call records nothing.
+func TestRetrieveRecordsBytesReturned(t *testing.T) {
+	id := keepForTest(t, "one\ntwo FAIL\nthree\nfour FAIL\nfive\n")
+	if code, out, _ := retrieve(id, "--grep", "FAIL"); code != 0 || out != "two FAIL\nfour FAIL\n" {
+		t.Fatalf("code=%d out=%q", code, out)
+	}
+	retrieve("000000000000") // not found
+	retrieve(id, "--grep", "(")
+	path, err := execwrap.RetrievalsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := execwrap.ReadRetrievals(path)
+	if err != nil || len(rows) != 1 || rows[0].ID != id || rows[0].Bytes != int64(len("two FAIL\nfour FAIL\n")) {
+		t.Fatalf("rows = %+v %v", rows, err)
 	}
 }

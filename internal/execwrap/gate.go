@@ -38,6 +38,7 @@ type gate struct {
 	keep            func(raw []byte) (string, bool) // Options.Keep, nil when off
 	keepFailed      func(raw []byte) (string, bool) // Options.KeepFailed
 	detail          string                          // passthrough detail set by finish
+	keptID          string                          // CCR id of the stored raw output, set by finish
 	skipObservation bool
 }
 
@@ -159,9 +160,10 @@ func (g *gate) finish(exitCode int, family Family) (raw, emitted int64, compacte
 	var out []byte
 	out, passthrough, g.detail = compactOutputFor(g.argv, exitCode, data, family, g.nErr > 0)
 	compacted = passthrough == ""
+	keep := g.noteKept(g.keeper(exitCode, family))
 	if compacted {
-		out = keepRaw(g.keeper(exitCode, family), data, out)
-	} else if foldedOut, ok := keepUncompacted(g.keeper(exitCode, family), data, exitCode, family, g.nErr > 0); ok {
+		out = keepRaw(keep, data, out)
+	} else if foldedOut, ok := keepUncompacted(keep, data, exitCode, family, g.nErr > 0); ok {
 		out, compacted, folded, passthrough, g.detail = foldedOut, true, true, "", ""
 	}
 	if compacted {
@@ -199,6 +201,22 @@ func observeUncompacted(hook func([]string, []byte, Family), argv []string, data
 	select {
 	case <-done:
 	case <-time.After(ObserveHookDeadline):
+	}
+}
+
+// noteKept wraps a storage port so the id of what it stored lands in g.keptID.
+// A nil port stays nil. Both callers use the id they get (keepRaw, and
+// keepUncompacted only when it stored), so a recorded id is one the marker names.
+func (g *gate) noteKept(keep func(raw []byte) (string, bool)) func(raw []byte) (string, bool) {
+	if keep == nil {
+		return nil
+	}
+	return func(raw []byte) (string, bool) {
+		id, ok := keep(raw)
+		if ok {
+			g.keptID = id
+		}
+		return id, ok
 	}
 }
 

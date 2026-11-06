@@ -39,6 +39,9 @@ func styledReportData(d reportOut, events []telemetry.Event, days int, scope acc
 				printCompactionLead(w, d.TokensByHarness, scope)
 				fmt.Fprintf(w, "\n📦 COMPACTOR (%s)\n", d.Numbers.Scope.Label())
 				fmt.Fprintf(w, "   %s\n", d.Numbers.Display.Compactor)
+				if d.Numbers.Display.Retrieved != "" {
+					fmt.Fprintf(w, "   %s\n", d.Numbers.Display.Retrieved)
+				}
 				printCompactionDetailText(w, d.CompactionDetail)
 			}),
 			tabOf("Routing", func(w io.Writer) {

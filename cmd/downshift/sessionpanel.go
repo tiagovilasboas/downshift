@@ -67,11 +67,14 @@ const compactorTokenEstimate = "estimated: saved_bytes / 4"
 // id), since the pane sits beside one session. `downshift report` keeps every
 // session and harness.
 type compactorPanel struct {
-	Scope                string `json:"scope"`
-	Commands             int64  `json:"commands"`
-	Compacted            int64  `json:"compacted"`
-	RawBytes             int64  `json:"raw_bytes"`
-	SavedBytes           int64  `json:"saved_bytes"`
+	Scope      string `json:"scope"`
+	Commands   int64  `json:"commands"`
+	Compacted  int64  `json:"compacted"`
+	RawBytes   int64  `json:"raw_bytes"`
+	SavedBytes int64  `json:"saved_bytes"`
+	// RetrievedBytes is what `retrieve` fetched back for this session's runs;
+	// SavedBytes is already net of it. Absent when none.
+	RetrievedBytes       int64  `json:"retrieved_bytes,omitempty"`
 	EstimatedTokensSaved int64  `json:"estimated_tokens_saved"`
 	TokenEstimate        string `json:"token_estimate"`
 	// Families is the per-family breakdown of this session's runs; never null.
@@ -140,7 +143,7 @@ func panelWithReport(v telemetry.PanelView, hash string, events []telemetry.Even
 	}
 	out.Compactor = &compactorPanel{
 		Scope: session.Label(), Commands: c.Commands, Compacted: c.Compacted, RawBytes: c.RawBytes,
-		SavedBytes: c.SavedBytes, EstimatedTokensSaved: c.Tokens, TokenEstimate: compactorTokenEstimate,
+		SavedBytes: c.SavedBytes, RetrievedBytes: c.RetrievedBytes, EstimatedTokensSaved: c.Tokens, TokenEstimate: compactorTokenEstimate,
 		Families: sessionFamilies(execEvents, session),
 	}
 	if direct.Commands > 0 {

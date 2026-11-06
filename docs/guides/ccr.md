@@ -91,4 +91,42 @@ paths or text the command echoed.
 76.1% with CCR on; the generic family goes from 18.4% to 93.1%.
 
 The exec log records raw and emitted bytes after the fold, so savings include CCR.
-Known gap: bytes later fetched with `retrieve` are not subtracted yet.
+Bytes later fetched with `retrieve` are taken off again; see the next section.
+
+## Retrieved bytes are subtracted from the savings
+
+A cut that the agent immediately undoes saved nothing. So every `retrieve` (the CLI and
+the MCP tool go through the same function) that returns bytes writes one row to
+`~/.downshift/exec-retrievals.jsonl`, next to the exec log:
+
+```json
+{"ts":"2026-11-06T18:02:11Z","id":"3f9a1c2b7d40","bytes":18432}
+```
+
+That is all it holds: the 12-hex id, the number of bytes returned (after `--grep`, `--head`,
+`--tail`, `--lines`, and after the MCP tool's size cut) and the time. Never the command, the
+output, the query, a path or a prompt. A `retrieve` that fails or returns nothing writes nothing.
+The compacted run's own row in `exec-events.jsonl` gains the same `kept_id`, which is how the two
+are matched.
+
+`downshift report`, `downshift session` (the panel), `report --daily/--history`, the compaction
+detail and the context summary all read the same figure:
+
+- A compacted run's saved bytes are `raw - emitted - retrieved`, **floored at zero per run**. A
+  run fetched back in full, or more than once, reports `0` saved bytes; it never goes negative
+  and never reduces another run's saving.
+- The bytes fetched back appear on their own line, next to the savings, so both numbers are
+  visible: `Fetched back with retrieve: 20400 bytes (already taken off the saved bytes)` in the
+  report (markdown, `--text`, the styled view), `retrieved_bytes` in `--json`, in the session panel
+  and in the context summary (`exec_metrics.retrieved_bytes`). The line is absent when nothing was
+  fetched back, and a log with no retrieval rows sums exactly as it did before.
+- An id retrieved twice counts twice. A retrieval whose id matches no run in the log (the run
+  rotated out, or the output was stored on another machine) changes nothing.
+- Two runs can share an id when their redacted output is identical. The bytes fetched for that id
+  are charged to the oldest run first, up to its saving, then to the next; the newest run takes
+  any remainder, so `retrieved_bytes` always adds up to what was fetched.
+- Rotation: the retrievals log rotates at 10 MiB like the exec log, and readers sum the `.1`
+  generation with the current file. `downshift report clear` moves both away.
+- Entries expire after 24 hours, so a retrieval always belongs to a recent run.
+
+The token figures are still `saved_bytes / 4`, an estimate, now of the net bytes.

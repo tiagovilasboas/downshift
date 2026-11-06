@@ -6,9 +6,11 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/ccr"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -63,5 +65,40 @@ func TestRetrieveToolIsReadOnlyAndListed(t *testing.T) {
 	}
 	if err := Validate([]Tool{tl}); err != nil {
 		t.Error(err)
+	}
+}
+
+// The MCP tool goes through the same execwrap.Retrieve as the CLI: it records
+// the bytes returned, the cut length when the result was cut, and nothing on a
+// failure.
+func TestRetrieveToolRecordsBytesReturned(t *testing.T) {
+	t.Setenv(paths.EnvStateDir, t.TempDir())
+	store, err := ccr.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	big := strings.Repeat("0123456789abcdef\n", maxResultBytes/16+10)
+	id, err := store.Put([]byte(big))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res := callRetrieve(t, `{"id":"`+id+`","head":2}`); res.IsError || res.Text != "0123456789abcdef\n0123456789abcdef\n" {
+		t.Fatalf("head: %+v", res)
+	}
+	if res := callRetrieve(t, `{"id":"`+id+`"}`); res.IsError || !strings.Contains(res.Text, "cut at") {
+		t.Fatalf("whole: error=%v, want the cut note", res.IsError)
+	}
+	callRetrieve(t, `{"id":"`+id+`","grep":"("}`)
+	callRetrieve(t, `{"id":"000000000000"}`)
+	path, err := execwrap.RetrievalsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := execwrap.ReadRetrievals(path)
+	if err != nil || len(rows) != 2 {
+		t.Fatalf("rows = %+v %v", rows, err)
+	}
+	if rows[0].ID != id || rows[0].Bytes != 34 || rows[1].Bytes != int64(maxResultBytes) {
+		t.Fatalf("rows = %+v, want 34 bytes then the cut length %d", rows, maxResultBytes)
 	}
 }

@@ -76,7 +76,10 @@ type Compactor struct {
 	Compacted  int64 `json:"compacted"`
 	RawBytes   int64 `json:"raw_bytes"`
 	SavedBytes int64 `json:"saved_bytes"`
-	Tokens     int64 `json:"tokens"`
+	// RetrievedBytes is what `retrieve` fetched back for these runs. SavedBytes
+	// is already net of it (per run, floored at zero).
+	RetrievedBytes int64 `json:"retrieved_bytes,omitempty"`
+	Tokens         int64 `json:"tokens"`
 }
 
 // Display is the final text of the figures, so no surface formats them again.
@@ -88,6 +91,10 @@ type Display struct {
 	ScopeLabel string `json:"scope_label"`
 	Routing    string `json:"routing"`
 	Compactor  string `json:"compactor"`
+	// Retrieved is its own line, empty when nothing was fetched back with
+	// `retrieve`: the bytes returned, so the reader sees them next to the
+	// savings, which are already net of them.
+	Retrieved string `json:"retrieved,omitempty"`
 	// Ledger is LedgerLine(Numbers.Ledger, Scope).
 	Ledger string `json:"ledger"`
 }
@@ -167,6 +174,8 @@ func compactorTotals(evs []execwrap.Event) Compactor {
 		RawBytes:   sum.RawBytes,
 		SavedBytes: sum.SavedBytes,
 		Tokens:     sum.EstimatedTokensSaved,
+
+		RetrievedBytes: sum.RetrievedBytes,
 	}
 }
 
@@ -177,8 +186,18 @@ func displayOf(n Numbers) Display {
 		ScopeLabel:       n.Scope.Label(),
 		Routing:          routingText(n.Routing),
 		Compactor:        fmt.Sprintf("Commands: %d · Compacted: %d", n.Compactor.Commands, n.Compactor.Compacted),
+		Retrieved:        RetrievedLine(n.Compactor),
 		Ledger:           LedgerLine(n.Ledger, n.Scope),
 	}
+}
+
+// RetrievedLine is the line for the bytes `retrieve` returned for the runs of
+// c, "" when there are none. The saved bytes and tokens are already net of them.
+func RetrievedLine(c Compactor) string {
+	if c.RetrievedBytes <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("Fetched back with retrieve: %d bytes (already taken off the saved bytes)", c.RetrievedBytes)
 }
 
 // routingText is one "harness: line" per harness, joined by "; ", never a

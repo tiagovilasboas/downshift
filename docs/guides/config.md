@@ -54,6 +54,7 @@ hook payload overrides them at spawn time.
 | `session-models.json` | Per-harness session allowlists |
 | `cursor-composer-model.json` | Cursor only: last seen composer slug per `session_id` (written by `cursor-touch` and `end cursor`; read for Task baseline when `preToolUse` omits `model`) |
 | `exec-events.jsonl`, `exec-skips.jsonl` | `downshift compact` metrics and skip reasons. Past 10 MiB a file moves to `<name>.1` (one generation); readers sum `.1` and the current file |
+| `exec-retrievals.jsonl` | One row per `downshift retrieve` (CLI or MCP) that returned bytes: the 12-hex id, the byte count and the time, nothing else. Read with `exec-events.jsonl` to take fetched-back bytes off the savings ([ccr.md](ccr.md)). Same rotation |
 | `compressor-learning.json` | Compressor learning store; written under `compressor-learning.json.lock` (a busy lock skips the observation after 200 ms) |
 | `loop-events.jsonl` | Routing v2 training events |
 | `weights.json` | Classifier weight override |

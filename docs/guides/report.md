@@ -108,6 +108,22 @@ section. The quota follows under `QUOTA USED PER HARNESS`.
 The report states no saving and flags no verdict. It describes the routed spawns of the window; a
 small window is small, so read the counts next to every rate.
 
+## Bytes fetched back with `retrieve`
+
+With CCR a compacted run keeps its raw output under an id, and `downshift retrieve <id>` (or the MCP
+tool `retrieve`) brings part or all of it back into the context. Those bytes are not a saving, so the
+report takes them off: a run's saved bytes are `raw - emitted - retrieved`, floored at zero per run,
+and a run that was fetched back in full reports 0 saved. Every figure that counts compaction
+(the per-harness tokens, the compaction detail, `--daily` and `--history`, `downshift session`'s
+panel, the context summary) uses that net number.
+
+The bytes themselves get their own line under the Compactor figures, in the markdown, `--text` and
+styled reports: `Fetched back with retrieve: N bytes (already taken off the saved bytes)`. In JSON it
+is `numbers.compactor.retrieved_bytes` and `numbers.display.retrieved` (the session panel's
+`compactor.retrieved_bytes`). The line and the keys are absent when nothing was fetched back, and a
+log with no retrieval rows gives the totals it always gave. The rows hold only the id, the byte count
+and the time; see [ccr.md](ccr.md#retrieved-bytes-are-subtracted-from-the-savings).
+
 ## Compaction detail
 
 The default output is markdown: the same sections as `--text`, as headings and tables a harness

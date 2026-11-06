@@ -78,6 +78,9 @@ type Result struct {
 	// Folded is true when the compacted output is a lossy fold with the raw
 	// kept in CCR, not the lossless compressor. Compacted is true as well.
 	Folded bool
+	// KeptID is the CCR id the raw output was stored under, empty when it was
+	// not stored.
+	KeptID string
 	// Passthrough is the Passthrough* reason when Compacted is false.
 	Passthrough string
 	// PassthroughDetail is the Detail* code refining PassthroughUnrecognized;
@@ -170,7 +173,7 @@ func Run(argv []string, o Options) (res Result) {
 	res.ExitCode, res.ExitClass = exitStatus(cmd.Wait())
 	release()
 	res.RawBytes, res.EmittedBytes, res.Compacted, res.Folded, res.Passthrough = g.finish(res.ExitCode, res.Family)
-	res.PassthroughDetail = g.detail
+	res.PassthroughDetail, res.KeptID = g.detail, g.keptID
 	return res
 }
 

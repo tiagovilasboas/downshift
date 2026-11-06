@@ -84,6 +84,15 @@ type Event struct {
 	// client or the value is dropped by the sanitizer; absent on rows written
 	// before this field was added.
 	Client string `json:"client,omitempty"`
+	// KeptID is the CCR id (12 lowercase hex) the run's raw output was stored
+	// under, when it was. It is what a retrieval is matched against. A hash of
+	// the redacted output: never the command or the output. Empty when nothing
+	// was stored, and on rows written before this field.
+	KeptID string `json:"kept_id,omitempty"`
+	// RetrievedBytes is filled by the readers, never written: the bytes fetched
+	// back with `retrieve` for KeptID that were charged to this run (see
+	// attachRetrievals). NetSaved subtracts them from the saving.
+	RetrievedBytes int64 `json:"-"`
 }
 
 // EventFrom builds the log record for a Result.
@@ -100,6 +109,7 @@ func EventFrom(r Result, now time.Time) Event {
 		ExitClass:    r.ExitClass,
 		Compacted:    r.Compacted,
 		Folded:       r.Folded,
+		KeptID:       r.KeptID,
 		Passthrough:  r.Passthrough,
 
 		PassthroughDetail: r.PassthroughDetail,
@@ -119,10 +129,19 @@ func Append(path string, ev Event) error {
 	return appendLine(path, line)
 }
 
-// ReadEvents reads every record from the exec log at path. A missing file is
-// an empty slice, not an error. Malformed lines are skipped, mirroring
-// Summarize. Callers that only need totals should use Summarize instead.
+// ReadEvents reads every record from the exec log at path, with the bytes
+// fetched back by `retrieve` (the retrievals log beside it) attached to the
+// runs they belong to. A missing file is an empty slice, not an error.
+// Malformed lines are skipped, mirroring Summarize. Callers that only need
+// totals should use Summarize instead.
 func ReadEvents(path string) ([]Event, error) {
+	return readEvents(path, "")
+}
+
+// readEvents is ReadEvents for one hashed session (all of them when session is
+// empty). The retrievals are charged to the runs of the whole log first, so a
+// session sees only what was fetched back for its own runs.
+func readEvents(path, session string) ([]Event, error) {
 	var out []Event
 	err := scanLog(path, func(line []byte) {
 		var ev Event
@@ -130,5 +149,19 @@ func ReadEvents(path string) ([]Event, error) {
 			out = append(out, ev)
 		}
 	})
-	return out, err
+	if err != nil {
+		return out, err
+	}
+	rets, rerr := ReadRetrievals(retrievalsBeside(path))
+	attachRetrievals(out, rets)
+	if session != "" {
+		kept := out[:0]
+		for _, ev := range out {
+			if ev.Session == session {
+				kept = append(kept, ev)
+			}
+		}
+		out = kept
+	}
+	return out, rerr
 }

@@ -138,14 +138,14 @@ func addCompaction(execEvents []execwrap.Event, o PeriodOptions, in func(time.Ti
 	saved := map[[2]string]int64{}
 	for _, ev := range execEvents {
 		t, ok := parseStamp(ev.TS)
-		if !ok || !in(t) || ev.RawBytes <= ev.EmittedBytes {
+		if !ok || !in(t) || ev.NetSaved() == 0 {
 			continue
 		}
 		h := ev.Harness
 		if h == "" {
 			h = UnknownHarness
 		}
-		saved[[2]string{o.periodKey(t), h}] += ev.RawBytes - ev.EmittedBytes
+		saved[[2]string{o.periodKey(t), h}] += ev.NetSaved()
 	}
 	for k, b := range saved {
 		cell(k[0], k[1]).CompactionTokens = b / execwrap.BytesPerToken

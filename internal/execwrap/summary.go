@@ -3,19 +3,21 @@
 
 package execwrap
 
-import (
-	"encoding/json"
-)
-
 // Summary totals the exec log. SavedBytes is measured; EstimatedTokensSaved
 // is SavedBytes / BytesPerToken and is an estimate.
 type Summary struct {
-	Commands             int64            `json:"commands"`
-	Compacted            int64            `json:"compacted"`
-	Failures             int64            `json:"failures,omitempty"`
-	RawBytes             int64            `json:"raw_bytes"`
-	EmittedBytes         int64            `json:"emitted_bytes"`
-	SavedBytes           int64            `json:"saved_bytes"`
+	Commands     int64 `json:"commands"`
+	Compacted    int64 `json:"compacted"`
+	Failures     int64 `json:"failures,omitempty"`
+	RawBytes     int64 `json:"raw_bytes"`
+	EmittedBytes int64 `json:"emitted_bytes"`
+	// SavedBytes is raw - emitted per compacted run, less what `retrieve` later
+	// fetched back for that run, floored at zero per run.
+	SavedBytes int64 `json:"saved_bytes"`
+	// RetrievedBytes is the bytes `retrieve` returned for the kept output of
+	// the runs in this summary. It is shown next to SavedBytes, not hidden in
+	// it; a run's saving drops by at most its own size. Absent when none.
+	RetrievedBytes       int64            `json:"retrieved_bytes,omitempty"`
 	EstimatedTokensSaved int64            `json:"estimated_tokens_saved"`
 	TokenEstimate        string           `json:"token_estimate"`
 	ByFamily             map[Family]int64 `json:"commands_by_family,omitempty"`
@@ -100,17 +102,7 @@ func Summarize(path string) (Summary, error) { return SummarizeSession(path, "")
 // session totals the whole log. Records written before the session field
 // existed belong to no session.
 func SummarizeSession(path, session string) (Summary, error) {
-	var evs []Event
-	err := scanLog(path, func(line []byte) {
-		var ev Event
-		if json.Unmarshal(line, &ev) != nil {
-			return
-		}
-		if session != "" && ev.Session != session {
-			return
-		}
-		evs = append(evs, ev)
-	})
+	evs, err := readEvents(path, session)
 	return SummarizeEvents(evs), err
 }
 
@@ -138,8 +130,8 @@ func SummarizeEvents(evs []Event) Summary {
 		if ev.Folded {
 			s.FoldedRuns++
 		}
-		if ev.RawBytes > ev.EmittedBytes {
-			saved := ev.RawBytes - ev.EmittedBytes
+		s.RetrievedBytes += ev.RetrievedBytes
+		if saved := ev.NetSaved(); saved > 0 {
 			s.SavedBytes += saved
 			if ev.Folded {
 				s.FoldedSavedBytes += saved

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/ccr"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 )
 
 const retrieveSchema = `{"type":"object","properties":{` +
@@ -69,22 +70,19 @@ func runRetrieve(raw json.RawMessage) Result {
 	if err != nil {
 		return failure("the store is unavailable")
 	}
-	data, err := store.Get(a.ID)
+	out, cut, err := execwrap.Retrieve(store, a.ID, ccr.Query{Grep: a.Grep, Head: a.Head, Tail: a.Tail, From: from, To: to}, maxResultBytes)
 	switch {
 	case errors.Is(err, ccr.ErrNotFound):
 		return failure("no kept output for this id")
 	case errors.Is(err, ccr.ErrExpired):
 		return failure("the kept output for this id has expired")
+	case errors.As(err, new(*execwrap.QueryError)):
+		return failure("invalid grep pattern or range")
 	case err != nil:
 		return failure("could not read the kept output")
 	}
-	out, err := ccr.Slice(data, ccr.Query{Grep: a.Grep, Head: a.Head, Tail: a.Tail, From: from, To: to})
-	if err != nil {
-		return failure("invalid grep pattern or range")
-	}
-	if len(out) > maxResultBytes {
-		out = append(out[:maxResultBytes:maxResultBytes],
-			fmt.Sprintf("\n[downshift: cut at %d bytes; narrow with grep, head, tail or lines]\n", maxResultBytes)...)
+	if cut {
+		out = append(out, fmt.Sprintf("\n[downshift: cut at %d bytes; narrow with grep, head, tail or lines]\n", maxResultBytes)...)
 	}
 	return Result{Text: string(out)}
 }

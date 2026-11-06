@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/compressor"
 )
@@ -74,6 +75,14 @@ func TestRun_Keep(t *testing.T) {
 			}
 			if want := string(tc.body) + tc.wantMarker; out.String() != want {
 				t.Errorf("out = %q, want %q", out.String(), want)
+			}
+			// The id the marker names is the id the event carries.
+			wantID := ""
+			if strings.Contains(tc.wantMarker, "retrieve ") {
+				wantID = strings.TrimSuffix(tc.wantMarker[strings.LastIndex(tc.wantMarker, " ")+1:], "]\n")
+			}
+			if r.KeptID != wantID || EventFrom(r, time.Now()).KeptID != wantID {
+				t.Errorf("KeptID = %q, want %q", r.KeptID, wantID)
 			}
 		})
 	}

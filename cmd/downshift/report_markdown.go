@@ -29,6 +29,9 @@ func printReportMarkdown(w io.Writer, out reportOut, scope string) {
 		}
 	}
 	fmt.Fprintf(w, "\n%s\n", noEventsLine(have))
+	if line := out.Numbers.Display.Retrieved; line != "" {
+		fmt.Fprintf(w, "\n%s\n", line)
+	}
 	fmt.Fprintln(w)
 	printCompactionDetailMarkdown(w, out.CompactionDetail)
 	telemetry.PrintRoutingSectionMarkdown(w, out.Report.Routing)
