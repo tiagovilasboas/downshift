@@ -1,0 +1,123 @@
+# Copyright (c) 2026 Tiago Vilas Boas.
+# SPDX-License-Identifier: Apache-2.0
+version: 2
+
+project_name: downshift
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+    # The documentation manifest of this exact build, attached to the release
+    # (outside dist/, which goreleaser requires empty and --clean removes)
+    # below (release.extra_files) so the site and docs guards check against it.
+    - sh -c 'mkdir -p release-assets && go run -ldflags "-X main.buildVersion={{ .Version }}" ./cmd/downshift docs-manifest > release-assets/docs-manifest.json'
+
+builds:
+  - id: downshift
+    main: ./cmd/downshift
+    binary: downshift
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    # Windows arm64 has limited user base — skip for now
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X main.buildVersion={{.Version}}
+      - -X main.buildCommit={{.ShortCommit}}
+      - -X main.buildDate={{.Date}}
+
+archives:
+  - id: default
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - README.md
+      - LICENSE
+      - NOTICE
+      - src: examples/catalog.sample.json
+        dst: .
+        strip_parent: true
+      - scripts/kirocrew-pre-tool-use.sh
+      - scripts/kirocrew-pre-tool-use.cmd
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+release:
+  # Draft until verify-release has checked the downloaded assets;
+  # publish-release then flips it (see .github/workflows/ci.yml).
+  draft: true
+  extra_files:
+    - glob: release-assets/docs-manifest.json
+  github:
+    owner: tiagovilasboas
+    name: downshift
+  # Pre-release flag is set automatically for tags containing -beta, -alpha, -rc
+  prerelease: auto
+  header: |
+    ## Downshift {{ .Tag }}
+
+    Model control layer for coding harnesses (Claude Code, Cursor, Codex, and more).
+    The orchestrator chooses each subagent's model; Downshift applies it within your policy and measures the result. It adds no LLM call of its own.
+
+    **⚠️ Beta release** — functional and tested, but APIs and catalog format may still change before v1.0.
+
+  footer: |
+    ---
+    **Install** (macOS / Linux):
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+    ```
+
+    **Install** (Go toolchain):
+    ```bash
+    go install github.com/tiagovilasboas/downshift/cmd/downshift@{{ .Tag }}
+    ```
+
+    **Verify checksum:**
+    ```bash
+    sha256sum -c checksums.txt
+    ```
+
+    **Verify signature and provenance:** see [Verify a release](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md#verify-a-release).
+
+    **Licence:** Apache License 2.0. See [LICENSE](https://github.com/tiagovilasboas/downshift/blob/main/LICENSE).
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: "New features"
+      regexp: "^feat"
+      order: 0
+    - title: "Bug fixes"
+      regexp: "^fix"
+      order: 1
+    - title: "Refactors"
+      regexp: "^refactor"
+      order: 2
+    - title: "Other"
+      order: 999
