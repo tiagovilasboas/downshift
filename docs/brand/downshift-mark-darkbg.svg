@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" role="img">
+<title>Downshift mark for dark backgrounds</title>
+<g transform="translate(0 0) scale(1.0)">
+  <path d="M28 22 H104 L168 86 V140 L137 171 V98 L94 55 H28 Z" fill="#F9FAFB"/>
+  <path d="M28 80 H81 L120 119 V164 L94 190 V130 L74 110 H28 Z" fill="#F9FAFB"/>
+  <path d="M28 138 H65 L103 176 L78 201 L55 178 H28 Z" fill="#22C55E"/>
+</g>
+</svg>
