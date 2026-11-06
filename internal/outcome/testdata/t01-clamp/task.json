@@ -1,0 +1,5 @@
+{
+  "id": "t01-clamp",
+  "label": "TRIVIAL",
+  "prompt": "add a Clamp(v, lo, hi int) int helper that bounds v to the range [lo, hi]"
+}
