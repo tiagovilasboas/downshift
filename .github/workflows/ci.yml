@@ -526,8 +526,7 @@ jobs:
         run: |
           set -eu
           cosign sign-blob --yes \
-            --output-signature dist/checksums.txt.sig \
-            --output-certificate dist/checksums.txt.pem \
+            --bundle dist/checksums.txt.sigstore.json \
             dist/checksums.txt
 
       - name: Upload signature and SBOM to the draft release
@@ -535,7 +534,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh release upload "$TAG" dist/checksums.txt.sig dist/checksums.txt.pem \
+          gh release upload "$TAG" dist/checksums.txt.sigstore.json \
             downshift_sbom.spdx.json --clobber --repo "$GITHUB_REPOSITORY"
 
   # Downloads every asset of the DRAFT release once (the only job that needs a
@@ -609,8 +608,7 @@ jobs:
           set -eu
           cd assets
           cosign verify-blob \
-            --certificate checksums.txt.pem \
-            --signature checksums.txt.sig \
+            --bundle checksums.txt.sigstore.json \
             --certificate-identity-regexp '^https://github\.com/tiagovilasboas/downshift/\.github/workflows/ci\.yml@refs/tags/v[0-9]' \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
             checksums.txt
@@ -621,7 +619,7 @@ jobs:
         run: |
           set -eu
           ver="${TAG#v}"
-          for want in checksums.txt checksums.txt.sig checksums.txt.pem downshift_sbom.spdx.json docs-manifest.json \
+          for want in checksums.txt checksums.txt.sigstore.json downshift_sbom.spdx.json docs-manifest.json \
             "downshift_${ver}_linux_amd64.tar.gz" "downshift_${ver}_linux_arm64.tar.gz" \
             "downshift_${ver}_darwin_amd64.tar.gz" "downshift_${ver}_darwin_arm64.tar.gz" \
             "downshift_${ver}_windows_amd64.zip"; do

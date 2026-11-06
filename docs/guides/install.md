@@ -62,15 +62,15 @@ any outcome other than "verified" an error that installs nothing;
 ### Verify a release
 
 Each release carries `checksums.txt`, a keyless cosign signature
-(`checksums.txt.sig`, `checksums.txt.pem`), an SPDX SBOM
+bundle (`checksums.txt.sigstore.json`), an SPDX SBOM
 (`downshift_sbom.spdx.json`) and a build-provenance attestation. Download the
-`.sig`, `.pem` and SBOM from the release page next to the archive. The release stays
+bundle and SBOM from the release page next to the archive. The release stays
 a draft until CI has fetched every asset, checked the signature, sha256 and
 attestation, and run the binary on Linux, macOS and Windows runners.
 
 ```bash
 cosign verify-blob checksums.txt \
-  --signature checksums.txt.sig --certificate checksums.txt.pem \
+  --bundle checksums.txt.sigstore.json \
   --certificate-identity-regexp '^https://github\.com/tiagovilasboas/downshift/\.github/workflows/ci\.yml@refs/tags/v[0-9]' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 sha256sum -c checksums.txt --ignore-missing          # Linux
