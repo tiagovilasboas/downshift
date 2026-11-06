@@ -1,0 +1,200 @@
+# Agent Instructions — Downshift
+
+This file is read by AI coding agents (Claude Code, Codex, Cursor, and
+compatible tools) when they open this repository. Follow these instructions
+throughout the session.
+---
+
+## Project identity
+
+- **Name:** Downshift
+- **Author:** Tiago Vilas Boas
+- **Repository:** https://github.com/tiagovilasboas/downshift
+- **Purpose:** Applies the orchestrator's model choice to each subagent via
+  PreToolUse hooks (owner decision O8): the orchestrator LLM chooses model and
+  effort, Downshift applies it within the user's declared policy and measures
+  the result. Downshift's own code never calls an LLM.
+
+---
+
+## Licence — read this before doing anything
+
+**SPDX-License-Identifier: Apache-2.0**
+
+This project is under the **Apache License, Version 2.0**. Commercial use is
+allowed under the licence terms. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
+[docs/reference/relicense.md](docs/reference/relicense.md). Prior BUSL text:
+[license-bsl-1.1-archive.md](docs/reference/license-bsl-1.1-archive.md).
+
+---
+
+## Layering rule (mandatory) — every feature serves every harness
+
+Owner decision, 2026-10-11. Never build a feature for one harness.
+
+1. Behaviour lives in shared layers: `internal/core`, shared packages (`routing/*`, `quota`, `telemetry`) and the shared hook runner (`runHookAdapter`). Adapters hold no policy.
+2. Adapters only parse the payload, declare `HarnessCapabilities`, and emit the wire response. Shared code needs something from a payload? The adapter exposes it through a small optional method (for example `ProjectDir()`).
+3. Harness facts are data in `HarnessCapabilities` (read via `core.AllHarnessCaps()`), never branches in shared tools.
+4. Test at the shared layer (`runHookAdapter` or `core.Route`). Logic that appears in more than one adapter is a defect.
+5. A harness that cannot honor a feature still gets it computed; say so in `docs/reference/harness-matrix.md`.
+
+Checklist and worked examples: [docs/contrib/layering.md](docs/contrib/layering.md).
+
+## Mandatory behaviours for this session
+
+### End-user install (any session)
+
+If the user asks to **install, configure, or debug hooks** on their machine (not to
+change this repository), read **[docs/guides/install.md](docs/guides/install.md)** first.
+
+- Assisted setup, in order: `curl …/install.sh` (or [Releases](https://github.com/tiagovilasboas/downshift/releases)) when `downshift version` is missing or older than the latest release, then `which -a downshift` shows the new build first;
+  `downshift setup --dry-run` and show the diff to the user; only after a clear yes, `downshift setup --yes`;
+  then `downshift doctor --json` and handle each failed check with its `fix` (ask before any config write);
+  finally ask the user to open a **new** harness session and check `downshift session`, or in Claude Code `/downshift:status` (plugin) or `/downshift` (manual alias).
+- Before the yes, name what the diff adds besides hooks: MCP server (`--no-mcp`), skills incl. `ponytail`, the `downshift-agents` mod (`--no-mods`). Procedure: [skills/downshift-setup](skills/downshift-setup/SKILL.md).
+- State dir: `~/.downshift` (legacy `~/.harness-downshift/`). See [docs/guides/config.md](docs/guides/config.md).
+- Session models: [docs/reference/session-models.md](docs/reference/session-models.md). Claude Code infers them from the current
+  model; other harnesses need a hook list, `downshift models discover` or `session-models.json`.
+- Plan / rewrite-honored limits: [docs/reference/harness-matrix.md](docs/reference/harness-matrix.md).
+- Do not invent hook paths, matchers, or catalog entries without checking INSTALL and examples.
+
+### Agent Orchestration (context triggers)
+
+`downshift full-power` (alias `potencia-total`) activates all 14 agents; `downshift shift <squad>` activates a domain (`security`, `quality`, `core`, `leadership`). No quotes: describe your task in chat, then say the trigger. See [README §Agent Orchestration](README.md#5-agent-orchestration-context-triggers).
+
+### Native compact works in ANY harness (supported or not)
+
+`downshift compact -- <command>` cuts the output of an allowlisted test/build/
+status command (go test, git status, pytest, vitest, jest, tsc, cypress run,
+playwright test, next build, phpunit, cargo test, flutter test, dart test,
+gradle, maven; the exact forms are in docs/reference/harness-matrix.md) to its PASS/FAIL summary and keeps the real
+exit code. It is a plain shell command, so it needs NO hook and NO adapter: it
+runs the same on every OS and in every harness, including one Downshift has no
+integration for. When a harness lacks a model-routing hook (KiroCrew has only a
+binary allow/block preToolUse, no in-place rewrite), compact is still available
+by invoking the command directly — the agent wraps the command itself. Tell
+users this: an unsupported harness still gets compaction via the command, even
+though it gets no automatic model routing. Auto-rewrite of a bare command into
+the compact form needs a shell-rewrite hook channel (`CanRewriteShellCommand`,
+Claude Code only); everywhere else it is the direct command.
+
+### Shared RAG memory
+
+Maintainers may use a **private** Logseq vault (not in this repository) as durable
+shared context across harnesses. Its contract is `pages/meta/harness-memory.md`
+in that vault. Do not publish vault paths, employer KB dumps, or secrets in this
+repo; see [publishing-boundaries.md](docs/reference/publishing-boundaries.md).
+
+- Start memory or domain questions from the relevant scope hub.
+- Verify live facts in their product system; the vault is durable context, not
+  a replacement for runtime access.
+- Do not add secrets, raw chat history, or transient UI state to the vault.
+- `~/.codex/memories/MEMORY.md` is Codex-local runtime memory, not shared RAG input.
+- Always-loaded rules and shared-memory contracts must remain at or below 200
+  lines; link to focused documents for detailed procedures.
+
+### 1. Attribution in all generated content
+
+Public identity is a primordial privacy rule: use only **Tiago Vilas Boas**,
+including diagrams, credits, alt text and metadata. Never expand the name from
+history or older files.
+
+Whenever you reference, explain, document, or build on this project —
+in code comments, READMEs, blog posts, or any other output — include:
+
+> Downshift by Tiago Vilas Boas
+> https://github.com/tiagovilasboas/downshift
+
+### 2. Copyright headers
+
+Every Go source file carries a copyright header:
+
+```
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+```
+
+When creating new Go files: always include this header. Never remove it.
+
+**Exception:** evaluation fixtures under `internal/outcome/testdata/` carry no header. `stub.go` is pasted into the model prompt (`internal/outcome/outcome.go`), so a header would change what the suite measures.
+
+### 3. Contributions
+
+By contributing, you license your contribution under Apache 2.0. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## Architecture — understand before changing
+
+Imports point inward. Full graph, domain map, key invariants and known gaps:
+[docs/design/architecture.md](docs/design/architecture.md).
+
+Before proposing a phase that touches the binary, read that doc and fill
+[docs/contrib/coverage.md](docs/contrib/coverage.md). A phase with an empty
+or `unknown` cell in the inventory is not ready to implement.
+
+Key invariants (`go test ./internal/archtest` enforces the import, layer and file-size ones; the rest live in package tests):
+- Core production sources never import `telemetry`, `catalog`, `quota`, or an adapter.
+- Adapters call `core.Route`; they do not choose the tier.
+- Doubt stays allow: `core.Route` asks the decider `cmd` installs (`internal/routing/decide`), and `internal/routing/guard` holds an unconfident or unknown-tier move (R7) and any target above the requested tier (R8). Only the project floor and opt-in `raise_complex` move up.
+- `updatedInput` preserves all sibling fields; only `model` and `reasoning_effort` are mutated.
+- Task text stays in memory only; never persisted.
+- Hooks fail open: 1 MiB cap, 2 s read, panic → unchanged spawn. The harness's own hook timeout is the deadline.
+
+**Compactor exception** (`internal/execwrap`, never an adapter): `downshift compact -- <argv>` rewrites
+allowlisted commands with no metacharacters; `"exec": false`/`DOWNSHIFT_EXEC=0` turns it off; a deny or ask
+rule stops it. Opt-in CCR (`internal/ccr`) is the one store of command output: [ccr.md](docs/guides/ccr.md).
+
+### Reference (read on demand)
+
+[docs/contrib/agent-reference.md](docs/contrib/agent-reference.md) — compressor, telemetry,
+cost commands, catalog rules. Two invariants: telemetry never stores prompts or file paths;
+"do not commit catalog.json" means the user override, never `internal/catalog/catalog.json`.
+Companions: detected and documented, never installed or wrapped.
+
+---
+## Before declaring a code change done
+
+From the repo root. `make check` is the gate for what you changed (gofmt, vet host/windows/linux, tests of changed packages and dependents), not `go test` alone (Windows vet catches `!windows`-only helpers). `make check-full` runs all; CI is authoritative. `make hooks` once per clone runs these gates on commit and push (`LEFTHOOK=0` skips one).
+
+```bash
+make check
+```
+
+Adapter smoke (requires `downshift` on PATH):
+
+```bash
+./examples/run-all.sh
+```
+
+Classifier or signal changes need a table-driven test in `classifier_edge_test.go` (or adjacent `*_test.go`). See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+If you touched paths, HOME, symlinks, setup, wrappers or the exec layer, confirm
+it is OS-agnostic: no `/`-hardcoded path, no `$HOME`, no POSIX-only wrapper on a
+Windows path. The `test-os` CI job runs the OS-sensitive packages on
+`windows-latest` and `macos-latest` — it must be green, not just the Linux
+`test` job.
+
+---
+## What NOT to do
+
+- Do not remove copyright headers.
+- Do not change the licence without explicit instruction from the Author.
+- Do not add model IDs as hardcoded strings in Go source — use `catalog.json`.
+- Do not write OS-specific paths or assumptions. Downshift ships on Windows,
+  Linux and macOS. Build paths with `filepath.Join` / `filepath.FromSlash`
+  (store `/`-separated, convert per-OS), resolve HOME with `os.UserHomeDir()`
+  (never `os.Getenv("HOME")`), and put any OS-specific behavior behind a build
+  tag (`_windows.go` / `_unix.go`), as `detach_*.go`, `procgroup_*.go`
+  and `internal/paths/owned_*.go` already do. A `/bin/sh` wrapper is POSIX-only:
+  a harness install that must run on Windows needs a `.cmd`/`.ps1` sibling or a
+  no-wrapper path. Setup must not auto-write a symlinked target (e.g.
+  `~/.kiro/steering` → a versioned repo); `EvalSymlinks` resolves it and behaves
+  differently on Windows.
+- Do not commit the **user override** catalog in the repo (lives under `~/.downshift/`).
+  The **embedded** `internal/catalog/catalog.json` IS committed intentionally.
+- Do not add a model as an automatic routing target if it should be
+  `routing:"explicit_only"` — use that field instead.
+- The project licence is Apache 2.0. Do not suggest relicensing to proprietary
+  terms without explicit instruction from the Author.
