@@ -1,0 +1,7 @@
+{
+  "tool_name": "Task",
+  "tool_input": {
+    "task": "rename the userId variable to userIdentifier",
+    "model": "claude-4.5-opus-high-thinking"
+  }
+}
