@@ -1,0 +1,209 @@
+# =============================================================================
+# Downshift Agent Configuration
+# =============================================================================
+# Documentation: https://github.com/tiagovilasboas/downshift
+#
+# This file configures agent routing and orchestration for harnesses without
+# native memory (Claude Code, Cursor, Codex). The orchestrator skill reads
+# this file to decide which agent handles each task.
+# =============================================================================
+
+# =============================================================================
+# Routing: Task Keywords → Agent
+# =============================================================================
+# When a task matches multiple keywords, the FIRST match wins.
+# Order matters: more specific patterns should come first.
+
+[routing]
+# Backend development
+"backend api" = "coder-back"
+"rest api" = "coder-back"
+backend = "coder-back"
+api = "coder-back"
+endpoint = "coder-back"
+database = "coder-back"
+sqlite = "coder-back"
+mysql = "coder-back"
+postgres = "coder-back"
+sql = "coder-back"
+concurrency = "coder-back"
+idempotency = "coder-back"
+
+# Frontend development
+"swarm visual" = "coder-front"
+"visual swarm" = "coder-front"
+"web worker" = "coder-front"
+webworker = "coder-front"
+frontend = "coder-front"
+ui = "coder-front"
+canvas = "coder-front"
+css = "coder-front"
+tailwind = "coder-front"
+react = "coder-front"
+nextjs = "coder-front"
+pwa = "coder-front"
+
+# Core development & Full-Stack integration
+"vertical slice" = "coder"
+"end to end" = "coder"
+"full stack" = "coder"
+fullstack = "coder"
+integration = "coder"
+implement = "coder"
+"add feature" = "coder"
+"bug fix" = "coder"
+"fix bug" = "coder"
+refactor = "refactor"
+cleanup = "refactor"
+restructure = "refactor"
+
+# Research & analysis
+analyze = "researcher"
+investigate = "researcher"
+"find where" = "researcher"
+"trace" = "researcher"
+
+# Quality
+test = "tester"
+coverage = "tester"
+"run tests" = "tester"
+debug = "debugger"
+"failing test" = "debugger"
+flaky = "debugger"
+
+# Review & documentation
+review = "reviewer"
+"code review" = "reviewer"
+"PR review" = "reviewer"
+document = "documenter"
+readme = "documenter"
+"api docs" = "documenter"
+
+# Security
+security = "security"
+audit = "security"
+vulnerability = "security"
+authentication = "security"
+authorization = "security"
+"access control" = "security"
+
+# Performance
+performance = "performance"
+slow = "performance"
+optimize = "performance"
+profile = "performance"
+profiling = "performance"
+
+# Architecture & leadership
+architecture = "architect"
+design = "architect"
+"system design" = "architect"
+"cross-module" = "architect"
+
+# Infrastructure
+deploy = "platform"
+"ci/cd" = "platform"
+infrastructure = "platform"
+devops = "platform"
+
+# AI/ML
+"llm" = "ai"
+"model routing" = "ai"
+embedding = "ai"
+"machine learning" = "ai"
+"artificial intelligence" = "ai"
+"ai agent" = "ai"
+"ai model" = "ai"
+
+# =============================================================================
+# Defaults
+# =============================================================================
+
+[defaults]
+# When no keyword matches, start with researcher to understand the task
+unknown_task = "researcher"
+
+# Multi-file tasks (3+ files) go to architect for decomposition
+complex_task = "architect"
+
+# Default tier when agent doesn't specify
+default_tier = "mid"
+
+# =============================================================================
+# Domains
+# =============================================================================
+# Agents grouped by domain for squad commands like `squad quality "..."`
+
+[domains]
+core = ["coder", "coder-back", "coder-front", "refactor", "researcher"]
+quality = ["tester", "debugger", "reviewer"]
+security = ["security"]
+performance = ["performance"]
+support = ["documenter"]
+leadership = ["architect", "platform", "ai"]
+
+# =============================================================================
+# Escalation
+# =============================================================================
+# Tasks matching these patterns ALWAYS go through leadership first
+
+[escalation]
+# These patterns require architect/security review before implementation
+always_escalate = [
+  "authentication",
+  "authorization",
+  "oauth",
+  "payment",
+  "billing",
+  "database schema",
+  "migration",
+  "breaking change",
+  "api contract",
+  "security",
+  "encryption",
+  "secrets",
+  "credentials",
+]
+
+# Escalation target by pattern type
+[escalation.targets]
+security_patterns = "security"    # auth, encryption, secrets
+data_patterns = "architect"       # database, migration, api contract
+default = "architect"             # everything else
+
+# =============================================================================
+# Tiers
+# =============================================================================
+# Model tier recommendations by agent
+
+[tiers]
+small = ["researcher", "tester", "documenter"]
+mid = ["coder", "coder-back", "coder-front", "refactor", "reviewer", "debugger", "performance"]
+frontier = ["architect", "security", "platform", "ai"]
+
+# =============================================================================
+# Memory (Optional)
+# =============================================================================
+# If your harness has native memory (Kiro Crew, Claude Projects), use it.
+# Otherwise, patterns are stored in .downshift/patterns.md (manual log).
+
+[memory]
+# Enable pattern storage (creates .downshift/patterns.md if no native memory)
+enabled = true
+
+# Namespaces for organizing patterns
+namespaces = ["patterns", "decisions", "errors"]
+
+# Auto-store successful patterns after task completion
+auto_store = false  # Manual for now, agent prompts user
+
+# =============================================================================
+# Hooks (Future)
+# =============================================================================
+# Pre/post task hooks for automation
+
+[hooks]
+enabled = false  # Not implemented yet
+
+# pre_task = ".downshift/hooks/pre-task.sh"
+# post_task = ".downshift/hooks/post-task.sh"
