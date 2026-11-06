@@ -204,6 +204,24 @@ func TestMcpStatusReportsTheServerAndEveryHarness(t *testing.T) {
 	if data["server"] != "downshift" {
 		t.Fatalf("status data = %v", data)
 	}
+	version, _ := currentBuild()
+	if data["version"] != version {
+		t.Fatalf("status version = %v, want running build %q", data["version"], version)
+	}
+}
+
+func TestMcpInitializationReportsRunningVersion(t *testing.T) {
+	s := startMcp(t, mcpState(t))
+	_, err := io.WriteString(s.in, `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1"}}}`+"\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := <-s.lines
+	result := m["result"].(map[string]any)
+	version, _ := currentBuild()
+	if got := result["serverInfo"].(map[string]any)["version"]; got != version {
+		t.Fatalf("server version = %v, want %q", got, version)
+	}
 }
 
 func TestMcpServeKeepsLogsOffStandardOutput(t *testing.T) {

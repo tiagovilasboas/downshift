@@ -94,6 +94,7 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 	root = resolvedDir(root)
 	broad := broadRoot(root)
 	log := slog.New(slog.NewTextHandler(errW, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	version, _ := currentBuild()
 	if broad {
 		log.Warn("the server was started in a broad directory; write jobs are refused, and read jobs refuse a broad dir or one below a hidden (dot) directory such as ~/.aws")
 	}
@@ -109,7 +110,7 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 		Parallel:     mcpParallel(root, os.Getenv),
 		QuotaStop:    mcpQuotaStop(root, os.Getenv),
 		BudgetTokens: mcpBudgetTokens(root, os.Getenv),
-		Version:      buildVersion,
+		Version:      version,
 	}
 	mode := resolveWorkerMode(root, os.Getenv)
 	for _, n := range mode.Notes {
@@ -130,7 +131,7 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 	workers.SetAgentHarnesses(workerAgentHarnesses())
 	wireWorkerTokens(deps.Work, os.Getenv, errW)
 	all := append(tools.Info(deps), tools.WorkTools(deps)...)
-	srv, err := transport.New(transport.Info{Name: "downshift", Version: buildVersion, Instructions: mcpInstructionsFor(mode)}, all, log)
+	srv, err := transport.New(transport.Info{Name: "downshift", Version: version, Instructions: mcpInstructionsFor(mode)}, all, log)
 	if err != nil {
 		fmt.Fprintln(errW, "mcp serve:", err)
 		return 1
