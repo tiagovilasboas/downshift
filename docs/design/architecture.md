@@ -1,0 +1,533 @@
+# Architecture — Downshift
+
+High-level view for adopters and contributors. Implementation details live in
+code and [CONTRIBUTING.md](../../CONTRIBUTING.md).
+
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+
+---
+
+## What Downshift is
+
+A **single Go binary** (`downshift`) that runs as a **harness hook** (JSON on
+stdin, JSON on stdout) and as an offline CLI over its own event log. On the hook
+path it reads the delegation a main agent makes, applies the orchestrator's model
+choice within the user's declared policy, catalog and session rules, and returns
+an **updated tool input** with `model` (and, where the harness takes it,
+`reasoning_effort`) rewritten, or the request unchanged. Around that one decision
+it keeps the evidence needed to say whether the rewrite was honored, what the
+child used, and whether routing beat a measured baseline.
+
+Read it as an **optimization layer for agent execution**, not only a router:
+the orchestrator's choice applied deterministically per delegation, guardrails that hold under doubt,
+observation of what the harness then did, and offline evaluation that feeds
+the next policy change. The hook itself stays small: **no network, no LLM call by
+Downshift's code, no prompt storage** on the hot path, and every failure fails open.
+
+> **Status under O8 (2026-10-28).** The orchestrator LLM chooses agent, model and
+> effort; Downshift applies the choice, enforces `policy.json` and measures. The
+> decider (`internal/routing/decide`) resolves: a pinned model is kept, then a declared
+> profile, then the first matching declared rule, then the orchestrator's tier hint
+> (down only for now), else the requested model is kept. The guard refuses only a
+> foreign id or an `explicit_only` model and keeps on doubt. Removed on 2026-10-28: the
+> built-in agent-type table (N11), the automatic upgrade after a failure, the built-in
+> risk floor and veto, and the economy effect on built-in types. The classifier now
+> feeds telemetry and user-declared floors; it does not decide. Where the sections
+> below describe the classifier or the risk floor as the decision, they are the
+> pre-O8 pipeline. Added: playbooks (`downshift playbook`) and the `downshift-orchestrator`
+> skill (implemented); `downshift mcp serve` (implemented: six information tools and seven worker tools; see [cli](../reference/cli.md) and [safety](../features/safety.md)).
+
+---
+
+## End-to-end flow
+
+Each box names its owner: `[D]` Downshift, `[H]` harness-native, `[X]` an
+external tool. Dotted boxes are opt-in or shadow and never change the route.
+
+```text
+ TASK ──▶ main agent plans and executes [H]
+             │ delegates: Task/Agent, spawn_agent, invoke_subagent, spawn_run [H]
+             ▼
+ PreToolUse hook [H] ─ stdin JSON ─▶ runHookAdapter + adapter [D]
+             │  bounded read (1 MiB), parse, hook deadline, ProjectDir seam, panic → allow
+             ▼
+ context and reference model [D]
+   current model: tool input → payload → override env → transcript tail →
+   settings fallback (flagged as a guess)        [claude-code adapter]
+   session list: hook lists → session-models.json → discovery → inferred from
+   the current model (Claude Code only) · quota marks from the hook, quota.json,
+   native exports (never fetched during a hook)
+             ▼
+ classify + risk [D]  Classify (signals) → hash semantic boost → risk floor /
+   abstain ┆ adapt ┆
+             ▼
+ Route [D]  core.Route asks the decider cmd installs (core.SetDecider):
+   routing/decide precedence → routing/guard (doubt or unknown tier ⇒ keep,
+   target above requested ⇒ never_widen, explicit_only, foreign id) → project
+   floor (.downshift/policy.json, raise only)
+             ▼
+ PlanSession [D]  foreign id → hold · explicit_only → preserve · unknown
+   session → keep · pick the session model at the tier (exhausted quota never
+   selected) · CanWriteSessionID · StrictModelName → native name
+             ▼
+ fate [D]  per-session pause ⇒ allow
+   unchanged, logged as baseline; else emit updatedInput (model, effort) or,
+   for kirocrew, exit 2 + stderr policy
+             │  stderr: correlation id, decision summary
+             ▼
+ harness spawns the subagent [H]  (may honor, drop or reject the rewrite:
+   docs/reference/harness-matrix.md)
+             ▼
+ child end [D ← H]  PostToolUse: resolvedModel (honored / refuted), no tokens for
+   async children · SubagentStop: child transcript → token counts and model ·
+   `downshift end <harness>` is the same recorder; Cursor/Codex ends unverified
+             ▼
+ event log [D]  ~/.downshift/events.jsonl, prompt-free · loop-events.jsonl
+   (features + tier) · sensor: tool output bytes (observe only)
+             ▼
+ read-outs [D]  stats (tokens saved) · report (routed spawns: tokens per
+   completed task, rework per verdict) · session / watch (live views over
+   the log) · doctor and skills (diagnosis)
+             ▼
+ tuning [D, offline]  eval-outcome · classifier tests
+```
+
+### Read the decision, then the execution
+
+BDI is a conceptual lens: task and session facts are **beliefs**, fixed safety
+and capability goals are **desires**, and a checked routing plan is an
+**intention**. Downshift implements deterministic routing, not a BDI framework
+or an LLM planner. Available observations support offline review rather than
+automatic policy updates.
+
+![BDI lens: available task and session facts and fixed safety goals feed a checked plan; the harness executes and observations support offline review.](../img/downshift-bdi.png)
+
+The complete flow keeps the same ownership boundary: Downshift recommends;
+the harness executes; sensors record only the evidence they receive.
+
+![Complete execution flow: delegation, session-first resolution, classification, guarded decision, session plan, harness execution, observation, reports and offline review.](../img/downshift-execution.png)
+
+Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
+[execution SVG](../img/downshift-execution.svg). Their colors follow the
+[brand tokens](../brand/downshift-brand-tokens.json).
+
+### Step by step, with what the code does
+
+1. **Task, planning, delegation** `[H]`. The main agent decides on its own
+   when to delegate. Downshift sees nothing until the harness fires the hook
+   on the spawn tool (`Agent|Task`, `spawn_agent`, `invoke_subagent`,
+   `spawn_run`; `internal/setup/targets.go`).
+2. **Hook runner and adapter** `[D]`. `runHookAdapter` (`cmd/downshift/main.go`)
+   is shared by every harness through `harnessRegistry` (`harnesses.go`). It
+   bounds stdin (1 MiB, 2 s read timeout), parses the payload, sets
+   `ProjectDir`, recovers a panic into an allow, and only then
+   calls the adapter's `Handle`. The catalog loads through
+   `loadCatalogFailOpen` (`catalogload.go`): a panic in the embedded data or a
+   hostile user override leaves the spawn unchanged instead of exiting 2, which
+   a harness reads as a deny.
+   Adapters (`internal/adapters/<harness>`) parse fields, declare
+   `HarnessCapabilities`, call core and encode the wire response. No policy.
+3. **Reference model and session** `[D]`. The Claude Code adapter resolves the
+   model the child would have run on: the call's `model`, the payload model,
+   `CLAUDE_CODE_SUBAGENT_MODEL` for inheriting agent types, the last assistant
+   message in the parent transcript tail (bounded 400 ms wait), and finally
+   the configured model (`ANTHROPIC_MODEL`, `settings*.json`), which is marked
+   as a guess and may only downshift to the small tier. The session list comes
+   from hook lists, `session-models.json`, discovery, or (Claude Code only)
+   inference from the current model, never above it. Quota marks come from the
+   hook payload, the `quota.json` cache or an opt-in native export file; a hook
+   never calls a provider. Every adapter calls `ResolveSessionModels` before
+   classification: exact session metadata takes precedence, and the catalog
+   supplies optional fallback metadata. The session is the complete candidate
+   set. Declared capability order can rank new IDs; an unordered native inventory
+   cannot. Malformed metadata rejects its ID instead of reopening catalog or
+   positional fallback. Missing prices remain unknown, including family matches
+   to a different generation. See [session models](../reference/session-models.md).
+4. **Classification and risk** `[D]`. `classifyTask` (`internal/core/policy.go`)
+   runs the signal scorer, the monotonic hash semantic boost, the risk floor and
+   risk abstention (`internal/classify/risk.go`; from 64 KiB the candidate risk
+   categories are scanned concurrently, same results and order).
+5. **Route, guardrails, floor** `[D]`. `core.Route` asks the decider that
+   `cmd/downshift/decider.go` installs with `core.SetDecider`:
+   `internal/routing/decide` walks the precedence (pin, profile, rule, hint,
+   agent default, class) and `internal/routing/guard` has the last word. The
+   guard keeps the requested model on doubt (unconfident decision or unknown
+   requested tier: R1, R6, R7, R9) and refuses any target above the requested
+   tier (`never_widen`: R8), an `explicit_only` model or a foreign id (R4).
+   The only moves up are deterministic: the project floor
+   (`.downshift/policy.json`, `routing/decide/floor.go`, raise only) and the
+   opt-in `raise_complex` of a decisive COMPLEX task. The R-rule ids in
+   `internal/core/rule_ids.go` are telemetry reason history.
+6. **Session plan and fate** `[D]`. `PlanSession` holds foreign ids, preserves
+   `explicit_only` models, keeps the model when the session is unknown, and
+   selects the session model at the needed tier, skipping exhausted quota. The
+   runner then applies the per-session pause, an explicit user command: a paused
+   spawn passes unchanged and is logged as `baseline`. Every other spawn is
+   routed: the wire emits `updatedInput` with only `model` and `reasoning_effort` changed; kirocrew
+   has no rewrite channel and gets a block-with-reason instead.
+7. **Subagent execution** `[H]`. The harness decides whether the rewrite takes
+   effect. Observed on Claude Code; inferred on Codex; unconfirmed on Cursor
+   (dropped on Free and legacy Pro). Antigravity has limited experimental proof
+   on one build; KiroCrew uses policy and retry. Grok is config-only. Downshift does not run the
+   child, cannot see its context, and never edits what it returns.
+8. **Child end and usage** `[D]` from `[H]` payloads. PostToolUse on Claude Code
+   is the launch of an async child: it carries `resolvedModel` (honored or
+   refuted) and no tokens. SubagentStop supplies the child transcript, from
+   which the shared recorder (`internal/childend`) records token counts and
+   model. Current usage records contain no dollar amount. A nil port stays
+   unobserved; absence is never inferred.
+   Per-step routing latency is not a supported telemetry measurement. Claude
+   Code also records the last recognized check command's result as
+   `verification: passed|failed|none`; this is a transcript sensor, not proof
+   that the implementation is correct. [Verification guide](../guides/verification.md).
+9. **Telemetry and read-outs** `[D]`. `events.jsonl` holds routing metadata
+   only (no prompts, tasks or paths). Appends do not fsync (a power loss can
+   drop the last events; a process crash cannot). `telemetry.TokenSavings` is the
+   single tokens-saved definition (work and cache apart, per agent type) shared
+   by `stats`, the session views and `dsmon`; none of
+   them shows a dollar, and neither does `report`.
+   `report` states the figures of routed spawns, counting "completed"
+   only for harnesses that declare an end event and have end records;
+   `session` and `watch` read the same log.
+10. **Benchmarks and tuning** `[D]`, offline. `eval-outcome` runs the outcome suite (minimal fixtures in OSS, full suite
+    in downshift-labs; it compiles and runs task and model-written Go code and
+    runs the `--solver` string through `sh -c`, with no sandbox, so it is for
+    maintainers on task sets they trust).
+    The classifier benchmark, feedback, training and shadow comparison were removed in wave A (2026-10-26); see [routing v2](../design/routing-v2.md).
+
+---
+
+## Layered view and import graph
+
+Checked against `go list` on 2026-10-19. An arrow means "imports"; every arrow
+points down or sideways to an inner package, and `core` never points back out.
+
+```text
+ harness hook (stdin JSON in, stdout JSON or exit code out)
+        │
+ ┌──────▼───────────────────────────────────────────────────────────────┐
+ │ cmd/downshift   harnessRegistry · runHookAdapter · setup · doctor    │
+ │   blank-imports: quota (init → hooks) · SetDecider(routing/decide)   │
+ └──────┬───────────────────────────────────────────────────────────────┘
+        ▼
+ ┌─────────────────────────────────────────────────────────────────────┐
+ │ internal/adapters/{claudecode cursor codex opencode kirocrew         │
+ │   antigravity}: parse, HarnessCapabilities, wire response. No policy │
+ │   imports: core hookutil quota · hookport childend telemetry         │
+ │   (claudecode also contextopt sensor shellwrap)                      │
+ └──────┬───────────────────────────────────────────────────────────────┘
+        ▼
+ ┌─────────────────────────────────────────────────────────────────────┐
+ │ internal/core  Route → Decider · PlanSession · Resolver · Caps       │
+ │   imports only: classify fuse quotamodel session                     │
+ │   hook vars (ports): NBSuggestHook NBTrivialHook                     │
+ │   LoadQuotaHook LoadNativeQuotaHook                                  │
+ │   ParseNativeQuotaHook RegisterNativeQuotaHook                       │
+ └──▲───────────────────────────────▲──────────────────────────────────┘
+    │ implement / register at init  │ import core (depend inward)
+ ┌──┴────────────────────────┐   ┌──┴────────────────────────────────────┐
+ │ hook providers            │   │ services over core                    │
+ │ quota → LoadQuota*        │   │ catalog (Resolver) · discovery · models│
+ │                           │   │ telemetry · hookport · childend       │
+ │                           │   │ contextopt · sensor · server          │
+ │                           │   │ outcome                               │
+ │                           │   │ accounting                            │
+ │                           │   │ api · cursorbridge                    │
+ │                           │   │ shellwrap · execwrap (compressor)     │
+ └───────────────────────────┘   └───────────────────────────────────────┘
+ leaf packages used by the layers above: classify semantic quotamodel paths
+   fuse (classify, semantic) · session (paths, quotamodel) · hookctx
+```
+
+Edges worth knowing, all read from the code:
+
+- `core` → `classify`, `fuse`, `quotamodel`, `session` (and `semantic`, `paths`
+  below them). Nothing else.
+- `session` and `fuse` do not import `core`.
+- `telemetry` → `paths` only; it reaches `core` only through `telemetry/fromcore`,
+  the composition point that installs the router's values. `hookport` → `core`,
+  `telemetry`. `childend` → `core`, `hookport`, `telemetry`.
+- `catalog` → `core`, `paths`. `discovery` → `catalog`, `core`, `paths`.
+  `models` → `catalog`, `core`, `paths`.
+- `policyfile` → `routing/policy` (floor file lookup for `downshift policy`).
+  `routing/decide` → `core`, `routing/*`; `cmd` installs it with `core.SetDecider`. `quota` → `core`, `paths`, `quotamodel`.
+- `hookutil` → `core` (shared payload helpers; it is not a leaf).
+- Removed on 2026-10-19 because no production package imported them:
+  `internal/routecache`, `internal/orchestration`, `internal/routingv2/router`
+  and `internal/routingv2/matcher`.
+
+Invariant checks run for this refresh (all from the repository root):
+
+| Invariant | Command | Result |
+|---|---|---|
+| Core production sources do not import `quota`, `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter | `go list -deps ./internal/core \| grep -E 'internal/(quota\|catalog\|telemetry\|adapt\|policyfile\|adapters)(/\|$)'` | holds (no match) |
+| `session` does not import `core` | `go list -deps ./internal/session \| grep 'internal/core$'` | holds |
+| `fuse` does not import `core` | `go list -deps ./internal/fuse \| grep 'internal/core$'` | holds |
+| `telemetry` reaches `core` only through `telemetry/fromcore` | `go list -deps ./internal/telemetry \| grep 'internal/core$'` | holds (no match) |
+| `core` test files import `catalog`, `quota` | `grep -l 'internal/catalog"' internal/core/*_test.go` | true; not in the binary, but those tests run with the registered hooks |
+
+`internal/archtest` (`TestImportGraph`, `TestTelemetryTreeImportsCoreOnlyThroughFromcore`)
+enforces the core, session, fuse and telemetry rules in the `test` job; the rest are
+manual (see Known gaps).
+
+## Data flows
+
+**Spawn routing (hook path).** harness `PreToolUse` → `runHookAdapter`
+(1 MiB, 2 s read, panic → allow; the harness hook timeout is the deadline) → adapter parses →
+`ResolveSessionModels` → `core.Route` (installed decider: `routing/decide` + `routing/guard`, tier floor)
+→ `PlanSession` → pause check → wire
+`updatedInput` (or block-with-reason for kirocrew) → two prompt-free appends
+(`events.jsonl`, `loop-events.jsonl`).
+
+**Output compaction.** Two paths: (1) **Shell wrapping (Claude Code only):**
+`PreToolUse` → `shellwrap.Policy` → if shell command and harness supports
+`updatedInput`, `AdviseAdapter` returns rewritten command with `downshift
+compactor -- <cmd>` prefix; the harness runs the wrapped command and
+`execwrap` compacts output in real time when the family is recognized. (2)
+**Observe-only (all harnesses):** `PostToolUse` → `sensor` records tool output
+bytes and the hypothetical reduction `safe` mode would reach → `{}` (plus an
+optional status line). The model never sees a shorter result unless the
+wrapping path ran. For manual use, the user pipes output through `downshift
+context compress` or `downshift compactor --`. Packages: `internal/shellwrap`,
+`internal/execwrap`, `internal/compressor`, `internal/sensor`.
+With CCR on (opt-in), `cmd/downshift` hands execwrap a `Keep` port backed by
+`internal/ccr`: the raw output is stored and the marker names its id for
+`downshift retrieve`. execwrap never imports ccr or contextopt.
+
+**Telemetry and stats.** appenders (`telemetry`, `childend`, `hookport`) write
+JSONL; `stats`, `report`, `session`, `watch` and `dsmon` read it.
+`telemetry.Aggregate` counts the tokens that ran on a lower or higher tier than
+requested from observed usage; no prices enter this count. The product uses no price.
+
+## Where state lives
+
+All under `~/.downshift/` (override `DOWNSHIFT_STATE_DIR`; legacy
+`~/.harness-downshift/`). Directories are created `0700`.
+
+| File | Written by | Mode |
+|---|---|---|
+| `events.jsonl` (+ rotated backups) | hook, `end` | `0600`, no fsync |
+| `loop-events.jsonl`, `probe.jsonl` | hook, `probe` | `0600` |
+| `quota.json` | `quota` (temp file, atomic rename; lock dir) | `0600` temp file |
+| `session-models.json` (operator), `discovered.json` (24 h TTL cache) | operator; `setup` and `models discover` | operator-owned; temp file `0600` |
+| `catalog.json` (user override), `weights.json`, `adapt-memory.json` | operator, offline tools | operator-owned; `adapt-memory.json` `0600` |
+| `paused/<session hash>` | `downshift session --pause` | `0600` |
+| `context-optimization.json` | `context enable` | `0644` (no secret inside) |
+
+A legacy `dci-events.jsonl` is no longer written (the subsystem that produced it was
+removed on 2026-11-01); `downshift report clear` still moves an old one if it exists.
+
+Per project: `.downshift/policy.json` (read only). No file holds prompts, task
+text or file paths. The harness's own settings are edited only by `setup`, with a
+backup, and only for keys that are unset.
+
+## Trust boundaries
+
+| Boundary | Control |
+|---|---|
+| Harness → hook stdin | Untrusted JSON. 1 MiB cap (`+1` byte detects overflow), 2 s read timeout (`hookReadTimeout`), strict parse; any failure is a logged fail-open allow |
+| Hook runtime | Panic recovery, catalog loaded under `recover`; a failure never exits 2 (deny) and an unchanged Claude Code or Codex spawn answers `{}`, not an explicit `allow`, so the user's ask rules still apply (Cursor answers `{"permission":"allow"}` only for a non-shell call such as a spawn; a shell command it does not own gets `{}`) |
+| Repeated hook failures | Routing circuit breaker (`cmd/downshift/hook_circuit.go`), state read from the event log tail (128 KiB), no state file: when a harness's last 3 hook events are failures with one error code, the hook allows its spawns unchanged without routing and records no more failures; a routed decision closes it, and the hook routes again 5 minutes after the last failure. `downshift doctor` fails with one line per open circuit, saying since when the run is open (its first failure), the error code, the payload field that failed validation (`invalid_field` in the event: the field name only, never its value) and whether it is half-open; failures from a `dev` build older than 24 hours do not count, so a stale dev binary cannot hold a circuit open |
+| Hook → network | None. No provider call, no LLM, no price fetch. Quota and prices come from files |
+| State directory | Single-user local files; `0700` dirs, `0600` logs; the telemetry logs refuse symlinks and non-regular files |
+| Worker processes | A worker is a child CLI started with an argument list, a filtered environment (`internal/workers/env.go`) and per-CLI isolation flags (`internal/workers/isolation.go`: Claude loads only user settings, a read worker only `Read,Grep,Glob`). A broken worker policy file resolves to `off`. `send` and `steer` obey the concurrency, token budget and follow-up turn caps. On Windows a worker starts suspended and joins its Job Object before it runs |
+| Vendored mods | Third-party code pinned in NOTICE, read-only, no routing logic; `setup` installs them through `claude plugin install` |
+| Release | goreleaser pinned to an exact version; build provenance attested for every archive (`gh attestation verify`) |
+
+## CI and release guards
+
+- `scripts/ci-classify-changes.sh` decides whether Go tests run. It is an
+  allowlist: only existing images under `docs/` are provably inert, so every
+  other path, including Markdown (read by `internal/docscheck`), embedded JSON
+  and `.goreleaser.yml`, runs Go. An empty diff, or a tag, also runs Go. The
+  classifier has its own test (`scripts/test-ci-classify-changes.sh`).
+- Pushes to `main` are never cancelled by a newer run; only superseded pull
+  request runs are. A cancelled code run followed by a skipped docs run once
+  left `main` unverified.
+- `ci-full` (weekdays) runs `go test -race -cover ./...` and `govulncheck`;
+  the per-PR job does not run the race detector.
+- Release: `goreleaser` at an exact version, then `attest-build-provenance`.
+
+---
+
+## Guide and sensor map
+
+This is the outer harness around a coding agent (model + vendor harness + user
+harness). Each concern has a guide before execution and a sensor after it;
+sensor coverage depends on the harness, not just on emitted JSON.
+
+| Concern / axis | Guia (feedforward) | Sensor (feedback) | Coverage |
+|---|---|---|---|
+| Routing safety / behaviour | Session metadata and project policy contract (inferencial); shared guards and tier floors (computacional) | Resolver, guardrail and all-adapter conformance tests (computacional) | Shared core; a passing test does not prove native rewrite honor |
+| Cross-harness architecture / architecture fitness | Adapters parse/emit; policy stays in shared code (inferencial, `AGENTS.md`) | Conformance tests and code review against that boundary (computacional + inferencial) | Repository / PR / CI |
+| Cost and outcome / behaviour | Evidence protocol (inferencial) | Honor, child-end and usage records; `report` (computacional) | Claude Code has the most complete records; absent evidence stays unknown |
+| Privacy and upkeep / maintainability | Prompt-free telemetry and bounded hook I/O contracts (inferencial) | Existing privacy, payload and documentation checks (computacional) | Repository checks; metadata rather than raw task text is persisted |
+
+Human review decides whether offline findings justify a policy change. The
+verification sensor observes a check result; it does not replace acceptance
+tests, a security review or a production signal.
+
+## Boundaries
+
+| Concern | What Downshift does | Owner | Where |
+|---|---|---|---|
+| Harness session policy | `setup` offers `model: opusplan`, `permissions.defaultMode: plan`, for Claude Code, each written only when the key is unset (`--no-session-policy` skips them); `enabledPlugins["cc-plugin-you-should-know@builtin"]: true` is opt-in (`--you-should-know`) because it is billed. On Claude Code `setup` also, outside `--dry-run`/`--undo`, runs model discovery (`discovery.Run`, 5 s) so session lists do not stay on handwritten values. The main agent's model is otherwise untouched. | D writes once, H enforces | `cmd/downshift/setup*.go`, `internal/discovery` |
+| Subagent routing | The flow above: one decision per spawn, rewrite or allow, fail open. | D decides, H applies | `internal/core`, adapters, `runHookAdapter` |
+| Context optimization | Native provider is **observe-only**: PostToolUse records tool output bytes and the reduction `safe` mode would reach; the hook never replaces the tool result the model sees. `downshift context compress` compacts piped output in `safe` mode as an explicit CLI step. Headroom is a companion: detected on PATH, recorded with `context enable headroom`, never installed, launched or wrapped. | D observes; X compresses | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` |
+| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `probe` (maintainer). Reports expose token counts and no dollar amounts; the product uses no price. | D | `internal/telemetry`, `internal/childend` |
+| Diagnosis and recommendations | `doctor` (binary, state dir, catalog, hooks per harness, model override, quota, policy, context optimization, companion, semantic boost) with a `fix` per failed check; skills `downshift-setup`, `downshift-audit`, `downshift-tune` write nothing without a yes. | D | `cmd/downshift/doctor*.go`, `skills/` |
+| Benchmark and economic evaluation | Outcome evals and the routed-spawn report (tokens per completed task, rework per verdict). Public `benchmark/` holds the published report; datasets stay in downshift-labs. | D | `internal/outcome` |
+
+### Shadow and opt-in paths
+
+| Path | Status | Switch |
+|---|---|---|
+| lifecycle observer | disabled by default; pick no models | config |
+
+---
+
+## What Downshift is not
+
+- **Not an HTTP proxy.** Nothing sits between the harness and the model API.
+- **Not an LLM-in-the-loop router.** Classification is a scored signal table
+  and a hash embedder, all local and deterministic.
+- **Does not edit tool results in flight.** The PostToolUse hook returns `{}`
+  (plus an optional status line); context compression is observe-only unless
+  the user pipes output through `downshift context compress` themselves.
+- **Does not store prompts.** Task text stays in memory for feature extraction;
+  the event log, probe and telemetry carry metadata only.
+- **Does not run the subagent or guarantee the rewrite.** The harness executes
+  and may ignore `updatedInput`; the matrix records what each one honors.
+
+## Domain Architecture Layers (Clean Architecture / SRP)
+
+Downshift's codebase and documentation are structured strictly according to Clean Architecture, Single Responsibility (SRP), and the Dependency Inversion Principle. Dependencies point inward toward core domain policies, and interface adapters contain zero business policy.
+
+| Domain Layer | Clean Architecture Role | Responsibilities & Invariants | Core Packages | Key Documents |
+|---|---|---|---|---|
+| **Domain 1: Subagent Model Routing & Guardrails** | Core Domain / Business Logic | Deterministic subagent routing, regex signal scoring, monotonic hash semantic boost, R1-R9 guardrails (holding unconfident moves under doubt), project tier floor (`.downshift/policy.json`), session candidate allowlists, and quota gating. Invariants: bounded reads (1 MiB), fail-open on timeout or error, zero network/LLM on hot path, zero prompt storage. | `internal/core`, `internal/classify`, `internal/fuse`, `internal/session`, `internal/quotamodel`, `internal/catalog`, `internal/semantic`, `internal/policyfile` | [../domains/subagent-routing.md](../domains/subagent-routing.md), [architecture.md](architecture.md), [router-generalization.md](router-generalization.md), [../reference/complexity-weights.md](../reference/complexity-weights.md), [../reference/session-models.md](../reference/session-models.md) |
+| **Domain 2: Output Compaction & Context Optimization** | Supporting Domain / Optimization | Native AST/JSON context compressor (`safe` mode CLI compaction), observe-only tool output sensor (PostToolUse byte measurement and hypothetical token reduction), Headroom companion detection & telemetry (`context enable headroom`), and initial session context policy (`opusplan`, plan mode). Invariants: PostToolUse hook never alters live output seen by the model (observe-only); companion tools are detected and recorded, never installed, wrapped, or launched. | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` | [../domains/context-optimization.md](../domains/context-optimization.md), [context-optimization.md](context-optimization.md), [../guides/companions.md](../guides/companions.md), [../../skills/downshift-tune/SKILL.md](../../skills/downshift-tune/SKILL.md) |
+| **Domain 3: Observability, Evidence & Verification** | Telemetry, Auditing & Evaluation | Prompt-free event logging (`events.jsonl`), token savings reports (`stats`, `report`; one definition in `telemetry.Summarize`), verification reports (`verification: passed|failed|none`), capability matrix, and evidence ladder (rungs A-E). Invariants: telemetry persists metadata only; child-end tokens are stored as observed counts, and no dollar is written; unobserved ports remain absent, never inferred. | `internal/telemetry`, `internal/childend`, `internal/hookport`, `internal/server`, `internal/benchmark`, `internal/outcome` | [../domains/observability-telemetry.md](../domains/observability-telemetry.md), [engineering-loop.md](engineering-loop.md), [../reference/capability-matrix.md](../reference/capability-matrix.md), [../guides/report.md](../guides/report.md), [../guides/verification.md](../guides/verification.md), [../guides/evidence.md](../guides/evidence.md) |
+| **Domain 4: Harness Adapters & Packaging** | Interface Adapters & Delivery | Harness-specific edge I/O (Claude Code, Cursor, Codex, OpenCode, KiroCrew, Antigravity), fail-open hook runner (`runHookAdapter`), 5 packaging layers (Memory, Skills, Hooks, Agents, Plugin), and the Claude Code plugin. Invariants: adapters embed no routing policy; adapters only parse wire format and emit core decisions; panic recovery ensures fail-open allow. | `internal/adapters/*`, `cmd/downshift`, `mods`, `hooks` | [../domains/harness-adapters-packaging.md](../domains/harness-adapters-packaging.md), [../reference/harness-matrix.md](../reference/harness-matrix.md), [../contrib/layering.md](../contrib/layering.md), [mod-router.md](mod-router.md), [../guides/claude-code.md](../guides/claude-code.md) |
+
+---
+
+## Module boundaries
+
+| Package | Responsibility |
+|---------|----------------|
+| `internal/classify` | Regex classifier, `signals.go`, language guard, risk floor. No tier, no harness, no catalog |
+| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify`, `fuse`, `quotamodel` and `session` (checked 2026-11-01: `go list -deps ./internal/core` lists only those plus `semantic` and `paths`). Production sources do not import `quota`, `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter. Core test files do import `catalog` and `quota`; they are not in the binary. Optional layers plug in through hook variables set in their `init` (see Known gaps). Env stays a typed snapshot set at the edge (`SetConfig`) |
+| `internal/quotamodel` | Pure quota evidence types: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O. Landed: `core` imports this package; file reads and native parsing enter through `LoadQuotaHook`, `LoadNativeQuotaHook`, `ParseNativeQuotaHook` and `RegisterNativeQuotaHook`, registered by `quota`, registered at `init` |
+| `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed (`5f94e07`): `core` imports this package; this package must not import `core`. `PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent` and `CanWriteSessionID` stay in `core` |
+| `internal/fuse` | Landed (`110ef31`). Semantic boost policy: raise-only, no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper. Stays in-process and does not exec |
+| `internal/classify` | Regex classifier, `signals.go`, language guard, risk floor (concurrent category scan from 64 KiB). No tier, no harness, no catalog |
+| `internal/catalog` | Embedded `catalog.json`, user override merge (recovers into the embedded data on a panic), `Resolver` |
+| `internal/discovery`, `internal/models` | Session model discovery (sources, order, `discovered.json` cache; run by `setup` and `models discover`) and `models list/check/pull`. Both import `catalog` and `core` |
+| `internal/adapters/*` | Harness-specific I/O only. Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns |
+| `internal/policyfile` | Thin wrapper over the floor file lookup in `routing/policy` (`Find`, `Load`), used by `downshift policy`. The floor itself is applied by `routing/decide` |
+| `internal/quota`, `internal/hookctx`, `internal/hookutil` | Offline budget evidence (file I/O); per-hook deadline and project dir; shared field helpers. `quota` keeps `Load`, `Store`, `ParseNative` and native registration, aliases the `quotamodel` types so adapters can keep saying `quota.Snapshot`, and registers `LoadQuotaHook` and the native quota hooks. Core production sources do not import `quota` |
+| `internal/hookport`, `internal/childend` | Honor, usage and child-end contract; one shared recorder for every harness |
+| `internal/telemetry` | Append-only local JSONL (no per-spawn fsync); prompt-free events; `Summarize` (single savings definition), stats, report, session tree. Imports `paths` only; router values (tiers) arrive through `telemetry/fromcore`, the one subtree package that imports `core` |
+| `internal/contextopt`, `internal/compressor`, `internal/sensor` | Context optimization registry, native compressor (observe/safe), tool-output sensor |
+| `internal/semantic` | In-process hash embedder. The raise-only boost policy lives in `internal/fuse`. The semantic boost stays in-process and does not exec |
+| `internal/outcome`, `internal/benchmark` | Outcome evals and classifier KPIs. Shadow classifiers (`internal/routingv2/*`), training and decision intelligence were removed in wave A (2026-10-26); see [routing v2](../design/routing-v2.md). `internal/routecache`, `routingv2/router` and `matcher` were removed on 2026-10-19 (no production importer) |
+| `internal/setup` | The data and plan model of `downshift setup`: the harness target table (`Targets`, `Target`, `Hook`, `Mcp`, `Steering`), `Options`, `Plan`, linked-path refusal (`RefuseLinkedPlans`, `HoldLinkedTargets`), the binary-path guard, harness bridge files and backup naming. Also the hook-file merge (`MergeTarget`), the backed-up `Write`, the summary and confirmation prompt, the MCP file planners (`PlanMcpJSON`, `PlanCodexMcp`), the remaining planners (skills, mods, steering, wrappers, workers, policy init, crew registry), the side effects (MCP registration, plugin install, `Undo`, binary prune) and `Run`, the whole command after argument parsing. Imports `configfile`, `paths`, `routing/policy`, `contextopt`, `hooks`, `mods`, `skills`; never `core`, `console` or `cmd`. `cmd/downshift` keeps argument parsing, the TUI, the smoke check and model discovery, and passes the last two in as `Options` funcs ([setup-extraction.md](setup-extraction.md)) |
+| `internal/setup/configfile` | Config-file primitives of `setup`: order-keeping JSON `Object`, raw-text JSON `Member` edits (`MembersAt`, `RenderWithMembersAt`), `UnifiedDiff`, `WriteAtomic`, `RemoveEmptyDirs`, the ownership marker (`Owns`). Standard library only; knows no harness, target or plan. Outer layer: `core` must not import `setup` (archtest `TestImportGraph`). The rest of setup lives in `internal/setup` ([setup-extraction.md](setup-extraction.md)) |
+| `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor. Installs the `routing/decide` decider (`core.SetDecider`); blank-imports `quota` |
+
+**Invariants:** adapters embed no routing rules; adding a harness is one
+`harnessRegistry` entry plus its adapter package, with a port entry only when
+that harness's own hook sends honor or usage fields; a nil port is unobserved,
+never inferred. Dependency check: `internal/archtest` (`TestImportGraph` and `TestTelemetryTreeImportsCoreOnlyThroughFromcore`, run by `go test ./...` in the `test` job) fails when the production closure of `core` reaches quota, catalog, telemetry, adapt, policyfile, setup or an adapter, when `session` or `fuse` reach `core`, when `setup/configfile` reaches core, an adapter, telemetry or catalog, or when any `telemetry` subtree package other than `telemetry/fromcore` reaches `core`; a negative test proves the matcher detects a violation. Rules not listed there (for example adapters importing policy) are still manual: `go list -deps ./internal/<pkg>`.
+
+---
+
+## Configuration on disk
+
+State directory `~/.downshift/` (legacy `~/.harness-downshift/`, see
+[rename.md](../brand/rename.md); override with `DOWNSHIFT_STATE_DIR`). See
+"Where state lives" below for what each file is and its permissions.
+Per project: `.downshift/policy.json` (tier floor). Overrides:
+`DOWNSHIFT_EVENT_LOG`, `DOWNSHIFT_SESSION_MODELS`, `DOWNSHIFT_QUIET`, flags in
+README and [minilm-semantic.md](minilm-semantic.md).
+
+---
+
+## Packaging layers (what an agent harness loads)
+
+Besides the Go layers above, the repository is laid out as the five things a
+coding harness can load. Each is a thin surface over the same binary; none holds
+policy. The plugin is Claude Code only; every other harness reaches the same
+layers through `downshift setup` and the docs.
+
+| Layer | Path | Holds | Harness-neutral? |
+|---|---|---|---|
+| 1 Memory | `AGENTS.md` (`CLAUDE.md` points to it) | always-loaded rules, at most 200 lines | yes |
+| 2 Skills | `skills/downshift-setup`, `skills/downshift-audit`, `skills/downshift-tune` | procedures with judgment; detail in `references/` on demand | yes (SKILL.md format) |
+| 3 Hooks | the `downshift <harness>` subcommands; `hooks/hooks.json` is the plugin form | routing, telemetry, guardrails (shared Go) | yes; `hooks.json` is Claude Code packaging |
+| 4 Agents | `agents/mechanical-worker.md` | one example with no pinned model ([subagents.md](../guides/subagents.md)) | Claude Code format; the rule applies everywhere |
+| 5 Plugin | `.claude-plugin/plugin.json`, `marketplace.json` | one install: hooks, command, skills, agent | Claude Code only |
+
+Contributor-only skills (`.claude/skills/downshift-layering`) stay out of the
+plugin. Companions (Headroom) are detected and documented, never
+bundled: [companions.md](../guides/companions.md).
+
+## Known gaps and limits
+
+These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
+
+1. **`telemetry` is large.** The `internal/` tree holds 292 non-test `.go`
+   files across 43 packages as of 2026-10-23. `telemetry` alone spans events,
+   cost, stats, report, rotation, pause, session tree, and
+   completion behind one package, imported by adapters, `childend`, `hookport`
+   and `server`. A split (event log and appenders vs read-outs) is proposed,
+   not done.
+2. **`init`-registered hooks in `core` (Fullstack P1-1).** The result of
+   `core.Route` depends on which decider `cmd/downshift` installed and which
+   packages it blank-imported (the quota loaders, `quota`). Adapter tests link
+   `quota` (adapters import it) but run a test decider (`decidertest`), not
+   `routing/decide`. Behaviour is covered at `runHookAdapter` and `core.Route` tests, but
+   an adapter test alone does not prove production routing.
+3. **Import-graph sensor is automated.** `internal/archtest/imports_test.go`
+   (`TestImportGraph`, run by `go test ./...`) fails on the forbidden imports
+   listed under the dependency check above. Rules outside that list are still
+   checked by hand with `go list`.
+4. **Rotated log backups are not read.** `stats` prints a note and counts only
+   the live `events.jsonl`; totals drop after a rotation (100 MB by default).
+5. **Savings are token shares, not invoices.** `stats` and `report` print no dollar.
+   Tokens are observed only where the harness reports them (Claude Code most completely). The
+   one tracked field trial is -12% on mechanical pieces, not a general rate.
+6. **Compaction is measure-only on Claude Code.** Hooks cannot rewrite tool
+   output, so the sensor reports a hypothetical reduction.
+7. **Hook latency** after removing the per-spawn fsync: p50 8.5 ms, p95 9.7 ms
+   for a Claude Code Task payload (n = 200, Apple M3 Pro, macOS 26.6, Go
+   1.27.1; `downshift version` p50 7.7 ms; process floor 2.2 ms). Not measured on
+   Linux or Windows, on a populated state directory, or under parallel
+   spawning. Trade-off: a power loss can drop the last events.
+   [Evidence](../evidence/perf-2026-10-19.md).
+8. **OpenCode is Beta.** `downshift setup opencode` installs a bridge plugin that
+   forwards spawns and shell commands to the adapter; routing, the honored model,
+   shell compaction and child usage were observed live on OpenCode 2.2.5. The retry
+   fallback after a provider failure is not verified yet. Cursor, Codex and Antigravity rewrite honor is also bounded as in
+   the [harness matrix](../reference/harness-matrix.md).
+9. **Stale diagram source.** `docs/img/architecture.svg` (and `-dark`) is
+    hand-drawn, not generated, and predates `classify`, `fuse`, `session`,
+    `opencode` and the hook ports; it still names e5 and graphify helpers.
+    Nothing links to it. The ASCII diagram above is the maintained one.
+    `downshift-bdi` and `downshift-execution` are current.
+10. **Dead-end packages.** Removed on 2026-10-19: `internal/routecache`,
+    `internal/orchestration`, `internal/routingv2/router` and `matcher`.
+
+## Further reading
+
+| Doc | Audience |
+|-----|----------|
+| [harness-matrix.md](../reference/harness-matrix.md) | What each harness honors |
+| [session-models.md](../reference/session-models.md) | Operators |
+| [layering.md](../contrib/layering.md) | Contributors |
+| [engineering-loop.md](engineering-loop.md) | Feedback loop |
+| [context-optimization.md](context-optimization.md), [companions.md](../guides/companions.md) | Context layer |
+| [report.md](../guides/report.md), [benchmark/README.md](../benchmark/README.md) | Measurement discipline |
+| [router-generalization.md](router-generalization.md) | Evaluation honesty |
+| [pt/README.md](../pt/README.md) | Portuguese doc set |
