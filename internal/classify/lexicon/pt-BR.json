@@ -1,0 +1,1290 @@
+{
+  "schema_version": 1,
+  "language": "pt-BR",
+  "actions": {
+    "inspect": [
+      {
+        "order": 4,
+        "pattern": "diagn[oó]stic\\w*"
+      },
+      {
+        "order": 5,
+        "pattern": "corrig\\w*"
+      },
+      {
+        "order": 6,
+        "pattern": "corrij\\w*"
+      },
+      {
+        "order": 8,
+        "pattern": "depur\\w*"
+      },
+      {
+        "order": 10,
+        "pattern": "analis\\w*"
+      },
+      {
+        "order": 11,
+        "pattern": "an[aá]lis\\w*"
+      }
+    ],
+    "integrate": [
+      {
+        "order": 1,
+        "pattern": "integr\\w*"
+      },
+      {
+        "order": 3,
+        "pattern": "conect\\w*"
+      },
+      {
+        "order": 4,
+        "pattern": "sincroniz\\w*"
+      },
+      {
+        "order": 6,
+        "pattern": "implementar"
+      },
+      {
+        "order": 7,
+        "pattern": "implemente"
+      }
+    ],
+    "build": [
+      {
+        "order": 1,
+        "pattern": "implementa[cç][aã]o"
+      },
+      {
+        "order": 2,
+        "pattern": "criar"
+      },
+      {
+        "order": 3,
+        "pattern": "crie"
+      },
+      {
+        "order": 4,
+        "pattern": "cria"
+      },
+      {
+        "order": 7,
+        "pattern": "constru\\w*"
+      },
+      {
+        "order": 8,
+        "pattern": "configur\\w*"
+      },
+      {
+        "order": 10,
+        "pattern": "integr\\w*"
+      },
+      {
+        "order": 11,
+        "pattern": "conect\\w*"
+      },
+      {
+        "order": 13,
+        "pattern": "adicion\\w*"
+      }
+    ],
+    "plan": [
+      {
+        "order": 1,
+        "pattern": "desenh\\w*"
+      },
+      {
+        "order": 2,
+        "pattern": "redesenh\\w*"
+      },
+      {
+        "order": 3,
+        "pattern": "arquitet\\w*"
+      },
+      {
+        "order": 4,
+        "pattern": "rearquitet\\w*"
+      },
+      {
+        "order": 6,
+        "pattern": "projet\\w*"
+      },
+      {
+        "order": 8,
+        "pattern": "planej\\w*"
+      },
+      {
+        "order": 10,
+        "pattern": "implementar"
+      },
+      {
+        "order": 11,
+        "pattern": "implemente"
+      },
+      {
+        "order": 13,
+        "pattern": "reconstru\\w*"
+      },
+      {
+        "order": 14,
+        "pattern": "migrat\\w*"
+      },
+      {
+        "order": 15,
+        "pattern": "migrar"
+      },
+      {
+        "order": 16,
+        "pattern": "migre"
+      },
+      {
+        "order": 17,
+        "pattern": "migra\\w*"
+      },
+      {
+        "order": 19,
+        "pattern": "orquestr\\w*"
+      },
+      {
+        "order": 20,
+        "pattern": "coorden\\w*"
+      }
+    ],
+    "automate": [
+      {
+        "order": 0,
+        "pattern": "automat\\w*"
+      },
+      {
+        "order": 1,
+        "pattern": "automate"
+      },
+      {
+        "order": 2,
+        "pattern": "automatiz\\w*"
+      },
+      {
+        "order": 4,
+        "pattern": "configur\\w*"
+      },
+      {
+        "order": 7,
+        "pattern": "implementar"
+      },
+      {
+        "order": 8,
+        "pattern": "implemente"
+      },
+      {
+        "order": 10,
+        "pattern": "criar"
+      },
+      {
+        "order": 11,
+        "pattern": "crie"
+      }
+    ],
+    "optimize": [
+      {
+        "order": 1,
+        "pattern": "otimiz\\w*"
+      },
+      {
+        "order": 2,
+        "pattern": "dimension\\w*"
+      },
+      {
+        "order": 4,
+        "pattern": "ajust\\w*"
+      },
+      {
+        "order": 5,
+        "pattern": "reduz\\w*"
+      }
+    ],
+    "protect": [
+      {
+        "order": 1,
+        "pattern": "implementar"
+      },
+      {
+        "order": 2,
+        "pattern": "implemente"
+      },
+      {
+        "order": 4,
+        "pattern": "endurec\\w*"
+      },
+      {
+        "order": 5,
+        "pattern": "proteg\\w*"
+      },
+      {
+        "order": 7,
+        "pattern": "configur\\w*"
+      },
+      {
+        "order": 9,
+        "pattern": "assinar"
+      }
+    ],
+    "fix": [
+      {
+        "order": 1,
+        "pattern": "corrig\\w*"
+      },
+      {
+        "order": 2,
+        "pattern": "corrij\\w*"
+      },
+      {
+        "order": 6,
+        "pattern": "diagn[oó]stic\\w*"
+      },
+      {
+        "order": 8,
+        "pattern": "repar\\w*"
+      }
+    ],
+    "verify": [
+      {
+        "order": 1,
+        "pattern": "verific\\w*"
+      },
+      {
+        "order": 2,
+        "pattern": "verifiq\\w*"
+      },
+      {
+        "order": 4,
+        "pattern": "valid\\w*"
+      },
+      {
+        "order": 5,
+        "pattern": "check"
+      },
+      {
+        "order": 6,
+        "pattern": "chec\\w*"
+      },
+      {
+        "order": 8,
+        "pattern": "confir\\w*"
+      }
+    ]
+  },
+  "terms": {
+    "fe-hydration-debug": [
+      {
+        "order": 1,
+        "pattern": "hidrata[cç][aã]o"
+      }
+    ],
+    "fe-design-system-migration": [
+      {
+        "order": 1,
+        "pattern": "sistema de design"
+      },
+      {
+        "order": 4,
+        "pattern": "componentes? de servidor"
+      },
+      {
+        "order": 6,
+        "pattern": "arquitetura de renderiza[cç][aã]o"
+      }
+    ],
+    "fe-typescript-typecheck": [
+      {
+        "order": 3,
+        "pattern": "erros? de tipagem"
+      },
+      {
+        "order": 4,
+        "pattern": "falhas? de tipagem"
+      },
+      {
+        "order": 5,
+        "pattern": "checagem de tipos"
+      }
+    ],
+    "be-pagination-endpoint": [
+      {
+        "order": 1,
+        "pattern": "pagina[cç][aã]o por cursor"
+      },
+      {
+        "order": 2,
+        "pattern": "pagina[cç][aã]o"
+      },
+      {
+        "order": 4,
+        "pattern": "limite de requisi[cç][oõ]es"
+      }
+    ],
+    "be-query-profiling": [
+      {
+        "order": 2,
+        "pattern": "consulta lenta"
+      },
+      {
+        "order": 3,
+        "pattern": "consultas? lentas"
+      },
+      {
+        "order": 6,
+        "pattern": "plano de execu[cç][aã]o"
+      }
+    ],
+    "be-consistency-design": [
+      {
+        "order": 3,
+        "pattern": "padr[aã]o saga"
+      },
+      {
+        "order": 6,
+        "pattern": "consist[eê]ncia eventual"
+      },
+      {
+        "order": 8,
+        "pattern": "transa[cç][aã]o distribu[ií]da"
+      }
+    ],
+    "be-api-contract-versioning": [
+      {
+        "order": 1,
+        "pattern": "versionamento de contrato da api"
+      },
+      {
+        "order": 2,
+        "pattern": "versionamento de contratos?"
+      }
+    ],
+    "fs-api-ui-feature": [
+      {
+        "order": 0,
+        "pattern": "(?:ui|front[ -]?end|interface|tela).{0,100}(?:backend|back[ -]?end|api|database|banco de dados)"
+      }
+    ],
+    "fs-coordinated-rollout": [
+      {
+        "order": 0,
+        "pattern": "(?:rollout|deploy|implanta[cç][aã]o|lan[cç]amento).{0,100}(?:schema|database|banco de dados).{0,100}(?:frontend|front[ -]?end|client|clientes?)"
+      }
+    ],
+    "fs-contract-compatibility": [
+      {
+        "order": 1,
+        "pattern": "compatibilidade de contratos?"
+      },
+      {
+        "order": 2,
+        "pattern": "compatibilidade de contrato"
+      },
+      {
+        "order": 4,
+        "pattern": "api retrocompat[ií]vel"
+      },
+      {
+        "order": 6,
+        "pattern": "contrato entre cliente e servidor"
+      }
+    ],
+    "ops-crashloop-debug": [
+      {
+        "order": 3,
+        "pattern": "evic[cç][aã]o de pods"
+      },
+      {
+        "order": 6,
+        "pattern": "agendamento de pods"
+      }
+    ],
+    "ops-helm-automation": [
+      {
+        "order": 3,
+        "pattern": "m[oó]dulo terraform"
+      }
+    ],
+    "ops-multi-region-recovery": [
+      {
+        "order": 1,
+        "pattern": "recupera[cç][aã]o de desastres"
+      }
+    ],
+    "ops-terraform-drift": [
+      {
+        "order": 2,
+        "pattern": "drift de infraestrutura"
+      },
+      {
+        "order": 4,
+        "pattern": "diverg[eê]ncia da infraestrutura"
+      }
+    ],
+    "finops-anomaly-investigation": [
+      {
+        "order": 1,
+        "pattern": "anomalia de custos?"
+      },
+      {
+        "order": 5,
+        "pattern": "custo de egress"
+      },
+      {
+        "order": 6,
+        "pattern": "despesa de sa[ií]da de dados"
+      }
+    ],
+    "finops-rightsizing-plan": [
+      {
+        "order": 1,
+        "pattern": "custos? de nuvem"
+      },
+      {
+        "order": 7,
+        "pattern": "planos? de economia"
+      }
+    ],
+    "finops-chargeback-design": [
+      {
+        "order": 1,
+        "pattern": "rateio de custos entre contas"
+      },
+      {
+        "order": 3,
+        "pattern": "modelo de showback"
+      },
+      {
+        "order": 5,
+        "pattern": "aloca[cç][aã]o de custos entre contas"
+      }
+    ],
+    "finops-amortized-cost": [
+      {
+        "order": 1,
+        "pattern": "custo amortizado"
+      },
+      {
+        "order": 3,
+        "pattern": "custo efetivo"
+      },
+      {
+        "order": 5,
+        "pattern": "desconto por compromisso"
+      },
+      {
+        "order": 7,
+        "pattern": "aloca[cç][aã]o de custos"
+      }
+    ],
+    "sec-sast-triage": [
+      {
+        "order": 3,
+        "pattern": "varredura de depend[eê]ncias"
+      },
+      {
+        "order": 4,
+        "pattern": "an[aá]lise est[aá]tica de seguran[cç]a"
+      },
+      {
+        "order": 6,
+        "pattern": "scan de segredos"
+      },
+      {
+        "order": 7,
+        "pattern": "an[aá]lise din[aâ]mica de seguran[cç]a"
+      }
+    ],
+    "sec-supply-chain-hardening": [
+      {
+        "order": 3,
+        "pattern": "atestados? de proveni[eê]ncia"
+      },
+      {
+        "order": 7,
+        "pattern": "cadeia de suprimentos de software"
+      }
+    ],
+    "sec-threat-model-design": [
+      {
+        "order": 1,
+        "pattern": "modelo de amea[cç]as"
+      },
+      {
+        "order": 5,
+        "pattern": "fronteiras? de confian[cç]a"
+      }
+    ],
+    "sec-asvs-access-control": [
+      {
+        "order": 1,
+        "pattern": "falha de controle de acesso"
+      },
+      {
+        "order": 3,
+        "pattern": "bypass de autoriza[cç][aã]o"
+      },
+      {
+        "order": 6,
+        "pattern": "eleva[cç][aã]o de privil[eé]gios"
+      }
+    ],
+    "mob-deep-link-integration": [
+      {
+        "order": 4,
+        "pattern": "navega[cç][aã]o profunda"
+      }
+    ],
+    "mob-anr-crash-debug": [
+      {
+        "order": 4,
+        "pattern": "crash no aplicativo"
+      },
+      {
+        "order": 5,
+        "pattern": "travamento no aplicativo"
+      },
+      {
+        "order": 7,
+        "pattern": "press[aã]o de mem[oó]ria"
+      }
+    ],
+    "mob-offline-conflict-design": [
+      {
+        "order": 3,
+        "pattern": "resolu[cç][aã]o de conflitos offline"
+      },
+      {
+        "order": 4,
+        "pattern": "sincroniza[cç][aã]o offline"
+      }
+    ],
+    "mob-ui-lifecycle-debug": [
+      {
+        "order": 3,
+        "pattern": "ciclo de vida.{0,35}(?:swiftui|jetpack compose)"
+      },
+      {
+        "order": 4,
+        "pattern": "problema de ciclo de vida.{0,35}jetpack compose"
+      }
+    ],
+    "ci-flaky-test-repair": [
+      {
+        "order": 1,
+        "pattern": "testes? intermitentes?"
+      },
+      {
+        "order": 3,
+        "pattern": "instabilidade do pipeline"
+      },
+      {
+        "order": 4,
+        "pattern": "testes? inst[aá]veis"
+      }
+    ],
+    "ci-build-matrix": [
+      {
+        "order": 1,
+        "pattern": "matriz de builds?"
+      },
+      {
+        "order": 3,
+        "pattern": "matriz de testes?"
+      }
+    ],
+    "ci-progressive-delivery": [
+      {
+        "order": 4,
+        "pattern": "rollback autom[aá]tico"
+      }
+    ],
+    "ci-cache-invalidation": [
+      {
+        "order": 1,
+        "pattern": "invalida[cç][aã]o de cache da pipeline"
+      },
+      {
+        "order": 2,
+        "pattern": "cache misses? no ci"
+      },
+      {
+        "order": 3,
+        "pattern": "falhas? de cache no ci"
+      }
+    ],
+    "fe-keyboard-a11y": [
+      {
+        "order": 1,
+        "pattern": "navega[cç][aã]o por teclado"
+      },
+      {
+        "order": 3,
+        "pattern": "gerenciamento de foco"
+      }
+    ],
+    "fe-bundle-size": [
+      {
+        "order": 1,
+        "pattern": "tamanho do bundle"
+      },
+      {
+        "order": 3,
+        "pattern": "peso do javascript"
+      }
+    ],
+    "fe-state-sync": [
+      {
+        "order": 1,
+        "pattern": "sincroniza[cç][aã]o de estado"
+      },
+      {
+        "order": 3,
+        "pattern": "loops? de atualiza[cç][aã]o de estado"
+      }
+    ],
+    "fe-form-validation": [
+      {
+        "order": 1,
+        "pattern": "valida[cç][aã]o de formul[aá]rios?"
+      },
+      {
+        "order": 3,
+        "pattern": "valida[cç][aã]o de campos"
+      }
+    ],
+    "fe-ssr-streaming": [
+      {
+        "order": 1,
+        "pattern": "arquitetura de streaming ssr"
+      },
+      {
+        "order": 3,
+        "pattern": "renderiza[cç][aã]o de m[uú]ltiplas rotas no servidor"
+      }
+    ],
+    "fe-visual-regression": [
+      {
+        "order": 1,
+        "pattern": "testes? de regress[aã]o visual"
+      },
+      {
+        "order": 3,
+        "pattern": "diferen[cç]a de screenshots?"
+      }
+    ],
+    "be-dlq-debug": [
+      {
+        "order": 1,
+        "pattern": "fila de mensagens mortas"
+      },
+      {
+        "order": 3,
+        "pattern": "ac[uú]mulo na dlq"
+      }
+    ],
+    "be-cache-stampede": [
+      {
+        "order": 1,
+        "pattern": "efeito manada no cache"
+      },
+      {
+        "order": 3,
+        "pattern": "sobrecarga simult[aâ]nea do cache"
+      }
+    ],
+    "be-idempotency-keys": [
+      {
+        "order": 1,
+        "pattern": "valida[cç][aã]o de chaves? de idempot[eê]ncia"
+      },
+      {
+        "order": 3,
+        "pattern": "middleware de idempot[eê]ncia"
+      }
+    ],
+    "be-websocket-reconnect": [
+      {
+        "order": 1,
+        "pattern": "l[oó]gica de reconex[aã]o websocket"
+      },
+      {
+        "order": 3,
+        "pattern": "reconex[aã]o exponencial websocket"
+      }
+    ],
+    "be-transaction-boundary": [
+      {
+        "order": 1,
+        "pattern": "fronteira transacional entre servi[cç]os"
+      },
+      {
+        "order": 3,
+        "pattern": "estrat[eé]gia transacional entre servi[cç]os"
+      }
+    ],
+    "be-batch-throughput": [
+      {
+        "order": 1,
+        "pattern": "processamento em lote"
+      },
+      {
+        "order": 3,
+        "pattern": "vaz[aã]o de lotes"
+      }
+    ],
+    "fs-session-flow": [
+      {
+        "order": 1,
+        "pattern": "fluxo de sess[aã]o ponta a ponta"
+      },
+      {
+        "order": 3,
+        "pattern": "ciclo de sess[aã]o entre cliente e servidor"
+      }
+    ],
+    "fs-upload-progress": [
+      {
+        "order": 3,
+        "pattern": "progresso de upload entre cliente e servidor"
+      }
+    ],
+    "fs-realtime-clients": [
+      {
+        "order": 1,
+        "pattern": "sincroniza[cç][aã]o em tempo real entre clientes"
+      },
+      {
+        "order": 3,
+        "pattern": "estado em tempo real entre clientes"
+      }
+    ],
+    "fs-internationalization": [
+      {
+        "order": 1,
+        "pattern": "internacionaliza[cç][aã]o entre frontend e backend"
+      },
+      {
+        "order": 3,
+        "pattern": "localiza[cç][aã]o compartilhada entre ui e api"
+      }
+    ],
+    "fs-api-ui-errors": [
+      {
+        "order": 1,
+        "pattern": "tratamento de erros de api na interface"
+      },
+      {
+        "order": 3,
+        "pattern": "estados de erro entre cliente e servidor"
+      }
+    ],
+    "fs-tenant-isolation": [
+      {
+        "order": 1,
+        "pattern": "isolamento de tenants? entre frontend e backend"
+      },
+      {
+        "order": 3,
+        "pattern": "fronteiras de acesso multi[ -]?tenant"
+      }
+    ],
+    "ops-hpa-autoscale": [
+      {
+        "order": 1,
+        "pattern": "escalonamento horizontal de pods"
+      },
+      {
+        "order": 3,
+        "pattern": "configura[cç][aã]o de hpa"
+      }
+    ],
+    "ops-dns-discovery": [
+      {
+        "order": 1,
+        "pattern": "descoberta de servi[cç]os dns"
+      },
+      {
+        "order": 3,
+        "pattern": "resolu[cç][aã]o dns no kubernetes"
+      }
+    ],
+    "ops-container-permissions": [
+      {
+        "order": 0,
+        "pattern": "container image permissions"
+      },
+      {
+        "order": 1,
+        "pattern": "permiss[oõ]es de imagem de cont[eê]iner"
+      },
+      {
+        "order": 3,
+        "pattern": "configura[cç][aã]o de cont[eê]iner sem root"
+      }
+    ],
+    "ops-config-reload": [
+      {
+        "order": 1,
+        "pattern": "recarga de configmap"
+      },
+      {
+        "order": 3,
+        "pattern": "recarga de configura[cç][aã]o entre pods"
+      }
+    ],
+    "ops-volume-expansion": [
+      {
+        "order": 1,
+        "pattern": "expans[aã]o de volume persistente sem downtime"
+      },
+      {
+        "order": 3,
+        "pattern": "migra[cç][aã]o de armazenamento entre clusters"
+      }
+    ],
+    "ops-service-mesh-mtls": [
+      {
+        "order": 1,
+        "pattern": "implanta[cç][aã]o mtls da malha de servi[cç]os"
+      },
+      {
+        "order": 3,
+        "pattern": "identidade de malha de servi[cç]os entre clusters"
+      }
+    ],
+    "finops-cost-tags": [
+      {
+        "order": 1,
+        "pattern": "etiquetas de aloca[cç][aã]o de custos"
+      },
+      {
+        "order": 3,
+        "pattern": "tags para rateio de custos em nuvem"
+      }
+    ],
+    "finops-spot-usage": [
+      {
+        "order": 1,
+        "pattern": "uso de inst[aâ]ncias spot"
+      },
+      {
+        "order": 3,
+        "pattern": "custos de cargas preemptivas"
+      }
+    ],
+    "finops-idle-resources": [
+      {
+        "order": 1,
+        "pattern": "recursos ociosos em nuvem"
+      },
+      {
+        "order": 3,
+        "pattern": "computa[cç][aã]o provisionada sem uso"
+      }
+    ],
+    "finops-budget-anomalies": [
+      {
+        "order": 1,
+        "pattern": "alertas de anomalia or[cç]ament[aá]ria"
+      },
+      {
+        "order": 2,
+        "pattern": "budget threshold notification"
+      },
+      {
+        "order": 3,
+        "pattern": "notifica[cç][aã]o de limite de or[cç]amento"
+      }
+    ],
+    "finops-commitment-portfolio": [
+      {
+        "order": 1,
+        "pattern": "portf[oó]lio de compromissos de inst[aâ]ncias reservadas"
+      },
+      {
+        "order": 3,
+        "pattern": "compromissos de economia entre provedores"
+      }
+    ],
+    "finops-cross-region-egress": [
+      {
+        "order": 1,
+        "pattern": "custos de transfer[eê]ncia de dados entre regi[oõ]es"
+      },
+      {
+        "order": 3,
+        "pattern": "egress entre regi[oõ]es"
+      }
+    ],
+    "sec-csp-policy": [
+      {
+        "order": 1,
+        "pattern": "pol[ií]tica de seguran[cç]a de conte[uú]do"
+      },
+      {
+        "order": 3,
+        "pattern": "implanta[cç][aã]o de csp"
+      }
+    ],
+    "sec-dependency-cve": [
+      {
+        "order": 1,
+        "pattern": "depend[eê]ncia vulner[aá]vel cve"
+      },
+      {
+        "order": 3,
+        "pattern": "aviso de seguran[cç]a de depend[eê]ncia"
+      }
+    ],
+    "sec-workload-identity": [
+      {
+        "order": 1,
+        "pattern": "federa[cç][aã]o de identidade de workloads?"
+      },
+      {
+        "order": 3,
+        "pattern": "identidade de workload oidc"
+      }
+    ],
+    "sec-sbom-license": [
+      {
+        "order": 1,
+        "pattern": "conformidade de licen[cç]as sbom"
+      },
+      {
+        "order": 3,
+        "pattern": "pol[ií]tica de licen[cç]as de software"
+      }
+    ],
+    "sec-cross-cluster-rbac": [
+      {
+        "order": 1,
+        "pattern": "migra[cç][aã]o de rbac kubernetes entre clusters"
+      },
+      {
+        "order": 2,
+        "pattern": "cross[ -]?cluster permissions model"
+      },
+      {
+        "order": 3,
+        "pattern": "modelo de permiss[oõ]es entre clusters"
+      }
+    ],
+    "sec-key-rotation-policy": [
+      {
+        "order": 1,
+        "pattern": "pol[ií]tica de rota[cç][aã]o de chaves"
+      },
+      {
+        "order": 3,
+        "pattern": "ciclo de credenciais de servi[cç]o"
+      }
+    ],
+    "mob-push-delivery": [
+      {
+        "order": 0,
+        "pattern": "push notification delivery"
+      },
+      {
+        "order": 1,
+        "pattern": "entrega de notifica[cç][oõ]es push"
+      },
+      {
+        "order": 2,
+        "pattern": "push notification retries"
+      },
+      {
+        "order": 3,
+        "pattern": "retentativas de notifica[cç][oõ]es push"
+      }
+    ],
+    "mob-cold-start": [
+      {
+        "order": 1,
+        "pattern": "inicializa[cç][aã]o a frio do aplicativo"
+      },
+      {
+        "order": 3,
+        "pattern": "tempo de abertura do aplicativo"
+      }
+    ],
+    "mob-background-location": [
+      {
+        "order": 0,
+        "pattern": "background location permissions"
+      },
+      {
+        "order": 1,
+        "pattern": "permiss[oõ]es de localiza[cç][aã]o em segundo plano"
+      },
+      {
+        "order": 2,
+        "pattern": "background permission prompt"
+      },
+      {
+        "order": 3,
+        "pattern": "solicita[cç][aã]o de permiss[aã]o em segundo plano"
+      }
+    ],
+    "mob-testflight-release": [
+      {
+        "order": 1,
+        "pattern": "implanta[cç][aã]o via testflight"
+      },
+      {
+        "order": 3,
+        "pattern": "lan[cç]amento gradual no play console"
+      }
+    ],
+    "mob-offline-db-migration": [
+      {
+        "order": 1,
+        "pattern": "migra[cç][aã]o de schema offline do banco local"
+      },
+      {
+        "order": 3,
+        "pattern": "migra[cç][aã]o de dados no dispositivo"
+      }
+    ],
+    "mob-battery-background": [
+      {
+        "order": 1,
+        "pattern": "consumo de bateria em segundo plano"
+      },
+      {
+        "order": 3,
+        "pattern": "uso de wakelock em segundo plano"
+      }
+    ],
+    "ci-actions-permissions": [
+      {
+        "order": 0,
+        "pattern": "github actions permissions"
+      },
+      {
+        "order": 1,
+        "pattern": "permiss[oõ]es de github actions"
+      },
+      {
+        "order": 3,
+        "pattern": "escopo do token de workflow ci"
+      }
+    ],
+    "ci-artifact-provenance": [
+      {
+        "order": 1,
+        "pattern": "proveni[eê]ncia de artefatos de build"
+      },
+      {
+        "order": 3,
+        "pattern": "atesta[cç][oõ]es de artefatos"
+      }
+    ],
+    "ci-monorepo-cache": [
+      {
+        "order": 1,
+        "pattern": "cache de monorepo"
+      },
+      {
+        "order": 3,
+        "pattern": "cache de builds afetados"
+      }
+    ],
+    "ci-semver-release": [
+      {
+        "order": 1,
+        "pattern": "release com versionamento sem[aâ]ntico"
+      },
+      {
+        "order": 3,
+        "pattern": "changelog de vers[aã]o sem[aâ]ntica"
+      }
+    ],
+    "ci-affected-matrix": [
+      {
+        "order": 1,
+        "pattern": "matriz de pacotes afetados"
+      },
+      {
+        "order": 3,
+        "pattern": "jobs afetados no monorepo"
+      }
+    ],
+    "ci-secret-exposure": [
+      {
+        "order": 1,
+        "pattern": "exposi[cç][aã]o de segredos na pipeline"
+      },
+      {
+        "order": 3,
+        "pattern": "credenciais vazadas no ci"
+      }
+    ],
+    "qa-consumer-contract": [
+      {
+        "order": 1,
+        "pattern": "testes de contrato orientados ao consumidor"
+      },
+      {
+        "order": 3,
+        "pattern": "compatibilidade de testes de contrato"
+      }
+    ],
+    "qa-property-based": [
+      {
+        "order": 1,
+        "pattern": "testes baseados em propriedades"
+      },
+      {
+        "order": 3,
+        "pattern": "casos de teste generativos"
+      }
+    ],
+    "qa-load-p99": [
+      {
+        "order": 1,
+        "pattern": "teste de carga lat[eê]ncia p99"
+      },
+      {
+        "order": 3,
+        "pattern": "teste de desempenho p99"
+      }
+    ],
+    "qa-e2e-flakiness": [
+      {
+        "order": 1,
+        "pattern": "instabilidade dos testes ponta a ponta"
+      },
+      {
+        "order": 2,
+        "pattern": "end[ -]?to[ -]?end flaky suite"
+      },
+      {
+        "order": 3,
+        "pattern": "su[ií]te e2e inst[aá]vel"
+      }
+    ],
+    "data-cdc-multi-db": [
+      {
+        "order": 1,
+        "pattern": "cdc entre m[uú]ltiplos bancos de dados"
+      },
+      {
+        "order": 3,
+        "pattern": "captura de altera[cç][oõ]es entre servi[cç]os"
+      }
+    ],
+    "data-online-backfill": [
+      {
+        "order": 1,
+        "pattern": "preenchimento retroativo de tabela sem downtime"
+      },
+      {
+        "order": 3,
+        "pattern": "carga retroativa de dados sem parada"
+      }
+    ],
+    "data-quality-constraints": [
+      {
+        "order": 1,
+        "pattern": "restri[cç][oõ]es de qualidade de dados"
+      },
+      {
+        "order": 3,
+        "pattern": "verifica[cç][oõ]es de atualidade de dados"
+      }
+    ],
+    "data-stream-consumer-lag": [
+      {
+        "order": 1,
+        "pattern": "atraso de consumidor de streaming"
+      },
+      {
+        "order": 3,
+        "pattern": "atraso de consumidor kafka"
+      }
+    ],
+    "ai-rag-retrieval": [
+      {
+        "order": 1,
+        "pattern": "recall da recupera[cç][aã]o rag"
+      },
+      {
+        "order": 3,
+        "pattern": "qualidade de reranking da busca"
+      }
+    ],
+    "ai-agent-tool-errors": [
+      {
+        "order": 1,
+        "pattern": "falhas de chamadas de ferramentas dos agentes"
+      },
+      {
+        "order": 3,
+        "pattern": "incompatibilidade de schema de ferramenta do agente"
+      }
+    ],
+    "ai-eval-regression-set": [
+      {
+        "order": 1,
+        "pattern": "conjunto de evals de regress[aã]o"
+      },
+      {
+        "order": 3,
+        "pattern": "casos de avalia[cç][aã]o de llm"
+      }
+    ],
+    "ai-multi-agent-hitl": [
+      {
+        "order": 1,
+        "pattern": "orquestra[cç][aã]o multiagente com hitl"
+      },
+      {
+        "order": 3,
+        "pattern": "fluxo multiagente com aprova[cç][aã]o humana"
+      }
+    ],
+    "obs-trace-correlation": [
+      {
+        "order": 1,
+        "pattern": "correla[cç][aã]o de traces distribu[ií]dos"
+      },
+      {
+        "order": 3,
+        "pattern": "correla[cç][aã]o de logs e traces"
+      }
+    ],
+    "obs-cross-service-slo": [
+      {
+        "order": 1,
+        "pattern": "pol[ií]tica de or[cç]amento de erro slo entre servi[cç]os"
+      },
+      {
+        "order": 3,
+        "pattern": "metas de confiabilidade entre servi[cç]os"
+      }
+    ],
+    "obs-metric-cardinality": [
+      {
+        "order": 1,
+        "pattern": "cardinalidade de labels das m[eé]tricas"
+      },
+      {
+        "order": 3,
+        "pattern": "m[eé]tricas de alta cardinalidade"
+      }
+    ],
+    "obs-alert-fatigue": [
+      {
+        "order": 1,
+        "pattern": "redu[cç][aã]o de ru[ií]do de alertas"
+      },
+      {
+        "order": 3,
+        "pattern": "fadiga de alertas"
+      }
+    ]
+  }
+}
