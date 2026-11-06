@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# The built-in control group would leave ~10% of spawns unrouted on purpose; the smoke
+# asserts routing, so it turns the control group off.
+export DOWNSHIFT_CONTROL_SHARE=0
+# Smoke test script for downshift adapters and CLI commands (Task P1.4)
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+BIN="$REPO_ROOT/downshift"
+
+echo "=== 1. Checking downshift binary ==="
+if [ ! -x "$BIN" ]; then
+  echo "Building downshift binary..."
+  (cd "$REPO_ROOT" && go build -ldflags "-s -w" -o downshift ./cmd/downshift)
+fi
+"$BIN" --help >/dev/null
+echo "OK: downshift binary is executable"
+
+echo "=== 3. Hook adapters payload smoke tests ==="
+# Hermetic state dir: never touch the runner's real ~/.downshift / legacy dir.
+SMOKE_HOME="$(mktemp -d)"
+SMOKE_STATE="$SMOKE_HOME/downshift-state"
+trap 'rm -rf "$SMOKE_HOME"' EXIT
+mkdir -p "$SMOKE_STATE"
+cat > "$SMOKE_STATE/session-models.json" <<'JSON'
+{
+  "claude-code": ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"],
+  "codex": ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"],
+  "cursor": ["composer-2.5", "claude-4.5-sonnet-thinking", "claude-4.5-opus-high-thinking"],
+  "antigravity": ["flash_lite", "flash", "pro"]
+}
+JSON
+hook() { HOME="$SMOKE_HOME" DOWNSHIFT_STATE_DIR="$SMOKE_STATE" "$BIN" "$@" 2>/dev/null; }
+expect() { # expect <label> <output> <fixed string>
+  if ! printf '%s' "$2" | grep -qF -- "$3"; then
+    echo "FAIL: $1: expected [$3] in: $2" >&2
+    exit 1
+  fi
+}
+
+# Claude Code: a trivial Task on opus must be rewritten to the small model.
+cc_res=$(echo '{"tool_name":"Task","tool_input":{"prompt":"[tier=small] rename the userId variable to userIdentifier","model":"claude-opus-5-5"}}' | hook claude-code)
+expect "claude-code rewrite" "$cc_res" '"updatedInput":{'
+# Claude Code accepts the catalog native_name (haiku|sonnet|opus|fable), not the full id.
+expect "claude-code rewrite" "$cc_res" '"model":"haiku"'
+expect "claude-code rewrite" "$cc_res" 'claude-haiku-5-5'
+echo "OK: claude-code rewrites updatedInput.model"
+
+# Claude Code with a session list in the payload: the payload list is used.
+cc_pl=$(echo '{"session_models":["claude-haiku-5-5","claude-sonnet-4-5","claude-opus-4-8"],"tool_name":"Task","tool_input":{"prompt":"[tier=small] rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+expect "claude-code payload session list" "$cc_pl" '"updatedInput":{'
+expect "claude-code payload session list" "$cc_pl" '"model":"haiku"'
+echo "OK: claude-code uses the payload session list"
+
+# The real Claude Code payload: no session_models, no operator file, the family
+# alias as the model. The catalog session_candidates below the current model
+# stand in for the list, so a trivial Task on opus is still downshifted.
+cc_real=$(echo '{"tool_name":"Task","tool_input":{"prompt":"[tier=small] rename the userId variable to userIdentifier","model":"opus"}}' | HOME="$(mktemp -d)" DOWNSHIFT_STATE_DIR="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+expect "claude-code without session_models" "$cc_real" '"updatedInput":{'
+expect "claude-code without session_models" "$cc_real" '"model":"haiku"'
+echo "OK: claude-code without session_models downshifts from the catalog candidates"
+
+# Without a current model there is nothing to build a list from: no rewrite and no
+# permission decision, so the user's own ask rules for Agent/Task still apply.
+cc_none=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+if printf '%s' "$cc_none" | grep -qF permissionDecision; then
+  echo "FAIL: claude-code answered a permission decision for an unchanged spawn: $cc_none" >&2
+  exit 1
+fi
+if printf '%s' "$cc_none" | grep -qF updatedInput; then
+  echo "FAIL: claude-code rewrote with no session and no current model: $cc_none" >&2
+  exit 1
+fi
+echo "OK: claude-code with no session and no model does not rewrite"
+
+# A harness without SessionFromCatalog (codex) never rewrites on an unknown session.
+cx_none=$(echo '{"tool_name":"spawn_agent","tool_input":{"message":"[tier=small] rename the userId variable to userIdentifier","model":"gpt-5.6-sol"}}' | HOME="$(mktemp -d)" "$BIN" codex 2>/dev/null)
+if printf '%s' "$cx_none" | grep -qF updatedInput; then
+  echo "FAIL: codex rewrote without a session allowlist: $cx_none" >&2
+  exit 1
+fi
+echo "OK: codex without session does not rewrite"
+
+# Antigravity: trivial subagent on flash must move to flash_lite.
+ag_res=$(echo '{"toolCall":{"name":"invoke_subagent","args":{"Subagents":[{"Model":"flash","Prompt":"[tier=small] rename the userId variable to userIdentifier"}]}}}' | hook antigravity)
+expect "antigravity rewrite" "$ag_res" '"overwrite":{'
+expect "antigravity rewrite" "$ag_res" '"Model":"flash_lite"'
+echo "OK: antigravity overwrites Subagents[0].Model"
+
+# Cursor: trivial task on the frontier model must be rewritten.
+cur_res=$(echo '{"tool_name":"Task","tool_input":{"task":"[tier=small] rename the userId variable to userIdentifier","model":"claude-4.5-opus-high-thinking"}}' | hook cursor)
+expect "cursor rewrite" "$cur_res" '"updated_input":{'
+expect "cursor rewrite" "$cur_res" '"permission":"allow"'
+echo "OK: cursor rewrites updated_input.model"
+
+# Codex: trivial spawn on sol must move to luna with low effort.
+codex_res=$(echo '{"tool_name":"spawn_agent","tool_input":{"message":"[tier=small] rename the userId variable to userIdentifier","model":"gpt-5.6-sol"}}' | hook codex)
+expect "codex rewrite" "$codex_res" '"updatedInput":{'
+expect "codex rewrite" "$codex_res" '"model":"gpt-5.6-luna"'
+echo "OK: codex rewrites updatedInput.model"
+
+echo "All smoke tests passed successfully!"
