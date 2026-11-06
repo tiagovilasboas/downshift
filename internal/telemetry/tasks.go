@@ -1,0 +1,190 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package telemetry
+
+import (
+	"sort"
+	"time"
+)
+
+// Task groups. Every spawn that routing was allowed to decide on is "routed"
+// (even when the decision was to leave it alone, so the figures are by intent).
+// A baseline spawn is "unrouted": a session pause, or a line an older binary
+// wrote for its control group or its no-route switch. It stays out of every
+// routed figure.
+const (
+	GroupRouted   = "routed"
+	GroupUnrouted = "unrouted"
+)
+
+// TaskRecord joins, for one spawn, the routing decision, the observed usage and
+// how the child ended. Ids and numbers only: no prompt, task text or path.
+type TaskRecord struct {
+	Key     string
+	Group   string
+	Harness string
+	Session string
+	Time    time.Time
+	// Verdict is the routing verdict of the decision (see verdictOf), and
+	// CorrelationID its opaque id; "" when the event carries none.
+	Verdict       string
+	CorrelationID string
+	// Status is how the child ended, or "" when no end was observed.
+	Status ChildStatus
+	// Observed is true when a usage record carried token counts for this spawn.
+	// A known catalog tier, not a price, is all it needs.
+	Observed bool
+	// Tokens is the token count of the observed usage records of this spawn alone.
+	Tokens TokenClasses
+	// Redo lists the failed spawns this one redid (a respawn in the same
+	// session within the respawn window after an error or interrupt).
+	Redo []string
+	// Reworked is set on a failed spawn that a later spawn redid.
+	Reworked bool
+	// TotalTokens is Tokens plus the tokens of every failed attempt it redid,
+	// transitively.
+	TotalTokens TokenClasses
+}
+
+// Failed reports an error or interrupt end.
+func (t TaskRecord) Failed() bool { return failedEnd(t.Status) }
+
+// Completed reports a child that finished normally.
+func (t TaskRecord) Completed() bool { return t.Status == ChildCompleted }
+
+func isTaskDecision(ev Event) bool {
+	if ev.Harness == "" {
+		return false
+	}
+	// A baseline record is a decision here: a spawn that was classified and
+	// left unchanged (paused, or logged so by an older binary).
+	switch ev.Outcome {
+	case OutcomeUsage, OutcomeResolved, OutcomeChildEnded, "error", OutcomeFailOpen, OutcomeBlocked, OutcomeDCI:
+		return false
+	}
+	return true
+}
+
+func groupOf(ev Event) string {
+	if ev.Outcome == OutcomeBaseline {
+		return GroupUnrouted
+	}
+	return GroupRouted
+}
+
+// endRank orders end statuses so the strongest observation wins when a child
+// has more than one child_ended record.
+func endRank(s ChildStatus) int {
+	switch {
+	case failedEnd(s):
+		return 4
+	case s == ChildCompleted:
+		return 3
+	case s == ChildStopped:
+		return 2
+	case s == ChildLaunched:
+		return 1
+	}
+	return 0
+}
+
+// BuildTasks joins decisions, usage and child ends into one record per spawn,
+// in event-time order. Rework is linked with RespawnAfterFailure.
+func BuildTasks(events []Event) []TaskRecord {
+	var tasks []TaskRecord
+	index := map[string]int{}
+	for _, ev := range events {
+		if !isTaskDecision(ev) {
+			continue
+		}
+		t, ok := parseEventTimeAny(ev.Timestamp)
+		if !ok {
+			continue
+		}
+		key := DecisionKey(ev)
+		if _, dup := index[key]; dup {
+			continue
+		}
+		index[key] = len(tasks)
+		tasks = append(tasks, TaskRecord{
+			Key: key, Group: groupOf(ev), Harness: ev.Harness, Session: ev.SessionID, Time: t,
+			Verdict: verdictOf(ev), CorrelationID: ev.CorrelationID,
+		})
+	}
+	for _, ev := range events {
+		if ev.LinkedDecision == "" {
+			continue
+		}
+		i, ok := index[ev.LinkedDecision]
+		if !ok {
+			continue
+		}
+		switch ev.Outcome {
+		case OutcomeUsage:
+			if ev.HasTokenUsage() {
+				tasks[i].Observed = true
+				tasks[i].Tokens.add(classesOf(ev.TokenUsageOrZero()))
+			}
+			// Background children report only "launched" at spawn time; the
+			// usage record written when the child stops is the proof that it ran
+			// to the end. It counts as completed unless a failure end outranks it.
+			if endRank(ChildCompleted) > endRank(tasks[i].Status) {
+				tasks[i].Status = ChildCompleted
+			}
+		case OutcomeChildEnded:
+			if endRank(ev.ChildStatus) > endRank(tasks[i].Status) {
+				tasks[i].Status = ev.ChildStatus
+			}
+		}
+	}
+	for _, r := range RespawnAfterFailure(events, respawnWindow) {
+		f, okF := index[r.FailedKey]
+		n, okN := index[r.NextKey]
+		if !okF || !okN || f == n || !tasks[n].Time.After(tasks[f].Time) {
+			continue
+		}
+		tasks[f].Reworked = true
+		// The failed attempt is rework of its own group whoever redid it, but
+		// its tokens follow the redo only inside one group. A redo that landed
+		// in the other group (a paused spawn redone after routing resumed)
+		// would put unrouted tokens on a routed task or the reverse.
+		if tasks[f].Group != tasks[n].Group {
+			continue
+		}
+		tasks[n].Redo = append(tasks[n].Redo, tasks[f].Key)
+	}
+	type taskTotal struct {
+		tokens TokenClasses
+	}
+	memo := map[int]taskTotal{}
+	var total func(i int) taskTotal
+	total = func(i int) taskTotal {
+		if v, ok := memo[i]; ok {
+			return v
+		}
+		sum := taskTotal{tokens: tasks[i].Tokens}
+		for _, k := range tasks[i].Redo {
+			// A redo is always later than the attempt it redid, so this
+			// recursion strictly moves back in time and cannot cycle.
+			r := total(index[k])
+			sum.tokens.add(r.tokens)
+		}
+		memo[i] = sum
+		return sum
+	}
+	for i := range tasks {
+		t := total(i)
+		tasks[i].TotalTokens = t.tokens
+	}
+	sort.SliceStable(tasks, func(i, j int) bool { return tasks[i].Time.Before(tasks[j].Time) })
+	return tasks
+}
+
+func parseEventTimeAny(s string) (time.Time, bool) {
+	t, err := time.Parse(time.RFC3339Nano, s)
+	if err != nil {
+		t, err = time.Parse(time.RFC3339, s)
+	}
+	return t, err == nil
+}
