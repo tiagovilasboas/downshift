@@ -1,0 +1,24 @@
+# Maintainer backlog (private ops)
+
+Current public runtime/evidence tasks: [gap-tasks.md](gap-tasks.md). That queue
+tracks acceptance and dependencies without exposing private operational detail.
+
+The autonomous execution backlog (DS/HC/KB streams, agent handoff rules, and
+cross-repo integration contracts) is **not published** in this repository.
+
+It contained operational detail that does not help adopters install or
+contribute, and that would ease cloning *how the project is run*, not just
+*what the code does*.
+
+**Where it lives now:** private maintainer store (planned repo `downshift-labs`,
+see [launch-waves.md](launch-waves.md) OC-1). If you are a co-maintainer, ask
+for access.
+
+**Public substitutes:**
+
+- Direction: [roadmap.md](../roadmap.md)
+- Beta evidence: [beta-exit.md](../reference/beta-exit.md)
+- Boundaries: [publishing-boundaries.md](../reference/publishing-boundaries.md)
+
+Historical copies may exist in git history before this stub; do not treat old
+commits as a current contract.
