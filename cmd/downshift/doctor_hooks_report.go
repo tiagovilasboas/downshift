@@ -65,7 +65,7 @@ func reportWiring(add func(id, status, detail, fix string), h string, w doctorWi
 			add("plugin", doctorOK, w.Plugin+" enabled; hooks come from the plugin, none needed in "+file, "")
 		}
 		if len(found) == 0 {
-			add("hooks wired", doctorOK, fmt.Sprintf("%d via plugin %s", len(w.Hooks), w.Plugin), "")
+			add("hooks wired", doctorOK, fmt.Sprintf("%d via plugin %s (configured; execution not verified)", len(w.Hooks), w.Plugin), "")
 			return
 		}
 	}
@@ -104,6 +104,7 @@ func reportWiring(add func(id, status, detail, fix string), h string, w doctorWi
 		}
 		detail += "; missing: " + strings.Join(names, ", ")
 	}
+	detail += "; configuration only, execution not verified"
 	if w.Setup && len(missing) > 0 {
 		fixes = []string{"downshift setup " + h}
 	}

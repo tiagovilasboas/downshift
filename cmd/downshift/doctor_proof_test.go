@@ -9,7 +9,24 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
+
+func TestDoctor_HistoricalSessionCannotProveCurrentHost(t *testing.T) {
+	f := newDoctorFixture(t)
+	for _, age := range []time.Duration{0, time.Minute, 8 * 24 * time.Hour} {
+		var detail string
+		var events []telemetry.Event
+		if age != 0 {
+			events = []telemetry.Event{{Timestamp: f.started.Add(-age).Format(time.RFC3339Nano), SessionID: "recorded-session", Verdict: "OK", Outcome: "allow"}}
+		}
+		checkLastEvent(func(_, _, d, _ string) { detail = d }, f.env, "codex", events)
+		if !strings.Contains(detail, "session not verified") {
+			t.Fatalf("age %s: historical event claimed current host proof: %q", age, detail)
+		}
+	}
+}
 
 func (f *doctorFixture) writeDecision(t *testing.T, age time.Duration, verdict, outcome, from, to string) {
 	t.Helper()
@@ -25,7 +42,7 @@ func TestDoctor_LastEventNamesTheDecision(t *testing.T) {
 	f.writeDecision(t, 5*time.Minute, "DOWNSHIFT", "rewrite_emitted", "opus", "haiku")
 	c := f.check(t, buildDoctorReport(f.env), "claude-code", "last hook event")
 	wantStatus(t, c, doctorOK)
-	for _, want := range []string{"5m ago", "DOWNSHIFT", "rewrite_emitted", "opus -> haiku"} {
+	for _, want := range []string{"5m ago", "current session not verified", "DOWNSHIFT", "rewrite_emitted", "opus -> haiku"} {
 		if !strings.Contains(c.Detail, want) {
 			t.Errorf("detail %q misses %q", c.Detail, want)
 		}

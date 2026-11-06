@@ -70,6 +70,8 @@ downshift doctor [flags]
 - `--verbose` — Show detailed output
 - `--json` — Output as JSON
 - `--quiet` — Print only the failed and warning checks
+- `--harness NAME` — Check the selected harness alongside global checks. File-based MCP registration confirms configuration only, not a live connection.
+- `--self-test` — With `--harness`, check the compactor, a local MCP tool call, and a synthetic hook probe. These do not prove the host application loaded or invoked its hook.
 - `--check-latest` — Also ask GitHub for the latest release (one request, 2 s timeout, cached 24 h); offline is "unknown", never a failure
 
 **Checks:**

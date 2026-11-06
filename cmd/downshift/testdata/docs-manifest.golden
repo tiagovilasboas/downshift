@@ -182,6 +182,12 @@
         },
         {
           "name": "--check-latest"
+        },
+        {
+          "name": "--harness"
+        },
+        {
+          "name": "--self-test"
         }
       ]
     },

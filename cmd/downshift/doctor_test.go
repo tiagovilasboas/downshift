@@ -166,6 +166,9 @@ func TestDoctor_HookMissing(t *testing.T) {
 	rep := buildDoctorReport(f.env)
 	claude := f.check(t, rep, "claude-code", "hooks wired")
 	wantStatus(t, claude, doctorWarn) // optional hooks only
+	if !strings.Contains(claude.Detail, "configuration only, execution not verified") {
+		t.Errorf("wiring must not claim runtime proof: %q", claude.Detail)
+	}
 	if !strings.Contains(claude.Detail, "missing: PostToolUse") || claude.Fix != "downshift setup claude-code" {
 		t.Errorf("claude: %+v", claude)
 	}

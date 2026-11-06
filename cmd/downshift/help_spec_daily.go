@@ -95,11 +95,13 @@ Next: downshift stats, to view session token savings and acceptance
 	"doctor": `downshift doctor — Checklist: binary, hooks per harness, state, with a fix per failure
 
 Usage:
-  downshift doctor [--verbose] [--json]
+  downshift doctor [--verbose] [--json] [--harness NAME]
 
 Flags:
   --verbose   List every model without a verified efforts list, and more detail
   --json      Machine-readable checklist
+  --harness   Check only NAME alongside global checks; MCP registration does not prove a connection
+  --self-test Run isolated component probes (requires --harness); does not prove host execution
 
 Examples:
   downshift doctor

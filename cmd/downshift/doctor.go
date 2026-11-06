@@ -48,6 +48,7 @@ type doctorEnv struct {
 	Getenv   func(string) string
 	Cat      *catalog.Catalog
 	Verbose  bool
+	Harness  string
 }
 
 func defaultDoctorEnv(cat *catalog.Catalog) doctorEnv {
@@ -71,21 +72,42 @@ func runDoctor(args []string, w, errW io.Writer, cat *catalog.Catalog) int {
 	verbose := fs.Bool("verbose", false, "list every model without a verified efforts list, and more detail")
 	quiet := fs.Bool("quiet", false, "print only failed and warning checks")
 	checkLatest := fs.Bool("check-latest", false, "also ask GitHub for the latest release (one request, cached 24 h)")
+	harness := fs.String("harness", "", "check only this harness alongside global checks")
+	selfTest := fs.Bool("self-test", false, "run isolated component checks")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
 	if fs.NArg() > 0 {
-		fmt.Fprintln(errW, "usage: downshift doctor [--verbose] [--quiet] [--json] [--check-latest]")
+		fmt.Fprintln(errW, "usage: downshift doctor [--verbose] [--quiet] [--json] [--check-latest] [--harness NAME]")
+		return 2
+	}
+	if *harness != "" {
+		found := false
+		for _, nc := range core.AllHarnessCaps() {
+			found = found || nc.Harness == *harness
+		}
+		if !found {
+			fmt.Fprintf(errW, "unknown harness: %s\n", *harness)
+			return 2
+		}
+	}
+	if *selfTest && *harness == "" {
+		fmt.Fprintln(errW, "--self-test requires --harness NAME")
 		return 2
 	}
 	env := defaultDoctorEnv(cat)
 	env.Verbose = *verbose
+	env.Harness = *harness
 	if *checkLatest {
 		if cache, err := paths.Join("latest_release.json"); err == nil {
 			env.Latest = defaultLatestLookup(cache).Latest
 		}
 	}
 	rep := buildDoctorReport(env)
+	if *selfTest {
+		runDoctorSelfTest(rep, env)
+		rep.OK = rep.Failed == 0
+	}
 	if *asJSON {
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
@@ -125,13 +147,17 @@ type doctorReport struct {
 	EffortUnknownCount  int           `json:"effort_unknown_count"`
 	EffortUnknownModels []string      `json:"effort_unknown_models,omitempty"` // --verbose only
 
-	// home and width shape the text output only (doctor_text.go): paths under
-	// home print as ~, and no line is wider than width. JSON never sees them.
-	home  string
-	width int
+	// home and width shape the text output only (doctor_text.go). Remediation
+	// commands remain intact even when they exceed the terminal width.
+	home    string
+	width   int
+	harness string
 }
 
 func (r *doctorReport) add(c doctorCheck) {
+	if r.harness != "" && c.Harness != "" && c.Harness != r.harness {
+		return
+	}
 	switch c.Status {
 	case doctorFail:
 		r.Failed++
@@ -168,7 +194,7 @@ func pluginInstallHint() string {
 
 func buildDoctorReport(env doctorEnv) *doctorReport {
 	version, commit := currentBuild()
-	rep := &doctorReport{Version: version, Commit: commit}
+	rep := &doctorReport{Version: version, Commit: commit, harness: env.Harness}
 	ver := "downshift " + version
 	if commit != "" {
 		ver += " (commit " + commit + ")"
@@ -186,6 +212,15 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	checkGateways(rep, env)
 	checkWorkers(rep, env)
 	checkCircuits(rep, events)
+	if env.Harness != "" && env.Harness != "claude-code" {
+		for _, target := range setup.Targets {
+			if target.Name == env.Harness {
+				checkMcpTargets(func(id, status, detail, fix string) {
+					rep.add(doctorCheck{ID: id, Harness: env.Harness, Status: status, Detail: detail, Fix: fix})
+				}, env.Home, []setup.Target{target})
+			}
+		}
+	}
 	for _, note := range modelOverrideNotes(core.AllHarnessCaps(), env.Getenv) {
 		name := strings.TrimPrefix(note, "model_override_env: ")
 		if i := strings.Index(name, "="); i > 0 {
@@ -195,6 +230,9 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	}
 
 	for _, nc := range core.AllHarnessCaps() {
+		if env.Harness != "" && nc.Harness != env.Harness {
+			continue
+		}
 		wiring, ok := doctorWiringFor(nc.Harness)
 		if !ok || !fileExists(filepath.Join(env.Home, wiring.File)) {
 			harness := nc.Harness

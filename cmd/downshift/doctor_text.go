@@ -43,7 +43,7 @@ func (r *doctorReport) writeText(w io.Writer, verbose, quiet bool) {
 				if i > 0 {
 					prefix = "           "
 				}
-				fmt.Fprintf(w, "%s%s\n", prefix, r.fit(line, prefix))
+				fmt.Fprintf(w, "%s%s\n", prefix, line)
 			}
 		}
 	}

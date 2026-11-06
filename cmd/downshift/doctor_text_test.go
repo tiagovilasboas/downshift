@@ -22,16 +22,33 @@ func TestDoctorText_HomeRelativeAndFitsWidth(t *testing.T) {
 	var b bytes.Buffer
 	rep.writeText(&b, false, false)
 	out := b.String()
-	if strings.Contains(out, "/Users/example") {
+	if !strings.Contains(out, "fix: cp -R /Users/example/.harness-downshift /Users/example/.downshift") {
+		t.Fatalf("fix command was changed:\n%s", out)
+	}
+	if strings.Contains(strings.Split(out, "fix:")[0], "/Users/example") {
 		t.Fatalf("absolute home path printed:\n%s", out)
 	}
 	if !strings.Contains(out, "~/.downshift/") || !strings.Contains(out, "…") {
 		t.Fatalf("want a home-relative path, cut in the middle:\n%s", out)
 	}
 	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "fix:") {
+			continue // Preserve the complete command; the terminal can wrap it.
+		}
 		if n := utf8.RuneCountInString(line); n > 60 {
 			t.Errorf("line is %d columns, terminal is 60: %q", n, line)
 		}
+	}
+}
+
+func TestDoctorText_PreservesUnicodeFix(t *testing.T) {
+	fix := "run --path /long/área/" + strings.Repeat("界", 60)
+	rep := &doctorReport{width: 40}
+	rep.add(doctorCheck{ID: "repair", Status: doctorWarn, Detail: "failed", Fix: fix})
+	var b bytes.Buffer
+	rep.writeText(&b, false, false)
+	if !strings.Contains(b.String(), "fix: "+fix+"\n") {
+		t.Fatalf("fix was altered: %s", b.String())
 	}
 }
 

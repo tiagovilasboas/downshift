@@ -11,8 +11,8 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
-// Proof that the hook ran: the last decision it logged and the quota source
-// that gates its rewrites. Both read shared state, so every harness gets them.
+// These checks read shared historical state. Doctor does not receive the host's
+// current session identifier and cannot correlate a recorded hook event with it.
 
 const lastEventStale = 7 * 24 * time.Hour
 
@@ -36,15 +36,15 @@ func checkLastEvent(add func(id, status, detail, fix string), env doctorEnv, h s
 		}
 	}
 	if last.IsZero() {
-		add("last hook event", doctorWarn, "none in the event log yet", fix)
+		add("last hook event", doctorWarn, "none in the event log yet; current host session not verified", fix)
 		return
 	}
 	age := env.Now().Sub(last)
 	if age > lastEventStale {
-		add("last hook event", doctorWarn, humanAge(age)+" ago (older than 7 days)", fix)
+		add("last hook event", doctorWarn, humanAge(age)+" ago (older than 7 days; current session not verified)", fix)
 		return
 	}
-	detail := humanAge(age) + " ago"
+	detail := humanAge(age) + " ago (recorded event; current session not verified)"
 	if !lastDecisionAt.IsZero() {
 		detail += "; last decision " + describeDecision(lastDecision, env.Now().Sub(lastDecisionAt))
 	}

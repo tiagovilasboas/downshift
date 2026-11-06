@@ -42,6 +42,16 @@ func okMcpContent(m *setup.Mcp) string {
 	return `{"mcpServers":{"downshift":{"command":"/x/downshift","args":["mcp","serve"]}}}`
 }
 
+func TestMcpEntryInFileManualTOML(t *testing.T) {
+	m := &setup.Mcp{Kind: setup.McpTOMLBlock}
+	for _, input := range []string{"[mcp_servers.downshift]\ncommand = 'downshift'\n", "[mcp_servers]\ndownshift = { command = 'downshift' }\n"} {
+		found, err := mcpEntryInFile([]byte(input), m)
+		if err != nil || !found {
+			t.Fatalf("manual entry not detected: found=%v err=%v", found, err)
+		}
+	}
+}
+
 func TestCheckMcpTargetsEveryFileTarget(t *testing.T) {
 	n := 0
 	for _, tgt := range setup.Targets {

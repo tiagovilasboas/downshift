@@ -10,7 +10,7 @@ var dailyCommands = []Command{
 	{Name: "uninstall", Summary: "Restore harness hook configurations and remove wrappers", Flags: f("--dry-run", "--yes|-y", "--purge")},
 	{Name: "accept", Summary: "Record developer acceptance for code delivered by subagents", Flags: f("--session", "--used", "--discarded")},
 	{Name: "loop", Summary: "Run an engineering loop with sensor verification and cascade auto-upgrade", Flags: f("--task", "--sensor", "--iterations", "--timeout", "--session", "--model", "--batch", "--continue-on-error", "--json")},
-	{Name: "doctor", Summary: "Checklist: binary, hooks per harness, state, with a fix per failure", Flags: f("--verbose", "--json", "--quiet", "--check-latest")},
+	{Name: "doctor", Summary: "Checklist: binary, hooks per harness, state, with a fix per failure", Flags: f("--verbose", "--json", "--quiet", "--check-latest", "--harness", "--self-test")},
 	{Name: "stats", Summary: "Decisions and the tiers spawns ran on", Flags: f("--days", "--by-harness", "--detail", "--export")},
 	{Name: "report", Summary: "Measured: routed spawns, tokens per completed task, rework per verdict", Flags: f("--days", "--json", "--text", "--markdown", "--daily", "--history", "--by")},
 	{Name: "report clear", Summary: "Move every measurement log to a backup so the measurement starts from zero", Flags: f("--dry-run", "--yes|-y")},

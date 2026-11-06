@@ -46,8 +46,10 @@ func TestRunExec_KiroCrewModel(t *testing.T) {
 
 	// Clear all harness env vars, then set KIRO_SESSION_ID.
 	for _, n := range core.AllHarnessCaps() {
-		if n.Caps.SessionEnv != "" {
-			t.Setenv(n.Caps.SessionEnv, "")
+		for _, name := range []string{n.Caps.SessionEnv, n.Caps.ShellEnv} {
+			if name != "" {
+				t.Setenv(name, "")
+			}
 		}
 	}
 	t.Setenv(core.KiroCrewCaps.SessionEnv, sessionID)
@@ -80,8 +82,10 @@ func TestRunExec_ModelEmptyWhenNotKiroCrew(t *testing.T) {
 
 	// Clear all harness env vars, then set Claude Code's.
 	for _, n := range core.AllHarnessCaps() {
-		if n.Caps.SessionEnv != "" {
-			t.Setenv(n.Caps.SessionEnv, "")
+		for _, name := range []string{n.Caps.SessionEnv, n.Caps.ShellEnv} {
+			if name != "" {
+				t.Setenv(name, "")
+			}
 		}
 	}
 	t.Setenv(core.ClaudeCodeCaps.SessionEnv, "some-claude-session")

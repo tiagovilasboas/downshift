@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pelletier/go-toml/v2"
 	"github.com/tiagovilasboas/downshift/internal/setup"
 	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
 )
@@ -77,8 +78,14 @@ func mcpTargetStatus(home string, t setup.Target) (mcpTargetState, string) {
 // setup writes for m.Kind and m.Layout.
 func mcpEntryInFile(raw []byte, m *setup.Mcp) (bool, error) {
 	if m.Kind == setup.McpTOMLBlock {
-		_, _, found, err := setup.McpBlockBounds(string(raw))
-		return found, err
+		var config struct {
+			Servers map[string]any `toml:"mcp_servers"`
+		}
+		if err := toml.Unmarshal(raw, &config); err != nil {
+			return false, err
+		}
+		_, found := config.Servers[setup.McpServerName]
+		return found, nil
 	}
 	doc, err := configfile.ParseMembers(raw)
 	if err != nil {
