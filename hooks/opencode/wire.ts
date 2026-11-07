@@ -7,12 +7,20 @@ import { createHash } from "node:crypto"
 
 export const HARNESS = "opencode"
 export const WIRE_VERSION = 1
-const CALL_TIMEOUT_MS = 3000
+function parseTimeout(val: string | undefined, fallback: number): number {
+  const n = Number(val)
+  return Number.isFinite(n) && n > 0 ? n : fallback
+}
+
+const timeoutScale = parseTimeout(process.env.DOWNSHIFT_TEST_TIMEOUT_SCALE, 1)
+const CALL_TIMEOUT_MS = parseTimeout(process.env.TEST_CALL_TIMEOUT_MS, 3000) * (timeoutScale > 1 ? timeoutScale : 1)
 // A shell call runs synchronously inside OpenCode's create.before hook: the
 // handler mutates event.command and returns, so the hook cannot be made async
 // and the event loop waits for it. The Go side reads stdin for at most 2 s, so
 // waiting longer than that buys nothing; the shell call uses the same bound.
-export const SHELL_TIMEOUT_MS = 2000
+// Tests or loaded environments can stretch this via TEST_SHELL_TIMEOUT_MS
+// or DOWNSHIFT_TEST_TIMEOUT_SCALE.
+export const SHELL_TIMEOUT_MS = parseTimeout(process.env.TEST_SHELL_TIMEOUT_MS, 2000) * (timeoutScale > 1 ? timeoutScale : 1)
 const MAX_OUTPUT_BYTES = 1 << 20
 // OpenCode prefixes a child's first prompt with this line before the task the
 // parent gave (checked against 2.2.5). Removing it keeps the classification

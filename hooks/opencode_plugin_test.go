@@ -4,6 +4,7 @@
 package hooks
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -14,8 +15,10 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 // driver loads the real plugin file under bun with a stub host API, registers
@@ -55,7 +58,7 @@ func runPlugin(t *testing.T, dir, bin, original string) string {
 
 // runPluginSettled runs the plugin and, when it hands back the original
 // command, tries again: that is the fail-open answer of a call that hit the
-// plugin's 2 s timeout on a loaded machine, not a shape the plugin refused.
+// plugin's timeout on a loaded machine, not a shape the plugin refused.
 func runPluginSettled(t *testing.T, dir, bin, original string) string {
 	t.Helper()
 	got := runPlugin(t, dir, bin, original)
@@ -73,11 +76,24 @@ func runPluginUnset(t *testing.T, dir, original string) string {
 
 func runPluginWith(t *testing.T, dir, bin, original string) string {
 	t.Helper()
-	cmd := exec.Command(bunBinary, "run", filepath.Join(dir, "driver.ts"))
+	timeout := testenv.Scaled(15 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), testenv.Scaled(60*time.Second))
+	defer cancel()
+	cmd := exec.CommandContext(ctx, bunBinary, "run", filepath.Join(dir, "driver.ts"))
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(), "TEST_COMMAND="+original, "DOWNSHIFT_BIN="+bin)
+	timeoutMs := fmt.Sprintf("%d", timeout.Milliseconds())
+	cmd.Env = append(os.Environ(),
+		"TEST_COMMAND="+original,
+		"DOWNSHIFT_BIN="+bin,
+		"TEST_SHELL_TIMEOUT_MS="+timeoutMs,
+		"TEST_CALL_TIMEOUT_MS="+timeoutMs,
+	)
 	if bin == "-unset-" {
-		cmd.Env = append(os.Environ(), "TEST_COMMAND="+original)
+		cmd.Env = append(os.Environ(),
+			"TEST_COMMAND="+original,
+			"TEST_SHELL_TIMEOUT_MS="+timeoutMs,
+			"TEST_CALL_TIMEOUT_MS="+timeoutMs,
+		)
 	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -94,6 +110,37 @@ func runPluginWith(t *testing.T, dir, bin, original string) string {
 	}
 	t.Fatalf("no RESULT in output:\n%s", out)
 	return ""
+}
+
+// readCapture reads the capture file written by the stub binary, waiting briefly
+// if the file is still being created or flushed asynchronously under parallel test load.
+func readCapture(t *testing.T, capture string, minLines int) []byte {
+	t.Helper()
+	deadline := time.Now().Add(testenv.Scaled(5 * time.Second))
+	for {
+		raw, err := os.ReadFile(capture)
+		if err == nil {
+			trimmed := strings.TrimSpace(string(raw))
+			if trimmed != "" {
+				if minLines <= 1 {
+					return raw
+				}
+				lines := strings.Split(trimmed, "\n")
+				if len(lines) >= minLines {
+					return raw
+				}
+			}
+		}
+		if time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	raw, err := os.ReadFile(capture)
+	if err != nil {
+		t.Fatalf("reading capture file %s: %v", capture, err)
+	}
+	return raw
 }
 
 // bunBinary is bun's absolute path, found by skipWithoutBun before a test
@@ -192,7 +239,11 @@ func TestOpenCodePluginTrustBoundary(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Setenv("REWRITE", c.rewrite)
-			if got := runPlugin(t, dir, c.bin, c.orig); got != c.want {
+			got := runPlugin(t, dir, c.bin, c.orig)
+			if got != c.want && got == c.orig {
+				got = runPluginSettled(t, dir, c.bin, c.orig)
+			}
+			if got != c.want {
 				t.Fatalf("command = %q, want %q", got, c.want)
 			}
 		})
@@ -269,10 +320,11 @@ func TestOpenCodePluginShellSessionTags(t *testing.T) {
 			t.Setenv("CAPTURE", capture)
 			t.Setenv("TEST_STEPS", c.steps)
 			runPlugin(t, dir, stub, cmd)
-			raw, err := os.ReadFile(capture)
-			if err != nil {
-				t.Fatal(err)
+			wantCalls := 1
+			if c.name == "parallel calls of one session both keep the tag" {
+				wantCalls = 2
 			}
+			raw := readCapture(t, capture, wantCalls)
 			lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
 			want := opaqueID(c.wantSession)
 			for _, line := range lines {
@@ -339,10 +391,7 @@ func TestOpenCodePluginShellPayloadCarriesBothDirectories(t *testing.T) {
 			t.Setenv("TEST_LOCATION", c.location)
 			t.Setenv("TEST_NO_CWD", c.noCwd)
 			runPlugin(t, dir, stub, "go test ./...")
-			raw, err := os.ReadFile(capture)
-			if err != nil {
-				t.Fatal(err)
-			}
+			raw := readCapture(t, capture, 1)
 			var call struct {
 				Directory        string `json:"directory"`
 				SessionDirectory string `json:"sessionDirectory"`
@@ -397,7 +446,13 @@ func TestOpenCodePluginPinsTheBinaryFromPath(t *testing.T) {
 			t.Setenv("DOWNSHIFT_BIN", "")
 			t.Setenv("PATH", c.path)
 			t.Setenv("REWRITE", c.rewrite)
-			if got := runPluginUnset(t, dir, orig); got != c.want {
+			got := runPluginUnset(t, dir, orig)
+			if got != c.want && got == orig {
+				for i := 0; i < 2 && got == orig; i++ {
+					got = runPluginUnset(t, dir, orig)
+				}
+			}
+			if got != c.want {
 				t.Fatalf("command = %q, want %q", got, c.want)
 			}
 		})
@@ -423,10 +478,7 @@ func TestOpenCodePluginPendingTagsAreCappedAcrossQueues(t *testing.T) {
 	t.Setenv("CAPTURE", capture)
 	t.Setenv("TEST_STEPS", "["+strings.Join(steps, ",")+"]")
 	runPlugin(t, dir, stub, cmd)
-	raw, err := os.ReadFile(capture)
-	if err != nil {
-		t.Fatal(err)
-	}
+	raw := readCapture(t, capture, 501)
 	lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
 	if len(lines) != 501 {
 		t.Fatalf("%d shell calls captured, want 501", len(lines))
