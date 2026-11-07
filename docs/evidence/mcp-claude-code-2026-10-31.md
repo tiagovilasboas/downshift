@@ -5,8 +5,7 @@
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Level: **observed on one machine** (macOS, Claude Code 2.1.314 CLI and the 2.1.309 build in Claude Desktop),
-binaries `v0.2.0-75-gb2bc0d20` to `v0.2.0-78-g22899752`. Plan and cards:
-`docs/internal/tasks/2026-10-30-mcp-claude-code/README.md`. Raw notes live in the private labs repository.
+binaries `v0.2.0-75-gb2bc0d20` to `v0.2.0-78-g22899752`. Raw notes live in the private labs repository.
 
 ## Result per card
 

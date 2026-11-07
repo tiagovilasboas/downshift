@@ -7,7 +7,7 @@
 Downshift by Tiago Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
-**Relacionado:** [harness-matrix.md](../reference/harness-matrix.md), [gap-tasks.md](../internal/gap-tasks.md), [2026-10-24-cursor-live](../internal/tasks/2026-10-24-cursor-live/README.md), [shell-wrap-harness-matrix.md](shell-wrap-harness-matrix.md) (parcialmente desatualizado em relação ao código).
+**Relacionado:** [harness-matrix.md](../reference/harness-matrix.md), [gap-tasks.md](../internal/gap-tasks.md), [shell-wrap-harness-matrix.md](shell-wrap-harness-matrix.md) (parcialmente desatualizado em relação ao código).
 
 ---
 
@@ -181,7 +181,7 @@ W0 (doctor + setup + template evidência)
 | Cursor Free/legacy descarta rewrite | Doctor avisa; matriz já documenta |
 | Codex schema muda | GAP-CODEX-REVALIDATE periódico; fixtures versionadas |
 | Prova consome crédito | Tasks mecânicas mínimas; uma spawn por harness |
-| Duplicar esforço com [cursor-live](../internal/tasks/2026-10-24-cursor-live/README.md) | T4/T7 feitos; este spike cobre honor + shell + doctor transversal |
+| Duplicar esforço com o trabalho cursor-live | T4/T7 feitos; este spike cobre honor + shell + doctor transversal |
 
 ---
 

@@ -213,5 +213,4 @@ Not required for install. See [reference/publishing-boundaries.md](reference/pub
 | [internal/backlog.md](internal/backlog.md) | Maintainer backlog (stub) |
 | [internal/next-steps.md](internal/next-steps.md) | Maintainer checklist (stub) |
 | [internal/gap-tasks.md](internal/gap-tasks.md) | Runtime and evidence task queue |
-| [internal/tasks/](internal/tasks/) | Dated task waves |
 | [internal/engineering-loop-maintainer.md](internal/engineering-loop-maintainer.md) | Promotion / dsmon appendix |

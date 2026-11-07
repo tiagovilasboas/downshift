@@ -294,7 +294,7 @@ without a terminal unless `--yes` is passed; `--dry-run` lists the files without
 
 ### `downshift export`
 
-Print the one artefact an outside operator shares after a measurement week ([issue #104](https://github.com/tiagovilasboas/downshift/issues/104)).
+Print the one artefact an outside operator shares after a measurement week (measurement-week issue).
 
 ```bash
 downshift export [--days=N]

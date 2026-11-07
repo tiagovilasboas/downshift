@@ -40,7 +40,7 @@ func TestHookE2E_ClaudeCodeRecordsAgentTypeLabel(t *testing.T) {
 		{"Plan", "Plan"},
 		{"general-purpose", "general-purpose"},
 		{"", "unspecified"},
-		{"voomp-payments-fraud-auditor", "custom"},
+		{"acme-payments-auditor", "custom"},
 	} {
 		if err := os.WriteFile(eventLog, nil, 0o600); err != nil {
 			t.Fatal(err)

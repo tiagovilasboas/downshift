@@ -24,7 +24,7 @@ regression gates and outcome verify against `eval/`.
 ## Do not copy here
 
 - Apache-licensed **router source** (single canonical repo: `downshift`).
-- Corporate `voomp-kb` or personal vault dumps without redaction.
+- Corporate a corporate knowledge base or personal vault dumps without redaction.
 
 ## Public link
 

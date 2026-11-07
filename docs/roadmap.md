@@ -6,7 +6,7 @@ Public direction for the open-source project. Timelines are indicative.
 **Product roadmap (owner, milestones and tasks):** [docs/product/roadmap.md](product/roadmap.md)  
 **Value roadmap (compaction, proof, cheaper workers, 2026-11):** [docs/product/value-roadmap.md](product/value-roadmap.md)  
 **Maintainer execution:** [docs/internal/launch-waves.md](internal/launch-waves.md) (see [publishing boundaries](reference/publishing-boundaries.md)).  
-**Latest handoff (open PRs, findings, next steps):** [2026-11-02, routing, compactor and MCP](internal/tasks/2026-11-02-routing-compactor-mcp/README.md) ([milestone](https://github.com/tiagovilasboas/downshift/milestone/1)).
+**Latest handoff (open PRs, findings, next steps):** 2026-11-02, routing, compactor and MCP ([milestone](https://github.com/tiagovilasboas/downshift/milestone/1)).
 
 Downshift by Tiago Vilas Boas\
 https://github.com/tiagovilasboas/downshift
@@ -61,7 +61,7 @@ pillars P2 (multi-user exports) and P3 (routed-versus-control token comparison).
 | ~~P0~~ | ~~Opt-in `downshift exec`~~ — superseded: the native compactor (`downshift compact`) is on by default with the plugin, `"exec": false` turns it off. Families: go test, git status, pytest, vitest, jest, tsc, cargo test, playwright, phpunit, next build, Gradle, Maven, Flutter/Dart. The conformance suite gates every family. |
 | P1 | Child-token payloads for Cursor, Codex, OpenCode, KiroCrew and Antigravity so tokens-first views cover them (today `stats` shows all five as unobserved); Codex tier order decision |
 | P1 | More harness matrix rows (Cursor paid plans, etc.) |
-| ~~P1~~ | **OpenRouter parts 4–6 deferred (owner 2026-10-24):** shadow routing, OpenCode wiring (`openrouter/<slug>`), live rewrite behind a flag — after M1 proof, compactor backlog, and harness honor. Parts 1–3 merged or in review; [verification](internal/tasks/2026-10-20-openrouter/verification.md) |
+| ~~P1~~ | **OpenRouter parts 4–6 deferred (owner 2026-10-24):** shadow routing, OpenCode wiring (`openrouter/<slug>`), live rewrite behind a flag — after M1 proof, compactor backlog, and harness honor. Parts 1–3 merged or in review |
 | ~~P1~~ | ~~DCI hook through the shared runner~~ — dropped: code intelligence (DCI) was removed on 2026-11-01 (#720) |
 | P1 | Optional: container image on GHCR |
 | P1 | Control group: 14 completed tasks against a minimum of 20 per group (`downshift report`), before any routing-cost claim |

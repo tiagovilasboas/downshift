@@ -258,9 +258,8 @@ Por último (dono 2026-10-24 — não puxar antes do resto):
 ```
 
 **Próxima ação de maior valor:** fechar A-P5 Cursor com observação ao vivo de
-`rewrite_emitted` após o cache de composer ([lote
-2026-10-24-cursor-live](tasks/2026-10-24-cursor-live/README.md); docs públicas
-[2026-10-24-cursor-docs-site](tasks/2026-10-24-cursor-docs-site/README.md)).
+`rewrite_emitted` após o cache de composer (lote
+2026-10-24-cursor-live; docs públicas 2026-10-24-cursor-docs-site).
 Honor no Cursor continua P1.6. Codex segue em A-P5, separado. E-M5/M6 (site)
 quando a Vercel liberar.
 

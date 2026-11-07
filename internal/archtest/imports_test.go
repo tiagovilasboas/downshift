@@ -8,7 +8,7 @@
 // of that graph, which is the point: a core test may import catalog, the binary
 // does not.
 //
-// Accounting layers (docs/internal/tasks/2026-10-21-accounting-v1, section 2).
+// Accounting layers (docs/design/accounting.md).
 // Every surface shows the numbers of accounting.Compute, so the layers are
 // enforced here:
 //

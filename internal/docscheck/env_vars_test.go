@@ -129,7 +129,6 @@ func TestDocumentedEnvVarsMatchTheCode(t *testing.T) {
 var testOnly = []string{
 	"DOWNSHIFT_HOOK_TEST_P", // cmd/devcheck: parallelism of the local test gate
 	"DOWNSHIFT_TEST_TIMING", // internal/testenv: slow-test report in tests
-	"DOWNSHIFT_DIR",         // scripts/curate-rea.sh: a shell variable, not an env contract
 }
 
 func withoutTestOnly(code map[string]bool) map[string]bool {

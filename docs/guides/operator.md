@@ -4,7 +4,7 @@
 
 You are asked for one thing: use Claude Code as you normally do for seven days with Downshift
 installed, then run one command and share what it prints. That export is the evidence
-[issue #104](https://github.com/tiagovilasboas/downshift/issues/104) needs from people who are not
+the measurement-week issue needs from people who are not
 the maintainer. It holds counts and token totals only. Nothing private leaves your machine.
 
 **2026-11-02:** there is no control group any more, so the export holds the routed spawns only.
@@ -62,7 +62,7 @@ usernames. The command checks its own output against a strict allowlist of field
 values, and refuses to print anything that does not pass. That check is tested in
 `internal/operatorexport`.
 
-Post the file as a comment on [issue #104](https://github.com/tiagovilasboas/downshift/issues/104),
+Post the file as a comment on the measurement-week issue,
 with the four facts from day 1 and the end date. A public handle is enough as your contributor
 reference; say so if you prefer to stay anonymous in the summary.
 

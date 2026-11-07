@@ -35,7 +35,7 @@ The usable lever is narrow: routing can only lower a request that asks for Opus.
 - **P5 The LLM chooses (O8, 2026-10-28).** The orchestrator LLM chooses agent, provider, model and effort for each delegation, as in Anthropic's Orchestrator-Workers pattern. Downshift applies the choice within the user's declared policy and measures it. No built-in tier table, no automatic upgrade, no built-in risk floor.
 - **P4 Keep only what serves this product.** Drop the Tauri UI, personas, prompt rule-sets, pricing UI, long-lived orchestrator shells, steering and approvals. A batch plan runner with one-shot workers is in scope (A1, stage 4 of the MVP plan).
 
-P1 and P3 are the header and section 2 of [routing-v2](../../design/routing-v2.md) and the [routing-v2 task README](../tasks/2026-10-26-routing-v2/README.md). P2 is routing-v2 section 9. P4 is only partly reflected: the README's out-of-scope list keeps worker supervision and experiments out, but names none of the dropped features, so P4 is not yet written in any repository doc.
+P1 and P3 are the header and section 2 of [routing-v2](../../design/routing-v2.md). P2 is routing-v2 section 9. P4 is only partly reflected: the README's out-of-scope list keeps worker supervision and experiments out, but names none of the dropped features, so P4 is not yet written in any repository doc.
 
 ## 3. Value proposition and evidence
 
