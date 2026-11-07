@@ -71,3 +71,13 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 |---|--:|--:|--:|--:|
 | lossless | 59 | 42611 | 14820 | 65.2 |
 | lossy | 48 | 87959 | 49041 | 44.2 |
+
+## Relationship to live token savings
+
+The figures above measure raw byte reduction across a synthetic test corpus of 107 CLI command outputs.
+
+- In live LLM sessions, compaction cuts verbose command outputs before they enter the prompt context, directly saving input tokens and subsequent prompt cache reads.
+- When evaluated with CCR enabled, overall corpus reduction reaches **72.0% fewer bytes** (and **51.1%** with CCR disabled).
+- Lossless test runners achieve **65.2% reduction** while preserving 100% of failure details, exit codes, and application stack traces.
+- Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.
+- Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
