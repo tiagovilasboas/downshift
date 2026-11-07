@@ -35,6 +35,10 @@ type Event struct {
 	PermissionMode string `json:"permission_mode,omitempty"`
 	// ToolUseID is the harness id of this Task call; PostToolUse repeats it.
 	ToolUseID string `json:"tool_use_id,omitempty"`
+	// AgentID is set by Claude Code, with agent_type, on the hook input of a call
+	// made inside a subagent. On a spawn it marks a nested one. Only its presence
+	// is used; it is never logged (observed on 2.1.319, harness-matrix.md).
+	AgentID string `json:"agent_id,omitempty"`
 	// ParentModel is the parent's effective model when a caller already knows
 	// it (the Claude Code mod's agent.spawn event). Used as the baseline only
 	// for inheriting agent types, before the transcript tail; never a guess.
@@ -132,6 +136,9 @@ func (ev Event) RequestedModel() string {
 func (ev Event) ParentModelIdentifier() (string, string) {
 	if ev.ParentModel != "" {
 		return ev.ParentModel, "mod"
+	}
+	if !core.ClaudeCodeCaps.TranscriptNamesSpawner(ev.SpawnedFromSubagent()) {
+		return "", ""
 	}
 	if m := parentModelAtSpawn(ev.TranscriptPath, ev.ToolUseID); m != "" {
 		return m, "transcript"

@@ -752,7 +752,8 @@
       "MainToolCategories": null,
       "MaxParallel": 0,
       "WorkerAgent": "",
-      "WorkerReadOnlyVerified": false
+      "WorkerReadOnlyVerified": false,
+      "SessionWideTranscript": false
     },
     "claude-code": {
       "CanRewriteModel": true,
@@ -802,7 +803,8 @@
       },
       "MaxParallel": 0,
       "WorkerAgent": "claude",
-      "WorkerReadOnlyVerified": true
+      "WorkerReadOnlyVerified": true,
+      "SessionWideTranscript": true
     },
     "codex": {
       "CanRewriteModel": true,
@@ -836,7 +838,8 @@
       "MainToolCategories": null,
       "MaxParallel": 0,
       "WorkerAgent": "codex",
-      "WorkerReadOnlyVerified": false
+      "WorkerReadOnlyVerified": false,
+      "SessionWideTranscript": false
     },
     "cursor": {
       "CanRewriteModel": true,
@@ -875,7 +878,8 @@
       "MainToolCategories": null,
       "MaxParallel": 0,
       "WorkerAgent": "",
-      "WorkerReadOnlyVerified": false
+      "WorkerReadOnlyVerified": false,
+      "SessionWideTranscript": false
     },
     "kirocrew": {
       "CanRewriteModel": false,
@@ -909,7 +913,8 @@
       "MainToolCategories": null,
       "MaxParallel": 0,
       "WorkerAgent": "",
-      "WorkerReadOnlyVerified": false
+      "WorkerReadOnlyVerified": false,
+      "SessionWideTranscript": false
     },
     "opencode": {
       "CanRewriteModel": true,
@@ -945,7 +950,8 @@
       "MainToolCategories": null,
       "MaxParallel": 0,
       "WorkerAgent": "",
-      "WorkerReadOnlyVerified": false
+      "WorkerReadOnlyVerified": false,
+      "SessionWideTranscript": false
     }
   }
 }

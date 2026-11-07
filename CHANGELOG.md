@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Claude Code: a spawn issued from inside a subagent (a nested spawn) read its parent model from the main session's transcript, because Claude Code hands every hook the main `transcript_path`. A nested spawn that named no model was then logged and "downshifted" from the main model, not from the model it would inherit from its spawner. It now has an unknown baseline and is held, and no `parent_model` is recorded for it. A model the call names, or a parent model the mod reports, routes as before. Nested spawns could not be produced on 2.1.319 (a subagent has no `Agent` tool), so the fix rests on the documented `agent_id` hook input; see the harness matrix.
+
 ## [0.9.0] - 2026-11-06
 
 First public beta. The repository starts a fresh history at this release. Release notes: [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).

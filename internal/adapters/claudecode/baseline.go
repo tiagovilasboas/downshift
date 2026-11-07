@@ -77,6 +77,11 @@ func (ev Event) resolveBaseline(ti map[string]any, res core.Resolver) baseline {
 		}
 		return baseline{Model: ev.ParentModel}
 	}
+	// A nested spawn inherits its spawner's model, which the session transcript
+	// does not hold (and neither does the configured model): unknown, so held.
+	if !core.ClaudeCodeCaps.TranscriptNamesSpawner(ev.SpawnedFromSubagent()) {
+		return baseline{}
+	}
 	parent := parentModelAtSpawn(ev.TranscriptPath, ev.ToolUseID)
 	inferred := false
 	if parent == "" && res != nil {
