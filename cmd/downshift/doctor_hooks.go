@@ -23,6 +23,8 @@ type doctorHook struct {
 	Matcher string
 	Args    string // subcommand and arguments after the binary
 	Wrapper string // stem of a script that carries the subcommand (setup.Hook.Wrapper)
+	// Rewrites is setup.Hook.Rewrites: what the hook changes in the input it answers.
+	Rewrites string
 	// Required: routing does not work without it. The first hook of a harness
 	// is the routing hook; the rest only observe (honor, usage).
 	Required bool
@@ -46,7 +48,7 @@ func doctorWiringFor(harness string) (doctorWiring, bool) {
 		}
 		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, Registry: t.Registry}
 		for i, h := range t.Hooks {
-			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Wrapper: h.Wrapper, Required: i == 0})
+			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Wrapper: h.Wrapper, Rewrites: h.Rewrites, Required: i == 0})
 		}
 		return w, true
 	}
@@ -148,6 +150,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	found, missing := matchWiredHooks(cmds, w.Hooks)
 	reportWiring(add, h, w, file, pathBin, viaPlugin, found, missing)
 	checkInstalledPluginHooks(add, env.Home, h, viaPlugin) // reads the plugin's own hooks.json
+	checkHookOverlap(add, env.Verbose, w, file, raw, viaPlugin)
 	// With the plugin carrying the hooks, found is empty: no hook binary to check.
 	checkEvidence(add, env, nc, file, found, pathBin, events)
 	checkCrewRegistry(add, env, h, w)

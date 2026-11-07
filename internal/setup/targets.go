@@ -83,9 +83,9 @@ var Targets = []Target{
 		// v0.4.x wrote the code intelligence hook, removed in #720.
 		Retired: []Hook{{Event: "UserPromptSubmit", Args: "dci hook claude-code"}},
 		Hooks: []Hook{
-			{Event: "PreToolUse", Matcher: "Agent|Task", Args: "claude-code"},
+			{Event: "PreToolUse", Matcher: "Agent|Task", Args: "claude-code", Rewrites: RewritesModel},
 			// The opt-in exec wrapper rewrites an allowlisted Bash command (shellrewrite.go).
-			{Event: "PreToolUse", Matcher: "Bash", Args: "claude-code"},
+			{Event: "PreToolUse", Matcher: "Bash", Args: "claude-code", Rewrites: RewritesShell},
 			{Event: "PostToolUse", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
 			// Bash output reaches the context sensor (observe only: bytes and
 			// the compressor's potential, never the text).
@@ -113,9 +113,9 @@ var Targets = []Target{
 		Hooks: []Hook{
 			{Event: "sessionStart", Args: "cursor-touch"},
 			{Event: "beforeSubmitPrompt", Matcher: "UserPromptSubmit", Args: "cursor-touch"},
-			{Event: "preToolUse", Matcher: "Task", Args: "cursor"},
+			{Event: "preToolUse", Matcher: "Task", Args: "cursor", Rewrites: RewritesModel},
 			// Shell command compaction (updated_input.command). Unverified live.
-			{Event: "preToolUse", Matcher: "Shell", Args: "cursor"},
+			{Event: "preToolUse", Matcher: "Shell", Args: "cursor", Rewrites: RewritesShell},
 			// Shell advise fallback: when the Shell rewrite is ignored, the agent is
 			// told to rerun a compressing command through downshift compact. Matcher
 			// "*" sends every shell command to the hook; the family check is inside.
@@ -145,9 +145,9 @@ var Targets = []Target{
 		HooksPath: []string{"hooks"},
 		Nested:    true,
 		Hooks: []Hook{
-			{Event: "PreToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "codex"},
+			{Event: "PreToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "codex", Rewrites: RewritesModel},
 			// Shell rewrite: allowlisted Bash commands become `downshift compact -- ...` (shellrewrite.go).
-			{Event: "PreToolUse", Matcher: "^Bash$", Args: "codex"},
+			{Event: "PreToolUse", Matcher: "^Bash$", Args: "codex", Rewrites: RewritesShell},
 			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "PostToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "end codex"},
 		},
@@ -165,8 +165,8 @@ var Targets = []Target{
 		ConfigDir: ".gemini",
 		File:      ".gemini/config/hooks.json",
 		Hooks: []Hook{
-			{Event: "PreToolUse", Matcher: "invoke_subagent", Args: "antigravity"},
-			{Event: "PreToolUse", Matcher: "run_command", Args: "antigravity"},
+			{Event: "PreToolUse", Matcher: "invoke_subagent", Args: "antigravity", Rewrites: RewritesModel},
+			{Event: "PreToolUse", Matcher: "run_command", Args: "antigravity", Rewrites: RewritesShell},
 		},
 		Steering: &Steering{Path: ".gemini/AGENTS.md", Content: HarnessSteering, Managed: true},
 		Mcp:      &Mcp{Kind: McpJSONMap, File: ".gemini/config/mcp_config.json"},
