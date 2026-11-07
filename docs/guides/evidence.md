@@ -152,7 +152,7 @@ decisions but not usage or ends ([harness-matrix.md](../reference/harness-matrix
 | Failure rate | available, undercounted | `child_status` `error` / `interrupted`; `PostToolUseFailure` payload never captured (GAP-CHILD-FAILURE) |
 | Retries | inferred | "Respawned after a failure" in `stats`, `↻` in the session tree (10-minute rule, a hint) |
 | Result quality | not available | hidden tests in the A/B only |
-| Coordination and delegation cost | not available | parent turns and tokens are outside the hook; GAP-COORDINATION open |
+| Coordination and delegation cost | not available | parent turns and tokens outside the hook; GAP-COORDINATION open; four-arm framework and breakeven boundaries in [delegation-boundaries-and-overhead-2026-11-07.md](../evidence/delegation-boundaries-and-overhead-2026-11-07.md) |
 | Fixed-context cost | available per child, as tokens | `cached_tokens` / `cache_write_tokens` counted apart by class; parent context not seen; `context metrics` token fields unavailable |
 | Abstention rate | available | reason codes `NO_SIGNAL`, `CLASSIFIER_UNCONFIDENT` in `stats --export` `reason_codes` |
 | Routing decisions and guardrails fired | available | `verdict`, `corrections`, `HELD_*` codes; `stats` "Guardrails held"; `session --why`; `stats --by-harness` |
@@ -203,7 +203,7 @@ has named a model. "Shown by" names a test or an evidence file; a claim with nei
 | Project tier floors: `.downshift/policy.json` by class and by risk, raise-only, applied by the shared runner for every harness | Neither `opusplan` nor a gateway reads a per-project floor from the repository | `internal/policyfile/policyfile_test.go`, `TestHookE2E_ProjectFloorThroughSharedRunner` (`cmd/downshift/policy_floor_e2e_test.go`), `TestRunKiroCrewHook_ProjectFloorApplies`; counted as `policy_floor` in `stats --export` | Shown by tests; no dated evidence file records a floor firing on a real project |
 | Report: `downshift report` states tokens per completed task and rework for routed spawns, and the policy key that turns each routing verdict off | Not compared: what a session policy or a gateway reports per task is outside this repository's evidence | `internal/telemetry/report_test.go`; [report.md](report.md) | Mechanism shown; it has no unrouted side, so it shows no saving |
 | Composes with `opusplan`: a spawn in plan mode inherits Opus and is routed as usual | Replaces nothing in the main session | Code path only: `configuredModel` resolves `opusplan` by `permission_mode` ([claude-code.md](claude-code.md), section 2) | Unproven: a live plan-mode spawn has not been observed |
-| Saves beyond what `opusplan` alone saves | The B−C comparison | Protocol only: [benchmark-protocol.md](benchmark-protocol.md); no `docs/evidence/benchmark-opusplan-*.md` exists | Unproven: the A/B compared routed and control under a Sonnet session, not `opusplan` arms |
+| Saves beyond what `opusplan` alone saves | The B−C comparison | Protocol only: [benchmark-protocol.md](benchmark-protocol.md) and [post-O8 smoke protocol](../evidence/post-o8-benchmark-protocol-2026-11-07.md); no `docs/evidence/benchmark-opusplan-*.md` exists | Unproven: the A/B compared routed and control under a Sonnet session, not `opusplan` arms |
 
 What Downshift does not do, by design ([when-to-use.md](when-to-use.md), [companions.md](companions.md)): it is not
 a gateway and terminates no HTTP chat or completions traffic; it holds no provider keys; it proxies no request and
