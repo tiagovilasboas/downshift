@@ -462,6 +462,7 @@ preserve  pytest      pytest_fail_verbose_colour.txt
 preserve  pytest      pytest_fail_warnings_rA.txt
 preserve  pytest      pytest_fail_tb_no.txt
 preserve  pytest      pytest_fail_tb_line.txt
+preserve  pytest      pytest_fail_verbose_collecting.txt
 preserve  cargo_test  cargo_failed_multi_crate.txt
 preserve  cargo_test  cargo_failed_lib_only.txt
 
@@ -476,6 +477,8 @@ clean     eslint      eslint_violations_warnings.txt
 preserve  nx            nx_failed_target.txt
 preserve  turbo         turbo_failed_task.txt
 clean     pytest        pytest_pass_clean_verbose.txt
+clean     pytest        pytest_pass_wrapped.txt
+clean     pytest        pytest_pass_clean_verbose_ids.txt
 clean     jest          jest_pass_clean_workers.txt
 clean     playwright    playwright_pass_clean_two_projects.txt
 clean     grep_group    grep_group_clean_nested.txt

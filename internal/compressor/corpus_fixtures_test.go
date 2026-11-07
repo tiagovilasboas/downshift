@@ -110,6 +110,9 @@ var cleanFixtures = []cleanFixture{
 	{"gitstatus_clean_uptodate.txt", []string{"On branch main", "working tree clean"}},
 	{"gitstatus_clean_no_upstream.txt", []string{"On branch feature/rate-limit", "working tree clean"}},
 	{"pytest_pass_clean.txt", []string{"25 passed"}},
+	// A wrapped progress line, and -v with ids that hold spaces, brackets and angle brackets.
+	{"pytest_pass_wrapped.txt", []string{"120 passed"}},
+	{"pytest_pass_clean_verbose_ids.txt", []string{"18 passed"}},
 	{"vitest_pass_clean.txt", []string{"25 passed"}},
 	// Real vitest 5 bytes: colour codes, skipped and todo counts, a skipped file.
 	{"vitest_v5_colour_clean.txt", []string{"2 passed, 3 skipped, 1 todo across 3 files in 74ms"}},

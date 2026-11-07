@@ -21,6 +21,9 @@ fixtures, tool state and captured outputs; the repository is read, never written
 import argparse, json, os, re, shlex, shutil, statistics, subprocess, sys
 
 REPS = 3
+# ds-default sets nothing. Since full CCR became the default it equals ds-ccr-on;
+# before that it kept only failing runs, which is what the 2026-11-07 tables
+# call "DS default" at b4acf99.
 ARMS = ["raw", "rtk", "rtk-norecall", "ds-default", "ds-ccr-on", "ds-ccr-off"]
 
 

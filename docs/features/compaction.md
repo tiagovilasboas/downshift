@@ -77,7 +77,7 @@ A failed Playwright run that wrote to stderr is raw, since any stderr byte
 releases the held output. The compacted text goes to stdout and ends with the
 `[downshift compact: ...]` marker, as for a clean run.
 
-The Jest, pytest and cargo grammars follow the same contract: a line the grammar does not know keeps the run raw. `tsc` is not compacted when it fails, since a failing `tsc` prints only errors.
+The Jest, pytest and cargo grammars follow the same contract: a line the grammar does not know keeps the run raw. A clean pytest run reads wrapped progress lines, `-v` lines of passed tests, `collecting ... collected N items` and a `testpaths:` line, and compacts only when the dots and `PASSED` lines add up to exactly the passed and skipped counts of the summary; a `-v` line that is SKIPPED, XFAIL or carries a reason keeps the run raw. `tsc` is not compacted when it fails, since a failing `tsc` prints only errors.
 
 The saving depends on how many tests passed. On the real transcripts used as
 test fixtures (vitest 3.2.7, 4.1.12 and 5.0.5, `@playwright/test` 1.64.1; 10 to

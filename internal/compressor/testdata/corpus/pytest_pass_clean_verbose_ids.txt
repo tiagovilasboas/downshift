@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/dev/project
+configfile: pytest.ini
+testpaths: tests
+collecting ... collected 18 items
+
+tests/test_orders.py::test_price[A-1] PASSED                             [  5%]
+tests/test_orders.py::test_price[B 2] PASSED                             [ 11%]
+tests/test_orders.py::test_price[<none>] PASSED                          [ 16%]
+tests/test_orders.py::test_price[] PASSED                                [ 22%]
+tests/test_orders.py::test_price[x.y-z] PASSED                           [ 27%]
+tests/test_orders.py::TestCart::test_add PASSED                          [ 33%]
+tests/test_orders.py::TestCart::test_remove PASSED                       [ 38%]
+tests/test_orders.py::TestCart::test_qty[0] PASSED                       [ 44%]
+tests/test_orders.py::TestCart::test_qty[1] PASSED                       [ 50%]
+tests/test_orders.py::TestCart::test_qty[2] PASSED                       [ 55%]
+tests/test_orders.py::TestCart::test_qty[3] PASSED                       [ 61%]
+tests/test_orders.py::TestCart::test_qty[4] PASSED                       [ 66%]
+tests/test_orders.py::TestCart::test_qty[5] PASSED                       [ 72%]
+tests/test_orders.py::TestCart::test_qty[6] PASSED                       [ 77%]
+tests/test_orders.py::TestCart::test_qty[7] PASSED                       [ 83%]
+tests/test_users.py::test_login PASSED                                   [ 88%]
+tests/test_users.py::test_logout PASSED                                  [ 94%]
+tests/test_users.py::test_profile PASSED                                 [100%]
+
+============================== 18 passed in 0.03s ==============================

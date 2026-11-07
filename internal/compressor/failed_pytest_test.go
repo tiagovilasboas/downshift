@@ -53,6 +53,13 @@ func TestCompressFailedPytestCutsOnlyPassedTests(t *testing.T) {
 		{"pytest_fail_tb_no.txt", "Pytest: 4 passing tests cut", []string{
 			"FAILED tests/test_billing.py::test_charge - assert 100 == 110",
 		}},
+		// Real -v output: "collecting ... collected N items" used to keep the run raw.
+		{"pytest_fail_verbose_collecting.txt", "Pytest: 7 passing tests cut", []string{
+			"test_bad.py::test_eq_wrong FAILED                                        [ 88%]",
+			"E       AssertionError: assert {'a': 1, 'b': [1, 2, 3]} == {'a': 1, 'b': [1, 2, 4]}",
+			"test_bad.py:13: ZeroDivisionError",
+			"FAILED test_bad.py::test_zero_div - ZeroDivisionError: division by zero",
+		}},
 	}
 	for _, c := range cases {
 		t.Run(c.file, func(t *testing.T) {

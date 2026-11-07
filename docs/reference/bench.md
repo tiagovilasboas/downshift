@@ -53,7 +53,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | pip_install | lossless | 1 | 250 | 77 | 69.2 | 62 | 19 | 123 | 50.8 |
 | playwright | lossless | 2 | 906 | 167 | 81.6 | 226 | 41 | 259 | 71.4 |
 | progress | lossy | 1 | 2181 | 119 | 94.5 | 545 | 29 | 165 | 92.4 |
-| pytest | lossless | 2 | 1216 | 162 | 86.7 | 304 | 40 | 254 | 79.1 |
+| pytest | lossless | 4 | 3457 | 326 | 90.6 | 864 | 81 | 510 | 85.2 |
 | rspec | lossless | 1 | 443 | 91 | 79.5 | 110 | 22 | 137 | 69.1 |
 | rubocop | lossless | 2 | 685 | 492 | 28.2 | 171 | 123 | 584 | 14.7 |
 | ruff | lossy | 2 | 492 | 339 | 31.1 | 123 | 84 | 431 | 12.4 |
@@ -61,7 +61,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | turbo | lossless | 1 | 494 | 101 | 79.6 | 123 | 25 | 147 | 70.2 |
 | vitest | lossless | 4 | 3624 | 931 | 74.3 | 906 | 232 | 1115 | 69.2 |
 | uncompacted (CCR only) | lossy | 3 | 6105 | 6105 | 0.0 | 1526 | 1526 | 1176 | 80.7 |
-| TOTAL | - | 104 | 129624 | 64186 | 50.5 | 32406 | 16046 | 36746 | 71.7 |
+| TOTAL | - | 106 | 131865 | 64350 | 51.2 | 32966 | 16087 | 37002 | 71.9 |
 
 ## Lossless and lossy split
 
@@ -69,7 +69,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 
 | Class | Fixtures | Raw bytes | Downshift bytes | Saving % |
 |---|--:|--:|--:|--:|
-| lossless | 56 | 41665 | 15145 | 63.7 |
+| lossless | 58 | 43906 | 15309 | 65.1 |
 | lossy | 48 | 87959 | 49041 | 44.2 |
 
 ## rtk column

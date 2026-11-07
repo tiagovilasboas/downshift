@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Full CCR is now on by default. `downshift compact` keeps the raw output of every compacted run (not only failures) under `~/.downshift/ccr/` and the marker names the id for `downshift retrieve <id>`; runs of 8 or more same-shape lines fold. Output stays local, redacted by line, mode 0600 and expires after 24 hours. Turn it off with `"ccr": false` in `context-optimization.json` or `DOWNSHIFT_CCR=0` (which also switches failure retention off); `DOWNSHIFT_CCR_FAILURES=0` and `"ccr_failures": false` now only matter while full CCR is off. A config file that cannot be read turns full CCR off. The measurement behind this change is [compact-vs-rtk-2026-11-07.md](docs/evidence/compact-vs-rtk-2026-11-07.md).
+- pytest compaction reads more of what pytest prints. A clean run with a progress line that wraps at 80 columns (about 60 tests or more in one file), a `-v` run, the `collecting ... collected N items` line and a `testpaths:` header line now compact, and a failing `pytest -v` run has its passed lines cut with every failure line kept. A run compacts only when the dots and `PASSED` lines add up to the summary's passed and skipped counts; SKIPPED, XFAIL and any unknown line still keep it raw. On the rtk comparison fixtures `pytest` (120 tests) goes from 519 to 82 bytes with CCR off, `pytest -v` from 10,047 to 84, and a failing `pytest -v` from 7,378 to 2,683. See [compact-vs-rtk-2026-11-07.md](docs/evidence/compact-vs-rtk-2026-11-07.md).
 
 ## [0.9.0] - 2026-11-06
 

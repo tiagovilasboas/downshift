@@ -1,0 +1,47 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+rootdir: /home/dev/project
+collecting ... collected 9 items
+
+test_bad.py::test_ok[0] PASSED                                           [ 11%]
+test_bad.py::test_ok[1] PASSED                                           [ 22%]
+test_bad.py::test_ok[2] PASSED                                           [ 33%]
+test_bad.py::test_ok[3] PASSED                                           [ 44%]
+test_bad.py::test_ok[4] PASSED                                           [ 55%]
+test_bad.py::test_ok[5] PASSED                                           [ 66%]
+test_bad.py::test_ok[6] PASSED                                           [ 77%]
+test_bad.py::test_eq_wrong FAILED                                        [ 88%]
+test_bad.py::test_zero_div FAILED                                        [100%]
+
+=================================== FAILURES ===================================
+________________________________ test_eq_wrong _________________________________
+
+    def test_eq_wrong():
+        data = {"a": 1, "b": [1, 2, 3]}
+>       assert data == {"a": 1, "b": [1, 2, 4]}
+E       AssertionError: assert {'a': 1, 'b': [1, 2, 3]} == {'a': 1, 'b': [1, 2, 4]}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'b': [1, 2, 3]} != {'b': [1, 2, 4]}
+E         
+E         Full diff:
+E           {...
+E         
+E         ...Full output truncated (10 lines hidden), use '-vv' to show
+
+test_bad.py:9: AssertionError
+________________________________ test_zero_div _________________________________
+
+    def test_zero_div():
+        x = 0
+>       return 1 / x
+               ^^^^^
+E       ZeroDivisionError: division by zero
+
+test_bad.py:13: ZeroDivisionError
+=========================== short test summary info ============================
+FAILED test_bad.py::test_eq_wrong - AssertionError: assert {'a': 1, 'b': [1, ...
+FAILED test_bad.py::test_zero_div - ZeroDivisionError: division by zero
+========================= 2 failed, 7 passed in 0.03s ==========================

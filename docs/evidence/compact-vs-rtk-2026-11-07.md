@@ -11,7 +11,7 @@ commands, 8 of them failing runs, 3 repetitions each, one machine, one day.
 
 ## Verdict
 
-Downshift does not beat rtk on this sample. Read the table, not the headline.
+Downshift does not beat rtk on this sample. Read the table, not the headline. A later section re-measures after two changes made the same day; it does not change that sentence.
 
 - **Bytes.** Summed over the 20 commands, rtk cut 114,971 bytes to 56,556 (50.8%). Downshift's configuration at `b4acf99` cut
   them to 65,737 (42.8%), and to 57,809 (49.7%) with full CCR on, which is now the default. Against the old default rtk emitted fewer bytes
@@ -212,7 +212,7 @@ machine and day. They are not in the table and not in the script.
    has 60 passing tests; a probe with 500 passing tests plus one failure compacted from 1,368 to 958 bytes, and one with 30
    stayed raw at 806. Row 12, `tsc`, has no failed-run compactor: other families' failing output is returned raw by design
    (`failedFormat` in `internal/execwrap/expected_format.go`).
-2. **Output outside the grammar of the pytest compressor** (rows 6, 7, 9). Read from source: `rePytestPlainLine` in
+2. **Output outside the grammar of the pytest compressor** (rows 6, 7, 9; widened afterwards, see the re-measurement). Read from source: `rePytestPlainLine` in
    `internal/compressor/pytest.go` lists the line shapes of a clean run, and one unlisted line keeps the whole transcript
    raw. Row 6's 120 tests wrap the progress line at 80 columns and the wrapped line has no file name in front. A probe is
    consistent with that: a 30-test and a 60-test file, whose progress line does not wrap, compacted from 421 to 81
@@ -222,6 +222,63 @@ machine and day. They are not in the table and not in the script.
    play. The cause is read from the grammar and fits the probes; it was not confirmed with an instrumented run.
 3. **Not compacted at all** (rows 15, 16, 18: `git status`, `git diff`, `ls -la`). The output came back identical to the raw
    output. This run did not find out why. rtk shortens all three (60%, 20% and 68%); only `ls -la` loses facts doing so.
+
+## Re-measurement after two changes, later the same day
+
+Two changes landed after the measurement above, and the same script was run again from an empty work directory:
+
+1. Full CCR became the default (commit `87469fc`). **DS now** is that default; **DS now, CCR=0** is `DOWNSHIFT_CCR=0`.
+2. The pytest clean-run grammar was widened (the commit that adds this section): progress lines that wrap at the terminal
+   width, `-v` lines of passed tests with any printable-ASCII id, `collecting ... collected N items`, and a `testpaths:`
+   line. It also checks that the dots and `PASSED` lines add up to exactly the counts in the summary, and keeps the run
+   raw when they do not. The same grammar now lets a failing `pytest -v` run have its passed lines cut.
+
+| # | Command | Raw | rtk | DS at b4acf99 | DS now | DS now, CCR=0 |
+|--:|---|--:|--:|--:|--:|--:|
+| 1 | `go test -count=1 ./...` | 930 | 34 | 369 | 220 | 369 |
+| 2 | `go test -count=1 -v ./...` | 14,967 | 34 | 283 | 329 | 283 |
+| 3 | `go test -count=1 ./calc` | 315 | 346 | 315 | 315 | 315 |
+| 4 | `go test -count=1 -v ./calc` | 2,175 | 346 | 563 | 563 | 517 |
+| 5 | `go test -count=1 ./boom` | 813 | 377 | 813 | 813 | 813 |
+| 6 | `pytest` | 520 | 28 | 519 | 128 | 82 |
+| 7 | `pytest -v` | 10,048 | 28 | 10,047 | 130 | 84 |
+| 8 | `pytest` | 2,411 | 611 | 2,410 | 2,411 | 2,411 |
+| 9 | `pytest -v` | 7,379 | 611 | 7,378 | 2,729 | 2,683 |
+| 10 | `npx vitest run ok` | 332 | 19 | 96 | 142 | 96 |
+| 11 | `npx vitest run bad` | 2,334 | 5,172 | 2,333 | 2,334 | 2,334 |
+| 12 | `tsc -p .` | 348 | 416 | 348 | 348 | 348 |
+| 13 | `cargo test` | 1,769 | 40 | 86 | 132 | 86 |
+| 14 | `cargo test` | 2,205 | 541 | 1,011 | 1,011 | 965 |
+| 15 | `git status` | 671 | 267 | 671 | 671 | 671 |
+| 16 | `git diff` | 14,697 | 11,788 | 14,697 | 14,697 | 14,697 |
+| 17 | `git log -n 50`† | 25,037 | 14,515 | 3,287 | 3,314 | 3,268 |
+| 18 | `ls -la`† | 1,914 | 617 | 1,865 | 1,914 | 1,914 |
+| 19 | `find internal/execwrap -name *.go` | 5,663 | 983 | 3,350 | 3,396 | 3,350 |
+| 20 | `grep -rn func Test internal/execwrap` | 22,214 | 19,804 | 15,296 | 15,342 | 15,296 |
+
+† Rows 17 and 18 read this repository's history and tree, which moved between the two runs (`b4acf99` to `87469fc` plus
+this change), so their raw bytes differ (23,320 to 25,037 and 1,865 to 1,914). Compare them within a run, not across.
+
+What the second run shows:
+
+- **Pytest rows moved, and rtk is still smaller.** Row 6 went from 519 to 128 bytes (82 with CCR off), row 7 from 10,047 to
+  130 (84), row 9 from 7,378 to 2,729. rtk is at 28, 28 and 611. Row 9 still shows all 25 facts of the failing run.
+  Row 8 (a failing run with 60 passing tests) stays raw; as before, the compressor returns the raw output when the cut would not make it shorter, which fits that probe (500 passing tests compact, 30 do not).
+- **The count of commands where rtk emits fewer bytes did not change:** 15 of 20, Downshift on the same 5 (rows 3, 11,
+  12, 17, 20). Nothing here is a Downshift win.
+- **The total flipped, and should not be read as a win.** Over all 20, rtk saves 51.5% and Downshift 56.4%. That is the
+  `git log` row: Downshift's 3,314 bytes against rtk's 14,515 shows 100 of 345 facts, against rtk's 237. Without row 17
+  the totals are rtk 54.1%, Downshift 48.1%; without rows 17 and 20, 68.0% against 53.5%.
+- **What the CCR default costs.** Every compacted success now carries a retrieve marker of 46 bytes. On the pytest summaries
+  that is the difference between 82 and 128 bytes, and between 84 and 130. Row 1 now shows 5 of 30 package names and folds the
+  other 25 (220 bytes against 369 with CCR off); they come back with `downshift retrieve`, but they are no longer in the
+  context the model reads. A marker is useful when something was cut that the summary cannot give back, and a lossless
+  pytest summary gives nothing back. Whether the marker should be left off when the compaction is lossless is an open
+  question for the owner, not decided here.
+- **Not changed, on purpose.** `git status` with changes, `git diff` and `ls -l` stay raw (rows 15, 16, 18). The corpus
+  contract lists dirty `git status` fixtures under `rawFixtures` ("must never change"), and the `ls` compressor documents
+  that long rows keep their mode, size and time because those are the facts asked for. Shortening them is a change to
+  those rules; it is not made here.
 
 ## What this does not show
 

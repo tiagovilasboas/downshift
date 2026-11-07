@@ -109,7 +109,7 @@ func cutPassingPytest(lines []string) (kept []string, passed int, reason string)
 				passed++
 				continue
 			}
-		} else if strings.TrimSpace(l) != "" && !rePytestPlainLine.MatchString(l) {
+		} else if strings.TrimSpace(l) != "" && !isPytestPlainLine(l) {
 			return nil, 0, "pytest_failed_run_unrecognized_line_preserved"
 		}
 		kept = append(kept, l)
