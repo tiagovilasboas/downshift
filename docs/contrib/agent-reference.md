@@ -26,7 +26,7 @@ task-observer): [docs/guides/companions.md](../guides/companions.md).
 
 Downshift records local routing decisions to `events.jsonl` in the state directory (`~/.downshift/events.jsonl`). Tasks, prompts, and file paths are never stored.
 
-Exception: CCR (`"ccr": true` or `DOWNSHIFT_CCR=1`, off by default) stores raw compacted command output under `~/.downshift/ccr/`, locally, redacted by line and expiring. Telemetry still never stores it. See [docs/guides/ccr.md](../guides/ccr.md).
+Exception: CCR (on by default; `"ccr": false` or `DOWNSHIFT_CCR=0` turns it off) stores raw compacted command output under `~/.downshift/ccr/`, locally, redacted by line and expiring. Telemetry still never stores it. See [docs/guides/ccr.md](../guides/ccr.md).
 
 Commands for agents and operators to audit savings, costs, and optimization:
 - `downshift stats`: display decision counts and estimated token savings (default: 30 days).

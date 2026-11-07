@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Full CCR is now on by default. `downshift compact` keeps the raw output of every compacted run (not only failures) under `~/.downshift/ccr/` and the marker names the id for `downshift retrieve <id>`; runs of 8 or more same-shape lines fold. Output stays local, redacted by line, mode 0600 and expires after 24 hours. Turn it off with `"ccr": false` in `context-optimization.json` or `DOWNSHIFT_CCR=0` (which also switches failure retention off); `DOWNSHIFT_CCR_FAILURES=0` and `"ccr_failures": false` now only matter while full CCR is off. A config file that cannot be read turns full CCR off. The measurement behind this change is [compact-vs-rtk-2026-11-07.md](docs/evidence/compact-vs-rtk-2026-11-07.md).
+
 ## [0.9.0] - 2026-11-06
 
 First public beta. The repository starts a fresh history at this release. Release notes: [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).

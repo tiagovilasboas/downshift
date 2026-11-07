@@ -56,7 +56,7 @@ check` on its own. A task that touches the binary fills
 | A4 | File-read family: `cat`, `head`, `tail`, `sed -n 'a,bp'`, `wc -l` on source files, with a mode for long files (outline: signatures and line numbers, full text kept for small files) | 5 | RTK `read`/`smart`; reading is the largest share of context |
 | A5 | Search breadth: `rg` and `grep -r` without `-n`, `--files`, `-l`, `-c`; grouped by file with per-file and total caps | 3 | RTK grep grouping |
 | A6 | Simple pipes and chains: `cmd \| tail -n N`, `cmd \| head`, `cmd \| grep x`, `cd dir && cmd`, `a && b` where every part is allowlisted | 5 | 5,191 metacharacter skips; needs a security review |
-| A7 | Keep the full output of a compacted failure by default (CCR on failure only), with `downshift retrieve` | 3 | RTK tee/recall; CCR off by default today |
+| A7 | Keep the full output of a compacted failure by default (CCR on failure only), with `downshift retrieve` | 3 | RTK tee/recall; full CCR is now on by default (changelog, Unreleased) |
 
 ### B. Prove the value
 

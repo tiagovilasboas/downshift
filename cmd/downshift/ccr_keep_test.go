@@ -58,10 +58,13 @@ func TestCompactKeepsFailedOutputByDefault(t *testing.T) {
 		wantID bool
 	}{
 		{"failure stored by default", true, nil, "", true},
-		{"success not stored by default", false, nil, "", false},
+		{"success stored by default", false, nil, "", true},
 		{"success stored when CCR is fully on", false, map[string]string{"DOWNSHIFT_CCR": "1"}, "", true},
-		{"env off switch", true, map[string]string{"DOWNSHIFT_CCR_FAILURES": "0"}, "", false},
-		{"config off switch", true, nil, `{"ccr_failures":false}`, false},
+		{"config ccr off keeps no success", false, nil, `{"ccr":false}`, false},
+		{"config ccr off still keeps a failure", true, nil, `{"ccr":false}`, true},
+		{"env off switch needs ccr off", true, map[string]string{"DOWNSHIFT_CCR_FAILURES": "0"}, `{"ccr":false}`, false},
+		{"config off switch needs ccr off", true, nil, `{"ccr":false,"ccr_failures":false}`, false},
+		{"failure switch alone keeps full ccr", true, map[string]string{"DOWNSHIFT_CCR_FAILURES": "0"}, "", true},
 		{"CCR=0 turns it off", true, map[string]string{"DOWNSHIFT_CCR": "0"}, "", false},
 		{"exec kill switch stores nothing", true, map[string]string{"DOWNSHIFT_EXEC": "0"}, "", false},
 	}

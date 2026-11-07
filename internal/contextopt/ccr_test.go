@@ -17,7 +17,7 @@ func TestCCREnabled(t *testing.T) {
 		env  string
 		want bool
 	}{
-		{"absent", Config{}, nil, "", false},
+		{"absent is on", Config{}, nil, "", true},
 		{"file true", Config{CCR: &yes}, nil, "", true},
 		{"file false", Config{CCR: &no}, nil, "", false},
 		{"env on wins", Config{CCR: &no}, nil, "1", true},

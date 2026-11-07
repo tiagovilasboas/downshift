@@ -13,9 +13,10 @@ commands, 8 of them failing runs, 3 repetitions each, one machine, one day.
 
 Downshift does not beat rtk on this sample. Read the table, not the headline.
 
-- **Bytes.** Summed over the 20 commands, rtk cut 114,971 bytes to 56,556 (50.8%). Downshift's default configuration cut
-  them to 65,737 (42.8%), and to 57,809 (49.7%) with full CCR on. In the default configuration rtk emitted fewer bytes
-  than Downshift on 15 of 20 commands (16 with rtk's recall hint off), Downshift on 5 (4 with the hint off).
+- **Bytes.** Summed over the 20 commands, rtk cut 114,971 bytes to 56,556 (50.8%). Downshift's configuration at `b4acf99` cut
+  them to 65,737 (42.8%), and to 57,809 (49.7%) with full CCR on, which is now the default. Against the old default rtk emitted fewer bytes
+  than Downshift on 15 of 20 commands (16 with rtk's recall hint off), Downshift on 5 (4 with the hint off). With full CCR on
+  the split is the same, 15 to 5, on the same five commands.
 - **Where Downshift loses.** It left 11 of 20 commands within one byte of the raw output (rows 3, 5, 6, 7, 8, 9, 11, 12,
   15, 16, 18), including `pytest -v` passing (10,047 bytes; rtk 28), `git status` (671; rtk 267), `git diff` (14,697; rtk
   11,788) and `ls -la` (1,865; rtk 606). On passing runs rtk's summary is 19 to 40 bytes where Downshift's is 86 to 369
@@ -32,13 +33,14 @@ Downshift does not beat rtk on this sample. Read the table, not the headline.
 - **Exit codes.** All 20 commands kept the raw exit code under every arm (0, 1, 2 and 101 seen). No difference between the
   tools there.
 
-## Premise correction: full CCR is not the default at this commit
+## Which CCR setting the columns measure
 
-Full CCR has been described as the default. At the measured commit it is not. Full CCR is opt-in
-(`"ccr": true` or `DOWNSHIFT_CCR=1`; `CCREnabled` in `internal/contextopt/provider.go`, and [config.md](../guides/config.md));
-only the raw output of a compacted failing command is kept by default (`ccr_failures`, [ccr.md](../guides/ccr.md)). So the
-table has three Downshift columns: **DS default** (nothing set), **DS CCR=1** (`DOWNSHIFT_CCR=1`) and **DS CCR=0**
-(`DOWNSHIFT_CCR=0`, which also switches the failure store off). A pointer exists in DS default only on rows 4 and 14.
+Everything below was measured at `b4acf99`, where full CCR was opt-in (`"ccr": true` or `DOWNSHIFT_CCR=1`) and only the raw
+output of a compacted failing command was kept by default (`ccr_failures`). The next commit on this branch makes full CCR
+the default. So the table has three Downshift columns: **DS default** (nothing set, the old default at `b4acf99`),
+**DS CCR=1** (`DOWNSHIFT_CCR=1`, which is what the new default produces) and **DS CCR=0** (`DOWNSHIFT_CCR=0`, which also
+switches the failure store off). A pointer exists in DS default only on rows 4 and 14. Read the DS CCR=1 columns as the
+current default behaviour; they were not re-measured after the change.
 
 ## Method
 
