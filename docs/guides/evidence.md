@@ -238,6 +238,12 @@ behaviour (more retries, more turns), which is part of what the arms of
 reproduced here. The protocol and its pre-registered cut criterion are in
 [benchmark-output-cutting.md](benchmark-output-cutting.md).
 
+One related measurement exists, of a different quantity: [compact-vs-rtk-2026-11-07.md](../evidence/compact-vs-rtk-2026-11-07.md)
+runs `downshift compact` and rtk 1.1.0 on 20 real commands (8 failing) and compares output bytes, exit codes and the
+facts that survive, on one machine. It measures bytes, not tokens, cost or task outcomes, so it is not a rung on the
+ladder above and does not change this status. Its plain result: rtk emitted fewer bytes on 15 of 20 commands in default
+configuration, Downshift kept every fact on the 8 failing runs, and each tool loses facts the other keeps.
+
 ## Why catalog prices are not the invoice
 
 Catalog prices are public list prices from a dated snapshot. An invoice differs by plan (Pro, Max and Team have no
