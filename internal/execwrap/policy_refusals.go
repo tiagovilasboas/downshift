@@ -40,6 +40,9 @@ func refusedShape(f Family, argv []string) bool {
 	if names := refusedFlags[f]; len(names) > 0 && namesFlag(argv[1:], names...) {
 		return true
 	}
+	if keepsRunning(f, argv) {
+		return true
+	}
 	switch f {
 	case FamilyDockerBuild:
 		return hasRemoteContext(argv[2:])

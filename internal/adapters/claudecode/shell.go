@@ -26,6 +26,35 @@ func (ev Event) ShellCommand() (string, bool) {
 	return command, true
 }
 
+// ShellRunsInBackground reports whether tool_input.run_in_background is set.
+// Any present value other than false or null counts as set, so an odd value
+// leaves the command as written.
+func (ev Event) ShellRunsInBackground() bool {
+	var ti map[string]json.RawMessage
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return false
+	}
+	raw, ok := ti["run_in_background"]
+	if !ok {
+		return false
+	}
+	switch string(raw) {
+	case "false", "null":
+		return false
+	}
+	return true
+}
+
+// promptingModes are the permission modes in which Claude Code still asks the
+// user before a tool call that no allow rule covers. An empty mode (an older
+// payload without the field) is the default mode.
+var promptingModes = map[string]bool{"": true, "default": true, "plan": true, "acceptEdits": true}
+
+// ShellPromptsSuppressed reports a permission mode in which Claude Code runs
+// shell calls without asking (bypassPermissions, dontAsk). Any mode this
+// adapter does not know counts as one, so a new mode fails safe.
+func (ev Event) ShellPromptsSuppressed() bool { return !promptingModes[ev.PermissionMode] }
+
 // shellOutput is the PreToolUse answer that replaces the shell command. It
 // carries no permissionDecision on purpose: the harness's own permission flow
 // (allow, ask and deny rules) then applies to the rewritten command.
