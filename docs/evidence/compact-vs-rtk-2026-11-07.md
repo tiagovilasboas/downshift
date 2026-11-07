@@ -12,18 +12,17 @@ outcomes.
 
 ## Verdict
 
-- **Bytes, all 15 runs:** RTK cuts 55.5%, Downshift cuts 72.0% with CCR on (the default since `1bbf74f6`) and
-  52.2% with CCR off. One command, `git log -n 30`, is 53% of the raw bytes, so read the table by class, not by
-  the total.
-- **Failing runs:** together, both tools save under 10% of the bytes. Downshift leaves Go, pytest and tsc failures raw by design
+- **Bytes, all 15 runs:** RTK cuts 39.3%, Downshift cuts 63.0% with CCR on (the default) and 36.0% with CCR off.
+  One command, `git log -n 30`, is 36% of the raw bytes, so read the table by class, not by the total.
+- **Failing runs:** together, RTK saves 10.4% of the bytes and Downshift 6.2% to 7.1%. Downshift leaves Go, pytest and tsc failures raw by design
   (non-zero exit) and keeps every fact. RTK cuts Go and pytest failures by about half and, in the Go run, drops the
   two stack frames in the user's own code (`p.go:3`, `p_test.go:6`), which `rtk recall` brings back. RTK's output
   for `tsc` and `vitest` failures was larger than the raw output (392 against 311 bytes, 3349 against 1857).
 - **Passing runs:** RTK is much terser (119 bytes against 448 for Downshift, 572 with CCR). The CCR marker adds
   32 to 47 bytes, so on a run that already prints 85 bytes it makes the output bigger.
-- **Where Downshift loses outright:** `git status` (546 bytes, passed through as an unknown shape, against 153
+- **Where Downshift loses outright:** `git status` (570 bytes, passed through as an unknown shape, against 177
   with all six files named by RTK), and every passing summary.
-- **Where Downshift is ahead:** directory listings, `find`, `grep` and `git log`: 85.6% against 63.8%. RTK's
+- **Where Downshift is ahead:** directory listings, `find`, `grep` and `git log`: 79.9% against 45.6%. RTK's
   `grep -rn` saved nothing. The price is that CCR folds the middle of the output. After `ls -la` only 6 of 151
   names stay visible and the agent has to call `downshift retrieve`. RTK's `ls` also truncates (50 of 151 names)
   and points to `rtk recall`.
@@ -34,7 +33,7 @@ outcomes.
 | | |
 |---|---|
 | RTK | 0.49.0, commit `1cf7bc703efa5cd0530222746ce40bd5d9b38336`, built from source with `cargo build --release`, default features (full edition). No hook installed. |
-| Downshift | `1bbf74f6` (CCR on by default), built from this repository. |
+| Downshift | Built from this repository at the commit before the one that adds this page (CCR on by default, retrieved bytes subtracted). |
 | Machine | One Linux container, Go 1.24.7 toolchain, pytest 9.1.1, cargo 1.97.0, Node 22.23.4, vitest 2.1.9, git 2.43.0. |
 | Output | stdout and stderr merged, as a coding agent's shell tool shows them. Bytes of that text. |
 | RTK command | What `rtk rewrite "<command>"` returns, i.e. what its hook would run. All 15 commands were rewritten. |
@@ -43,6 +42,8 @@ outcomes.
 | Fixtures | Built by [make_fixtures.sh](compact-vs-rtk-2026-11-07/make_fixtures.sh): 12 Go packages, a Go project with failures and a panic, a pytest file with 40 passes and one with 4 failures, two Rust crates, a TypeScript project with 4 type errors, vitest files, this repository with a staged rename, 2 edits and 2 untracked files, and 190 small files. |
 | Facts | For each run, a fixed list of things the agent needs: failing test names, messages, `file:line` locations, file names, commit hashes and subjects, the pass count. A fact counts as kept when its text is in the output. Lines were not compared, because RTK writes `[FAIL] TestName` where Go writes `--- FAIL: TestName`. |
 | Recovery | When an output names an id (`downshift retrieve <id>`, `rtk recall <id>`), the harness ran it and counted the facts again. |
+
+This page was measured twice. The first run was on the repository history before it was rewritten for v0.9.0 and gave 72.0% (Downshift, CCR on) against 55.5% (RTK) over all 15 runs. It was repeated on the published history; the cases that read this repository (`git status`, `git log`) changed size, and every other case is within a few bytes. The numbers here are from the second run.
 
 The first scoring pass compared literal failure lines and marked RTK down for format alone. It was replaced by the
 fact list above before any number on this page was kept. Each cell is one run. Byte counts move by a few bytes
@@ -55,27 +56,27 @@ Bytes of agent-visible output. "Facts in context" is facts kept in the output it
 | Case | Exit | Raw | RTK | Downshift, CCR on | Downshift, CCR off | Facts in context: RTK / DS on / DS off |
 |---|--:|--:|--:|--:|--:|---|
 | go-test-pass-12pkg | 0 | 279 | 34 | 201 | 169 | 1/1 / 1/1 / 1/1 |
-| go-test-fail | 1 | 1288 | 653 | 1287 | 1287 | 13/15 / 15/15 / 15/15 |
+| go-test-fail | 1 | 1271 | 653 | 1271 | 1271 | 13/15 / 15/15 / 15/15 |
 | pytest-pass-40 | 0 | 99 | 27 | 99 | 99 | 1/1 / 1/1 / 1/1 |
 | pytest-fail | 1 | 1903 | 802 | 1903 | 1903 | 12/12 / 12/12 / 12/12 |
-| cargo-test-pass | 0 | 832 | 40 | 131 | 85 | 1/1 / 1/1 / 1/1 |
-| cargo-test-fail | 101 | 5446 | 4604 | 4994 | 4948 | 12/12 / 12/12 / 12/12 |
+| cargo-test-pass | 0 | 824 | 40 | 131 | 85 | 1/1 / 1/1 / 1/1 |
+| cargo-test-fail | 101 | 5441 | 4607 | 4997 | 4951 | 12/12 / 12/12 / 12/12 |
 | tsc-errors | 1 | 311 | 392 | 311 | 311 | 9/9 / 9/9 / 9/9 |
-| vitest-fail | 1 | 1857 | 3349 | 1630 | 1583 | 6/6 / 6/6 / 6/6 |
-| vitest-pass-12 | 0 | 390 | 18 | 141 | 95 | 1/1 / 1/1 / 1/1 |
-| git-status | 0 | 546 | 153 | 546 | 546 | 6/6 / 6/6 / 6/6 |
+| vitest-fail | 1 | 1849 | 3205 | 1622 | 1576 | 6/6 / 6/6 / 6/6 |
+| vitest-pass-12 | 0 | 382 | 18 | 141 | 95 | 1/1 / 1/1 / 1/1 |
+| git-status | 0 | 570 | 177 | 570 | 570 | 6/6 / 6/6 / 6/6 |
 | git-diff | 0 | 3208 | 3132 | 3208 | 3208 | 5/5 / 5/5 / 5/5 |
-| git-log-30 | 0 | 34595 | 8482 | 2516 | 2470 | 60/60 / 60/60 / 60/60 |
+| git-log-30 | 0 | 17359 | 8747 | 2058 | 2012 | 60/60 / 60/60 / 60/60 |
 | ls-la-150 | 0 | 8137 | 1139 | 536 | 8137 | 50/151 / 6/151 / 151/151 |
 | find-md-40 | 0 | 591 | 287 | 185 | 453 | 40/40 / 5/40 / 40/40 |
 | grep-todo | 0 | 6066 | 6066 | 651 | 6066 | 190/190 / 15/190 / 190/190 |
 
 | Class | Runs | Raw | RTK | Downshift, CCR on | Downshift, CCR off |
 |---|--:|--:|--:|--:|--:|
-| failing | 5 | 10805 | 9800 (9.3%) | 10125 (6.3%) | 10032 (7.2%) |
-| passing | 4 | 1600 | 119 (92.6%) | 572 (64.2%) | 448 (72.0%) |
-| listing and history | 6 | 53143 | 19259 (63.8%) | 7642 (85.6%) | 20880 (60.7%) |
-| all | 15 | 65548 | 29178 (55.5%) | 18339 (72.0%) | 31360 (52.2%) |
+| failing | 5 | 10775 | 9659 (10.4%) | 10104 (6.2%) | 10012 (7.1%) |
+| passing | 4 | 1584 | 119 (92.5%) | 572 (63.9%) | 448 (71.7%) |
+| listing and history | 6 | 35931 | 19548 (45.6%) | 7208 (79.9%) | 20446 (43.1%) |
+| all | 15 | 48290 | 29326 (39.3%) | 17884 (63.0%) | 30906 (36.0%) |
 
 After the recovery call every fact was present for every output that named an id, for both tools.
 
@@ -85,7 +86,7 @@ After the recovery call every fact was present for every output that named an id
    through (`nonzero_exit`). That is the design: failures stay byte for byte. RTK saves 49% on the Go failure and
    58% on the pytest one while keeping every test name, message and `file:line` for them.
 2. **`git status` was not recognised** (`unknown_shape`) for a status with a staged rename, edits and untracked
-   files. RTK printed the same six files in 153 bytes. `git diff` also passed through (`danger_word`); RTK saved 2%.
+   files. RTK printed the same six files in 177 bytes. `git diff` also passed through (`danger_word`); RTK saved 2%.
 3. **Passing summaries are larger.** 169 bytes against 34 (Go), 99 against 27 (pytest), 85 against 40 (cargo),
    95 against 18 (vitest). With CCR on each Go, cargo and vitest summary grows by 32 to 47 bytes for the marker.
 4. **Path-qualified runners are refused.** `downshift compact -- ./node_modules/.bin/vitest run` answers
