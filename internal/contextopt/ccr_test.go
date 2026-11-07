@@ -17,7 +17,7 @@ func TestCCREnabled(t *testing.T) {
 		env  string
 		want bool
 	}{
-		{"absent", Config{}, nil, "", false},
+		{"absent is on", Config{}, nil, "", true},
 		{"file true", Config{CCR: &yes}, nil, "", true},
 		{"file false", Config{CCR: &no}, nil, "", false},
 		{"env on wins", Config{CCR: &no}, nil, "1", true},
@@ -25,6 +25,8 @@ func TestCCREnabled(t *testing.T) {
 		{"cfg error", Config{CCR: &yes}, errors.New("x"), "", false},
 		{"env on beats cfg error", Config{}, errors.New("x"), "1", true},
 		{"other env ignored", Config{CCR: &yes}, nil, "maybe", true},
+		{"other env ignored, file false", Config{CCR: &no}, nil, "maybe", false},
+		{"cfg error stays off without env", Config{}, errors.New("x"), "", false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

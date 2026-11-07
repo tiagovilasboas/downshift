@@ -196,3 +196,25 @@ func TestNumbers_JSONKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestCompactorTextShowsBytesReadBack(t *testing.T) {
+	if got := compactorText(Compactor{Commands: 4, Compacted: 3}); got != "Commands: 4 · Compacted: 3" {
+		t.Fatalf("without retrievals = %q", got)
+	}
+	want := "Commands: 4 · Compacted: 3 · Read back with retrieve: 250 bytes"
+	if got := compactorText(Compactor{Commands: 4, Compacted: 3, RetrievedBytes: 250}); got != want {
+		t.Fatalf("with retrievals = %q, want %q", got, want)
+	}
+}
+
+// Compute reports the saving net of what retrieve pulled back.
+func TestComputeCompactorIsNetOfRetrievals(t *testing.T) {
+	evs := []execwrap.Event{
+		{Family: "go-test", RawBytes: 1000, EmittedBytes: 100, Compacted: true, Kept: "aaaaaaaaaaaa"},
+	}
+	evs = execwrap.ApplyRetrievals(evs, map[string]int64{"aaaaaaaaaaaa": 300})
+	c := compactorTotals(evs)
+	if c.SavedBytes != 600 || c.RetrievedBytes != 300 || c.Tokens != 150 {
+		t.Fatalf("compactor = %+v, want saved 600, retrieved 300, tokens 150", c)
+	}
+}

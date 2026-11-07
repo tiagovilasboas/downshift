@@ -44,6 +44,7 @@ rewrite to the child subagent, not just that downshift emitted one.
 | harness | plan / build | rewrite honored? | evidence / limit |
 |---|---|---|---|
 | claude-code | paid: Pro / Max / Teams / API | Yes, 2026-10-06 (two spawns; API-reported model in the child transcript) | `updatedInput.model` must be a family name (`haiku`/`sonnet`/`opus`/`fable`); a full id is rejected and blocks the spawn. The catalog `native_name` supplies it. Write-up: `docs/evidence/claude-code-rewrite-honored-2026-10-06.md`. There is no built-in agent-type table (owner decision O8): the orchestrator chooses the model per subagent, and the `downshift-orchestrator` playbook carries the defaults. Setup does not write `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`, so a per-call model from the orchestrator is honoured. The payload carries no session list; without one (payload, discovery or `session-models.json`) the catalog `session_candidates` below the current model stand in for it (`SessionFromCatalog`, downshift only, never above the current model); a list is needed only to allow upshifts. |
+| claude-code | nested spawn (a subagent spawning a subagent), Claude Code 2.1.319 | Not applicable: verified 2026-11-07, a subagent has no Agent tool, even when a custom agent declares it | Two live sessions; the hook log holds only the main session's `Agent` call. A subagent's other tool calls reach the hooks with `agent_id` and `agent_type`, which `isSubagentCall` already reads. Other builds and agent teams unverified. `docs/evidence/claude-code-nested-spawn-2026-11-07.md` |
 | claude-code | Free | No: no real subagents | Sandboxed, no egress; subagents need paid (README.md:728) |
 | cursor | Free | No: silently discarded | `updated_input.model` ignored, known issue (README.md:734) |
 | cursor | Pro legacy (request-based) | No: silently dropped | Task model takes only `"fast"` (README.md:735) |
@@ -484,7 +485,7 @@ decoders. Until then the safe answer is the documented one.
 
 ## Shell command rewrite: `downshift compact` (on by default, 2026-10-19)
 
-CCR (opt-in, `"ccr": true` or `DOWNSHIFT_CCR=1`) stores the raw output of a compacted command and adds `downshift retrieve <id>`. Both are plain commands, so CCR works in every harness, hooked or not; the MCP tool `retrieve` is the same read. See [ccr.md](../guides/ccr.md).
+CCR (on by default; `DOWNSHIFT_CCR=0` turns it off; `"ccr": false` keeps only failed runs) stores the raw output of a compacted command and adds `downshift retrieve <id>`. Both are plain commands, so CCR works in every harness, hooked or not; the MCP tool `retrieve` is the same read. See [ccr.md](../guides/ccr.md).
 
 On by default on Claude Code: the plugin registers the `Bash` PreToolUse hook. Set
 `"exec": false` in the Downshift config or `DOWNSHIFT_EXEC=0` to turn it off. The decision is

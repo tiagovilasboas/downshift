@@ -11,8 +11,10 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/ccr"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 )
 
 const retrieveSchema = `{"type":"object","properties":{` +
@@ -86,6 +88,7 @@ func runRetrieve(raw json.RawMessage) Result {
 		out = append(out[:maxResultBytes:maxResultBytes],
 			fmt.Sprintf("\n[downshift: cut at %d bytes; narrow with grep, head, tail or lines]\n", maxResultBytes)...)
 	}
+	execwrap.RecordRetrieval(a.ID, len(out), time.Now())
 	return Result{Text: string(out)}
 }
 

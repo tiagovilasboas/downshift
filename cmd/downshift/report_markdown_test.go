@@ -73,3 +73,37 @@ func TestReport_MarkdownIsDefaultWithCompactionDetail(t *testing.T) {
 		t.Errorf("--text lacks the compaction detail:\n%s", text)
 	}
 }
+
+// A saving the agent read back with `retrieve` is subtracted in every view, and
+// the default markdown report says how many bytes were read back.
+func TestReport_ReadBackBytesAreSubtractedAndShown(t *testing.T) {
+	whyFixtureEnv(t)
+	path, err := execwrap.EventsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	const id = "0123456789ab"
+	for _, ev := range []execwrap.Event{
+		{TS: now, Harness: "claude-code", RawBytes: 4400, EmittedBytes: 400, Compacted: true, Kept: id},
+		{TS: now, Harness: "claude-code", RawBytes: 2400, EmittedBytes: 400, Compacted: true},
+	} {
+		if err := execwrap.Append(path, ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+	execwrap.RecordRetrieval(id, 1000, time.Now())
+
+	md := runReportOut(t, "--days=0", "--markdown")
+	// 4000 + 2000 saved, 1000 read back: 5000 bytes, 1250 tokens.
+	if !strings.Contains(md, "| claude-code | 1.2k |") && !strings.Contains(md, "| claude-code | 1.3k |") {
+		t.Errorf("markdown does not show the net 1250 tokens:\n%s", md)
+	}
+	if !strings.Contains(md, "Read back with `retrieve`: 1000 bytes") {
+		t.Errorf("markdown does not say how much was read back:\n%s", md)
+	}
+	text := runReportOut(t, "--days=0", "--text")
+	if !strings.Contains(text, "Read back with retrieve: 1000 bytes") {
+		t.Errorf("text report does not say how much was read back:\n%s", text)
+	}
+}

@@ -25,6 +25,12 @@ func failedRunFixture(t *testing.T, dir, name string) string {
 }
 
 // emit is a shell script that prints text exactly, on stdout or on stderr.
+// gap separates two writes to different streams in a fake program. The wrapper
+// reads stdout and stderr from two pipes with two goroutines, so two writes with
+// no gap can reach it in either order on a loaded machine. A real runner's
+// streams are not that tight, and the tests assume the order they were written in.
+const gap = "sleep 0.05\n"
+
 func emit(text string, toStderr bool) string {
 	redirect := ""
 	if toStderr {
@@ -42,7 +48,7 @@ func TestRun_FailedVitestCompactsAndKeepsExitCode(t *testing.T) {
 	want := string(body) + Marker(len(raw), len(body))
 
 	t.Run("report on stderr, as vitest prints it", func(t *testing.T) {
-		fakeBin(t, "vitest", emit(raw[:cut], false)+emit(raw[cut:], true)+"exit 1")
+		fakeBin(t, "vitest", emit(raw[:cut], false)+gap+emit(raw[cut:], true)+"exit 1")
 		r, out, errOut := run(t, []string{"vitest", "run"}, true)
 		if r.ExitCode != 1 || r.ExitClass != ExitClassNonZero || !r.Compacted || r.Passthrough != "" || errOut != "" {
 			t.Fatalf("result=%+v stderr=%q", r, errOut)
@@ -63,7 +69,7 @@ func TestRun_FailedVitestCompactsAndKeepsExitCode(t *testing.T) {
 		}
 	})
 	t.Run("kill switch keeps the run raw", func(t *testing.T) {
-		fakeBin(t, "vitest", emit(raw[:cut], false)+emit(raw[cut:], true)+"exit 1")
+		fakeBin(t, "vitest", emit(raw[:cut], false)+gap+emit(raw[cut:], true)+"exit 1")
 		r, out, errOut := run(t, []string{"vitest", "run"}, false)
 		if r.Compacted || r.ExitCode != 1 || out != raw[:cut] || errOut != raw[cut:] {
 			t.Fatalf("result=%+v", r)
@@ -72,7 +78,7 @@ func TestRun_FailedVitestCompactsAndKeepsExitCode(t *testing.T) {
 	t.Run("a line the grammar does not know is kept, the run still compacts", func(t *testing.T) {
 		odd := strings.Replace(raw, " ✓ test/ok.test.js", "something unexpected\n ✓ test/ok.test.js", 1)
 		oddCut := strings.Index(odd, "⎯⎯⎯⎯⎯⎯⎯ Failed Tests")
-		fakeBin(t, "vitest", emit(odd[:oddCut], false)+emit(odd[oddCut:], true)+"exit 1")
+		fakeBin(t, "vitest", emit(odd[:oddCut], false)+gap+emit(odd[oddCut:], true)+"exit 1")
 		r, out, errOut := run(t, []string{"vitest", "run"}, true)
 		if !r.Compacted || r.ExitCode != 1 || errOut != "" || !strings.Contains(out, "something unexpected\n") {
 			t.Fatalf("result=%+v out=%q", r, out)

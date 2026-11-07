@@ -90,9 +90,7 @@ func TokensByHarness(events []telemetry.Event, execEvents []execwrap.Event, scop
 			h = UnknownHarness
 		}
 		row(h)
-		if ev.RawBytes > ev.EmittedBytes {
-			saved[h] += ev.RawBytes - ev.EmittedBytes
-		}
+		saved[h] += ev.NetSavedBytes()
 	}
 	out := make([]HarnessTokens, 0, len(rows))
 	for h, r := range rows {

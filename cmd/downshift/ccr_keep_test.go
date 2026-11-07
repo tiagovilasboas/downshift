@@ -49,7 +49,9 @@ func ccrTestEnv(t *testing.T) string {
 	return state
 }
 
-func TestCompactKeepsFailedOutputByDefault(t *testing.T) {
+// CCR is on by default, so every compacted run is kept. "ccr": false falls back to
+// keeping only failed runs; "ccr_failures": false and DOWNSHIFT_CCR=0 turn that off.
+func TestCompactKeepsOutputByDefault(t *testing.T) {
 	cases := []struct {
 		name   string
 		fail   bool
@@ -58,11 +60,17 @@ func TestCompactKeepsFailedOutputByDefault(t *testing.T) {
 		wantID bool
 	}{
 		{"failure stored by default", true, nil, "", true},
-		{"success not stored by default", false, nil, "", false},
-		{"success stored when CCR is fully on", false, map[string]string{"DOWNSHIFT_CCR": "1"}, "", true},
-		{"env off switch", true, map[string]string{"DOWNSHIFT_CCR_FAILURES": "0"}, "", false},
-		{"config off switch", true, nil, `{"ccr_failures":false}`, false},
-		{"CCR=0 turns it off", true, map[string]string{"DOWNSHIFT_CCR": "0"}, "", false},
+		{"success stored by default", false, nil, "", true},
+		{"success stored when CCR is forced on", false, map[string]string{"DOWNSHIFT_CCR": "1"}, `{"ccr":false}`, true},
+		{"ccr false keeps failures only: failure", true, nil, `{"ccr":false}`, true},
+		{"ccr false keeps failures only: success", false, nil, `{"ccr":false}`, false},
+		{"failures switch alone does not hide a full-CCR run", true, map[string]string{"DOWNSHIFT_CCR_FAILURES": "0"}, "", true},
+		{"env failures off switch under ccr false", true, map[string]string{"DOWNSHIFT_CCR_FAILURES": "0"}, `{"ccr":false}`, false},
+		{"config failures off switch under ccr false", true, nil, `{"ccr":false,"ccr_failures":false}`, false},
+		{"CCR=0 turns it off: failure", true, map[string]string{"DOWNSHIFT_CCR": "0"}, "", false},
+		{"CCR=0 turns it off: success", false, map[string]string{"DOWNSHIFT_CCR": "0"}, "", false},
+		{"unreadable config keeps failures only: failure", true, nil, `{bad`, true},
+		{"unreadable config keeps failures only: success", false, nil, `{bad`, false},
 		{"exec kill switch stores nothing", true, map[string]string{"DOWNSHIFT_EXEC": "0"}, "", false},
 	}
 	for _, tc := range cases {

@@ -109,9 +109,7 @@ func (a *detailAcc) addRun(ev execwrap.Event) {
 	a.commands++
 	f.Commands++
 	a.rawBytes[fam] += ev.RawBytes
-	if ev.RawBytes > ev.EmittedBytes {
-		a.savedBytes[fam] += ev.RawBytes - ev.EmittedBytes
-	}
+	a.savedBytes[fam] += ev.NetSavedBytes()
 	if ev.Compacted {
 		a.compacted++
 		f.Compacted++

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/ccr"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -63,5 +64,35 @@ func TestRetrieveToolIsReadOnlyAndListed(t *testing.T) {
 	}
 	if err := Validate([]Tool{tl}); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestRetrieveToolRecordsBytesReturned(t *testing.T) {
+	t.Setenv(paths.EnvStateDir, t.TempDir())
+	store, err := ccr.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	id, err := store.Put([]byte("one\ntwo FAIL\nthree\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := runRetrieve([]byte(`{"id":"` + id + `","grep":"FAIL"}`))
+	if res.IsError || res.Text != "two FAIL\n" {
+		t.Fatalf("result = %+v", res)
+	}
+	events, err := execwrap.EventsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := execwrap.ReadRetrievals(events)[id]; got != int64(len("two FAIL\n")) {
+		t.Fatalf("recorded %d bytes for %s, want %d", got, id, len("two FAIL\n"))
+	}
+	// A failed read records nothing.
+	if res := runRetrieve([]byte(`{"id":"000000000000"}`)); !res.IsError {
+		t.Fatalf("unknown id should fail: %+v", res)
+	}
+	if got := len(execwrap.ReadRetrievals(events)); got != 1 {
+		t.Fatalf("failed read recorded: %v", execwrap.ReadRetrievals(events))
 	}
 }

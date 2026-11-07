@@ -52,7 +52,7 @@ func TestRun_NpmTestRunsVitestOrJest(t *testing.T) {
 		raw := scriptRun(t, "npm_vitest_v3_fail.in")
 		body := compressor.CompressFailed([]byte(raw), compressor.FormatVitest).Output
 		cut := strings.Index(raw, "⎯⎯⎯⎯⎯⎯⎯ Failed Tests")
-		fakeBin(t, "npm", emit(raw[:cut], false)+emit(raw[cut:], true)+"exit 1")
+		fakeBin(t, "npm", emit(raw[:cut], false)+gap+emit(raw[cut:], true)+"exit 1")
 		r, out, errOut := run(t, []string{"npm", "test"}, true)
 		if !r.Compacted || r.ExitCode != 1 || errOut != "" || out != string(body)+Marker(len(raw), len(body)) {
 			t.Fatalf("result=%+v stderr=%q out=%q", r, errOut, out)
@@ -66,7 +66,7 @@ func TestRun_NpmTestRunsVitestOrJest(t *testing.T) {
 	t.Run("passing jest on pnpm", func(t *testing.T) {
 		raw := scriptRun(t, "npm_jest_pass.in")
 		cut := strings.Index(raw, "PASS ")
-		fakeBin(t, "pnpm", emit(raw[:cut], false)+emit(raw[cut:], true))
+		fakeBin(t, "pnpm", emit(raw[:cut], false)+gap+emit(raw[cut:], true))
 		r, out, errOut := run(t, []string{"pnpm", "test"}, true)
 		if !r.Compacted || r.ExitCode != 0 || errOut != "" || !strings.HasPrefix(out, "Jest: PASS (214 passed across 30 suites)\n") {
 			t.Fatalf("result=%+v stderr=%q out=%q", r, errOut, out)
@@ -76,7 +76,7 @@ func TestRun_NpmTestRunsVitestOrJest(t *testing.T) {
 		// The failure compressor cuts the six PASS lines and keeps the rest.
 		raw := npmJestBanner + npmJestFailure
 		body := compressor.CompressFailed([]byte(raw), compressor.FormatJest).Output
-		fakeBin(t, "npm", emit(npmJestBanner, false)+emit(npmJestFailure, true)+"exit 1")
+		fakeBin(t, "npm", emit(npmJestBanner, false)+gap+emit(npmJestFailure, true)+"exit 1")
 		r, out, errOut := run(t, []string{"npm", "test"}, true)
 		if !r.Compacted || r.ExitCode != 1 || errOut != "" || out != string(body)+Marker(len(raw), len(body)) {
 			t.Fatalf("result=%+v stderr=%q out=%q", r, errOut, out)
