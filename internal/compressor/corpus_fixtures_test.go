@@ -33,13 +33,10 @@ var rawFixtures = []string{
 	"gotest_pass_with_log_line.txt",
 	"gotest_crlf.txt",
 	"gotest_truncated_last_line.txt",
-	// git status with anything to look at.
-	"gitstatus_untracked.txt",
-	"gitstatus_modified_staged.txt",
+	// git status with unmerged, rebase, detached or non-default shapes.
 	"gitstatus_conflict.txt",
 	"gitstatus_rebase_in_progress.txt",
 	"gitstatus_detached_dirty.txt",
-	"gitstatus_ansi.txt",
 	"gitstatus_porcelain_v2.txt",
 	"gitstatus_short.txt",
 	// D1: repeated lines must not trigger log dedup on a failing run.
@@ -109,6 +106,9 @@ var cleanFixtures = []cleanFixture{
 	{"gotest_pass_mixed_no_test_files.txt", []string{"PASS", "6 packages ok", "3 without tests", "cmd/dsmon-server", "internal/adapt", "80.5%", "internal/session", "internal/testrace"}},
 	{"gitstatus_clean_uptodate.txt", []string{"On branch main", "working tree clean"}},
 	{"gitstatus_clean_no_upstream.txt", []string{"On branch feature/rate-limit", "working tree clean"}},
+	{"gitstatus_modified_staged.txt", []string{"On branch feature/rate-limit", "ahead of 'origin/feature/rate-limit' by 1 commit", "Changes to be committed:", "modified:   internal/httpx/limit.go", "new file:   internal/httpx/limit_test.go", "Changes not staged for commit:", "deleted:    internal/httpx/old.go"}},
+	{"gitstatus_untracked.txt", []string{"On branch main", "Untracked files:", "notes/todo.txt", "scratch.go"}},
+	{"gitstatus_ansi.txt", []string{"On branch main", "Untracked files:", "scratch.go"}},
 	{"pytest_pass_clean.txt", []string{"25 passed"}},
 	{"vitest_pass_clean.txt", []string{"25 passed"}},
 	// Real vitest 5 bytes: colour codes, skipped and todo counts, a skipped file.
