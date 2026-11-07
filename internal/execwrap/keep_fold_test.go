@@ -52,6 +52,8 @@ func TestKeepUncompacted_Refuses(t *testing.T) {
 		{"wrote stderr", func([]byte) (string, bool) { return "0123456789ab", true }, raw, 0, FamilyGoTest, true},
 		{"not compactible", func([]byte) (string, bool) { return "0123456789ab", true }, raw, 0, Family("none"), false},
 		{"nothing to fold", func([]byte) (string, bool) { return "0123456789ab", true }, []byte("a\nb\n"), 0, FamilyGoTest, false},
+		{"find under 100 lines preserved", storeOK(new([][]byte)), []byte("a/1.md\na/2.md\n"), 0, FamilyFind, false},
+		{"ls under 100 lines preserved", storeOK(new([][]byte)), []byte("file1.go\nfile2.go\n"), 0, FamilyLs, false},
 		{"store refused", func([]byte) (string, bool) { return "", false }, raw, 0, FamilyGoTest, false},
 		{"store panics", func([]byte) (string, bool) { panic("boom") }, raw, 0, FamilyGoTest, false},
 	}

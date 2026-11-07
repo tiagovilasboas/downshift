@@ -34,6 +34,9 @@ func TestFoldRepeats(t *testing.T) {
 		{"warning inside run keeps it", strings.Join(seqLines("step %d warning ok", 1, 10), "\n") + "\n", false, foldNoRun, ""},
 		{"secret in run keeps it", strings.Join(seqLines("load token_%d done", 1, 10), "\n") + "\n", false, foldNoRun, ""},
 		{"different words break run", strings.Join(append(seqLines("alpha %d", 1, 4), seqLines("beta %d", 1, 4)...), "\n"), false, foldNoRun, ""},
+		{"40 distinct file paths stay unfolded", strings.Join(seqLines("docs/fixtures/case%02d.md", 1, 40), "\n") + "\n", false, foldNoRun, ""},
+		{"80 distinct file paths fold keeping 20 head and 10 tail", strings.Join(seqLines("docs/fixtures/case%03d.md", 1, 80), "\n") + "\n", true, "similar lines folded",
+			strings.Join(seqLines("docs/fixtures/case%03d.md", 1, 20), "\n") + "\n[... 50 similar lines folded]\n" + strings.Join(seqLines("docs/fixtures/case%03d.md", 71, 80), "\n") + "\n"},
 		{"empty input", "", false, foldNoRun, ""},
 		{"short run is not shorter", strings.Join(seqLines("a%d", 1, 8), "\n"), false, genericNoGain, ""},
 	}

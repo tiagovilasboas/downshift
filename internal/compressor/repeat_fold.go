@@ -17,10 +17,18 @@ import (
 // between them. A run with any line that carries a danger word or a secret is
 // left whole. This is lossy by design: callers use it only when the raw output
 // is stored elsewhere (CCR) and can be retrieved.
+//
+// File paths: when a run consists of distinct file paths (e.g. from find or ls),
+// folding down to 5 lines starves agents of needed paths. Such runs require at
+// least foldPathMinRun lines to fold, and retain foldPathKeepHead and
+// foldPathKeepTail lines instead of 3 and 2.
 const (
-	foldMinRun   = 8
-	foldKeepHead = 3
-	foldKeepTail = 2
+	foldMinRun       = 8
+	foldKeepHead     = 3
+	foldKeepTail     = 2
+	foldPathMinRun   = 60
+	foldPathKeepHead = 20
+	foldPathKeepTail = 10
 )
 
 var reDigitRun = regexp.MustCompile(`[0-9]+`)
@@ -33,6 +41,44 @@ func lineShape(line string) string { return reDigitRun.ReplaceAllString(line, "#
 // foldLineUnsafe reports whether a line must never be folded away.
 func foldLineUnsafe(line string) bool {
 	return genericHasDanger(line) || reGitDiffSecret.MatchString(line)
+}
+
+// isFilePathLine reports whether a line looks like a file path or filename.
+func isFilePathLine(s string) bool {
+	if s == "" || strings.Contains(s, " ... ") || strings.Contains(s, ":") {
+		return false
+	}
+	if strings.Contains(s, " ") || strings.Contains(s, "\t") {
+		return false
+	}
+	if strings.Contains(s, "/") || strings.Contains(s, "\\") {
+		return true
+	}
+	if i := strings.LastIndexByte(s, '.'); i > 0 && i < len(s)-1 {
+		ext := s[i+1:]
+		if len(ext) >= 1 && len(ext) <= 6 {
+			return true
+		}
+	}
+	return false
+}
+
+// isFilePathRun reports whether run is a sequence of distinct file path lines.
+func isFilePathRun(run []string) bool {
+	if len(run) == 0 {
+		return false
+	}
+	seen := make(map[string]struct{}, len(run))
+	for _, l := range run {
+		if !isFilePathLine(l) {
+			return false
+		}
+		if _, exists := seen[l]; exists {
+			return false
+		}
+		seen[l] = struct{}{}
+	}
+	return true
 }
 
 // FoldRepeats folds runs of similarly shaped lines (see the constants above).
@@ -50,10 +96,19 @@ func FoldRepeats(input []byte) Result {
 				j++
 			}
 		}
-		if j-i >= foldMinRun && !runUnsafe(lines[i:j]) {
-			out = append(out, lines[i:i+foldKeepHead]...)
-			out = append(out, fmt.Sprintf("[... %d similar lines folded]", j-i-foldKeepHead-foldKeepTail))
-			out = append(out, lines[j-foldKeepTail:j]...)
+		run := lines[i:j]
+		minRun := foldMinRun
+		head := foldKeepHead
+		tail := foldKeepTail
+		if isFilePathRun(run) {
+			minRun = foldPathMinRun
+			head = foldPathKeepHead
+			tail = foldPathKeepTail
+		}
+		if j-i >= minRun && j-i > head+tail && !runUnsafe(run) {
+			out = append(out, lines[i:i+head]...)
+			out = append(out, fmt.Sprintf("[... %d similar lines folded]", j-i-head-tail))
+			out = append(out, lines[j-tail:j]...)
 			folded = true
 		} else {
 			out = append(out, lines[i:j]...)

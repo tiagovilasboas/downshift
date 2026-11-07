@@ -23,9 +23,14 @@ var (
 	reGoFailedSignal = regexp.MustCompile(`(?m)^(?:\s*--- FAIL:|FAIL(?:\s|$)|\s*panic:|fatal error:|WARNING: DATA RACE)|\[(?:build|setup) failed\]`)
 	// reGoFailedJSON is a `go test -json` event line.
 	reGoFailedJSON = regexp.MustCompile(`(?m)^\{"`)
+	// reGoStdlibFunc matches stack frame function names originating in stdlib runtime or testing.
+	reGoStdlibFunc = regexp.MustCompile(`^(?:testing\.|runtime\.|created by (?:testing|runtime)\.)`)
+	// reGoStdlibPath matches stack frame source paths originating in stdlib runtime or testing.
+	reGoStdlibPath = regexp.MustCompile(`^\t.*(?:/src/testing/|/src/runtime/|/testing/testing\.go:|/runtime/panic\.go:|/runtime/[a-zA-Z0-9_]+\.(?:go|s):)`)
 )
 
-// compactFailedGoTest drops passing noise and prepends one summary line.
+// compactFailedGoTest drops passing noise, folds internal stdlib panic frames,
+// and prepends one summary line (or omits it if the header eliminates the gain).
 func compactFailedGoTest(input string) (string, bool) {
 	lines := strings.Split(strings.TrimSuffix(input, "\n"), "\n")
 
@@ -69,25 +74,68 @@ func compactFailedGoTest(input string) (string, bool) {
 		}
 		kept = append(kept, l)
 	}
+
+	kept = FoldGoStdlibFrames(kept)
+
 	if okPkgs == 0 && passedTests == 0 && len(kept) == len(lines) {
 		return "", false
 	}
 
 	var parts []string
 	if okPkgs > 0 {
-		parts = append(parts, fmt.Sprintf("ok: %d packages", okPkgs))
+		if okPkgs == 1 {
+			parts = append(parts, "ok: 1 pkg")
+		} else {
+			parts = append(parts, fmt.Sprintf("ok: %d pkgs", okPkgs))
+		}
 	}
 	if passedTests > 0 {
-		parts = append(parts, fmt.Sprintf("%d passing tests cut", passedTests))
+		if passedTests == 1 {
+			parts = append(parts, "1 passing test cut")
+		} else {
+			parts = append(parts, fmt.Sprintf("%d passing tests cut", passedTests))
+		}
 	}
-	var b strings.Builder
+
+	header := ""
 	if len(parts) > 0 {
-		b.WriteString("Go test: " + strings.Join(parts, ", ") + " (failures kept verbatim)\n")
+		header = "Go test: " + strings.Join(parts, ", ") + "\n"
 	}
-	for _, l := range kept {
-		b.WriteString(l + "\n")
+
+	body := strings.Join(kept, "\n") + "\n"
+	full := header + body
+	if len(full) < len(input) {
+		return full, true
 	}
-	return b.String(), true
+	if header != "" && len(body) < len(input) {
+		return body, true
+	}
+	return "", false
+}
+
+// isGoStdlibFrame reports whether the two-line stack frame belongs to Go internal testing or runtime packages.
+func isGoStdlibFrame(fnLine, pathLine string) bool {
+	return strings.HasPrefix(pathLine, "\t") &&
+		reGoStdlibFunc.MatchString(fnLine) &&
+		reGoStdlibPath.MatchString(pathLine)
+}
+
+// FoldGoStdlibFrames collapses contiguous internal stdlib panic frames into a single fold marker.
+func FoldGoStdlibFrames(lines []string) []string {
+	var out []string
+	n := len(lines)
+	for i := 0; i < n; {
+		if i+1 < n && isGoStdlibFrame(lines[i], lines[i+1]) {
+			for i+1 < n && isGoStdlibFrame(lines[i], lines[i+1]) {
+				i += 2
+			}
+			out = append(out, "\t... [internal frames folded] ...")
+			continue
+		}
+		out = append(out, lines[i])
+		i++
+	}
+	return out
 }
 
 // isIndentedLog reports whether line is output indented deeper than indent

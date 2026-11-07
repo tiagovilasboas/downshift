@@ -23,7 +23,7 @@ const failedGoTestDir = "testdata/failed_go_test"
 var passingNoise = regexp.MustCompile(`^(?:ok\s|\s*--- PASS:)`)
 
 // keepLines are the lines that must survive byte for byte and in order.
-var keepLines = regexp.MustCompile(`^(?:\s*--- FAIL:|FAIL|\s*panic:|# |WARNING: DATA RACE|internal/|goroutine |\s+\S+_test\.go:\d+:|\s+testing\.go:|\s+/|exit status|=+$)|\[build failed\]|^\t`)
+var keepLines = regexp.MustCompile(`^(?:\s*--- FAIL:|FAIL|\s*panic:|# |WARNING: DATA RACE|internal/|goroutine |\s+\S+_test\.go:\d+:|\s+/|exit status|=+$)|\[build failed\]|^\t`)
 
 func TestCompressFailedGoTestGolden(t *testing.T) {
 	ins, err := filepath.Glob(filepath.Join(failedGoTestDir, "*.in"))
@@ -90,6 +90,7 @@ func assertFailureLinesSurvive(t *testing.T, in, out []byte) {
 		}
 		want = append(want, l)
 	}
+	want = compressor.FoldGoStdlibFrames(want)
 	if strings.Join(want, "\n") != strings.Join(outLines, "\n") {
 		t.Fatalf("non-noise lines differ\n got: %q\nwant: %q", outLines, want)
 	}
@@ -103,10 +104,78 @@ func TestCompressFailedGoTestKeepsEveryFailureBlock(t *testing.T) {
 		}
 		out := compressor.CompressFailed(in, compressor.FormatGoTest).Output
 		for _, l := range strings.Split(string(in), "\n") {
+			if strings.Contains(l, "/src/testing/testing.go") || strings.Contains(l, "testing.tRunner") || strings.Contains(l, "testing.(*M)") || strings.Contains(l, "testing.(*T)") {
+				continue
+			}
 			if keepLines.MatchString(l) && !strings.Contains(string(out), l+"\n") {
 				t.Errorf("%s: lost failure line %q", n, l)
 			}
 		}
+	}
+}
+
+func TestCompressFailedGoTestBenchmarkMultiPackagePanic(t *testing.T) {
+	raw := "ok  \tfixfail/okpkg\t0.864s\n" +
+		"--- FAIL: TestMulTwoByThree (0.00s)\n" +
+		"    f_test.go:7: Mul(2,3) = 5, want 6\n" +
+		"--- FAIL: TestMulFourByFive (0.00s)\n" +
+		"    f_test.go:13: Mul(4,5) = 9, want 20\n" +
+		"--- FAIL: TestMulZero (0.00s)\n" +
+		"    f_test.go:19: zero case broken\n" +
+		"FAIL\n" +
+		"FAIL\tfixfail/failpkg\t0.002s\n" +
+		"--- FAIL: TestIdxOutOfRange (0.00s)\n" +
+		"panic: runtime error: index out of range [7] with length 3 [recovered]\n" +
+		"\tpanic: runtime error: index out of range [7] with length 3\n" +
+		"\n" +
+		"goroutine 6 [running]:\n" +
+		"testing.tRunner.func1.2({0x100d04860, 0x140000a6048})\n" +
+		"\t/opt/homebrew/Cellar/go/1.22.4/libexec/src/testing/testing.go:1631 +0x1c4\n" +
+		"testing.tRunner.func1({0x100d3d578, 0x140000880e0})\n" +
+		"\t/opt/homebrew/Cellar/go/1.22.4/libexec/src/testing/testing.go:1634 +0x334\n" +
+		"runtime.gopanic({0x100d04860?, 0x140000a6048?})\n" +
+		"\t/opt/homebrew/Cellar/go/1.22.4/libexec/src/runtime/panic.go:770 +0x124\n" +
+		"runtime.goPanicIndex(0x7, 0x3)\n" +
+		"\t/opt/homebrew/Cellar/go/1.22.4/libexec/src/runtime/panic.go:114 +0x5c\n" +
+		"fixfail/panicpkg.Idx(...)\n" +
+		"\t/Users/tiago.boas/project/gofail/panicpkg/p.go:3\n" +
+		"fixfail/panicpkg.TestIdxOutOfRange(0x140000880e0)\n" +
+		"\t/Users/tiago.boas/project/gofail/panicpkg/p_test.go:6 +0x40\n" +
+		"testing.tRunner(0x140000880e0, 0x100d33e00)\n" +
+		"\t/opt/homebrew/Cellar/go/1.22.4/libexec/src/testing/testing.go:1689 +0xf4\n" +
+		"created by testing.(*T).Run in goroutine 1\n" +
+		"\t/opt/homebrew/Cellar/go/1.22.4/libexec/src/testing/testing.go:1742 +0x318\n" +
+		"FAIL\tfixfail/panicpkg\t0.002s\n" +
+		"FAIL\n"
+
+	r := compressor.CompressFailed([]byte(raw), compressor.FormatGoTest)
+	if !r.Applied {
+		t.Fatalf("expected applied=true, reason=%q", r.Reason)
+	}
+	out := string(r.Output)
+
+	// All 15 facts must survive in the output:
+	facts := []string{
+		"failpkg", "panicpkg", "TestMulTwoByThree", "TestMulFourByFive", "TestMulZero",
+		"TestIdxOutOfRange", "Mul(2,3) = 5, want 6", "Mul(4,5) = 9, want 20",
+		"zero case broken", "index out of range [7] with length 3",
+		"f_test.go:7", "f_test.go:13", "f_test.go:19", "p.go:3", "p_test.go:6",
+	}
+	for _, f := range facts {
+		if !strings.Contains(out, f) {
+			t.Errorf("missing fact %q in output:\n%s", f, out)
+		}
+	}
+
+	// Must contain short header:
+	if !strings.HasPrefix(out, "Go test: ok: 1 pkg\n") {
+		t.Errorf("expected header 'Go test: ok: 1 pkg', got: %q", strings.Split(out, "\n")[0])
+	}
+
+	// Must achieve substantial reduction (>40%):
+	reduction := float64(len(raw)-len(r.Output)) / float64(len(raw))
+	if reduction < 0.40 {
+		t.Errorf("expected at least 40%% reduction, got %.1f%% (%d -> %d)", reduction*100, len(raw), len(r.Output))
 	}
 }
 

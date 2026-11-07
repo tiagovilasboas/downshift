@@ -69,6 +69,7 @@ func foldStored(text []byte) []byte {
 // replays the raw output, when the run failed, wrote to stderr, has nothing
 // to fold or could not be stored. A panic in Keep counts as false. A file read
 // is never folded this way: its lines are the file's, not a log's repeats.
+// File listings under 100 lines (find, ls) are also preserved without folding.
 func keepUncompacted(keep func(raw []byte) (string, bool), raw []byte, exitCode int, family Family, wroteStderr bool) (res []byte, ok bool) {
 	defer func() {
 		if recover() != nil {
@@ -76,6 +77,9 @@ func keepUncompacted(keep func(raw []byte) (string, bool), raw []byte, exitCode 
 		}
 	}()
 	if keep == nil || exitCode != 0 || wroteStderr || !compactibleFamily(family) || family == FamilyFileRead {
+		return nil, false
+	}
+	if (family == FamilyFind || family == FamilyLs) && bytes.Count(raw, []byte("\n")) <= 100 {
 		return nil, false
 	}
 	summary := foldStored(raw)
