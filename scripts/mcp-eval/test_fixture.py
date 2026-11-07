@@ -13,6 +13,12 @@ spec.loader.exec_module(fixture)
 
 
 class FixtureTest(unittest.TestCase):
+    def test_native_case_provider_offers_configured_model(self):
+        server = fixture.Fixture("C01", "test-model")
+        result, failed = server.call("providers", {"harness": "codex"})
+        self.assertFalse(failed)
+        self.assertEqual(result["models"][0]["id"], "test-model")
+
     def test_worker_lifecycle_and_ack(self):
         server = fixture.Fixture("C03")
         data, error = server.call("delegate", {"mode": "read", "tasks": ["alpha", "beta"]})

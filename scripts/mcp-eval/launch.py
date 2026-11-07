@@ -32,16 +32,19 @@ def main():
         output = args.output.resolve()
         with tempfile.TemporaryDirectory(prefix='downshift-mcp-eval-') as work:
             pathlib.Path(work, 'answer.txt').write_text('ready')
+            pathlib.Path(work, 'fixture_api.py').write_text('def public_entry():\n    return "ready"\n\ndef _private_helper():\n    return None\n')
             instruction_bytes, fixture_bytes = instructions.read_bytes(), fixture.read_bytes()
             instruction_snapshot = pathlib.Path(work, 'instructions.txt')
             fixture_snapshot = pathlib.Path(work, 'fixture.py')
             instruction_snapshot.write_bytes(instruction_bytes)
             fixture_snapshot.write_bytes(fixture_bytes)
-            fixture_args = [str(fixture_snapshot), '--case', args.case, '--instructions', str(instruction_snapshot), '--log', str(output / 'calls.jsonl')]
+            fixture_args = [str(fixture_snapshot), '--case', args.case, '--model', args.model, '--instructions', str(instruction_snapshot), '--log', str(output / 'calls.jsonl')]
             cmd = ['codex', 'exec', '--ignore-user-config', '--ephemeral', '--skip-git-repo-check',
                    '--sandbox', 'workspace-write', '--add-dir', str(output), '--json', '-C', work, '-m', args.model,
                    '-c', 'mcp_servers.downshift.command="python3"',
                    '-c', 'mcp_servers.downshift.args=' + json.dumps(fixture_args), case['prompt']]
+            if args.case in {'C01', 'C02'}:
+                cmd[2:2] = ['--enable', 'multi_agent']
             started = time.monotonic()
             with (output / 'events.jsonl').open('w', encoding='utf-8') as events, (output / 'stderr.log').open('w', encoding='utf-8') as errors:
                 result = subprocess.run(cmd, stdout=events, stderr=errors, timeout=args.timeout)
