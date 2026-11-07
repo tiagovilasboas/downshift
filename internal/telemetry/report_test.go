@@ -170,7 +170,7 @@ func TestBuildReport_OldBaselineLinesAreReadAndExcluded(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")
 	body := strings.Join([]string{
 		line("b1", `,"reason_codes":["CONTROL"]`, 30), // the old control group
-		line("b2", ``, 20), // the old no-route switch
+		line("b2", ``, 20),                            // the old no-route switch
 		routed,
 	}, "\n") + "\n"
 	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
