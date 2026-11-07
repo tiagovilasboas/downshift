@@ -12,7 +12,7 @@ import (
 
 // Composer (PHP) install/update output compressor.
 // Strips verbose download progress, keeps only the summary.
-// RTK-style: "✓ composer: installed 45 packages in 12.3s"
+// Summary shape: "✓ composer: installed 45 packages in 12.3s"
 
 var (
 	// Composer summary patterns

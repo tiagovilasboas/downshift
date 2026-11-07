@@ -14,7 +14,7 @@ import (
 // pip prints one "Collecting", "Downloading" and "Using cached" line per
 // dependency, plus a multi-line "Installing collected packages" block. LLMs
 // only need the final result.
-// RTK parity: installed packages only, progress stripped.
+// Installed packages only, progress stripped.
 
 var (
 	// "Successfully installed flask-3.0.0 jinja2-3.1.2 werkzeug-3.0.1"

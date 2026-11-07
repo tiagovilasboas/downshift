@@ -813,7 +813,7 @@ tool. What the harness then does is a harness fact, and only one is measured.
 
 | Harness | Downshift hooks tagged as rewriters | Which rewrite runs when two hooks answer | Evidence |
 |---|---|---|---|
-| claude-code | `Agent\|Task` (model), `Bash` (shell) | Not merged, not guaranteed by the documentation; measured on 2.1.319: the hook that returns last, not the first in the file. A permission `allow` from either hook still applies | [hook coexistence](../evidence/hook-coexistence-2026-11-06.md) |
+| claude-code | `Agent\|Task` (model), `Bash` (shell) | Not merged, not guaranteed by the documentation; measured on 2.1.319: the hook that returns last, not the first in the file. A permission `allow` from either hook still applies | [hook coexistence](../evidence/hook-coexistence-2026-11-07.md) |
 | cursor | `Task` (model), `Shell` (shell) | not measured | none |
 | codex | `(^Agent$\|.*spawn_agent$)` (model), `^Bash$` (shell) | not measured | none |
 | antigravity | `invoke_subagent` (model), `run_command` (shell) | not measured | none |

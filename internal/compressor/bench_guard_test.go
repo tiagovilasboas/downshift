@@ -5,8 +5,8 @@ package compressor_test
 
 // Per-family floor over the bench corpus. The committed table
 // testdata/bench/baseline.tsv holds integers only: family, fixtures, raw bytes,
-// reduced bytes. TestBenchGuard compares a fresh run (rtk off, CCR column
-// ignored) against it; `make bench-baseline` rewrites it. See
+// reduced bytes. TestBenchGuard compares a fresh run (CCR column ignored)
+// against it; `make bench-baseline` rewrites it. See
 // docs/contrib/bench-baseline.md.
 
 import (

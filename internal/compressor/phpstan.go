@@ -12,7 +12,7 @@ import (
 
 // PHPStan and Psalm static analysis output compressor.
 // Groups errors by file, similar to eslint/ruff pattern.
-// RTK-style: "file.php: 3 errors (Rule1, Rule2)"
+// Summary shape: "file.php: 3 errors (Rule1, Rule2)"
 
 var (
 	// PHPStan patterns (default table format)

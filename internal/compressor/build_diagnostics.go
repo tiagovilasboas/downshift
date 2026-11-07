@@ -64,7 +64,7 @@ func (b *buildDiagnostics) fileCount() int {
 	return n
 }
 
-// render produces the RTK build format: a summary header with the total
+// render produces the build summary format: a summary header with the total
 // error/warning counts, then one block per file with the diagnostics it
 // carries, in first-seen order.
 //
@@ -73,7 +73,7 @@ func (b *buildDiagnostics) fileCount() int {
 //	  error[E0308]: mismatched types
 //	  warning: unused variable: `x`
 //
-// The leading "[ ]" marks a non-passing build at a glance, mirroring RTK.
+// The leading "[ ]" marks a non-passing build at a glance.
 func (b *buildDiagnostics) render(tool string) []byte {
 	totalErr, totalWarn := 0, 0
 	for _, f := range b.order {

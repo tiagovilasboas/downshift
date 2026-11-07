@@ -52,10 +52,10 @@ check` on its own. A task that touches the binary fills
 | A1 | Recognise large `go test -v` and `go test -json` output; keep every FAIL, panic and the summary | 3 | 2.7 MB unrecognised in 9 runs |
 | A2 | Recognise `npm test` / `pnpm test` / `yarn test` when they wrap jest or vitest (script banner, workspace prefixes) | 3 | 1.9 MB unrecognised |
 | A3 | Failure summary for `make` and test runners: the failing target, the first error block and the exit line, nothing cut from a failure | 3 | 2.3 MB of failures passed raw |
-| A4 | File-read family: `cat`, `head`, `tail`, `sed -n 'a,bp'`, `wc -l` on source files, with a mode for long files (outline: signatures and line numbers, full text kept for small files) | 5 | RTK `read`/`smart`; reading is the largest share of context |
-| A5 | Search breadth: `rg` and `grep -r` without `-n`, `--files`, `-l`, `-c`; grouped by file with per-file and total caps | 3 | RTK grep grouping |
+| A4 | File-read family: `cat`, `head`, `tail`, `sed -n 'a,bp'`, `wc -l` on source files, with a mode for long files (outline: signatures and line numbers, full text kept for small files) | 5 | reading is the largest share of context |
+| A5 | Search breadth: `rg` and `grep -r` without `-n`, `--files`, `-l`, `-c`; grouped by file with per-file and total caps | 3 | wide search output is unrecognised today |
 | A6 | Simple pipes and chains: `cmd \| tail -n N`, `cmd \| head`, `cmd \| grep x`, `cd dir && cmd`, `a && b` where every part is allowlisted | 5 | 5,191 metacharacter skips; needs a security review |
-| A7 | Keep the full output of a compacted failure by default (CCR on failure only), with `downshift retrieve` | 3 | RTK tee/recall; CCR off by default today |
+| A7 | Keep the full output of a compacted failure by default (CCR on failure only), with `downshift retrieve` | 3 | CCR off by default today |
 
 ### B. Prove the value
 
@@ -110,6 +110,6 @@ At most three PRs open at once. A wave's PRs merge before the next wave opens ne
 
 ## Out of scope
 
-- An API-traffic proxy (RTK's `rtk-proxy`): Downshift stays hook-shaped.
+- An API-traffic proxy: Downshift stays hook-shaped.
 - A desktop workspace (Alethe's app): Downshift has the panel mod and the TUI.
 - Any money figure: savings stay in tokens per harness.

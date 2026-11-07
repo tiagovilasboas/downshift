@@ -11,8 +11,8 @@ and every hook fails open. Two pillars, in this order:
 1. Model choice per subagent. The orchestrator (the session's LLM) chooses the
    model and effort of each spawn; a PreToolUse hook applies that choice within
    your declared policy.json and measures the result. Downshift adds no LLM
-   call of its own; when it cannot read the request, the session's model stays. About 1 in 10 spawns stay
-   unrouted as a control group. Implemented. Harness status: Claude Code
+   call of its own; when it cannot read the request, the session's model stays. Every spawn is routed
+   (the control group was removed on 2026-11-02). Implemented. Harness status: Claude Code
    Completed (rewrite observed honored), Codex and Cursor Functional, OpenCode
    Beta, Antigravity and KiroCrew Experimental (docs/reference/harness-matrix.md).
 2. The Compactor (downshift compact). Shorter output from allowlisted commands:
@@ -45,8 +45,8 @@ The suite (one sentence each; status words from docs/reference/capability-matrix
     without credit; stale after 1 h. Implemented, not validated everywhere.
   - Session view and statusline: downshift session --tree, /downshift, watch,
     stderr line per spawn; statusline Claude Code only. Implemented.
-  - Telemetry and token reports with a control group: prompt-free events.jsonl,
-    ~1 in 10 spawns unrouted, downshift stats / report. Implemented; estimates.
+  - Telemetry and token reports: prompt-free events.jsonl, downshift stats /
+    report. Implemented; estimates.
   - Context policy: setup sets opusplan, plan mode, You should know for unset
     keys (Claude Code only); native compressor observes bytes. Implemented, limited.
   - Companions: a compression proxy (detected and recorded),
