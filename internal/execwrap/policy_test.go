@@ -144,7 +144,7 @@ func TestDecide(t *testing.T) {
 		{"kubectl get pods", "kubectl get pods", true, FamilyKubectlGet, "'/opt/ds/downshift' compact -- kubectl get pods", ReasonAllowlisted},
 		{"kubectl get all", "kubectl get all -n voomp-creators-back", true, FamilyKubectlGet, "'/opt/ds/downshift' compact -- kubectl get all -n voomp-creators-back", ReasonAllowlisted},
 		{"kubectl describe pod", "kubectl describe pod my-pod", true, FamilyKubectlDescribe, "'/opt/ds/downshift' compact -- kubectl describe pod my-pod", ReasonAllowlisted},
-		{"kubectl logs", "kubectl logs my-pod -f", true, FamilyKubectlLogs, "'/opt/ds/downshift' compact -- kubectl logs my-pod -f", ReasonAllowlisted},
+		{"kubectl logs", "kubectl logs my-pod --tail=50", true, FamilyKubectlLogs, "'/opt/ds/downshift' compact -- kubectl logs my-pod --tail=50", ReasonAllowlisted},
 		{"kubectl delete not allowed", "kubectl delete pod my-pod", false, "", "", ReasonNotAllowlisted},
 		{"kubectl apply not allowed", "kubectl apply -f deploy.yaml", false, "", "", ReasonNotAllowlisted},
 
@@ -169,7 +169,7 @@ func TestDecide(t *testing.T) {
 		{"aws s3 ls", "aws s3 ls", true, FamilyAwsS3Ls, "'/opt/ds/downshift' compact -- aws s3 ls", ReasonAllowlisted},
 		{"aws s3 ls bucket", "aws s3 ls s3://my-bucket/", true, FamilyAwsS3Ls, "'/opt/ds/downshift' compact -- aws s3 ls s3://my-bucket/", ReasonAllowlisted},
 		{"aws s3 cp", "aws s3 cp s3://bucket/file.txt .", true, FamilyAwsS3Cp, "'/opt/ds/downshift' compact -- aws s3 cp s3://bucket/file.txt .", ReasonAllowlisted},
-		{"aws logs tail", "aws logs tail /aws/lambda/my-fn --follow", true, FamilyAwsLogs, "'/opt/ds/downshift' compact -- aws logs tail /aws/lambda/my-fn --follow", ReasonAllowlisted},
+		{"aws logs tail", "aws logs tail /aws/lambda/my-fn --since 1h", true, FamilyAwsLogs, "'/opt/ds/downshift' compact -- aws logs tail /aws/lambda/my-fn --since 1h", ReasonAllowlisted},
 		{"aws ecs list-clusters", "aws ecs list-clusters", true, FamilyAwsList, "'/opt/ds/downshift' compact -- aws ecs list-clusters", ReasonAllowlisted},
 		{"aws lambda get-function", "aws lambda get-function --function-name my-fn", true, FamilyAwsGet, "'/opt/ds/downshift' compact -- aws lambda get-function --function-name my-fn", ReasonAllowlisted},
 		{"aws ec2 terminate-instances not allowed", "aws ec2 terminate-instances --instance-ids i-123", false, "", "", ReasonNotAllowlisted},
@@ -178,7 +178,7 @@ func TestDecide(t *testing.T) {
 		// Docker (safe commands only)
 		{"docker ps", "docker ps", true, FamilyDockerPS, "'/opt/ds/downshift' compact -- docker ps", ReasonAllowlisted},
 		{"docker ps all", "docker ps -a", true, FamilyDockerPS, "'/opt/ds/downshift' compact -- docker ps -a", ReasonAllowlisted},
-		{"docker logs", "docker logs my-container -f", true, FamilyDockerLogs, "'/opt/ds/downshift' compact -- docker logs my-container -f", ReasonAllowlisted},
+		{"docker logs", "docker logs my-container --tail 50", true, FamilyDockerLogs, "'/opt/ds/downshift' compact -- docker logs my-container --tail 50", ReasonAllowlisted},
 		{"docker images", "docker images", true, FamilyDockerImages, "'/opt/ds/downshift' compact -- docker images", ReasonAllowlisted},
 		{"docker build", "docker build -t myapp .", true, FamilyDockerBuild, "'/opt/ds/downshift' compact -- docker build -t myapp .", ReasonAllowlisted},
 		{"docker rm not allowed", "docker rm my-container", false, "", "", ReasonNotAllowlisted},

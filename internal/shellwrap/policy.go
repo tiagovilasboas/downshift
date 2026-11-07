@@ -57,15 +57,17 @@ func (a AdviseResult) Denied() (bool, string) { return true, a.Message }
 // ReasonNotReadOnly is the skip code for a command left unwrapped because it
 // is not one read-only command on a harness whose rewrite answer approves the
 // command or whose user rules cannot be read
-// (core.HarnessCapabilities.RewriteImpliesApproval, UnknownUserRules).
+// (core.HarnessCapabilities.RewriteImpliesApproval, UnknownUserRules), or in a
+// permission mode where the harness runs the call without asking
+// (PromptReporter).
 const ReasonNotReadOnly = "not_read_only"
 
 // limitToReadOnly keeps a rewrite decision only for one read-only command
-// when the harness would approve the rewritten command or cannot show
-// Downshift the user's deny/ask rules; any other command then reaches the
-// harness's own prompt and rules as written.
-func limitToReadOnly(caps core.HarnessCapabilities, d execwrap.Decision, command string) execwrap.Decision {
-	if d.Rewrite && (caps.RewriteImpliesApproval || caps.UnknownUserRules) && !execwrap.ReadOnly(command) {
+// when limit is set: the harness would approve the rewritten command, cannot
+// show Downshift the user's deny/ask rules, or will not prompt the user. Any
+// other command then reaches the harness's own prompt and rules as written.
+func limitToReadOnly(limit bool, d execwrap.Decision, command string) execwrap.Decision {
+	if d.Rewrite && limit && !execwrap.ReadOnly(command) {
 		return execwrap.Decision{Family: d.Family, Reason: ReasonNotReadOnly}
 	}
 	return d
@@ -121,7 +123,9 @@ func handleRewrite(caps core.HarnessCapabilities, rw RewriteAdapter, sessionTag 
 		return Result{}
 	}
 	d := decide(caps.ShellDialect, command, rw.ShellBlocked, caps.CanRewriteShellCommand)
-	d = limitToReadOnly(caps, refuseQuotedUnderQuotedRules(rw, d), command)
+	d = refuseBackground(rw, refuseQuotedUnderQuotedRules(rw, d))
+	limit := caps.RewriteImpliesApproval || caps.UnknownUserRules || promptsSuppressed(rw)
+	d = limitToReadOnly(limit, d, command)
 	if !d.Rewrite {
 		return skipped(d, command)
 	}
@@ -142,6 +146,7 @@ func handleAdvise(caps core.HarnessCapabilities, ad AdviseAdapter, sessionTag st
 		return Result{}
 	}
 	d := refuseQuotedUnderQuotedRules(ad, decide(caps.ShellDialect, command, ad.ShellBlocked, caps.CanAdviseShellWrap))
+	d = limitToReadOnly(promptsSuppressed(ad), refuseBackground(ad, d), command)
 	if !d.Rewrite {
 		return skipped(d, command)
 	}
