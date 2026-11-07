@@ -75,7 +75,7 @@ O Downshift foi projetado segundo a regra de camadas arquiteturais: a inteligên
 | **Antigravity** | Execução direta via `downshift compact` | Suporte a rotas e subagentes locais | **Functional** | `downshift setup antigravity` |
 | **KiroCrew** | Execução direta via `downshift compact` | Modo de política (allow/block, sem reescrita in-place) | **Experimental** | `downshift setup kirocrew` |
 
-> **Nota:** A compactação direta (`downshift compact -- <comando>`) funciona de maneira universal em **qualquer terminal e harness** (suportado ou não), pois opera como um comando shell padrão independente de hooks.
+> **Nota:** Claude Code e OpenCode reescrevem comandos permitidos para sua forma compactada de forma automática (via hooks nativos `PreToolUse` e bridge plugin). Em outros ambientes, a compactação opera por reescrita via hooks, políticas de orientação/advise (como o código de saída 2 no KiroCrew) ou execução direta via `downshift compact -- <comando>` (universal em qualquer terminal). Detalhes por harness: [Matriz de Harnesses](../reference/harness-matrix.md) e [Reconciliação de Evidências](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
 
 ---
 
@@ -86,13 +86,20 @@ Os ganhos do Downshift são medidos em bytes e contagens de tokens em um corpus 
 | Métrica Avaliada | Resultado Obtido | Significado Técnico |
 |---|---|---|
 | **Corpus Geral (CCR desligado)** | **51.1%** de economia em bytes | Redução sem compactação agressiva de repetições |
-| **Corpus Geral (CCR ativado)** | **72.0%** de economia em bytes | **Padrão atual:** máxima redução com recuperação integral |
-| **Suítes Lossless (Testes)** | **65.2%** de economia em bytes | Preserva 100% de erros e stack traces da aplicação |
+| **Corpus Geral (CCR ativado)** | **72.0%** de economia em bytes | **Padrão atual:** máxima redução com recuperação integral via `downshift retrieve` |
+| **Suítes Lossless (Testes)** | **65.2%** de economia em bytes | Preserva 100% de erros, falhas e stack traces da aplicação |
 | **Picos de Redução** | **80% a 95%** de economia | *Progress* (94.5%), `cargo test` (93.0%), `flutter test` (92.3%), *lockfile diff* (91.2%), `npm install` (89.1%), `pytest` (86.7%), `playwright` (81.6%), `turbo` (79.6%), `tsc` (78.4%), `vitest` (74.3%) |
 
 Em test runners *lossless*, o compilador e o framework de testes continuam gerando suas mensagens de falha completas: o Downshift corta apenas as linhas repetidas de testes que passaram com sucesso (`PASS`, `ok`), evidenciando imediatamente as falhas.
 
-Consulte a análise técnica aprofundada na [Referência de Benchmarks](referencia/benchmarks.md).
+### Resultados Empíricos de Roteamento e Uso Real
+
+Além do corpus de compactação, testes controlados mediram o impacto de roteamento e uso combinado:
+- **Roteamento de Subagentes (Claude Code):** Em bateria controlada de 46 execuções em tarefas mecânicas delegadas ([bateria de quatro braços](../evidence/four-arm-mechanical-2026-10-21.md)), o roteamento sob `opusplan` nativo alcançou **24.1% menos tokens por tarefa aceita** (IC 95% +2.1% a +46.7%) e 16.5% por execução (+0.6% a +29.7%), com 100% (12/12) de aceitação. Mais de 98% dos tokens foram leituras de prompt cache.
+- **Roteamento e Compactação Combinados (KiroCrew):** Em sessão real direcional avaliando 6 tarefas de controle, a combinação de política de roteamento com compactação via shell advise alcançou **até ~53% menos tokens por tarefa** ([reconciliação](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)).
+- **Uso Cotidiano:** A economia no uso cotidiano natural e não restrito ainda **não está estabelecida** (telemetria de 30 dias registrou variação de −1.9%, dentro da margem de ruído). O Downshift segue uma [Escada de Evidências](../guides/evidence.md) e reporta contagens de tokens, bytes e retrabalho, nunca faturas em dólares.
+
+Consulte a análise técnica aprofundada na [Referência de Benchmarks](referencia/benchmarks.md) e na [Reconciliação de Evidências](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
 
 ---
 

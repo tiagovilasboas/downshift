@@ -308,30 +308,34 @@ the [Harness matrix](docs/reference/harness-matrix.md):
 | **Antigravity** | `downshift compact` run by the agent | One observed child on one build | Experimental | `downshift setup antigravity` |
 | **KiroCrew** | `downshift compact` run by the agent | Policy mode (allow/block, no rewrite) | Experimental | `downshift setup kirocrew` |
 
-Only Claude Code rewrites a command into its compact form automatically; on every other harness the compact
-command works when the agent runs it directly. KiroCrew's preToolUse hook only supports allow/block
-decisions, so routing there is policy mode, and the ACP provider exposes no token counts. Details per
-harness: [Harness matrix](docs/reference/harness-matrix.md) · [Capability matrix](docs/reference/capability-matrix.md) ·
-[Session models](docs/reference/session-models.md) · [KiroCrew guide](docs/guides/kirocrew-routing-guide.md)
+Claude Code and OpenCode rewrite allowlisted commands into their compact form automatically (via native
+PreToolUse hooks and bridge plugin); on other harnesses, compaction operates through hook-based command
+rewriting, advise policies (such as KiroCrew's exit-2 advise), or direct execution via `downshift compact`.
+KiroCrew's preToolUse hook only supports allow/block decisions, so routing there is policy mode, and the ACP
+provider exposes no token counts. Details per harness: [Harness matrix](docs/reference/harness-matrix.md) ·
+[Capability matrix](docs/reference/capability-matrix.md) · [Session models](docs/reference/session-models.md) ·
+[KiroCrew guide](docs/guides/kirocrew-routing-guide.md) · [Reconciliation](docs/evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)
 
 ---
 
 ## Token savings
 
-Measured in bytes (not LLM tokens) on the synthetic corpus across supported command families (see [benchmark report](docs/reference/bench.md)):
+Compaction is measured in bytes (not LLM tokens) on the synthetic corpus across supported command families (see [benchmark report](docs/reference/bench.md)):
 
 | Metric | Value |
 |--------|-------|
 | Compacted fixtures across families | 107 fixtures |
-| Lossless runs | 65.2% fewer bytes |
+| Lossless runs | 65.2% fewer bytes (preserves 100% of failure lines and exit codes) |
 | Best cases | 90–95% fewer bytes (progress 94.5%, cargo test 93.0%, flutter test 92.3%, lockfile diff 91.2%, npm install 89.1%, pytest 86.7%, cypress 83.2%, playwright 81.6%, turbo 79.6%, rspec 79.5%, tsc 78.4%, vitest 74.3%) |
 | Overall corpus (CCR off) | 51.1% fewer bytes |
 | Overall corpus (CCR on) | 72.0% fewer bytes |
 
-With CCR (Command Context Recovery) enabled, the full raw output is stored on disk and recoverable anytime via `downshift retrieve <id>`. Your savings depend on your command mix; failures and edge cases pass through unchanged by design. Run
-`downshift stats` for your real numbers. Savings on everyday use are not established yet. Downshift follows
-an [Evidence Ladder](docs/guides/evidence.md) (bytes measured, token estimate, routed-spawn report, your
-invoice) and shows byte counts and percentages, not dollar figures.
+With CCR (Command Context Recovery) enabled, the full raw output is stored on disk and recoverable anytime via `downshift retrieve <id>`.
+
+Empirical live trials evaluated subagent routing and compaction:
+- **Subagent Routing (Claude Code):** In a controlled 46-run trial on mechanical delegated tasks ([four-arm battery](docs/evidence/four-arm-mechanical-2026-10-21.md)), routing subagents under native `opusplan` achieved **24.1% fewer tokens per accepted run** (95% CI +2.1% to +46.7%) and 16.5% fewer tokens per run (+0.6% to +29.7%), with 12/12 accepted. Prompt cache reads represented >98% of total tokens.
+- **Combined Routing & Compaction (KiroCrew):** In a real-use directional trial across 6 control tasks, combining native policy routing with shell advice compaction achieved **up to ~53% fewer tokens per task** ([reconciliation](docs/evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)).
+- **Everyday Baseline:** Savings on unconstrained, natural everyday use are not established yet (30-day telemetry normalized delta −1.9%, within noise). Downshift follows an [Evidence Ladder](docs/guides/evidence.md) and reports token counts, bytes, and rework, not dollar invoices.
 
 ---
 

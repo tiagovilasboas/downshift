@@ -333,5 +333,6 @@ flowchart LR
 - [Subagent routing A/B results (2026-10-15)](subagent-routing-ab-2026-10-15.md)
 - [Four-arm mechanical battery (2026-10-21)](four-arm-mechanical-2026-10-21.md)
 - [Delegation boundaries and coordination overhead (2026-11-07)](delegation-boundaries-and-overhead-2026-11-07.md)
+- [Benchmark RouteLLM and coding-agent routers against Downshift (2026-11-07)](router-comparison-routellm-2026-11-07.md)
 - [Runtime and evidence task queue](../internal/gap-tasks.md)
 - [Published classifier & outcome metrics](../benchmark/report.md)

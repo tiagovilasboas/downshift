@@ -201,6 +201,13 @@ func renderBench(rows []benchRow) string {
 	for _, r := range []benchRow{lossless, lossy} {
 		fmt.Fprintf(&b, "| %s | %d | %d | %d | %.1f |\n", r.family, r.files, r.raw, r.reduced, r.saving())
 	}
+	b.WriteString("\n## Relationship to live token savings\n\n")
+	b.WriteString("The figures above measure raw byte reduction across a synthetic test corpus of 107 CLI command outputs.\n\n")
+	b.WriteString("- In live LLM sessions, compaction cuts verbose command outputs before they enter the prompt context, directly saving input tokens and subsequent prompt cache reads.\n")
+	b.WriteString("- When evaluated with CCR enabled, overall corpus reduction reaches **72.0% fewer bytes** (and **51.1%** with CCR disabled).\n")
+	b.WriteString("- Lossless test runners achieve **65.2% reduction** while preserving 100% of failure details, exit codes, and application stack traces.\n")
+	b.WriteString("- Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.\n")
+	b.WriteString("- Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).\n")
 	return b.String()
 }
 
