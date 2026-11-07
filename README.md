@@ -417,6 +417,7 @@ below your session model and the bytes compaction removed, per harness; how a pl
 
 **Beta** ([v0.11.2](docs/releases/v0.11.2.md); changes since are under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md)). Not yet stable:
 the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
+What does not work yet, harness by harness: [Known limitations](docs/reference/known-limitations.md).
 
 ## License
 
