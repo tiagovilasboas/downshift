@@ -5,7 +5,7 @@ import { expect, test } from 'claude-code/testing'
 
 import type { Agent } from '../../../types'
 import { spawnSettled, spawnStarted, toolUsed, turnCompleted } from './roster'
-import { STALE_AFTER_MS, sweepStale } from './stale'
+import { GONE_AFTER_MS, STALE_AFTER_MS, isLive, sweepStale } from './stale'
 
 const spawn = (toolUseId: string, now = 0) => ({ toolUseId, label: toolUseId, type: 'general-purpose', now })
 const done = (agentId: string, now: number) => ({ agentId, turnId: `u-${agentId}`, reason: 'answer' as const, now })
@@ -50,4 +50,22 @@ test('with two open provisional entries an unknown id is not linked, and the swe
   list = turnCompleted(list, done('ag9', 6))
   expect(list.map(a => a.id)).toEqual(['tool:t1', 'tool:t2', 'ag9'])
   expect(running(sweepStale(list, STALE_AFTER_MS + 10))).toBe(0)
+})
+
+test('a stale agent leaves the active view once it has been silent past GONE_AFTER_MS', () => {
+  const stale = sweepStale(spawnSettled(spawnStarted([], spawn('t1')), 't1', 'a1', undefined), STALE_AFTER_MS + 1)
+  const agent = stale[0]!
+  expect(agent.status).toBe('stale')
+  const touched = agent.touchedAt ?? agent.startedAt
+  expect(isLive(agent, touched + GONE_AFTER_MS)).toBe(true)
+  expect(isLive(agent, touched + GONE_AFTER_MS + 1)).toBe(false)
+  // nothing is deleted: the entry is still in the list
+  expect(stale.map(a => a.id)).toEqual(['a1'])
+})
+
+test('a running or finished agent is judged by status, not by silence', () => {
+  const running = spawnSettled(spawnStarted([], spawn('t1')), 't1', 'a1', undefined)[0]!
+  expect(isLive(running, 10 * GONE_AFTER_MS)).toBe(true)
+  const done1 = turnCompleted([running], done('a1', 5))[0]!
+  expect(isLive(done1, 6)).toBe(false)
 })

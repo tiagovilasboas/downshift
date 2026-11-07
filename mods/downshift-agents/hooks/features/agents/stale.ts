@@ -19,3 +19,14 @@ export function sweepStale(list: readonly Agent[], now: number, staleAfterMs = S
 
 /** Whether any agent is still running, so the sweep has something to watch. */
 export const hasRunning = (list: readonly Agent[]): boolean => list.some(a => a.status === 'running')
+
+/**
+ * A stale agent silent this long is no longer shown as active: no end will
+ * come for it (an interrupted session, a spawn never named). It stays in the
+ * full list, so nothing is deleted, but the active view stops carrying it.
+ */
+export const GONE_AFTER_MS = 600_000
+
+/** Running, or stale but heard from recently enough to still be waited on. */
+export const isLive = (a: Agent, now: number, goneAfterMs = GONE_AFTER_MS): boolean =>
+  a.status === 'running' || (a.status === 'stale' && now - (a.touchedAt ?? a.startedAt) <= goneAfterMs)

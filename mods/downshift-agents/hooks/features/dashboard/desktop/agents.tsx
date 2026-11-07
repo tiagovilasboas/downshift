@@ -5,6 +5,7 @@
 // (bot, name, the model as far as the evidence goes, status chip, elapsed
 // time) with one dim rule between rows. No progress share per agent: the engine reports none.
 
+import { isLive } from '../../agents/stale'
 import type { Agent, DownshiftSnapshot } from '../../../../types'
 import { modelClaim, orchestratorOf, spawnOf, taskOf, visibleAgents } from '../../metrics/normalize'
 import { ACCENT, MUTED, elapsed, modelName } from '../../../shared/ui/format'
@@ -26,10 +27,10 @@ type Input = { agents: readonly Agent[]; snapshot: DownshiftSnapshot; filter: 'a
 export function agentsPanel(ui: GraphicUi, input: Input) {
   const { Text } = ui
   const all = visibleAgents(input.agents)
-  const shown = input.filter === 'active' ? all.filter(a => a.status === 'running' || a.status === 'stale') : all
+  const shown = input.filter === 'active' ? all.filter(a => isLive(a, input.now)) : all
   const rows = treeRows(shown)
   const active = all.filter(a => a.status === 'running').length
-  const stale = all.filter(a => a.status === 'stale').length
+  const stale = all.filter(a => a.status === 'stale' && isLive(a, input.now)).length
   const empty = input.filter === 'active' && all.length > 0 ? 'No agent running now.' : 'None yet in this session.'
 
   return panel(ui, { title: 'SUBAGENTS', color: ACCENT, summary: `${active} active${stale > 0 ? ` · ${stale} stale` : ''} · ${all.length} total`, icon: icon('agents', 'green') }, [

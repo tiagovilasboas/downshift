@@ -85,7 +85,7 @@ test('the desktop band draws a logo and a task bar as Svg beside the same figure
   expect(meter?.props.width).toBe(64)
   expect(meter?.props.height).toBe(12)
 
-  for (const text of [/Downshift Agents/, /Tasks 1\/2/, /50%/, /Agents 0\/0 active/, /Compact ~14\.4k\*/]) {
+  for (const text of [/Downshift Agents/, /Tasks 1\/2/, /50%/, /Agents 0 active/, /Compact ~14\.4k\*/]) {
     expect(await ui.find({ type: 'Text', text })).toBeDefined()
   }
   expect(await ui.find({ type: 'Text', text: /━/ })).toBeUndefined()
