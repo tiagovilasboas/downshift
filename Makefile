@@ -112,7 +112,7 @@ build-all:
 report:
 	go run ./cmd/downshift eval-outcome --report
 
-## bench: token-savings benchmark over the compressor corpus; rewrites docs/reference/bench.md (DOWNSHIFT_BENCH_RTK=1 adds rtk columns)
+## bench: token-savings benchmark over the compressor corpus; rewrites docs/reference/bench.md
 bench:
 	@DOWNSHIFT_BENCH_WRITE=1 go test -count=1 -run TestBenchReport -v ./internal/compressor
 

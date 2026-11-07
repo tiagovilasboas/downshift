@@ -151,7 +151,7 @@ func TestBenchGuard(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, msg := range compareBaseline(base, guardRows(benchCorpus(t, false))) {
+	for _, msg := range compareBaseline(base, guardRows(benchCorpus(t))) {
 		t.Error(msg)
 	}
 }
@@ -161,7 +161,7 @@ func TestBenchBaselineWrite(t *testing.T) {
 	if os.Getenv("DOWNSHIFT_BENCH_BASELINE") == "" {
 		t.Skip("set DOWNSHIFT_BENCH_BASELINE=1 (make bench-baseline)")
 	}
-	text := formatBaseline(guardRows(benchCorpus(t, false)))
+	text := formatBaseline(guardRows(benchCorpus(t)))
 	if err := os.WriteFile(baselinePath, []byte(text), 0o644); err != nil {
 		t.Fatal(err)
 	}
