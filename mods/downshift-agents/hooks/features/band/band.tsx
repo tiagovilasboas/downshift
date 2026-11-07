@@ -51,7 +51,8 @@ export function bandSegments(
     segment('tasks', 40, tasksParts(tasks, columns >= 90 ? 8 : 5)),
     segment('agents', 60, [
       { text: 'Agents ' },
-      { text: `${agents.active}/${agents.total}`, color: agents.active > 0 ? ACCENT : undefined, bold: true },
+      // running now only: the session total lives in the pane, where it is labelled
+      { text: `${agents.active}`, color: agents.active > 0 ? ACCENT : undefined, bold: true },
       { text: ' active' },
       ...(agents.failed > 0 ? [{ text: ` · ${agents.failed} failed`, color: FAIL }] : []),
     ]),
