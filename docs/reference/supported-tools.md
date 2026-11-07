@@ -107,7 +107,7 @@ pass through unchanged.
 |------|----------|
 | TypeScript | `tsc` |
 | Next.js | `next build` |
-| Vite | `vite build`, `vite preview` |
+| Vite | `vite build` (`vite preview` serves until stopped and is never wrapped) |
 | Turbo | `turbo run` |
 | npm | `npm test`, `npm run build` |
 | pnpm | `pnpm test`, `pnpm run build` |

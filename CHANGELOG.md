@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Release signing now uses a cosign bundle (`checksums.txt.sigstore.json`), because cosign v3 refused the detached `.sig`/`.pem` flags and the v0.9.0 release never published. Release notes: [docs/releases/v0.9.1.md](docs/releases/v0.9.1.md).
 
+### Security
+
+- Claude Code: in `bypassPermissions` or `dontAsk` mode Claude Code runs a shell call without asking, so its deny rules are the only guard. A rule Downshift cannot read (`--disallowedTools`, Agent SDK `disallowedTools`, `--settings <file>`, server-managed policy, MDM) did not match the wrapped command, and a denied command such as `gh pr merge` could run. In those modes, and in any mode Downshift does not know, the shell rewrite is now limited to one read-only command (`git status`, `gh pr view` and the like); everything else runs as typed and meets Claude Code's rules unchanged.
+- Background and never-ending commands: the compactor shows output only when the command exits, so a background call or a follow, watch or server command showed nothing while it ran and lost its output if killed. A Bash call with `run_in_background` set is no longer wrapped, and these forms are left as typed: `docker logs -f`, `kubectl logs -f`, `journalctl -f`, `aws logs tail --follow`, `logcli query --tail`, `jest --watch`/`--watchAll`, `vitest watch`/`dev`/`--watch`, `tsc --watch`, `vite preview` and `flutter run`. Their one-shot forms are still compacted.
+
 ## [0.9.0] - 2026-11-06
 
 First public beta, tagged but not published (its release job failed at signing). The repository starts a fresh history at this release. The notes live in [docs/releases/v0.9.1.md](docs/releases/v0.9.1.md).
