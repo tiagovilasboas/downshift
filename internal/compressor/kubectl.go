@@ -10,7 +10,7 @@ import (
 )
 
 // Kubectl output compressor.
-// kubectl get pods produces wide tables; RTK keeps only NAME, STATUS, RESTARTS.
+// kubectl get pods produces wide tables; keep only NAME, STATUS, RESTARTS.
 // kubectl logs can be deduplicated for repeated entries.
 
 var (

@@ -4,7 +4,7 @@
 > Repositório oficial: https://github.com/tiagovilasboas/downshift  
 > Licença: Apache 2.0 · CLI: `downshift` · Go 1.27
 
-O **Downshift** é uma ferramenta de otimização de contexto e delegação inteligente de modelos para agentes de codificação baseados em IA (como Claude Code, Codex, Cursor, OpenCode, Antigravity e KiroCrew). Ele atua diretamente na camada de infraestrutura de execução, reduzindo drasticamente o consumo desnecessário de tokens e garantindo que cada tarefa seja executada pelo modelo adequado dentro dos limites que você declarar.
+O **Downshift** é uma ferramenta de otimização de contexto e delegação inteligente de modelos para agentes de codificação baseados em IA (como Claude Code, Codex, Cursor, OpenCode, Antigravity e KiroCrew). Ele ataca as duas coisas que mais gastam tokens e limite de uso no Claude Code: subagentes que herdam o seu modelo mais caro e saída longa de teste e build que fica no contexto. Ele atua diretamente na camada de infraestrutura de execução, reduzindo drasticamente o consumo desnecessário de tokens e garantindo que cada tarefa seja executada pelo modelo adequado dentro dos limites que você declarar.
 
 Toda a lógica do Downshift roda localmente em código determinístico Go de altíssimo desempenho: **o código do Downshift nunca faz chamadas a LLMs, não grava prompts ou códigos em disco para telemetria, não envia dados para a rede e opera em modo *fail-open* (em caso de dúvida ou erro, a execução original é sempre preservada sem bloqueios).**
 
@@ -22,6 +22,7 @@ Toda a lógica do Downshift roda localmente em código determinístico Go de alt
 - [Comandos Essenciais do CLI](#comandos-essenciais-do-cli)
 - [Navegação da Documentação PT-BR](#navegação-da-documentação-pt-br)
 - [Segurança, Privacidade e Governança](#segurança-privacidade-e-governança)
+- [Perguntas Frequentes](#perguntas-frequentes)
 
 ---
 
@@ -214,3 +215,15 @@ Para aprofundar seu conhecimento em cada área do Downshift, explore os guias e 
 - **Privacidade de Prompts e Código:** O Downshift nunca salva textos de prompts, arquivos do repositório ou parâmetros confidenciais em sua telemetria. O arquivo `events.jsonl` armazena apenas contagens, hashes e tempos.
 - **Sanitização Heurística no CCR:** O buffer de CCR filtra ativamente linhas com padrões de credenciais, chaves de API, tokens JWT e blocos PEM. O armazenamento é local, com permissões restritas (0600/0700) e expiração automática em 24 horas.
 - **Sem Portas dos Fundos ou LLMs Ocultos:** Toda decisão é tomada por código Go estático e determinístico inspecionável em código aberto.
+
+---
+
+## Perguntas Frequentes
+
+**Os subagentes do Claude Code gastam o limite de uso mais rápido?** Podem gastar. A documentação de subagentes da Anthropic diz que cada subagente começa com um contexto novo e faz requisições próprias, que contam para os mesmos limites de uso da conversa principal, e roda no modelo principal se nada definir outro. O agente embutido Explore também roda no modelo principal. Coloque subagentes rotineiros num modelo menor; o `downshift policy init` oferece um perfil `explore` que manda o Explore para o tier pequeno e mostra antes em qual modelo isso resolve. [Guia](https://downshift-ai.vercel.app/pt-br/guias/subagentes-gastam-limite-claude-code/).
+
+**Qual a diferença para `CLAUDE_CODE_SUBAGENT_MODEL`?** Essa variável define um modelo padrão para todo subagente que nada mais define, e sozinha não muda os agentes embutidos Explore e Plan. O Downshift aplica o modelo escolhido em cada chamada, dentro de uma política que você declara, mantém o modelo pedido na dúvida, registra onde os tokens rodaram e também funciona no Codex, Cursor e OpenCode.
+
+**O Downshift economiza o limite do meu plano no Claude Code?** Ainda não foi medido. O Downshift mostra, por harness, os tokens que rodaram abaixo do modelo da sessão e os bytes que a compactação tirou; como um plano converte tokens nos limites de 5 horas e semanal não é publicado, então nenhuma economia de limite é prometida.
+
+Mais guias em português: [https://downshift-ai.vercel.app/pt-br/guias/](https://downshift-ai.vercel.app/pt-br/guias/).

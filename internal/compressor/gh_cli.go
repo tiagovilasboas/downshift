@@ -11,7 +11,7 @@ import (
 
 // GitHub CLI (gh) output compressors.
 //
-// RTK principle: keep the facts an agent decides on (PR title, state, check
+// Principle: keep the facts an agent decides on (PR title, state, check
 // pass/fail, failing-check names), drop presentation. In a non-TTY pipe — the
 // only way downshift's compactor sees a subprocess — gh already emits
 // line-based plain text, so there is rarely a literal box to remove; but if a
@@ -104,7 +104,7 @@ func compressGhPrView(input []byte) ([]byte, bool, string) {
 // A trailing summary line may read "N/M checks passing" or similar.
 var (
 	reGhCheckRow = regexp.MustCompile(`^([^\t]+)\t(pass|fail|pending|skipping|cancel|successful|failing)\t`)
-	// Terminal states that mean an agent must look (RTK highlights these).
+	// Terminal states that mean an agent must look.
 	ghCheckFailureStates = map[string]bool{"fail": true, "failing": true, "cancel": true}
 )
 
