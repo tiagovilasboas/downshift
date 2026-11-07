@@ -36,7 +36,7 @@ func TestRun_FailedCargoTestCompactsMergedStreams(t *testing.T) {
 		t.Fatal("fixture has no test report")
 	}
 	report = "\nrunning 24 tests" + report
-	fakeBin(t, "cargo", emit(status, true)+emit(report, false)+"exit 101")
+	fakeBin(t, "cargo", emit(status, true)+gap+emit(report, false)+"exit 101")
 	r, out, errOut := run(t, []string{"cargo", "test"}, true)
 	if r.ExitCode != 101 || r.ExitClass != ExitClassNonZero || !r.Compacted || errOut != "" || out != want {
 		t.Fatalf("result=%+v stdout=%q stderr=%q", r, out, errOut)
