@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `install.sh` now replaces the downshift already on PATH (a regular file in a writable directory, such as `~/go/bin` after `go install`) instead of installing a second copy in `/usr/local/bin` or `~/.local/bin`, where one copy shadowed the other. A linked copy is left alone, and `DOWNSHIFT_INSTALL_DIR` still wins.
+
 ### Changed
 
 - `downshift doctor`'s `hook overlap` check names only cheap-subagents, for the subagent model. Any other hook on the same tool is counted under `--verbose`, as before, and the shell half of the check stays in place for a recognised shell rewriter. The guide section and the evidence page on hook coexistence no longer name a shell-rewriting product; the raw run files of 2026-11-06 are removed.
