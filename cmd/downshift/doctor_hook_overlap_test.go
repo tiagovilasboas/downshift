@@ -14,6 +14,11 @@ import (
 // overlapRows runs the real wiring match and the overlap check on a hook file,
 // the way checkHarness does, and returns the rows it added.
 func overlapRows(t *testing.T, harness, file string, verbose, viaPlugin bool) []bridgeRow {
+	return overlapRowsExec(t, harness, file, verbose, viaPlugin, true)
+}
+
+// overlapRowsExec is overlapRows with the compact wrapper on or off.
+func overlapRowsExec(t *testing.T, harness, file string, verbose, viaPlugin, execOn bool) []bridgeRow {
 	t.Helper()
 	w, ok := doctorWiringFor(harness)
 	if !ok {
@@ -25,8 +30,28 @@ func overlapRows(t *testing.T, harness, file string, verbose, viaPlugin bool) []
 	}
 	var rows []bridgeRow
 	add := func(id, status, detail, fix string) { rows = append(rows, bridgeRow{id, status, detail, fix}) }
-	checkHookOverlap(add, verbose, w, "SETTINGS", raw, viaPlugin)
+	checkHookOverlap(add, verbose, w, "SETTINGS", raw, viaPlugin, execOn)
 	return rows
+}
+
+// With the compact wrapper off, Downshift rewrites no shell command, so a shell
+// rewriter beside it is no longer reported; a model rewriter still is.
+func TestHookOverlapShellSilentWhenExecOff(t *testing.T) {
+	rtk := group("Bash", "bash /home/u/.claude/hooks/rtk-rewrite.sh")
+	cheap := group("Agent", "/usr/local/bin/python3", "/home/u/cheap-subagents/cheap_subagents.py")
+	file := pre(dsAgent, dsBash, rtk, cheap)
+	var names []string
+	for _, r := range overlapRowsExec(t, "claude-code", file, false, false, false) {
+		if r.status == doctorWarn {
+			names = append(names, strings.SplitN(r.detail, " also rewrites", 2)[0])
+		}
+	}
+	if len(names) != 1 || names[0] != "cheap-subagents" {
+		t.Fatalf("exec off: warnings = %v, want only cheap-subagents", names)
+	}
+	if on := overlapRowsExec(t, "claude-code", file, false, false, true); len(on) != 2 {
+		t.Fatalf("exec on: %d warning(s), want 2 (RTK and cheap-subagents): %+v", len(on), on)
+	}
 }
 
 // Settings fixtures, nested shape (matcher group holding commands).

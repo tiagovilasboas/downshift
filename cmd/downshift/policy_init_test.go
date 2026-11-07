@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -62,6 +63,9 @@ func TestPlanPolicyInit(t *testing.T) {
 }
 
 func TestPolicyInitCommand(t *testing.T) {
+	// In a clean home only Claude Code resolves a small model (the catalog
+	// stand-in), so the default file carries that one profile.
+	exploreBody, _ := setup.PolicyInitDocumentFor([]setup.SmallTarget{{Harness: "claude-code", Model: "x", Source: "catalog-fallback"}}, false)
 	tests := []struct {
 		name       string
 		args       []string
@@ -74,8 +78,9 @@ func TestPolicyInitCommand(t *testing.T) {
 	}{
 		{name: "dry run writes nothing", args: []string{"--dry-run"}, wantRC: 0, wantOutHas: "Dry run: nothing was written."},
 		{name: "declined question writes nothing", input: "n\n", wantRC: 1},
-		{name: "yes writes the file", args: []string{"--yes"}, wantRC: 0, wantFile: true, wantBody: setup.PolicyInitDocument},
-		{name: "answering y writes the file", input: "y\n", wantRC: 0, wantFile: true, wantBody: setup.PolicyInitDocument},
+		{name: "yes writes the file", args: []string{"--yes"}, wantRC: 0, wantFile: true, wantBody: exploreBody, wantOutHas: "profile \"explore\""},
+		{name: "answering y writes the file", input: "y\n", wantRC: 0, wantFile: true, wantBody: exploreBody},
+		{name: "bare writes only the version", args: []string{"--yes", "--bare"}, wantRC: 0, wantFile: true, wantBody: setup.PolicyInitDocument},
 		{name: "existing file is left untouched", args: []string{"--yes"}, existing: `{"version":1,"min_tier":"mid"}`, wantRC: 0, wantFile: true, wantBody: `{"version":1,"min_tier":"mid"}`, wantOutHas: "left untouched"},
 		{name: "unknown argument is a usage error", args: []string{"--bogus"}, wantRC: 2},
 	}
@@ -124,8 +129,65 @@ func TestPolicyInitFileIsAValidPolicy(t *testing.T) {
 	if !strings.Contains(out.String(), "project file: "+policy.ProjectPath(project)) {
 		t.Errorf("check did not find the new file: %q", out.String())
 	}
-	if !strings.Contains(out.String(), "policy ok: 0 profiles, 0 rules") {
-		t.Errorf("new file is not an empty routing policy: %q", out.String())
+	if !strings.Contains(out.String(), "policy ok: 1 profiles, 0 rules") {
+		t.Errorf("new file does not carry the one explore profile: %q", out.String())
+	}
+}
+
+// The planner writes one explore profile per harness with a small model, says
+// what each resolves to, and leaves out (with a note) a harness with no list.
+func TestPlanPolicyInitExploreProfile(t *testing.T) {
+	resolved := setup.SmallTarget{Harness: "claude-code", Model: "claude-haiku-4-5", Native: "haiku", Source: "catalog-fallback"}
+	unresolved := setup.SmallTarget{Harness: "cursor"}
+	cases := []struct {
+		name         string
+		targets      []setup.SmallTarget
+		bare         bool
+		wantProfiles int
+		wantNotes    []string
+	}{
+		{"no targets", nil, false, 0, nil},
+		{"one resolved, one not", []setup.SmallTarget{unresolved, resolved}, false, 1,
+			[]string{"claude-code: profile \"explore\"", `claude-haiku-4-5 (written as "haiku")`, "catalog-fallback", "cursor: no detected model list", "downshift models discover --harness cursor"}},
+		{"bare keeps the version only", []setup.SmallTarget{resolved}, true, 0, nil},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			p, ok := setup.PlanPolicyInit(setup.Options{Home: t.TempDir(), ProjectDir: t.TempDir(), SmallTargets: c.targets, BarePolicy: c.bare})
+			if !ok || p.Err != nil || p.Skip != "" {
+				t.Fatalf("plan ok=%v err=%v skip=%q", ok, p.Err, p.Skip)
+			}
+			var doc struct {
+				Version int `json:"version"`
+				Routing *struct {
+					Profiles []struct{ Name, Tier, Harness, Description string } `json:"profiles"`
+				} `json:"routing"`
+			}
+			if err := json.Unmarshal(p.After, &doc); err != nil || doc.Version != 1 {
+				t.Fatalf("file is not a version-1 policy: %v\n%s", err, p.After)
+			}
+			got := 0
+			if doc.Routing != nil {
+				got = len(doc.Routing.Profiles)
+				for _, pr := range doc.Routing.Profiles {
+					if pr.Name != setup.ExploreProfile || pr.Tier != "small" || pr.Harness != "claude-code" || pr.Description == "" {
+						t.Errorf("profile = %+v", pr)
+					}
+				}
+			}
+			if got != c.wantProfiles {
+				t.Fatalf("%d profile(s), want %d:\n%s", got, c.wantProfiles, p.After)
+			}
+			if c.wantProfiles == 0 && string(p.After) != setup.PolicyInitDocument {
+				t.Errorf("no profile should give the bare document, got %s", p.After)
+			}
+			notes := strings.Join(p.Notes, "\n")
+			for _, w := range c.wantNotes {
+				if !strings.Contains(notes, w) {
+					t.Errorf("notes lack %q:\n%s", w, notes)
+				}
+			}
+		})
 	}
 }
 

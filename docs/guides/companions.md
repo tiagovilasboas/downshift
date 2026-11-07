@@ -508,10 +508,12 @@ in `context-optimization.json` (`DOWNSHIFT_EXEC=0`) so Downshift stops rewriting
 job. A hook that only observes, logs or blocks does not conflict: when hooks disagree on a permission,
 `deny` wins over `defer`, `ask` and `allow`.
 
-`downshift doctor` warns (`hook conflict`) when a known rewriter (RTK, cheap-subagents) is registered in the
-harness's hook file on the same event and tool as a Downshift hook that rewrites. It knows those two
-products only, reads the user hook file only (not a project file, a plugin or managed policy), and was
-observed on Claude Code only. Downshift still never installs, wraps or configures a companion.
+`downshift doctor` warns (`hook overlap`) when a recognised rewriter (RTK, cheap-subagents) is registered in
+the harness's hook file on the same event and tool as a Downshift hook that rewrites the same field. With
+the compact wrapper off (`"exec": false` or `DOWNSHIFT_EXEC=0`) Downshift rewrites no shell command, so a
+shell rewriter beside it is not reported; a model rewriter still is. The check knows those two products only,
+reads the user hook file only (not a project file, a plugin or managed policy), and was observed on Claude
+Code only. Downshift still never installs, wraps or configures a companion.
 
 ## Related
 

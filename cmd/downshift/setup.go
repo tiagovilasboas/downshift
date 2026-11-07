@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/models"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/setup"
 )
@@ -56,6 +58,9 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	}
 	if cwd, err := os.Getwd(); err == nil && !flags.noPolicy {
 		opts.ProjectDir = cwd
+		if md, ok := any(catalog.Load()).(models.Metadata); ok {
+			opts.SmallTargets = resolveSmallTargets(md)
+		}
 	}
 	if !flags.keepBinaries {
 		opts.BinDirs = setup.DefaultBinDirs(home)

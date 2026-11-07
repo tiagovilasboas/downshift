@@ -62,6 +62,16 @@ type Options struct {
 	// ProjectDir is the project whose .downshift/policy.json setup offers to
 	// create. Empty skips that step.
 	ProjectDir string
+	// SmallTargets is, per harness that can rewrite a subagent's model, the
+	// small-tier model the hook would write today, resolved by the CLI from the
+	// detected model list (never from the catalog alone, except where the
+	// harness declares that fallback). An entry with an empty Model has no
+	// list, so no profile is written for it and the plan says what to run.
+	// Nil or empty keeps the bare policy file (BarePolicy).
+	SmallTargets []SmallTarget
+	// BarePolicy writes the policy file with no routing section even when
+	// SmallTargets resolve (`policy init --bare`).
+	BarePolicy bool
 	// BinDirs are the directories searched for other downshift executables that
 	// setup offers to remove. Nil skips the step; the CLI entry sets it, so
 	// tests that call Run directly never touch the real PATH.
