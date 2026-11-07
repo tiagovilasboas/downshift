@@ -60,7 +60,9 @@ The MCP tool `retrieve` takes `{id, grep, head, tail, lines}` and returns the sa
 - Entries are kept for 24 hours.
 - One entry is at most 8 MiB; the total is pruned to 64 MiB.
 - Lines that look like secrets are replaced with
-  `[downshift ccr: line withheld, it looked like a secret]`.
+  `[downshift ccr: line withheld, it looked like a secret]`, and structured credentials
+  (AWS STS session credentials, SSM parameter values, and AWS environment variables)
+  are redacted in place to `[REDACTED]`.
 
 ## Privacy
 
@@ -72,9 +74,13 @@ paths or text the command echoed.
 
 - Redaction withholds whole lines that look like credentials (tokens, auth
   headers, cookies, URL credentials, JWTs, known key prefixes) and every line of
-  a PEM block. It is a heuristic: do not turn CCR on for commands that print
-  secrets in other shapes. If you work with such output, set `DOWNSHIFT_CCR=0`, and
-  run `rm -r ~/.downshift/ccr` to drop what is already kept.
+  a PEM block. AWS STS credentials (`AccessKeyId`, `SecretAccessKey`, `SessionToken`,
+  `ASIA...` keys across JSON, CLI table, text, and environment variables) and AWS SSM
+  Parameter Store outputs (`Value` inside `Parameter`/`Parameters` JSON blocks, CLI text,
+  and table parameter rows) are automatically redacted to `[REDACTED]` without breaking
+  normal non-secret JSON fields or metadata. It is a heuristic: do not turn CCR on for
+  commands that print secrets in other unsupported shapes. If you work with such output,
+  set `DOWNSHIFT_CCR=0`, and run `rm -r ~/.downshift/ccr` to drop what is already kept.
 - The store refuses a `ccr` directory that is a symlink or owned by another user,
   and never follows a link planted in place of an entry.
 - On Windows the 0700/0600 modes do not apply; files inherit the profile's ACL.

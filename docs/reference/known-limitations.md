@@ -21,7 +21,7 @@ What Downshift does not do yet, in one place. The beta label stays until the [ex
 
 ## Raw output kept by CCR
 
-- Redaction covers common credential shapes but misses the values `aws sts` and `aws ssm` print. Turn CCR off (`"ccr": false` and `"ccr_failures": false`, see the [CCR guide](../guides/ccr.md)) before running those, or do not run them through `downshift compact`.
+- Redaction covers common credential shapes, including AWS STS session credentials (`AccessKeyId`, `SecretAccessKey`, `SessionToken`, `ASIA...` prefixes across JSON, table, text, and environment outputs) and AWS SSM Parameter Store values (`Value` in JSON blocks, CLI text, and table outputs). For custom commands that print secrets in unsupported arbitrary shapes, turn CCR off (`"ccr": false` and `"ccr_failures": false`, see the [CCR guide](../guides/ccr.md)) before running those, or do not run them through `downshift compact`.
 
 ## Setup
 
