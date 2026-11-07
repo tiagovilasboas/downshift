@@ -8,6 +8,7 @@
 // otherwise it hangs directly under the orchestrator. A model is called
 // "observed" only with evidence (see modelClaim).
 
+import { isLive } from '../agents/stale'
 import type { Agent, DownshiftSnapshot } from '../../../types'
 import { modelClaim, orchestratorOf, spawnOf, taskOf, visibleAgents, workTokens } from '../metrics/normalize'
 import type { ModelClaim, Orchestrator } from '../metrics/normalize'
@@ -47,10 +48,10 @@ export function agentsSection(
   const { Box, Text } = ui
   const inner = innerColumns(columns)
   const all = visibleAgents(input.agents)
-  const shown = input.filter === 'active' ? all.filter(a => a.status === 'running' || a.status === 'stale') : all
+  const shown = input.filter === 'active' ? all.filter(a => isLive(a, input.now)) : all
   const rows = treeRows(shown)
   const active = all.filter(a => a.status === 'running').length
-  const stale = all.filter(a => a.status === 'stale').length
+  const stale = all.filter(a => a.status === 'stale' && isLive(a, input.now)).length
   const empty = input.filter === 'active' && all.length > 0 ? 'No agent running now.' : 'None yet in this session.'
   const summary = `${active} active${stale > 0 ? ` · ${stale} stale` : ''} · ${all.length} total`
 

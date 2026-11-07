@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `downshift doctor`'s `hook overlap` check names only cheap-subagents, for the subagent model. Any other hook on the same tool is counted under `--verbose`, as before, and the shell half of the check stays in place for a recognised shell rewriter. The guide section and the evidence page on hook coexistence no longer name a shell-rewriting product; the raw run files of 2026-11-06 are removed.
+- The `downshift-agents` band reads `Agents N active`, the agents running now, instead of `N/total` (the total counted every subagent of the session, finished ones too; the pane still shows it, labelled). In the pane's active view a stale agent, one whose end never arrived, now drops out after 10 minutes of silence, and the idle orchestrator row goes with it. It stays in the full list, so nothing is deleted.
 
 ## [0.11.1] - 2026-11-07
 
