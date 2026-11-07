@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `downshift doctor` lists a harness's declared capability limits (the `limitations` row and the two Claude Desktop surface rows) as `ok` instead of `warn`: they describe what the harness cannot do, not a fault on this machine. They stay in the output and the JSON, and now point to the new [known limitations](docs/reference/known-limitations.md) page.
+
+### Fixed
+
+- The `[0.10.0]` heading was missing from this file (its entries sat under `[0.11.0]`); it is restored.
+
 ## [0.11.2] - 2026-11-07
 
 Release notes: [docs/releases/v0.11.2.md](docs/releases/v0.11.2.md).

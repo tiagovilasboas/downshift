@@ -200,7 +200,10 @@ func checkHarnessLimitations(add func(id, status, detail, fix string), harness s
 	detail := strings.Join(parts, ", ")
 	// No command explains harness limitations: `help <harness>` prints hook
 	// usage only. The evidence is in docs/reference/harness-matrix.md.
-	add("limitations", doctorWarn, detail, "see docs/reference/harness-matrix.md for the evidence")
+	// A declared capability limit is a fact about the harness, not a fault on this
+	// machine, so it is reported as ok: it stays in the output and the JSON, but
+	// does not count as a warning.
+	add("limitations", doctorOK, detail, "see docs/reference/known-limitations.md")
 }
 
 // claudeDesktopSurfaces are the two Claude Desktop surfaces that are not hooked
@@ -225,8 +228,8 @@ func checkClaudeDesktopSurfaces(add func(id, status, detail, fix string), harnes
 		for _, lim := range lims.Limitations {
 			parts = append(parts, lim.Feature+":"+lim.Status)
 		}
-		add(id, doctorWarn, strings.Join(parts, ", "),
-			"see docs/reference/harness-matrix.md for the evidence")
+		add(id, doctorOK, strings.Join(parts, ", "),
+			"see docs/reference/known-limitations.md")
 	}
 }
 
