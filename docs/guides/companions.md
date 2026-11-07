@@ -338,6 +338,29 @@ so they overlap rather than complement. Their fixed-context advice (smaller
 are list-price estimates from transcripts; on a subscription plan there is no
 per-token invoice. Downshift prints no dollar figure: `downshift stats` reports tokens only.
 
+## Hooks that rewrite the same input
+
+Two PreToolUse hooks that both rewrite the same tool input do not combine. Claude Code runs matching hooks
+in parallel and applies the answer of the one that finishes last, whatever the order of the entries in the
+settings file; neither hook is told. Measured on Claude Code 2.1.319 with RTK 0.49.0 and cheap-subagents
+(2026-11-07, [evidence](../evidence/hook-coexistence-2026-11-07.md)):
+
+| Next to Downshift | Overlap | What happens |
+|---|---|---|
+| [RTK](https://github.com/rtk-ai/rtk) (`rtk hook claude` on `Bash`) | A shell command: both rewrite `go test ...` | One rewrite is applied per call. In 8 runs Downshift won 6 and RTK won 2. No double wrapping and the exit code of a passing run is kept. |
+| [cheap-subagents](https://github.com/The-Guard305/cheap-subagents) (a hook on `Agent`) | The subagent `model` | The one that finishes last sets the model. Downshift's policy, tier floor and the orchestrator's choice only count on the calls where Downshift is last. |
+
+Keep one rewriter per tool. Downshift already applies the orchestrator's model choice inside your policy, so
+the model rewriter is the one to drop. For the shell command, either drop RTK's hook or set `"exec": false`
+in `context-optimization.json` (`DOWNSHIFT_EXEC=0`) so Downshift stops rewriting commands and RTK keeps that
+job. A hook that only observes, logs or blocks does not conflict: when hooks disagree on a permission,
+`deny` wins over `defer`, `ask` and `allow`.
+
+`downshift doctor` warns (`hook conflict`) when a known rewriter (RTK, cheap-subagents) is registered in the
+harness's hook file on the same event and tool as a Downshift hook that rewrites. It knows those two
+products only, reads the user hook file only (not a project file, a plugin or managed policy), and was
+observed on Claude Code only. Downshift still never installs, wraps or configures a companion.
+
 ## Related
 
 - [when-to-use.md](when-to-use.md): Downshift versus gateways and SDKs

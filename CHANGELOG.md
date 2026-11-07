@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `downshift doctor` warns (`hook conflict`) when a known input rewriter, RTK or cheap-subagents, sits on the same event and tool as a Downshift hook that rewrites. Two hooks that rewrite the same input do not combine: Claude Code runs them in parallel and applies the one that finishes last, so a rewrite is dropped on some calls with no sign. Measured on Claude Code 2.1.319 (33 live runs): `docs/evidence/hook-coexistence-2026-11-07.md`; guidance in `docs/guides/companions.md`. With `"exec": false` the RTK shell warning clears. Doctor reads the user hook file only.
+
 ### Changed
 
 - CCR is now on by default (owner decision, 2026-11-06). `downshift compact` keeps the raw output of every compacted command under `~/.downshift/ccr/` (0600, 24 h, 8 MiB per entry, 64 MiB total, secret-looking lines withheld), so repeated lines fold and `downshift retrieve <id>` reads any cut line back; before, only failed runs were kept. This is the one place Downshift writes command output to disk. `DOWNSHIFT_CCR=0` turns it off completely; `"ccr": false` in `context-optimization.json` goes back to keeping failed runs only (`"ccr_failures": false` turns that off too); `DOWNSHIFT_CCR=1` forces every run on. A config file that cannot be read never turns on keeping every run. To drop output already kept, remove `~/.downshift/ccr`. Redaction is a line heuristic: do not leave CCR on for commands that print secrets in other shapes. See `docs/guides/ccr.md`.
