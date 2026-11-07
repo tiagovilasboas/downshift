@@ -53,6 +53,7 @@ func pythonQualityFamily(argv []string) Family {
 	if len(argv) == 0 {
 		return FamilyNone
 	}
+	argv = stripVenvBin(argv)
 	switch argv[0] {
 	case "flake8":
 		return FamilyFlake8

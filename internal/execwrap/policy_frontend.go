@@ -48,6 +48,7 @@ func frontendFamily(argv []string) Family {
 	if len(argv) == 0 {
 		return FamilyNone
 	}
+	argv = stripNodeModulesBin(argv)
 
 	// Vitest
 	if argv[0] == "vitest" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "vitest") {

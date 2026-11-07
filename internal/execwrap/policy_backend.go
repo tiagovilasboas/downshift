@@ -54,6 +54,7 @@ func backendFamily(argv []string) Family {
 	if len(argv) == 0 {
 		return FamilyNone
 	}
+	argv = stripVenvBin(argv)
 
 	// Pytest (standalone)
 	if argv[0] == "pytest" {
