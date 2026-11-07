@@ -83,10 +83,14 @@ func shortCluster(w string) bool {
 }
 
 // vitestWatchSubcommand reports `vitest watch` or `vitest dev` (its alias),
-// also behind npx, pnpm exec or yarn.
+// also behind npx, pnpm exec, yarn or node_modules/.bin.
 func vitestWatchSubcommand(argv []string) bool {
 	for i, w := range argv {
-		if w == "vitest" && i+1 < len(argv) {
+		name := w
+		if t, ok := nodeModulesBinTool(w); ok {
+			name = t
+		}
+		if name == "vitest" && i+1 < len(argv) {
 			return argv[i+1] == "watch" || argv[i+1] == "dev"
 		}
 	}
