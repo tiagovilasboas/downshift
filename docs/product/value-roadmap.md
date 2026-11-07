@@ -27,11 +27,10 @@ rule that told Claude Code to call the compactor directly; that rule is gone
 
 Two references set the bar:
 
-- **RTK** (github.com/rtk-ai/rtk, Apache-2.0 CLI): a rewrite hook for 18 agents and
-  100+ commands. It reads files with filter levels (`rtk read`, `rtk smart`),
-  groups `grep`/`rg` by file, keeps the full output of a failure for `rtk recall`,
-  and `rtk discover` scans past sessions for missed savings. It does not route
-  models.
+- **Single-purpose CLI compactors**: CLI rewrite hooks across agents and
+  commands. They read files with filter levels, group `grep`/`rg` by file, keep the
+  full output of a failure for recall, and scan past sessions for missed savings.
+  They do not route models.
 - **Alethe** (github.com/Kc1t/alethe-orchestrate-skill, MIT): no compaction. It
   saves by delegating to cheaper CLI workers (Codex, Kimi, any CLI) in waves, with
   a playbook catalogue, a quota stop line before each wave, per-wave budgets and a

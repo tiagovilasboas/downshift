@@ -306,16 +306,17 @@ harness: [Harness matrix](docs/reference/harness-matrix.md) · [Capability matri
 
 ## Token savings
 
-Measured in bytes (not LLM tokens) on a synthetic corpus of 248 fixtures (Rung B evidence, not real-world
-traffic), of which 26 were compacted ([evidence](docs/evidence/compaction-corpus-2026-10-21.md)):
+Measured in bytes (not LLM tokens) on the synthetic corpus across supported command families (see [benchmark report](docs/reference/bench.md)):
 
 | Metric | Value |
 |--------|-------|
-| Compacted files (26 of 248, clean outputs) | 82.3% fewer bytes |
-| Best cases (test runners, all pass) | 90–97% fewer bytes (flutter 97.4%, dart 97.3%, cargo 95.0%, pytest 95.0%, playwright 91.2%) |
-| Overall corpus (all 248, includes failures and edge cases) | 23.7% fewer bytes |
+| Compacted fixtures across families | 107 fixtures |
+| Lossless runs | 65.2% fewer bytes |
+| Best cases | 90–95% fewer bytes (progress 94.5%, cargo test 93.0%, flutter test 92.3%, lockfile diff 91.2%, npm install 89.1%, pytest 86.7%, cypress 83.2%, playwright 81.6%, turbo 79.6%, rspec 79.5%, tsc 78.4%, vitest 74.3%) |
+| Overall corpus (CCR off) | 51.1% fewer bytes |
+| Overall corpus (CCR on) | 72.0% fewer bytes |
 
-Your savings depend on your command mix; failures and edge cases pass through unchanged by design. Run
+With CCR (Command Context Recovery) enabled, the full raw output is stored on disk and recoverable anytime via `downshift retrieve <id>`. Your savings depend on your command mix; failures and edge cases pass through unchanged by design. Run
 `downshift stats` for your real numbers. Savings on everyday use are not established yet. Downshift follows
 an [Evidence Ladder](docs/guides/evidence.md) (bytes measured, token estimate, routed-spawn report, your
 invoice) and shows byte counts and percentages, not dollar figures.
