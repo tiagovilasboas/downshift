@@ -13,6 +13,8 @@ outcome suite (`internal/outcome`, [benchmark/report.md](../benchmark/report.md)
 
 **2026-11-02:** arms A and B used to run with the hooks wired and `DOWNSHIFT_NO_ROUTE=1`. That switch was removed (every spawn is routed), so those arms now run without the Downshift hooks, and Downshift records nothing for them. Their requested models and tokens come from the harness (manual), and cost per run still comes from Claude Code's own `total_cost_usd`. Only arm C has Downshift decisions, usage and child ends.
 
+**Post-O8 directional smoke:** Prior to undertaking an expanded multi-category trial, a small, directional smoke protocol is defined in [post-o8-benchmark-protocol-2026-11-07.md](../evidence/post-o8-benchmark-protocol-2026-11-07.md). It reuses four frozen fixtures (`mech-rename`, `setup-named-group`, `c01-dijkstra`, `t02-reverse`) to verify hook coexistence, child model honor, policy profiles (PR #18), and telemetry recording in an isolated `DOWNSHIFT_STATE_DIR` before committing large token budgets.
+
 ## Arms
 
 | Arm | Session model | Downshift | How to set it |
@@ -121,5 +123,7 @@ telemetry follows: counts, rates and tokens only.
 
 ## Output
 
-One page in `docs/evidence/benchmark-opusplan-<start date>.md`: the arm table with the values used, the task
-categories with counts, the per-category results, the four answers, the limits, and the two exports of arm C.
+One page in `docs/evidence/benchmark-opusplan-<start date>.md` (or the dated post-O8 smoke document
+[post-o8-benchmark-protocol-2026-11-07.md](../evidence/post-o8-benchmark-protocol-2026-11-07.md)): the arm table with
+the values used, the task categories with counts, the per-category results, the four answers, the limits, and the two
+exports of arm C.

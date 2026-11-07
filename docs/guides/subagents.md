@@ -23,7 +23,9 @@ So, for agents you write yourself:
 brief, the return and the parent's coordination; Downshift records that cost
 as tokens per child on Claude Code (`downshift stats`, `downshift session --tree`) but
 does not decide whether to delegate. A one-line edit is usually cheaper in the
-main agent even on a frontier model. The example agent shows what a routable
+main agent even on a frontier model. See
+[delegation-boundaries-and-overhead-2026-11-07.md](../evidence/delegation-boundaries-and-overhead-2026-11-07.md)
+for the empirical breakeven boundaries and the four-arm evaluation framework. The example agent shows what a routable
 delegation looks like, not that every trivial task should become one.
 
 The orchestrator chooses the model of each Task call; the agent file is read only for a pinned `model`.
