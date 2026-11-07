@@ -87,7 +87,6 @@ repository; the public repo holds aggregates and two sample tasks under `interna
 | Classifier routing on that suite | 40 | recomputed 2026-10-15 | 6 small, 22 mid, 12 frontier; 37/40 pass at the picked tier | No |
 | Adapt memory, offline | 40 | same runs | per-task upper bound 40/40; shared shape memory 37/40 (0.0pp vs classifier) | No |
 | Held-out suite (GAP-SUITE) | 6 tasks, 1 smoke run | Go tasks outside the development suite | small 2/6, mid 4/6, frontier 6/6, USD 0.14 total ([gap-tasks.md](../internal/gap-tasks.md)) | Total only, not per task |
-| Compaction against RTK 0.49.0 | 15 commands, 1 run each | one machine, small synthetic projects, `rtk rewrite` against `downshift compact`, facts listed per run | Bytes saved over all runs: RTK 55.5%, Downshift 72.0% with CCR on and 52.2% off. Failing runs: 9.3% and 6.3%. Downshift loses on `git status` and on passing summaries, RTK drops two user-code stack frames in one Go failure ([compact-vs-rtk-2026-11-07.md](../evidence/compact-vs-rtk-2026-11-07.md)) | No: bytes, not tokens or money |
 
 Two notes. The small-versus-frontier gap on TRIVIAL+SIMPLE labels is −20.0 points on fixed-model runs, with
 overlapping intervals; the suite's own rule is to revisit the downshift below −5.
