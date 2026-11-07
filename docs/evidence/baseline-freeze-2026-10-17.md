@@ -102,4 +102,5 @@ from the labs script `baseline_eval.py`, which also rebuilds the binary from a c
   served by four providers in that run.
 
 Related: [benchmark/report.md](../benchmark/report.md), [hardening-audit-2026-10-15.md](hardening-audit-2026-10-15.md),
-[evaluation-suite-inventory.md](evaluation-suite-inventory.md), [e5-int8-evaluation-2026-10-17.md](e5-int8-evaluation-2026-10-17.md), [guides/evidence.md](../guides/evidence.md).
+[evaluation-suite-inventory.md](evaluation-suite-inventory.md), [router-comparison-routellm-2026-11-07.md](router-comparison-routellm-2026-11-07.md),
+[e5-int8-evaluation-2026-10-17.md](e5-int8-evaluation-2026-10-17.md), [guides/evidence.md](../guides/evidence.md).

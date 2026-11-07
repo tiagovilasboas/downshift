@@ -27,11 +27,11 @@ Source: `internal/catalog/catalog.json` (`version` 2, `updated` 2026-10-16), USD
 | `claude-opus-5-5` (frontier) | 4.00 | 20.00 | 0.20 | 5.00 |
 
 A Haiku child costs 75% less than Opus and 50% less than Sonnet on uncached input and output tokens. On cache reads the
-gap to Opus is 50% and the gap to Sonnet is zero. A subagent's traffic is mostly cached context (the one transcript
+gap to Opus is 50% and the gap to Sonnet is zero ($0.10 / 1M tokens for both). A subagent's traffic is mostly cached context (the one transcript
 checked in [beta-exit.md](../reference/beta-exit.md#pillar-3--billing-beforeafter-real-dollars) had 18 input, 311
-output and 82,900 cache tokens), so "75%" is the ceiling of one token class, not the saving on a child. Rung A also
+output and 82,900 cache tokens, and cache reads exceeded 98% of total tokens in the four-arm battery), so "75%" is the ceiling of one token class, not the saving on a child. Crucially, downshifting from Sonnet to Haiku produces **zero price reduction on prompt cache reads**. Rung A also
 assumes the same tokens on both models and a task that passes on the cheaper one; both assumptions are what rungs C
-to E test.
+to E test. Detailed source-to-claim reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
 
 ## B. Saving estimated by telemetry
 
@@ -114,9 +114,22 @@ nothing downshifted in 2 of 3 runs). Output tokens in b5: 39.8k on Haiku against
 routed arm used about half the turns (13.9 against 30.6) with no downshift applied, so that gap is agent variation.
 Codex without Downshift, 8 runs: 8/8 accepted, about $0.21 per run. Median wall time 141 s; mean not reported.
 
-What D supports: a saving of about 12% on mechanical delegated work, a third on pure renames, with 12/12 accepted
-in both arms. What it does not: any figure for natural use (b2 and b6 gaps are not attributable to routing),
-intervals (three runs per cell), quality beyond structural checks, other harnesses, more than one operator.
+### Subsequent Controlled and Real-Use Batteries (2026-10-21)
+
+Three subsequent empirical evaluations expanded this evidence base:
+1. **Four-arm mechanical battery (Claude Code, 46 runs):** In [`four-arm-mechanical-2026-10-21.md`](../evidence/four-arm-mechanical-2026-10-21.md),
+   isolated routing under native `opusplan` (Arm B vs Arm C) achieved **24.1% fewer tokens per accepted run** (95% CI +2.1% to +46.7%)
+   and 16.5% fewer tokens per run (+0.6% to +29.7%), with 12/12 accepted in both routed arms. Prompt cache reads accounted for >98%
+   of total tokens across all arms.
+2. **KiroCrew combined routing and compaction trial:** In a multi-hour session evaluating 6 control tasks, combining native policy
+   routing with shell advise compaction achieved **up to ~53% fewer tokens per task** (directional real-use measurement; see
+   [`roadmap.md`](../roadmap.md#now-beta) line 68 and [`anthropic-references-benchmark-reconciliation-2026-11-07.md`](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)).
+3. **CCR Compactor benchmark:** On the 107-fixture synthetic corpus ([`bench.md`](../reference/bench.md)), output compaction
+   achieved **72.0% byte reduction with CCR** (51.1% raw without CCR), reaching 65.2% on lossless test runners while preserving 100% of diagnostic failures.
+
+What D supports: a saving of about 12% to 24% on mechanical delegated work, a third on pure renames, and up to 53% when combined
+with shell compaction in KiroCrew, with 100% acceptance on mechanical tasks. What it does not: any proven figure for unconstrained natural
+everyday use (where 30-day telemetry shows −1.9%, within noise), or generalization beyond mechanical disjoint tasks.
 
 ## E. Cost per task completed with acceptable quality
 
@@ -129,11 +142,12 @@ child that ended `completed` and has a usage record with tokens; tokens per comp
 failed attempt it redid (a respawn in the same session within 10 minutes of an `error` or `interrupted` end); rework
 rate is reworked spawns over spawns with an observed end. The report prints these for routed spawns only, with no comparison and no threshold.
 
-What is missing for a per-task cost figure: enough completed tasks in one log (see the [pilot](pilot.md)); a captured
-`PostToolUseFailure` payload, without which rework undercounts (GAP-CHILD-FAILURE); and a quality judgment, because
-"acceptable quality" is not in the log: `completed` means the child returned, not that its work was right.
-The 2026-10-15 A/B measured cost per run with an
-acceptance check, which is close to E for those tasks but is not the `report` definition and had no rework term.
+What is missing for a per-task cost figure:
+- **Acceptance vs Completion:** A subagent `completed` status simply means the tool process exited with code 0 or finished turns. It does **not** judge functional correctness or acceptance. Small models fail 32.5% of tasks in the 40-task outcome suite ([evaluation-suite-inventory.md](../evidence/evaluation-suite-inventory.md)); if broken code passes as "completed", subsequent lead-session rework erases all savings.
+- **Missing Failure Payloads (GAP-CHILD-FAILURE):** The `PostToolUseFailure` error payload is not delivered by harness hooks ([billing-gap-audit.md](../evidence/billing-gap-audit.md)), leading to potential undercounting of child failure and rework.
+- **Workflow Hook Bypass (GAP-WORKFLOW-AGENTS):** Spawns from Claude Code `Workflow` scripts bypass `PreToolUse` entirely ([workflow-agents-bypass-pretooluse-2026-10-11.md](../evidence/workflow-agents-bypass-pretooluse-2026-10-11.md)), remaining unrouted unless declared in script parameters.
+- **Unmeasured Parent Overhead (GAP-COORDINATION):** Orchestrator tokens spent generating briefs and reviewing child outputs are not captured by subagent hooks ([delegation-boundaries-and-overhead-2026-11-07.md](../evidence/delegation-boundaries-and-overhead-2026-11-07.md)).
+- **Expanded Held-out Testing (GAP-SUITE):** Sizing quality degradation requires independent held-out evaluation beyond the current 6-task smoke set ([evaluation-suite-inventory.md](../evidence/evaluation-suite-inventory.md)).
 
 ## Metrics table
 
@@ -193,7 +207,10 @@ Three things sit near Downshift. Claude Code's native `opusplan` ([claude-code.m
 main-session policy: Opus while plan mode is on, Sonnet once the plan is approved; it makes no per-spawn decision,
 and a subagent inherits whatever the session runs. A gateway (LiteLLM, Portkey and the like,
 [when-to-use.md](when-to-use.md)) owns transport, keys, retries and fallbacks and sees each request after the harness
-has named a model. "Shown by" names a test or an evidence file; a claim with neither is marked unproven.
+has named a model. Academic and commercial router products (RouteLLM, RouterBench, FrugalGPT) invoke external embeddings or
+meta-LLM calls on single prompts, incurring 100–300+ ms latency and routing token fees; see
+[router-comparison-routellm-2026-11-07.md](../evidence/router-comparison-routellm-2026-11-07.md) for the benchmark comparison.
+"Shown by" names a test or an evidence file; a claim with neither is marked unproven.
 
 | Claim | Against | Shown by | Status |
 |---|---|---|---|
@@ -237,23 +254,27 @@ a 20% output saving takes spend to 0.95 x 0.80, a 24% total saving. The composit
 behaviour (more retries, more turns), which is part of what the arms of
 [benchmark-output-cutting.md](benchmark-output-cutting.md) test.
 
-**Status.** None of this is measured. No run has combined routing with output cutting; the 12% (rung D) and 3%
-(rung B estimate) are the only routing figures; no output-cutting figure from Downshift or its companions has been
-reproduced here. The protocol and its pre-registered cut criterion are in
-[benchmark-output-cutting.md](benchmark-output-cutting.md).
+**Status.** Directionally validated on 2026-10-21: Arm D of the four-arm battery ([`four-arm-mechanical-2026-10-21.md`](../evidence/four-arm-mechanical-2026-10-21.md))
+combined routing with compactor wrapping (26.8% fewer tokens per accepted run), and KiroCrew real-use testing
+demonstrated up to ~53% total token savings combining policy routing and shell advice compaction across 6 control tasks.
+In both trials, output cutting and subagent routing acted as complementary multipliers, but broad everyday gains
+remain unproven.
 
 ## Why catalog prices are not the invoice
 
-Catalog prices are public list prices from a dated snapshot. An invoice differs by plan (Pro, Max and Team have no
-per-token line at all), negotiated or batch discounts, cache pricing the catalog may lack (then cached tokens are
-billed at the input rate, an upper bound), provider-side retries and the parent session's own tokens, which no hook
-sees. Downshift does not measure money: it reports tokens, and the production figures are tokens per completed task and rework for routed spawns (see [report.md](report.md)). The planned seven-day routed-versus-control comparison (issue #103, [beta-exit.md](../reference/beta-exit.md) P3.7) cannot run since 2026-11-02, when the control arm was removed.
+Catalog prices are public list prices from a dated snapshot. An invoice differs fundamentally by pricing structure:
+- **Subscription plans (Pro, Max, Team; Cursor Pro/Ultra):** Flat monthly fees with rolling 5-hour and weekly rate limits.
+  There is no per-token line item or dollar invoice. What Downshift saves on subscriptions is **quota headroom**, extending
+  active coding duration before throttling occurs.
+- **Pay-as-you-go API billing:** Invoices incorporate provider-side minimums, cache-write overhead, retry spikes, and the
+  parent session's own accumulating context window, which no client subagent hook can observe.
+Downshift does not measure money: it reports tokens, and the production figures are tokens per completed task and rework for routed spawns (see [report.md](report.md)). The planned seven-day routed-versus-control comparison (issue #103, [beta-exit.md](../reference/beta-exit.md) P3.7) cannot run since 2026-11-02, when the control arm was removed.
 
 ## Why fewer tokens can cost more
 
 A cheaper child that fails is paid for and then paid for again on the retry, usually on a larger model, plus the
-parent's turns to notice and re-delegate. The outcome suite shows the risk size: the small tier passes 27 of 40 tasks
-where the frontier passes 40. That is why the primary metric is per completed task including rework, why `report` adds
+parent's turns to notice, diagnose, and re-delegate. The outcome suite shows the risk size: the small tier passes 27 of 40 tasks
+where the frontier passes 40 ([evaluation-suite-inventory.md](../evidence/evaluation-suite-inventory.md)). That is why the primary metric is per completed task including rework, why `report` adds
 redone attempts to the completing child, and why an unconfident router that keeps the requested model (most spawns in
 b2 and b6) is the intended behaviour rather than a missed saving. A token count or a per-decision percentage says what
-a spawn cost, not what the task cost.
+a spawn cost, not what the task cost. Detailed reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).

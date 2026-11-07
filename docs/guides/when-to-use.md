@@ -32,7 +32,7 @@ Every harness with an adapter gets every feature, computed in shared layers. **C
 | **Hosted model marketplace** and billing in one dashboard | A hosted model API from your provider | Downshift does not proxy traffic or add a provider markup layer. |
 | **Compress what the agent reads** (tool output, logs, files) in the request path | A compression proxy (a companion, detected and recorded) | The Compactor shortens the output of allowlisted commands (it wraps every `git` subcommand and the listed test and build families), but a hook cannot replace an arbitrary tool result; a proxy can. Downshift detects and records a companion, never wraps it. |
 | **One model for everything** in a simple script | Direct provider SDK | No spawn delegation → little value from subagent routing. |
-| **A separate model call that picks the model** | Router products that call a model for routing | Downshift adds no such call. The orchestrator you already run chooses the model; Downshift applies it, bounds it with your policy, and measures. |
+| **A separate model call that picks the model** | Router products that call a model for routing | Downshift adds no such call. The orchestrator you already run chooses the model; Downshift applies it, bounds it with your policy, and measures. See [router-comparison-routellm-2026-11-07.md](../evidence/router-comparison-routellm-2026-11-07.md) for the detailed benchmark against RouteLLM, RouterBench, SWE-Router, and FrugalGPT. |
 
 ## Downshift + gateways and compressors (complementary)
 
