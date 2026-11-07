@@ -6,7 +6,6 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Level: **observed on one machine, from real sessions the owner ran in the Claude Desktop Code tab.** No session was
 started for this record; the evidence was read afterwards from the Claude Code transcripts and the Downshift logs.
-Card plan: `docs/internal/tasks/2026-10-30-claude-desktop/README.md`.
 
 ## How a session was attributed to Claude Desktop
 
@@ -16,7 +15,7 @@ Claude Code writes `"entrypoint":"claude-desktop"` on every line of a transcript
 found by hashing its id. Since 2026-10-15, 66 transcripts carry `claude-desktop`, 4 `cli`, 10 `sdk-cli` and 195
 `sdk-ts`; 994 of the 1,374 `claude-code` events in that period belong to Desktop sessions.
 
-Session used below: `21bba747-e845-4924-8d4f-0adbcc712ef6`, project `/Users/tiago.boas/Github/downshift`, embedded
+Session used below: `21bba747-e845-4924-8d4f-0adbcc712ef6`, project `<repo>`, embedded
 Claude Code 2.1.299 to 2.1.309, Downshift `v0.2.0-69-g01b25094`.
 
 ## Model routing: works, rewrite honored
@@ -56,7 +55,7 @@ matched by time and command only.
 The Desktop window exposes no accessibility tree to the automation tool (AX error -25211), so the reduction was
 shown by running the Claude Code binary bundled with Claude Desktop
 (`~/Library/Application Support/Claude/claude-code/2.1.309/.../claude`, version 2.1.309) headless with `-p`, in
-`/Users/tiago.boas/Github/downshift`, with the same `~/.claude` settings and plugin:
+`<repo>`, with the same `~/.claude` settings and plugin:
 
 | Session | Command the model ran | Exec event |
 |---|---|---|

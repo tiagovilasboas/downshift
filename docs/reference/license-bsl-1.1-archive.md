@@ -1,5 +1,7 @@
 SPDX-License-Identifier: BUSL-1.1
 
+**Archived.** Superseded by the Apache License 2.0 on 2026-10-06. This text applies only to releases before that date.
+
 Business Source License 1.1
 
 Parameters

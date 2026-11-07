@@ -142,7 +142,7 @@ func TestDecide(t *testing.T) {
 
 		// Kubernetes
 		{"kubectl get pods", "kubectl get pods", true, FamilyKubectlGet, "'/opt/ds/downshift' compact -- kubectl get pods", ReasonAllowlisted},
-		{"kubectl get all", "kubectl get all -n voomp-creators-back", true, FamilyKubectlGet, "'/opt/ds/downshift' compact -- kubectl get all -n voomp-creators-back", ReasonAllowlisted},
+		{"kubectl get all", "kubectl get all -n shop-api", true, FamilyKubectlGet, "'/opt/ds/downshift' compact -- kubectl get all -n shop-api", ReasonAllowlisted},
 		{"kubectl describe pod", "kubectl describe pod my-pod", true, FamilyKubectlDescribe, "'/opt/ds/downshift' compact -- kubectl describe pod my-pod", ReasonAllowlisted},
 		{"kubectl logs", "kubectl logs my-pod --tail=50", true, FamilyKubectlLogs, "'/opt/ds/downshift' compact -- kubectl logs my-pod --tail=50", ReasonAllowlisted},
 		{"kubectl delete not allowed", "kubectl delete pod my-pod", false, "", "", ReasonNotAllowlisted},

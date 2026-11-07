@@ -4,6 +4,7 @@ Downshift Architecture Diagram Generator
 Generates a PNG diagram showing the full system with agent framework.
 """
 
+import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
@@ -212,7 +213,7 @@ ax.text(3.5, 8.0, 'delegate()', fontsize=7, color=COLORS['text'], alpha=0.7, sty
 ax.text(14.5, 5.0, 'state.json', fontsize=7, color=COLORS['text'], alpha=0.7, style='italic')
 
 # ===== Save =====
-output_path = '/Users/tiago.boas/Github/downshift/docs/design/downshift-architecture.png'
+output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'downshift-architecture.png')
 plt.savefig(output_path, dpi=150, bbox_inches='tight', 
             facecolor=COLORS['bg'], edgecolor='none')
 plt.close()
