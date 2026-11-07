@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `downshift doctor` reports a `hook overlap` warning, with a fix, when another `PreToolUse` hook in the same hook file rewrites the same field as an active Downshift hook: RTK on the shell command, or cheap-subagents on the subagent model, on a matcher that selects the same tool. Measured on Claude Code 2.1.319: the harness keeps one rewrite (the hook that returns last, whatever the file order) and drops the other with no error; nothing is double-wrapped. The check is shared code driven by the new `setup.Hook.Rewrites` data. Guide: [companions.md](docs/guides/companions.md#hook-coexistence-rtk-and-cheap-subagents-next-to-downshift-measured-2026-11-06). Evidence: [hook-coexistence-2026-11-06.md](docs/evidence/hook-coexistence-2026-11-06.md).
+
 ## [0.9.0] - 2026-11-06
 
 First public beta. The repository starts a fresh history at this release. Release notes: [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).

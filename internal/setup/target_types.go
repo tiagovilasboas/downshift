@@ -16,7 +16,19 @@ type Hook struct {
 	// executable path and no arguments. A hook already registered under that
 	// stem from another directory is left alone.
 	Wrapper string
+	// Rewrites says what the hook changes in the tool input it answers:
+	// RewritesModel (the spawned subagent's model) or RewritesShell (the shell
+	// command). Empty means the hook only observes or cannot rewrite. `doctor`
+	// reads it to find another hook on the same tool that rewrites the same
+	// field (docs/guides/companions.md, "Hook coexistence").
+	Rewrites string
 }
+
+// Values of Hook.Rewrites.
+const (
+	RewritesModel = "model"
+	RewritesShell = "shell"
+)
 
 // StatusLine is the optional status line command (Claude Code).
 type StatusLine struct {

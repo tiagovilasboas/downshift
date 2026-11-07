@@ -1,0 +1,39 @@
+scenario	kind	order	delay	no_allow	winner_or_model	double_wrapped_or_tag	exit_code	permission	hook_finish_order	doctor_overlap_rows
+bash-downshift	bash	downshift	-		downshift	no	3	ran	downshift	-
+bash-rtk	bash	rtk	-		rtk	no	3	ran	rtk	-
+bash-downshift_rtk	bash	downshift,rtk	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-rtk_downshift	bash	rtk,downshift	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-ds_rtk-1	bash	downshift,rtk	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-rtk_ds-1	bash	rtk,downshift	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-ds_rtk-2	bash	downshift,rtk	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-rtk_ds-2	bash	rtk,downshift	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-ds_rtk-3	bash	downshift,rtk	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-rtk_ds-3	bash	rtk,downshift	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-ds_rtk-4	bash	downshift,rtk	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-rtk_ds-4	bash	rtk,downshift	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-ds_rtk-5	bash	downshift,rtk	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-natural-rtk_ds-5	bash	rtk,downshift	-		downshift	no	3	ran	rtk>downshift	RTK
+bash-downshift_rtk-rtk-slow	bash	downshift,rtk	rtk=0.5		rtk	no	3	ran	downshift>rtk	-
+bash-downshift_rtk-downshift-slow	bash	downshift,rtk	downshift=0.5		downshift	no	3	ran	rtk>downshift	-
+bash-rtk_downshift-rtk-slow	bash	rtk,downshift	rtk=0.5		rtk	no	3	ran	downshift>rtk	-
+bash-rtk_downshift-downshift-slow	bash	rtk,downshift	downshift=0.5		downshift	no	3	ran	rtk>downshift	-
+bash-noallow-downshift	bash	downshift	-	yes	none-ran	no	0	denied	downshift	-
+bash-noallow-rtk	bash	rtk	-	yes	rtk	no	3	ran	rtk	-
+bash-noallow-downshift_rtk	bash	downshift,rtk	-	yes	downshift	no	3	ran	rtk>downshift	RTK
+bash-noallow-rtk_downshift	bash	rtk,downshift	-	yes	downshift	no	3	ran	rtk>downshift	RTK
+agent1-downshift	agent	downshift	-		opus	tag-stripped/none	-	ran	downshift	-
+agent1-cheap	agent	cheap	-		sonnet	tag-stripped/none	-	ran	cheap	-
+agent1-downshift_cheap	agent	downshift,cheap	-		sonnet	tag-stripped/none	-	ran	cheap>downshift	cheap-subagents
+agent1-cheap_downshift	agent	cheap,downshift	-		sonnet	tag-stripped/none	-	ran	cheap>downshift	cheap-subagents
+agent2-downshift	agent	downshift	-		haiku	tag-kept	-	ran	downshift	-
+agent2-cheap	agent	cheap	-		sonnet	tag-stripped/none	-	ran	cheap	-
+agent2-downshift_cheap	agent	downshift,cheap	-		haiku	tag-kept	-	ran	cheap>downshift	cheap-subagents
+agent2-cheap_downshift	agent	cheap,downshift	-		haiku	tag-kept	-	ran	cheap>downshift	cheap-subagents
+agent2-downshift_cheap-cheap-slow	agent	downshift,cheap	cheap=0.5		sonnet	tag-stripped/none	-	ran	downshift>cheap	-
+agent2-downshift_cheap-downshift-slow	agent	downshift,cheap	downshift=0.5		haiku	tag-kept	-	ran	cheap>downshift	-
+agent3-downshift	agent	downshift	-		haiku	tag-stripped/none	-	ran	downshift	-
+agent3-cheap	agent	cheap	-		sonnet	tag-stripped/none	-	ran	cheap	-
+agent3-downshift_cheap	agent	downshift,cheap	-		haiku	tag-stripped/none	-	ran	cheap>downshift	cheap-subagents
+agent3-cheap_downshift	agent	cheap,downshift	-		haiku	tag-stripped/none	-	ran	cheap>downshift	cheap-subagents
+agent3-downshift_cheap-cheap-slow	agent	downshift,cheap	cheap=0.5		sonnet	tag-stripped/none	-	ran	downshift>cheap	-
+agent3-downshift_cheap-downshift-slow	agent	downshift,cheap	downshift=0.5		haiku	tag-stripped/none	-	ran	cheap>downshift	-
