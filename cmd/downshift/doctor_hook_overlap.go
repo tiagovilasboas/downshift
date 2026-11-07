@@ -176,8 +176,11 @@ func overlapFix(rewrites, other, event, file string) string {
 // matcher written there is the one that counts, since setup keeps a matcher the
 // user already had) or when the plugin carries it (the shipped matcher counts).
 // matchWiredHooks pairs hooks by command alone, so the matcher is checked here.
-// With verbose it also counts the unrecognised hooks on those tools.
-func checkHookOverlap(add func(id, status, detail, fix string), verbose bool, w doctorWiring, file string, raw any, viaPlugin bool) {
+// With verbose it also counts the unrecognised hooks on those tools. execOn is
+// whether the compact wrapper is on: with it off Downshift rewrites no shell
+// command, so a shell rewriter beside it is not an overlap (that is one of the
+// two fixes the warning offers).
+func checkHookOverlap(add func(id, status, detail, fix string), verbose bool, w doctorWiring, file string, raw any, viaPlugin, execOn bool) {
 	var entries []hookEntry
 	collectHookEntries(raw, nil, "", &entries)
 
@@ -198,7 +201,7 @@ func checkHookOverlap(add func(id, status, detail, fix string), verbose bool, w 
 	}
 	var active []rewriter
 	for _, spec := range w.Hooks {
-		if spec.Rewrites == "" {
+		if spec.Rewrites == "" || (spec.Rewrites == setup.RewritesShell && !execOn) {
 			continue
 		}
 		if viaPlugin {

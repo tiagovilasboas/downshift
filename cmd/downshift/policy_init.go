@@ -9,16 +9,22 @@ import (
 	"os"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/models"
 	"github.com/tiagovilasboas/downshift/internal/setup"
 )
 
-const policyInitUsage = `usage: downshift policy init [--dry-run] [--yes]
+const policyInitUsage = `usage: downshift policy init [--dry-run] [--yes] [--bare]
 
-Create .downshift/policy.json in the current directory, with no routing policy.
-An existing file is left untouched. Nothing is written without a yes; --dry-run
-shows the file that would be created.
+Create .downshift/policy.json in the current directory. For each harness whose
+hook can rewrite a subagent's model and has a detected model list, the file
+declares an "explore" profile that sends that agent type to the small tier; the
+plan names the model each one resolves to today. A harness with no list gets no
+profile and a note saying what to run. An existing file is left untouched.
+Nothing is written without a yes; --dry-run shows the file that would be created.
   --dry-run   show what would be written, write nothing
   --yes       do not ask before writing
+  --bare      write only the version, no routing section
 `
 
 // runPolicyInit is 'downshift policy init'. It shares the plan, confirm and
@@ -31,6 +37,8 @@ func runPolicyInit(args []string, in io.Reader, stdout, stderr io.Writer) int {
 			o.DryRun = true
 		case "--yes", "-y":
 			o.Yes = true
+		case "--bare":
+			o.BarePolicy = true
 		case "-h", "--help":
 			fmt.Fprint(stdout, policyInitUsage)
 			return 0
@@ -51,6 +59,9 @@ func runPolicyInit(args []string, in io.Reader, stdout, stderr io.Writer) int {
 	}
 	o.Home = home
 	o.ProjectDir = cwd
+	if md, ok := any(catalog.Load()).(models.Metadata); ok {
+		o.SmallTargets = resolveSmallTargets(md)
+	}
 	plan, _ := setup.PlanPolicyInit(o)
 	failed, _ := setup.ApplyPlans(o, []setup.Plan{plan})
 	if failed {

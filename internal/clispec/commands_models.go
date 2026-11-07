@@ -14,7 +14,7 @@ var modelCommands = []Command{
 	{Name: "models available", Summary: "The models a spawn can use now on a harness", Flags: f("--harness", "--json")},
 	{Name: "quota", Summary: "Inspect, import or collect budget evidence for a harness", Flags: f("--harness", "--source", "--ttl", "--transcript", "--model")},
 	{Name: "route", Summary: "Show what would be applied for one spawn", Flags: f("--harness", "--model", "--effort", "--tier", "--agent-type", "--dir", "--json")},
-	{Name: "policy", Summary: "Validate the routing policy without routing anything", Flags: f("--dry-run", "--yes|-y", "--harness")},
+	{Name: "policy", Summary: "Validate the routing policy without routing anything", Flags: f("--dry-run", "--yes|-y", "--harness", "--bare")},
 	{Name: "playbook", Summary: "Edit the working rules a delegated worker receives"},
 	{Name: "plan", Summary: "Validate a delegation plan and print it as a table", Flags: f("--json")},
 	{Name: "gateway", Summary: "Check local companion routers (9router)", Flags: f("--json", "--endpoint")},

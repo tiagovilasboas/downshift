@@ -9,7 +9,7 @@ var policyHelp = map[string]string{
 
 Usage:
   downshift policy check
-  downshift policy init [--dry-run] [--yes]
+  downshift policy init [--dry-run] [--yes] [--bare]
   downshift policy apply --harness claude-code [--dry-run] [--yes]
 
 Reads the nearest project .downshift/policy.json (searched upward from the
@@ -22,10 +22,14 @@ no rules mean the requested model is kept.
 Flags:
   none
 
-policy init creates .downshift/policy.json in the current directory with no
-routing policy. It asks before writing; --dry-run shows the file and writes
-nothing; --yes skips the question. An existing file is left untouched.
-downshift setup offers the same file, unless --no-policy is passed.
+policy init creates .downshift/policy.json in the current directory. For each
+harness whose hook can rewrite a subagent's model and has a detected model list
+it declares an "explore" profile (that agent type runs on the small tier) and
+the plan names the model it resolves to today; a harness with no list gets a
+note instead of a profile. --bare writes the version only. It asks before
+writing; --dry-run shows the file and writes nothing; --yes skips the question.
+An existing file is left untouched. downshift setup offers the same file, unless
+--no-policy is passed.
 
 policy apply compiles routing.profiles declared in policy.json into harness-native
 agent definitions. For --harness claude-code, it writes or updates
