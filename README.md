@@ -158,7 +158,7 @@ Docs: [Output Compaction](docs/features/compaction.md) · [Supported tools](docs
 [Harness matrix](docs/reference/harness-matrix.md) · [CCR](docs/guides/ccr.md) ·
 [Benchmark](docs/reference/bench.md) · [Classification](docs/features/classification.md)
 
-### 2. Subagent Model Delegation (stable on Claude Code, functional on Codex and Cursor)
+### 2. Subagent Model Delegation (stable on Claude Code, functional on Codex, experimental on Cursor)
 
 The lead session picks agent, model and effort for every delegation. Downshift applies that choice
 deterministically, enforces what you declared in `policy.json` (profiles, ordered rules, quota gates, tier
