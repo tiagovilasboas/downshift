@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CCR is now on by default (owner decision, 2026-11-06). `downshift compact` keeps the raw output of every compacted command under `~/.downshift/ccr/` (0600, 24 h, 8 MiB per entry, 64 MiB total, secret-looking lines withheld), so repeated lines fold and `downshift retrieve <id>` reads any cut line back; before, only failed runs were kept. This is the one place Downshift writes command output to disk. `DOWNSHIFT_CCR=0` turns it off completely; `"ccr": false` in `context-optimization.json` goes back to keeping failed runs only (`"ccr_failures": false` turns that off too); `DOWNSHIFT_CCR=1` forces every run on. A config file that cannot be read never turns on keeping every run. To drop output already kept, remove `~/.downshift/ccr`. Redaction is a line heuristic: do not leave CCR on for commands that print secrets in other shapes. See `docs/guides/ccr.md`.
+
 ### Added
 
 - `downshift doctor` reports a `hook overlap` warning, with a fix, when another `PreToolUse` hook in the same hook file rewrites the same field as an active Downshift hook: RTK on the shell command, or cheap-subagents on the subagent model, on a matcher that selects the same tool. Measured on Claude Code 2.1.319: the harness keeps one rewrite (the hook that returns last, whatever the file order) and drops the other with no error; nothing is double-wrapped. The check is shared code driven by the new `setup.Hook.Rewrites` data. Guide: [companions.md](docs/guides/companions.md#hook-coexistence-rtk-and-cheap-subagents-next-to-downshift-measured-2026-11-06). Evidence: [hook-coexistence-2026-11-06.md](docs/evidence/hook-coexistence-2026-11-06.md).
+- Bytes read back with `downshift retrieve` are subtracted from the compaction saving. Compacted runs that kept their output record the CCR id (a hash) in the exec log; the CLI and the MCP tool `retrieve` append the id and the bytes returned to `exec-retrievals.jsonl` (no query, no output, no path). `report`, `session`, the panel, the context summary and `stats` show the net saving, floored at zero per run, with a `Read back with retrieve: N bytes` figure, and a session counts only its own runs. Older logs are unchanged. This closes the known gap in `docs/guides/ccr.md`, which matters now that CCR is on by default.
 
 ### Fixed
 

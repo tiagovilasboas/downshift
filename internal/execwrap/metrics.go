@@ -84,6 +84,29 @@ type Event struct {
 	// client or the value is dropped by the sanitizer; absent on rows written
 	// before this field was added.
 	Client string `json:"client,omitempty"`
+	// Kept is the CCR id named in the marker of a compacted run whose raw output
+	// was stored: a hash of the stored text, never the text. A later
+	// `downshift retrieve` of that id is matched to this row (retrievals.go).
+	Kept string `json:"kept,omitempty"`
+	// RetrievedBytes is filled when the log is read, never written: the bytes
+	// that retrievals of Kept pulled back into context, matched to this run.
+	// NetSavedBytes subtracts them.
+	RetrievedBytes int64 `json:"retrieved_bytes,omitempty"`
+}
+
+// NetSavedBytes is what the run saved after the agent read part of the raw
+// output back with retrieve: raw minus emitted minus RetrievedBytes, never below
+// zero. This is the one per-run savings figure; every surface uses it.
+func (e Event) NetSavedBytes() int64 {
+	saved := e.RawBytes - e.EmittedBytes
+	if saved <= 0 {
+		return 0
+	}
+	saved -= e.RetrievedBytes
+	if saved < 0 {
+		return 0
+	}
+	return saved
 }
 
 // EventFrom builds the log record for a Result.
@@ -101,6 +124,7 @@ func EventFrom(r Result, now time.Time) Event {
 		Compacted:    r.Compacted,
 		Folded:       r.Folded,
 		Passthrough:  r.Passthrough,
+		Kept:         r.KeptID,
 
 		PassthroughDetail: r.PassthroughDetail,
 	}
@@ -121,7 +145,8 @@ func Append(path string, ev Event) error {
 
 // ReadEvents reads every record from the exec log at path. A missing file is
 // an empty slice, not an error. Malformed lines are skipped, mirroring
-// Summarize. Callers that only need totals should use Summarize instead.
+// Summarize. Callers that only need totals should use Summarize instead. Each
+// run whose Kept id was read back carries its RetrievedBytes.
 func ReadEvents(path string) ([]Event, error) {
 	var out []Event
 	err := scanLog(path, func(line []byte) {
@@ -130,5 +155,5 @@ func ReadEvents(path string) ([]Event, error) {
 			out = append(out, ev)
 		}
 	})
-	return out, err
+	return ApplyRetrievals(out, ReadRetrievals(path)), err
 }

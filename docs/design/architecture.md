@@ -290,7 +290,7 @@ optional status line). The model never sees a shorter result unless the
 wrapping path ran. For manual use, the user pipes output through `downshift
 context compress` or `downshift compactor --`. Packages: `internal/shellwrap`,
 `internal/execwrap`, `internal/compressor`, `internal/sensor`.
-With CCR on (opt-in), `cmd/downshift` hands execwrap a `Keep` port backed by
+With CCR on (the default; `DOWNSHIFT_CCR=0` turns it off; `"ccr": false` keeps only failed runs), `cmd/downshift` hands execwrap a `Keep` port backed by
 `internal/ccr`: the raw output is stored and the marker names its id for
 `downshift retrieve`. execwrap never imports ccr or contextopt.
 

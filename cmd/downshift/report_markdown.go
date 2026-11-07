@@ -29,6 +29,9 @@ func printReportMarkdown(w io.Writer, out reportOut, scope string) {
 		}
 	}
 	fmt.Fprintf(w, "\n%s\n", noEventsLine(have))
+	if n := out.Numbers.Compactor.RetrievedBytes; n > 0 {
+		fmt.Fprintf(w, "_Read back with `retrieve`: %d bytes, already subtracted from the savings above._\n", n)
+	}
 	fmt.Fprintln(w)
 	printCompactionDetailMarkdown(w, out.CompactionDetail)
 	telemetry.PrintRoutingSectionMarkdown(w, out.Report.Routing)

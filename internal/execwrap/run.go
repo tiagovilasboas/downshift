@@ -83,6 +83,9 @@ type Result struct {
 	// PassthroughDetail is the Detail* code refining PassthroughUnrecognized;
 	// empty for every other reason.
 	PassthroughDetail string
+	// KeptID is the CCR id the compacted output names, empty when the raw
+	// output was not kept. It is a hash of the stored text, never the text.
+	KeptID string
 }
 
 // ObserveUncompactedHook is called when a command's output was not compacted.
@@ -131,7 +134,10 @@ func Run(argv []string, o Options) (res Result) {
 
 	g := newGate(o.Stdout, o.Stderr, o.Compact && readCompactible(res.Family, argv), argv, res.Family)
 	g.skipObservation = o.SkipObservation
-	g.keep, g.keepFailed = o.Keep, o.KeepFailed
+	// The ports run once, inside finish, on this goroutine; the id of the one
+	// that stored the output goes on the Result and the event.
+	var keptID string
+	g.keep, g.keepFailed = captureKept(o.Keep, &keptID), captureKept(o.KeepFailed, &keptID)
 	cmd := exec.Command(path, argv[1:]...)
 	cmd.Args[0] = argv[0]
 	cmd.Env = append(os.Environ(), DepthEnv+"=1")
@@ -171,6 +177,9 @@ func Run(argv []string, o Options) (res Result) {
 	release()
 	res.RawBytes, res.EmittedBytes, res.Compacted, res.Folded, res.Passthrough = g.finish(res.ExitCode, res.Family)
 	res.PassthroughDetail = g.detail
+	if res.Compacted {
+		res.KeptID = keptID
+	}
 	return res
 }
 
@@ -203,4 +212,19 @@ func exitStatus(err error) (int, string) {
 		return ExitCannotExecute, ExitClassStartError
 	}
 	return code, ExitClassNonZero
+}
+
+// captureKept wraps a keep port so the id of what it stored is written to id.
+// A nil port stays nil.
+func captureKept(keep func(raw []byte) (string, bool), id *string) func(raw []byte) (string, bool) {
+	if keep == nil {
+		return nil
+	}
+	return func(raw []byte) (string, bool) {
+		k, ok := keep(raw)
+		if ok {
+			*id = k
+		}
+		return k, ok
+	}
 }

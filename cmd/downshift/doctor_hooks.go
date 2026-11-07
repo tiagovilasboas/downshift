@@ -144,6 +144,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	collectCommands(raw, nil, &cmds)
 	checkMainPolicy(add, h, raw)
 	checkModelForce(add, nc.Caps, raw, file, env.Getenv)
+	checkRewriteConflicts(add, nc, w, raw, file, env.Getenv(execEnvKillSwitch) != "0" && execConfigEnabled())
 	viaPlugin := w.Plugin != "" && setup.PluginEnabled(raw, w.Plugin)
 
 	found, missing := matchWiredHooks(cmds, w.Hooks)

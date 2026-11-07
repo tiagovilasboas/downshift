@@ -50,6 +50,9 @@ type Summary struct {
 	// compressor. Totals above still include them.
 	FoldedRuns       int64 `json:"folded_runs,omitempty"`
 	FoldedSavedBytes int64 `json:"folded_saved_bytes,omitempty"`
+	// RetrievedBytes is what `downshift retrieve` pulled back into context for
+	// the runs counted here. SavedBytes is already net of it.
+	RetrievedBytes int64 `json:"retrieved_bytes,omitempty"`
 }
 
 // PassthroughNotRecorded is the PassthroughByReason key of a not-compacted row
@@ -98,7 +101,8 @@ func Summarize(path string) (Summary, error) { return SummarizeSession(path, "")
 
 // SummarizeSession totals only the records of one hashed session; an empty
 // session totals the whole log. Records written before the session field
-// existed belong to no session.
+// existed belong to no session. Retrievals are matched to the runs in scope by
+// CCR id, so a session counts only what was read back from its own runs.
 func SummarizeSession(path, session string) (Summary, error) {
 	var evs []Event
 	err := scanLog(path, func(line []byte) {
@@ -111,7 +115,7 @@ func SummarizeSession(path, session string) (Summary, error) {
 		}
 		evs = append(evs, ev)
 	})
-	return SummarizeEvents(evs), err
+	return SummarizeEvents(ApplyRetrievals(evs, ReadRetrievals(path))), err
 }
 
 // SummarizeEvents totals already-read records. It is the one place the
@@ -138,8 +142,8 @@ func SummarizeEvents(evs []Event) Summary {
 		if ev.Folded {
 			s.FoldedRuns++
 		}
-		if ev.RawBytes > ev.EmittedBytes {
-			saved := ev.RawBytes - ev.EmittedBytes
+		s.RetrievedBytes += ev.RetrievedBytes
+		if saved := ev.NetSavedBytes(); saved > 0 {
 			s.SavedBytes += saved
 			if ev.Folded {
 				s.FoldedSavedBytes += saved

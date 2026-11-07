@@ -10,8 +10,10 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/ccr"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 )
 
 // runRetrieve prints the raw output the compactor kept for an id, optionally
@@ -80,6 +82,7 @@ func retrieveRun(id string, q ccr.Query, stdout, stderr io.Writer) int {
 		return retrieveUsage(stderr, err.Error())
 	}
 	_, _ = stdout.Write(out)
+	execwrap.RecordRetrieval(id, len(out), time.Now())
 	return 0
 }
 

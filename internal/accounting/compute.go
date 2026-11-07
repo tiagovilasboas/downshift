@@ -77,6 +77,9 @@ type Compactor struct {
 	RawBytes   int64 `json:"raw_bytes"`
 	SavedBytes int64 `json:"saved_bytes"`
 	Tokens     int64 `json:"tokens"`
+	// RetrievedBytes is what `downshift retrieve` pulled back into context from
+	// the runs counted here. SavedBytes and Tokens are already net of it.
+	RetrievedBytes int64 `json:"retrieved_bytes,omitempty"`
 }
 
 // Display is the final text of the figures, so no surface formats them again.
@@ -167,6 +170,8 @@ func compactorTotals(evs []execwrap.Event) Compactor {
 		RawBytes:   sum.RawBytes,
 		SavedBytes: sum.SavedBytes,
 		Tokens:     sum.EstimatedTokensSaved,
+
+		RetrievedBytes: sum.RetrievedBytes,
 	}
 }
 
@@ -176,7 +181,7 @@ func displayOf(n Numbers) Display {
 		TokensSavedShort: telemetry.ShortTokens(n.TokensSavedEstimate),
 		ScopeLabel:       n.Scope.Label(),
 		Routing:          routingText(n.Routing),
-		Compactor:        fmt.Sprintf("Commands: %d · Compacted: %d", n.Compactor.Commands, n.Compactor.Compacted),
+		Compactor:        compactorText(n.Compactor),
 		Ledger:           LedgerLine(n.Ledger, n.Scope),
 	}
 }
@@ -191,4 +196,15 @@ func routingText(v telemetry.RoutingView) string {
 		}
 	}
 	return strings.Join(parts, "; ")
+}
+
+// compactorText is the Commands line. When the agent read output back with
+// `downshift retrieve`, it adds the bytes read back, so a saving that was
+// taken back is visible beside the net figure.
+func compactorText(c Compactor) string {
+	text := fmt.Sprintf("Commands: %d · Compacted: %d", c.Commands, c.Compacted)
+	if c.RetrievedBytes > 0 {
+		text += fmt.Sprintf(" · Read back with retrieve: %d bytes", c.RetrievedBytes)
+	}
+	return text
 }

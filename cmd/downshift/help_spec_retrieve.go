@@ -16,7 +16,8 @@ Flags:
   --tail N      Keep the last N lines
   --lines A:B   Keep lines A to B (1-based, inclusive), each prefixed with its number
 
-The id comes from the marker the compactor prints when DOWNSHIFT_CCR is on.
+The id comes from the marker the compactor prints while CCR is on (the default;
+DOWNSHIFT_CCR=0 turns it off).
 Kept output lives under the state directory for 24 hours. Exit 0 on success,
 1 when the output is gone or expired, 2 on bad arguments.
 
