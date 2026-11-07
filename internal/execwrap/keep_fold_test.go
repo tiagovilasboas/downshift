@@ -76,3 +76,23 @@ func TestKeepRaw_FoldsSummaryAfterStore(t *testing.T) {
 		t.Fatalf("nil keep changed output: %q", got)
 	}
 }
+
+func TestKeepRaw_SkipsStoreWhenIDMarkerWouldExceedRaw(t *testing.T) {
+	// A 99-byte pytest -q output compacts to 34 bytes + 46-byte plain Marker = 80 bytes (< 99).
+	// Swapping Marker for MarkerWithID (92 bytes) would produce 126 bytes (>= 99), so keepRaw
+	// must skip storing in CCR and keep the 80-byte output with the plain Marker.
+	raw := []byte("........................................                                 [100%]\n40 passed in 0.03s\n")
+	body := []byte("Pytest: PASS (40 passed in 0.03s)\n")
+	out := append(append([]byte{}, body...), Marker(len(raw), len(body))...)
+	var calls [][]byte
+	got := keepRaw(storeOK(&calls), raw, out)
+	if len(calls) != 0 {
+		t.Fatalf("keep called %d times, want 0 when MarkerWithID exceeds raw size", len(calls))
+	}
+	if string(got) != string(out) {
+		t.Fatalf("got %q, want %q", got, out)
+	}
+	if len(got) >= len(raw) {
+		t.Fatalf("emitted %d bytes >= raw %d bytes", len(got), len(raw))
+	}
+}
