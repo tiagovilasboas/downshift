@@ -5,12 +5,12 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift — token optimization and model routing for AI coding agents" width="320">
 </picture>
 
-### Cut Claude Code token usage: run each subagent on the right model and shorten long test output, failures kept.
+# Downshift
 
-Downshift compacts verbose command output, applies the model the orchestrator chose for each
-subagent (bounded by your policy), and learns which commands need new compressors. Its own code
-never calls an LLM.
+### Stop wasting Claude Code tokens on noisy output and oversized subagents.
 
+Free, open-source token optimization for AI coding agents. Compact command output and apply the
+orchestrator's model choice per subagent, within your policy. No extra LLM call in Downshift's code.
 
 [![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-868A90.svg?labelColor=0A0A0A)](LICENSE)
@@ -26,17 +26,26 @@ never calls an LLM.
 
 </div>
 
-Two things burn Claude Code tokens and usage limits fastest: subagents that inherit your most expensive
-model, and long test and build output that stays in context. Downshift is a free, open-source tool for both,
-in Claude Code, Cursor (Experimental), Codex, OpenCode, Antigravity (Experimental), and KiroCrew (Experimental). It compacts verbose
-command output before it fills the context window, applies the orchestrator's model choice for each
-subagent within the bounds you declare, and counts, per harness, the tokens compaction saved and the tokens
-that ran on a cheaper model.
+Keep your context window focused on the work. Downshift shrinks verbose test and build output before
+it reaches your coding agent, preserves failure details and exit codes, and applies the model your
+orchestrator chose for each subagent. See what changed with `downshift report`.
 
-**Who it is for:** people whose agent sessions run long commands and spawn subagents, and who want the
-policy they declared, not a router, to bound those choices.
+Built with **Claude Code**, with support for **Codex, OpenCode, Cursor, Antigravity and KiroCrew**.
+Integration depth varies: Cursor, Antigravity and KiroCrew are experimental. [Harness support](#harness-support).
 
-**First action:** [install it](#install), run `downshift setup`, then `downshift doctor`.
+| Where tokens go | What Downshift does |
+|---|---|
+| Repetitive test and build output | Compacts supported commands; keeps failures and exit codes |
+| Routine work on an expensive subagent model | Applies per-spawn model choices within your declared policy |
+| Savings you cannot inspect | Reports compacted bytes and routed tokens per harness |
+
+**For developers using AI coding agents:** start with [installation](#install), run `downshift setup`,
+then `downshift doctor`. A single Go binary. Free under Apache 2.0.
+
+**Measured, with scope:** [72.0% fewer command-output bytes](docs/reference/bench.md) on a synthetic
+107-fixture corpus with CCR enabled; [24.1% fewer tokens per accepted run](docs/evidence/four-arm-mechanical-2026-10-21.md)
+in a controlled Claude Code trial (46 runs, mechanical tasks; 95% CI +2.1% to +46.7%).
+These are separate experiments, not additive savings or a promise about your bill or usage limit.
 
 **Guides:** [Do Claude Code subagents burn your usage limit faster?](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/) ·
 [Claude Code usage limit](https://downshift-ai.vercel.app/guides/claude-code-usage-limit/) ·
