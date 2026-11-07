@@ -9,7 +9,7 @@ Canonical guide for humans and coding agents installing Downshift on a user mach
 
 **Related:** [config.md](config.md) · [session-models.md](../reference/session-models.md) · [harness-matrix.md](../reference/harness-matrix.md) · [examples/README.md](../../examples/README.md) · [Portuguese guides](../pt/README.md)
 
-**Harness status:** Claude Code is Completed; Codex and Cursor are Functional; Antigravity and KiroCrew are Experimental (see [Experimental harnesses](#experimental-harnesses)); OpenCode is Beta (adapter, routing and observation wire in this repository, and the bridge plugin that setup installs; live-verified except the retry fallback). The sections below follow that order. Definitions and evidence: [harness-matrix.md](../reference/harness-matrix.md#status-per-harness).
+**Harness status:** Claude Code is Completed; Codex is Functional; Cursor, Antigravity and KiroCrew are Experimental (see [Experimental harnesses](#experimental-harnesses)); OpenCode is Beta (adapter, routing and observation wire in this repository, and the bridge plugin that setup installs; live-verified except the retry fallback). The sections below follow that order. Definitions and evidence: [harness-matrix.md](../reference/harness-matrix.md#status-per-harness).
 
 ## Health check
 
@@ -268,7 +268,7 @@ in a terminal for any harness. See [session-view.md](session-view.md).
 
 ## Install (Cursor)
 
-**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md)). On Cursor 3.27.12, Task `preToolUse` often omits `model` and `model_id`; Downshift remembers the parent composer slug from earlier hooks and from `subagentStop`.
+**Status: Experimental.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md)). On Cursor 3.27.12, Task `preToolUse` often omits `model` and `model_id`; Downshift remembers the parent composer slug from earlier hooks and from `subagentStop`.
 
 **Fastest path:** `downshift setup cursor` (the wizard shows the diff and asks before writing). That merges the hooks below (and your existing entries) and points them at the binary that ran setup.
 

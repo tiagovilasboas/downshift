@@ -90,7 +90,7 @@ Model definitions reside in embedded metadata (`internal/catalog/catalog.json`) 
 |---|---|---|---|---|
 | **Claude Code** | Completed | `Task` / `Agent` | `PreToolUse` → `updatedInput.model` | Observed honored (2026-10-06); transcript token usage; controlled A/B evidence |
 | **Codex** | Functional | `spawn_agent` | `PreToolUse` → model + `reasoning_effort` | Inferred, conformance test verified |
-| **Cursor** | Functional | `Task` | `preToolUse` → `updated_input.model` | Conformance verified; unconfirmed on Free/legacy Pro |
+| **Cursor** | Experimental | `Task` | `preToolUse` → `updated_input.model` | Conformance verified; unconfirmed on Free/legacy Pro |
 | **OpenCode** | Beta | `subagent` | Hook adapter / plugin wire | Adapter and conformance tests in repository |
 | **Antigravity** | Experimental | `Task` | Policy mode / native hook | Single-build observed execution |
 | **KiroCrew** | Experimental | Native CLI hook | Allow/block retry | Single-build observed execution |

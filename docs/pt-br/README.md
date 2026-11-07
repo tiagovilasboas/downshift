@@ -70,9 +70,9 @@ O Downshift foi projetado segundo a regra de camadas arquiteturais: a inteligên
 |---|---|---|---|---|
 | **Claude Code** | Reescrita automática de comandos | Reescrita de modelo observada e honrada | **Completed** | `downshift setup claude-code` |
 | **Codex** | Execução direta via `downshift compact` | Reescrita emitida e honrada inferida | **Functional** | `downshift setup codex` |
-| **Cursor** | Execução direta via `downshift compact` | Reescrita emitida e honrada não confirmada | **Functional** | `downshift setup cursor` |
+| **Cursor** | Execução direta via `downshift compact` | Reescrita emitida e honrada não confirmada | **Experimental** | `downshift setup cursor` |
 | **OpenCode** | Reescrita automática via bridge plugin | Reescrita observada e honrada | **Beta** | `downshift setup opencode` |
-| **Antigravity** | Execução direta via `downshift compact` | Suporte a rotas e subagentes locais | **Functional** | `downshift setup antigravity` |
+| **Antigravity** | Execução direta via `downshift compact` | Suporte a rotas e subagentes locais | **Experimental** | `downshift setup antigravity` |
 | **KiroCrew** | Execução direta via `downshift compact` | Modo de política (allow/block, sem reescrita in-place) | **Experimental** | `downshift setup kirocrew` |
 
 > **Nota:** Claude Code e OpenCode reescrevem comandos permitidos para sua forma compactada de forma automática (via hooks nativos `PreToolUse` e bridge plugin). Em outros ambientes, a compactação opera por reescrita via hooks, políticas de orientação/advise (como o código de saída 2 no KiroCrew) ou execução direta via `downshift compact -- <comando>` (universal em qualquer terminal). Detalhes por harness: [Matriz de Harnesses](../reference/harness-matrix.md) e [Reconciliação de Evidências](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
