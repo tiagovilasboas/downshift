@@ -28,8 +28,8 @@ var (
 	// rePytestSectionHeading is any "=== title ===" line.
 	rePytestSectionHeading = regexp.MustCompile(`^=+ .+ =+$`)
 	rePytestShortSummary   = regexp.MustCompile(`^=+ short test summary info =+$`)
-	// rePytestFinalLine is the closing summary: "=== 1 failed, 24 passed in 0.48s ===".
-	rePytestFinalLine = regexp.MustCompile(`^=+ .*\b(?:failed|errors?)\b.* in .+ =+$`)
+	// rePytestFinalLine is the closing summary: "=== 1 failed, 24 passed in 0.48s ===" or "-q" form "1 failed, 24 passed in 0.48s".
+	rePytestFinalLine = regexp.MustCompile(`^(?:=+ )?.*\b(?:failed|errors?)\b.* in .+`)
 	// rePytestProgressLine: the outcome letters of a progress line, with its path and percentage.
 	rePytestProgressLine = regexp.MustCompile(`^(?:` + pytestPathChars + `\.py )?([.sFExX]+)(?: +\[ *\d+%\])?$`)
 	// rePytestVerboseLine is a -v line: nodeid, outcome, percentage.

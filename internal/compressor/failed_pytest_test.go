@@ -74,6 +74,15 @@ func TestCompressFailedPytestStaysRawWhenNothingCutOrUnknown(t *testing.T) {
 	assertRaw(t, compressor.FormatPytest, readFixture(t, "pytest_fail_tb_line.txt"), "pytest_failed_run_unrecognized_line_preserved")
 }
 
+func TestCompressFailedPytestQuietMode(t *testing.T) {
+	in := []byte("....................                                                     [ 80%]\n..F..                                                                    [100%]\n=================================== FAILURES ===================================\n_________________________________ test_charge __________________________________\nE       assert 100 == 110\n=========================== short test summary info ============================\nFAILED tests/test_billing.py::test_charge - assert 100 == 110\n1 failed, 24 passed in 0.05s\n")
+	r := compressor.CompressFailed(in, compressor.FormatPytest)
+	if !r.Applied || r.Format != compressor.FormatPytest || len(r.Output) >= len(in) {
+		t.Fatalf("not compacted: applied=%v format=%s reason=%q %d -> %d", r.Applied, r.Format, r.Reason, len(in), len(r.Output))
+	}
+	assertOnlyNoiseCut(t, in, r.Output, "Pytest: 20 passing tests cut", pytestNoise)
+}
+
 // Each input is a run the grammar cannot read in full, or one with no failure
 // signal: the output must come back byte for byte.
 func TestCompressFailedPytestFailsOpen(t *testing.T) {

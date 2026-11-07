@@ -37,12 +37,19 @@ func keepRaw(keep func(raw []byte) (string, bool), raw, out []byte) (res []byte)
 	if i < 0 {
 		return out
 	}
+	summary := foldStored(out[:i])
+	if len(raw) > len(out) && len(summary)+len(MarkerWithID(len(raw), len(summary), "000000000000")) >= len(raw) {
+		return out
+	}
 	id, ok := keep(append([]byte(nil), raw...))
 	if !ok {
 		return out
 	}
-	summary := foldStored(out[:i])
-	return append(append([]byte{}, summary...), MarkerWithID(len(raw), len(summary), id)...)
+	withID := append(append([]byte{}, summary...), MarkerWithID(len(raw), len(summary), id)...)
+	if len(raw) > len(out) && len(withID) >= len(raw) {
+		return out
+	}
+	return withID
 }
 
 // foldStored cuts runs of same-shape lines (compressor.FoldRepeats) from text
@@ -72,7 +79,7 @@ func keepUncompacted(keep func(raw []byte) (string, bool), raw []byte, exitCode 
 		return nil, false
 	}
 	summary := foldStored(raw)
-	if len(summary) == len(raw) {
+	if len(summary) == len(raw) || len(summary)+len(MarkerWithID(len(raw), len(summary), "000000000000")) >= len(raw) {
 		return nil, false
 	}
 	id, stored := keep(append([]byte(nil), raw...))

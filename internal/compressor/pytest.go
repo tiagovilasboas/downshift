@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d+(?:\.\d+)?s) =+$`)
+	rePytestSummary     = regexp.MustCompile(`(?m)^(?:=+\s*)?(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d+(?:\.\d+)?s)(?: =+)?$`)
 	rePytestHeader      = regexp.MustCompile(`(?m)^=+\s*test session starts\s*=+`)
 	rePytestFailSummary = regexp.MustCompile(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
 	// rePytestPlainLine lists every line shape a clean pytest run emits. A
@@ -34,7 +34,7 @@ var (
 		`|cachedir: ` + pytestPathValue +
 		`|plugins: [A-Za-z0-9_.-]+-[0-9][A-Za-z0-9_.+-]*(?:, [A-Za-z0-9_.-]+-[0-9][A-Za-z0-9_.+-]*)*` +
 		`|collected \d+ items?(?: / \d+ deselected)?` +
-		`|` + pytestPathChars + `\.py [.s]+(?: +\[ *\d+%\])?` +
+		`|(?:` + pytestPathChars + `\.py )?[.s]+(?: +\[ *\d+%\])?` +
 		`)$`)
 )
 
