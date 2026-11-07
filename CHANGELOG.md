@@ -9,7 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.10.0] - 2026-11-07
+## [0.11.0] - 2026-11-07
+
+### Added
+
+- Lossless test failure folding for `go test` and `pytest`:
+  - `go test`: Folds standard library runtime and testing panic stack frames, shortens headers, condenses multiple passing packages without coverage into a single summary line, and preserves 100% of user stack frames and assertion failures (15/15 facts preserved).
+  - `pytest`: Counts passing dots on mixed progress lines, strips non-error test body lines in failure blocks, deduplicates short summaries, and preserves 100% of user stack frames and failure reasons (12/12 facts preserved).
+- Dirty `git status` formatting: Compresses dirty working tree status into a short/porcelain view with branch tracking information, stripping git advice hints, upstream boilerplate, and empty lines for a ~66% token cut.
+- Listing commands compaction: Compresses `ls -l` and `ls -la` long listings by filtering permissions, link counts, owner, and group columns while preserving file sizes, timestamps, and target paths (~58% token cut). Repeat folding threshold is calibrated to prevent over-folding on listings under 60–100 items.
+- Natural language context triggers: Conversational squad dispatch support (`downshift full-power`, `potência total`, `força total`, `downshift shift <squad>` for `security`, `quality`, `core`, and `leadership`) across agent harnesses.
+- Dedicated Portuguese (PT-BR) documentation hub under `docs/pt-br/` with complete guides, CLI references, benchmark summaries, and architectural overviews.
+
+### Changed
+
+- Compactor benchmark baseline: Achieved 51.1% raw corpus reduction across 107 test fixtures (from 130,570 raw bytes down to 63,861 bytes) and 72.0% token reduction (down to 36,559 bytes) with Command Context Recovery (CCR) repeat folding enabled by default.
+- Maturity updates:
+  - Setup wizard (`downshift setup`) promoted to Stable with non-destructive backups under `~/.downshift/backups/`, symlink preservation, and hook collision checks in `downshift doctor`.
+  - Token Accounting (`downshift report`, `downshift discover`) promoted to Functional.
+  - Compressor Learning (`downshift learning`) promoted to Functional.
+  - Antigravity harness promoted from Experimental to Functional status with verified setup wizard support, MCP server tools, and hook integration.
+- Language switcher added to `README.md` linking English and Brazilian Portuguese documentation.
+
 
 ### Changed
 
