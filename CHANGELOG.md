@@ -13,9 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Claude Code: a spawn issued from inside a subagent (a nested spawn) read its parent model from the main session's transcript, because Claude Code hands every hook the main `transcript_path`. A nested spawn that named no model was then logged and "downshifted" from the main model, not from the model it would inherit from its spawner. It now has an unknown baseline and is held, and no `parent_model` is recorded for it. A model the call names, or a parent model the mod reports, routes as before. Nested spawns could not be produced on 2.1.319 (a subagent has no `Agent` tool), so the fix rests on the documented `agent_id` hook input; see the harness matrix.
 
+## [0.9.1] - 2026-11-06
+
+### Fixed
+
+- Release signing now uses a cosign bundle (`checksums.txt.sigstore.json`), because cosign v3 refused the detached `.sig`/`.pem` flags and the v0.9.0 release never published. Release notes: [docs/releases/v0.9.1.md](docs/releases/v0.9.1.md).
+
 ## [0.9.0] - 2026-11-06
 
-First public beta. The repository starts a fresh history at this release. Release notes: [docs/releases/v0.9.0.md](docs/releases/v0.9.0.md).
+First public beta, tagged but not published (its release job failed at signing). The repository starts a fresh history at this release. The notes live in [docs/releases/v0.9.1.md](docs/releases/v0.9.1.md).
 
 ### Security
 
@@ -551,8 +557,8 @@ First public beta. The repository starts a fresh history at this release. Releas
   `~/.kiro/crew/sessions/<id>/state.json`. PRs #559, #560, #561.
 - **REA curation:** reverse engineering analysis content moved to
   [downshift-labs](https://github.com/tiagovilasboas/downshift-labs); integration evidence
-  (rewrite-honored, executor-ack, benchmarks) stays in Downshift. Added `scripts/curate-rea.sh`
-  for future curation. PR #562.
+  (rewrite-honored, executor-ack, benchmarks) stays in Downshift. Added a curation script
+  (since removed). PR #562.
 - **Cursor adapter:** composer baseline cache (`downshift cursor-touch` on
   `sessionStart` and `beforeSubmitPrompt`, `~/.downshift/cursor-composer-model.json`);
   `subagentStop` links by `subagent_id` on Cursor 3.27.12+. `downshift setup cursor`
@@ -995,10 +1001,10 @@ First public beta. The repository starts a fresh history at this release. Releas
 - **Benchmarks & training ops:** Public repo no longer ships benchmark JSON,
   outcome suite, or `tools/minilm` / `tools/baseline`. Curated metrics:
   [benchmark/REPORT.md](docs/benchmark/report.md). Maintainer eval and regression gates
-  run in private **downshift-labs** ([#57](https://github.com/tiagovilasboas/downshift/pull/57)).
+  run in private **downshift-labs** (PR #57).
 - **README / docs:** Messaging aligned with labs split (REPORT, not in-repo outcome
   CI); [BETA-EXIT](docs/reference/beta-exit.md) P4.5 note; `Makefile report` no longer
-  overwrites README ([#58](https://github.com/tiagovilasboas/downshift/pull/58) hygiene).
+  overwrites README (PR #58 hygiene).
 - **Docs:** Maintainer shadow/engineering/v2 long form stubbed in OSS; full copies
   in downshift-labs. classifier-shadow.md shortened (file since removed).
 - **CI:** Public `ci` / `ci-full` run `go test` and adapter smoke only (sample

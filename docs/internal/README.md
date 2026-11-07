@@ -19,7 +19,6 @@ Adopters should start with the [root README](../../README.md), [architecture.md]
 | [gap-tasks.md](gap-tasks.md) | Runtime and evidence task queue (2026-10-09 snapshot) |
 | [ds-04-codex-observer-contract.md](ds-04-codex-observer-contract.md) | DS-04 Codex observer privacy and evidence contract (POC, disabled) |
 | [codex-lifecycle-observer-poc.md](codex-lifecycle-observer-poc.md) | DS-04 Codex lifecycle observer POC notes |
-| [tasks/](tasks/) | Dated task waves (2026-10-13: next, review, scores, ux, ux-review) |
 
 Sensitive execution detail lives in **private** storage; see
 [publishing-boundaries.md](../reference/publishing-boundaries.md) (competitive sensitivity).

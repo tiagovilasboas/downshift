@@ -9,7 +9,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 #
 #   # Specific version:
-#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh -s v0.1.0-beta.1
+#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh -s v0.9.1
 #
 # The binary is installed to /usr/local/bin/downshift (or ~/.local/bin or
 # ~/bin if /usr/local/bin is not writable without sudo). Set
@@ -72,7 +72,7 @@ fi
 if [ -z "$VERSION" ]; then
   echo "error: could not determine latest version (no release found, or github.com unreachable)." >&2
   echo "Pass a version explicitly:" >&2
-  echo "  sh install.sh v0.1.0-beta.1" >&2
+  echo "  sh install.sh v0.9.1" >&2
   exit 1
 fi
 

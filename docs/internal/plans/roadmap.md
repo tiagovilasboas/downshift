@@ -6,7 +6,7 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Status: Accepted 2026-10-26 (D1 to D13); sequencing superseded 2026-10-27 by the [MVP plan](mvp-plan.md), which wins where they differ. Scope: model routing and its channels. The Compactor (`execwrap`, `compressor`, `shellwrap`) and DCI (`codeintel`) do not change.
 
-Sources: [routing-v2 design](../../design/routing-v2.md), [cards](../tasks/2026-10-26-routing-v2/README.md), [true-north cleanup](../tasks/2026-10-26-routing-v2/true-north-cleanup.md). The external-orchestrator behaviour report is kept outside this repository and is not reproduced here.
+Sources: [routing-v2 design](../../design/routing-v2.md). The external-orchestrator behaviour report is kept outside this repository and is not reproduced here.
 
 Phases end at exit criteria, not dates. Where two sources disagree, section 9 names the conflict and this roadmap states which side it follows.
 
@@ -39,7 +39,7 @@ Phases 1 to 5 hold 18 cards and 51 points. Phase 6 has no cards.
 
 ## 3a. Current state (2026-10-29, latest; source of truth for routing phases)
 
-Sections 5 below are the 2026-10-26 plan, kept for history. Where they conflict with this block or with 8a to 8d, the later text wins. For the MVP stages (setup, MCP, report, plan runner), the [MVP closing state (2026-10-29)](../tasks/2026-10-27-mvp/README.md#closing-state-2026-10-29) wins over this table.
+Sections 5 below are the 2026-10-26 plan, kept for history. Where they conflict with this block or with 8a to 8d, the later text wins. For the MVP stages (setup, MCP, report, plan runner), the MVP closing state (2026-10-29) wins over this table.
 
 | Phase | State | What is left |
 |---|---|---|
@@ -346,7 +346,7 @@ The plan runner estimate is now 41 points, with two new fronts (P11 events, P12 
 
 Wave totals: W0 14, W2 13, W3 13, W4 13, W5 8. The plan-runner spec (33 points) overlaps W2 and W3; it is reconciled in BP3 to BP5.
 
-**State on 2026-10-28 (MVP stage 2b and 3).** Built: the MCP server with four information tools and `setup --mcp` (K3 to K6), detected models only (K1, K7: no id is fixed in code, `setup` no longer writes `session-models.json`, the `providers` tool can store reported ids as a one-hour hint that a fresh detection overrides), and the routing note in `report` and `session --panel` with tokens per harness in two columns (V1). Pending the owner's acceptance. Next: V2 (acceptance baseline, needs the owner's budget approval) and V3 (real-session proof). Partly met on 2026-10-28: two real Claude Code spawns carrying `[tier=small]` in the prompt were moved to haiku (routing note `hint_down`), and the MCP server answered a real session's `providers` call. Open: the haiku alias drift (OR1), the release note, and a proof with the control group off. The setup registers the MCP server by default now (`--no-mcp` skips it). Cards: `docs/internal/tasks/2026-10-27-mvp/README.md`.
+**State on 2026-10-28 (MVP stage 2b and 3).** Built: the MCP server with four information tools and `setup --mcp` (K3 to K6), detected models only (K1, K7: no id is fixed in code, `setup` no longer writes `session-models.json`, the `providers` tool can store reported ids as a one-hour hint that a fresh detection overrides), and the routing note in `report` and `session --panel` with tokens per harness in two columns (V1). Pending the owner's acceptance. Next: V2 (acceptance baseline, needs the owner's budget approval) and V3 (real-session proof). Partly met on 2026-10-28: two real Claude Code spawns carrying `[tier=small]` in the prompt were moved to haiku (routing note `hint_down`), and the MCP server answered a real session's `providers` call. Open: the haiku alias drift (OR1), the release note, and a proof with the control group off. The setup registers the MCP server by default now (`--no-mcp` skips it).
 
 **Open reconciliations (owner decisions)**
 

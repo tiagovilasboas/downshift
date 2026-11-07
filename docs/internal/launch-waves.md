@@ -132,7 +132,7 @@
 | W5-2 | P2.4: README tabela multi-fonte + data | docs | [ ] |
 | W5-3 | P3.4: ≥50 eventos usage ligados a decisões | dogfood | [ ] |
 | W5-4 | P3.5: `stats` com Real provider cost não zero | dogfood | [ ] |
-| W5-5 | P3.7: rodar a comparação de sete dias roteado vs controle em tokens (efeito, tokens por tarefa concluída, retrabalho), publicar `docs/evidence/real-seven-day-<date>.md` ([issue #103](https://github.com/tiagovilasboas/downshift/issues/103)); sem medir dinheiro | dogfood | [ ] |
+| W5-5 | P3.7: rodar a comparação de sete dias roteado vs controle em tokens (efeito, tokens por tarefa concluída, retrabalho), publicar `docs/evidence/real-seven-day-<date>.md` (seven-day comparison issue); sem medir dinheiro | dogfood | [ ] |
 | W5-6 | P1.6: Cursor Pro/Ultra evidência em `docs/reference/harness-matrix.md` | dogfood | [ ] |
 | W5-7 | Habilitar `claude-code-subagent-stop` no settings maintainer + doc | dogfood | [ ] |
 | W5-8 | **Decisão:** se P2/P3 incompletos → README “beta” + BETA-EXIT link; se completos → remover beta | TL | [ ] |
@@ -226,7 +226,7 @@ Não bloqueia launch; ordem sugerida:
 | 4 | `64e2295`/`660f276` module + GitHub rename | 2026-10-06 | W4-8 via `v0.1.0-beta.6` |
 | 5 | template `stats-export` | 2026-10-06 | P2.3 exports ainda 0/2 |
 | 6 | `v0.1.0-beta.6` + CI tiers | 2026-10-06 | W6-2/3 manual GitHub UI |
-| — | [#57](https://github.com/tiagovilasboas/downshift/pull/57) labs split | 2026-10-06 | REPORT público; gates no labs |
+| — | PR #57 labs split | 2026-10-06 | REPORT público; gates no labs |
 | 7 | | | |
 
 ---
