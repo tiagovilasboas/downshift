@@ -3,8 +3,8 @@
 `internal/compressor/testdata/bench/baseline.tsv` is the floor for the
 compaction benchmark: per family, the fixture count, raw bytes and reduced bytes
 (integers), plus `@lossless`, `@lossy` and `@total` sums. `TestBenchGuard` in
-`internal/compressor` is never skipped. It re-runs the bench corpus with rtk off
-and the CCR column ignored, and fails when:
+`internal/compressor` is never skipped. It re-runs the bench corpus with the CCR
+column ignored, and fails when:
 
 - a family's saving falls more than 2.0 points below its row **and** its reduced
   size grew by more than 8 bytes (the byte floor protects one-fixture families);
@@ -21,7 +21,7 @@ make bench            # rewrites docs/reference/bench.md
 
 Commit both files; the TSV change is the reviewable diff. An improvement or a
 new fixture needs no more than that. Running `make bench` twice must leave
-`git diff` empty (the rtk columns are off by default: rtk output is not stable).
+`git diff` empty.
 
 ## Lowering a floor
 

@@ -26,7 +26,7 @@ import (
 // setup.Targets (Hook.Rewrites); the event, matcher and file come from the same
 // table, so every harness whose hook file doctor already reads is covered.
 // Evidence and the measured winner rule: docs/guides/companions.md,
-// "Hook coexistence", and docs/evidence/hook-coexistence-2026-11-06.md.
+// "Hook coexistence", and docs/evidence/hook-coexistence-2026-11-07.md.
 
 // hookEntry is one command found in a hook file, with the keys above it, the
 // matcher of its group, and the argument list of an exec-form entry.
@@ -81,11 +81,6 @@ type knownRewriter struct {
 }
 
 var knownHookRewriters = []knownRewriter{
-	// RTK (rtk-ai/rtk) rewrites the shell command: `rtk hook <agent>` or the
-	// rtk-rewrite script it installs.
-	{Name: "RTK", Rewrites: setup.RewritesShell, Is: func(b string) bool {
-		return b == "rtk" || strings.HasPrefix(b, "rtk-rewrite")
-	}},
 	// cheap-subagents (The-Guard305/cheap-subagents) sets the subagent model.
 	{Name: "cheap-subagents", Rewrites: setup.RewritesModel, Is: func(b string) bool {
 		return b == "cheap_subagents"
@@ -109,7 +104,7 @@ func normBase(tok string) string {
 }
 
 // commandWords splits a hook command into words. A quoted first word may hold
-// spaces (`"C:\Program Files\rtk\rtk.exe" hook claude`), as in
+// spaces (`"C:\Program Files\Tool\tool.exe" hook claude`), as in
 // setup.IsDownshiftCommand; the rest is split on white space.
 func commandWords(command string) []string {
 	c := strings.TrimSpace(command)

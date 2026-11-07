@@ -5,7 +5,7 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift — token optimization and model routing for AI coding agents" width="320">
 </picture>
 
-### Compact verbose output. Let the orchestrator pick each subagent's model. Cut AI coding agent token use.
+### Cut Claude Code token usage: run each subagent on the right model and shorten long test output, failures kept.
 
 Downshift compacts verbose command output, applies the model the orchestrator chose for each
 subagent (bounded by your policy), and learns which commands need new compressors. Its own code
@@ -26,15 +26,21 @@ never calls an LLM.
 
 </div>
 
-Downshift is a token optimization and model delegation tool for AI coding agents: Claude Code, Cursor,
-Codex, OpenCode, Antigravity, and KiroCrew (Experimental). It compacts verbose command output before it
-fills the context window, applies the orchestrator's model choice for each subagent within the bounds you
-declare, and counts, per harness, the tokens compaction saved and the tokens that ran on a cheaper model.
+Two things burn Claude Code tokens and usage limits fastest: subagents that inherit your most expensive
+model, and long test and build output that stays in context. Downshift is a free, open-source tool for both,
+in Claude Code, Cursor, Codex, OpenCode, Antigravity, and KiroCrew (Experimental). It compacts verbose
+command output before it fills the context window, applies the orchestrator's model choice for each
+subagent within the bounds you declare, and counts, per harness, the tokens compaction saved and the tokens
+that ran on a cheaper model.
 
 **Who it is for:** people whose agent sessions run long commands and spawn subagents, and who want the
 policy they declared, not a router, to bound those choices.
 
 **First action:** [install it](#install), run `downshift setup`, then `downshift doctor`.
+
+**Guides:** [Do Claude Code subagents burn your usage limit faster?](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/) ·
+[Claude Code usage limit](https://downshift-ai.vercel.app/guides/claude-code-usage-limit/) ·
+[all guides](https://downshift-ai.vercel.app/guides/) · [guias em português](https://downshift-ai.vercel.app/pt-br/guias/)
 
 ## Contents
 
@@ -384,6 +390,22 @@ the [harness matrix](docs/reference/harness-matrix.md).
 **How is this different from `/compact` in Claude Code?** `/compact` summarizes conversation history already
 in the context window. Downshift shrinks command output before it enters the context. They are
 complementary.
+
+**Do Claude Code subagents burn my usage limit faster?** They can. Anthropic's subagent docs say each
+subagent starts with a fresh context and sends its own requests, which count toward the same usage limits
+as your main conversation, and it runs on your main model unless something sets another. The built-in
+Explore agent runs on the main model too. Put routine subagents on a smaller model; `downshift policy init`
+offers an `explore` profile that sends Explore to the small tier and shows which model that resolves to
+first. [Guide](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/).
+
+**How is this different from `CLAUDE_CODE_SUBAGENT_MODEL`?** That variable sets one default model for every
+subagent nothing else sets, and by itself it does not change the built-in Explore and Plan agents.
+Downshift applies the model chosen for each spawn, within a policy you declare, keeps the requested model
+when in doubt, records where tokens ran, and also works in Codex, Cursor and OpenCode.
+
+**Does Downshift save my Claude Code usage limit?** Not measured yet. Downshift reports the tokens that ran
+below your session model and the bytes compaction removed, per harness; how a plan converts tokens into its
+5-hour and weekly limits is not published, so no limit saving is claimed.
 
 ---
 

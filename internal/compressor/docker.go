@@ -11,7 +11,7 @@ import (
 
 // Docker output compressor.
 // docker ps and docker images produce wide tables with many columns.
-// RTK keeps only essential columns: name, image, status, ports for ps;
+// Keep only the essential columns: name, image, status, ports for ps;
 // repository, tag, size for images.
 
 var (

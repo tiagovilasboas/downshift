@@ -12,7 +12,7 @@ import (
 // npm/pnpm/yarn/bun install output compressor.
 // These package managers produce hundreds of lines of dependency resolution,
 // peer dependency warnings, and deprecation notices that LLMs don't need.
-// RTK parity: installed packages only, progress stripped.
+// Installed packages only, progress stripped.
 
 var (
 	// npm patterns
