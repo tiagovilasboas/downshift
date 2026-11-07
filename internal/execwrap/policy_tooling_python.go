@@ -8,6 +8,7 @@ func pythonToolingFamily(argv []string) Family {
 	if len(argv) == 0 {
 		return FamilyNone
 	}
+	argv = stripVenvBin(argv)
 
 	prog := argv[0]
 
