@@ -128,6 +128,158 @@ Downshift integrates with it cleanly:
 2. The model decider and catalog recognise gateway-prefixed models (e.g. `9router/*`) so routing decisions remain sound without "unknown model" rejections.
 3. `downshift gateway on [9router] [--endpoint URL]` routes workers delegated through `downshift mcp serve` through the gateway (`ANTHROPIC_BASE_URL` for claude, `OPENAI_BASE_URL` for codex); `downshift gateway off` stops it. Only delegate workers are routed: native harness subagents cannot be. Use provider API keys configured in the gateway; Downshift passes no key.
 
+## Hook coexistence: RTK and cheap-subagents next to Downshift (measured 2026-11-06)
+
+Two companions install their own `PreToolUse` hook that rewrites the tool input,
+the same field a Downshift hook rewrites. Nobody had run two such hooks on one
+call, so this was measured. Downshift still does not install, wrap or configure
+either tool; this section records what happens when they sit next to it and what
+`downshift doctor` says.
+
+| Companion | Install | Hook | Rewrites | Downshift hook it overlaps |
+|---|---|---|---|---|
+| [RTK](https://github.com/rtk-ai/rtk) | `rtk init -g` | `PreToolUse`, `Bash` | `tool_input.command` becomes `rtk <command>` | the shell rewrite (`downshift compact`), `Bash` |
+| [cheap-subagents](https://github.com/The-Guard305/cheap-subagents) | `cheap_subagents.py --install` | `PreToolUse`, `Agent` | `tool_input.model` | the model rewrite, `Agent\|Task` |
+
+### What Claude Code documents
+
+From the [hooks reference](https://code.claude.com/docs/en/hooks.md) and the
+[hooks guide](https://code.claude.com/docs/en/hooks-guide.md), read 2026-11-06:
+
+> When an event fires, its matching hooks run in parallel.
+
+> When multiple hooks match the same event, every hook's command runs to completion before Claude Code merges the results.
+
+> For `PreToolUse` permission decisions, the most restrictive answer applies, in the order `deny`, `defer`, `ask`, `allow`.
+
+> `updatedInput` … Replaces the entire input object, so include unchanged fields alongside modified ones.
+
+> When multiple `PreToolUse` hooks return `updatedInput` to rewrite a tool's input, Claude Code doesn't merge the rewrites or guarantee which rewrite the tool runs with. Avoid having more than one hook rewrite the same tool's input.
+
+So the documentation promises parallel hooks, combined permission decisions,
+rewrites that are not merged, and no rule for which rewrite runs. The hooks
+reference page says nothing about several `updatedInput` results; the
+limitation is in the guide.
+
+### What was observed
+
+Claude Code 2.1.319, a real `claude -p` run per scenario with a scrubbed
+environment against a local mock API (127.0.0.1 only, no credentials, nothing
+left the machine), 38 runs (22 Bash, 16 Agent). Method, scripts, results table, debug-log excerpts and
+doctor output: [the evidence file](../evidence/hook-coexistence-2026-11-06.md).
+
+**Which hook's rewrite runs: the one that returns last.** Claude Code's own debug
+log shows both hooks returning and both reporting `modified tool input keys`;
+the applied input was the later one in all 18 Bash runs with both hooks and in
+all 8 Agent runs where the two hooks answered differently. The order of the entries in
+`settings.json` made no difference (swapped in every pair). Delaying one hook by
+0.5 s moved the win to the other one, in both directions, for both pairs. With
+no delay, Downshift (a Go binary, about 40 ms) returned after RTK's shell hook
+(about 22 ms) and won all 12 Bash runs with natural timing; that is a fact about those two processes
+on that machine, not a promise, and a faster or slower companion flips it.
+
+| | Downshift + RTK (`Bash`, `go test ./...`) | Downshift + cheap-subagents (`Agent`) |
+|---|---|---|
+| Rewrite that runs | the later hook's: `downshift compact -- go test ./...` or `rtk go test ./...`, never a mix | the later hook's whole `updatedInput`: model, and prompt text |
+| Double wrap (`rtk downshift compact -- …` or the reverse) | **0 of 18 runs with both hooks.** Each hook is handed the original command and neither sees the other's output | not applicable |
+| Lost rewrite | **yes, silently.** The loser's rewrite is dropped with no error in the log or the tool result | **yes, silently**, see below |
+| Exit code of the command | survives: the fixture command exits 3 and the tool result says `Exit code 3` in every run where a command ran, through `downshift compact` and through the RTK stub | not applicable |
+| `downshift doctor` | `hook overlap` warning with a fix | `hook overlap` warning with a fix |
+
+Downshift also leaves a command that already starts with `rtk` or with
+`downshift compact` unchanged (it answers `{}`), so a command written that way by
+the model is not wrapped twice either.
+
+**The Agent pair loses more than a model name.** With a prompt that starts
+`[model:sonnet]` and a requested `opus`, Downshift answers `haiku` and leaves the
+prompt as it is; cheap-subagents answers `sonnet` and strips the tag. If
+Downshift returns last the subagent runs on haiku with the tag still in its
+prompt; if cheap-subagents returns last it runs on sonnet. When
+cheap-subagents won, Downshift's own record still said it had rewritten to haiku
+(`events.jsonl`: `final_model claude-haiku-5-5`, `rewrite_emitted`; `downshift
+stats`: `Models: haiku 1`) while the subagent was served sonnet. That fixture
+wired only `PreToolUse`, so the `SubagentStop` honor check that exists for this
+([harness matrix](../reference/harness-matrix.md)) was not in play; see "Not
+verified". When only one hook has something to change (a non-trivial prompt with
+`opus` requested: Downshift holds, cheap-subagents says `sonnet`) there is no
+conflict and the rewrite runs.
+
+**Permission is combined separately from the input.** With no `Bash` allow rule
+in a headless run, Downshift alone was denied (`This command requires
+approval`): it emits no `permissionDecision` on purpose, so the harness's own
+rules decide. RTK alone ran, because its hook answers `allow`. With both, the
+command that ran was **Downshift's** rewrite, approved by **RTK's** `allow`, the
+hook whose rewrite was discarded. This follows from the documented rule that
+decisions are combined across all hooks, and it means that next to RTK the
+sentence "no Bash allow rule is needed" is true for a different reason: RTK is
+supplying the allow. Deny and ask rules are still evaluated after the hooks
+([hooks reference](https://code.claude.com/docs/en/hooks.md)); RTK's own
+deny/ask handling was not exercised (see "Not verified").
+
+### What `downshift doctor` reports
+
+A `hook overlap` row, per harness whose hook file doctor reads, when another
+`PreToolUse` hook in the same file
+
+- is a recognised rewriter of the **same field** (RTK for the shell command,
+  cheap-subagents for the model; a small table in
+  `cmd/downshift/doctor_hook_overlap.go`),
+- on the same event, with a matcher that can select a tool the Downshift hook
+  answers (`Bash` and `Bash`, `Agent` and `Agent|Task`, an empty or `*` matcher
+  overlaps everything), and
+- while the Downshift hook is active (in the file, or carried by the plugin).
+
+The row is a warning with a `fix`:
+
+```text
+  ! hook overlap    RTK also rewrites the command; one rewrite is lost
+      fix: RTK (matcher "Bash") and Downshift (matcher "Bash") both answer the same
+           PreToolUse call; … Keep one shell rewriter: set DOWNSHIFT_EXEC=0 (or "exec":
+           false in context-optimization.json) to leave the command to RTK, or remove
+           the RTK entry under "PreToolUse" in <settings file>
+```
+
+An unrecognised hook on the same tool is silent (most hooks there audit or
+guard and never rewrite); `doctor --verbose` counts them. The check is shared
+code driven by `setup.Targets` (`Hook.Rewrites` says whether a Downshift hook
+rewrites the model or the shell command), so it is not specific to one harness;
+the tests are `TestHookOverlapTable`, `TestHookOverlapOtherHarnessShapes` and
+`TestDoctorReportsHookOverlap`. The doctor does **not** read a project or local
+settings file, a managed policy, or a hook that a third-party plugin carries, so
+a conflict created there is not reported. A recogniser works from the command
+line, so a tool hidden behind your own wrapper script is not recognised.
+
+### What to do
+
+Keep one rewriter per tool; Downshift does not choose for you.
+
+- **Bash:** either leave `downshift compact` on and remove RTK's `Bash` hook, or
+  turn Downshift's rewrite off (`DOWNSHIFT_EXEC=0`, or `"exec": false` in
+  `context-optimization.json`) and let RTK rewrite. Routing and every other
+  Downshift hook are unaffected.
+- **Agent:** keep Downshift's routing or cheap-subagents, not both. There is no
+  switch that turns off only Downshift's model rewrite; remove one hook.
+
+### Not verified
+
+- **The real RTK binary.** It was not installed or run. The experiment ran the
+  published `rtk-rewrite.sh` hook unmodified (version 4 header, sha256 in the
+  evidence) against a stub `rtk` that implements only `--version` and
+  `rewrite`. RTK's real rewrite rules, its deny/ask handling, its native `rtk
+  hook claude` command and the exit code of a real `rtk <command>` are
+  unmeasured; the exit-code result above is for the stub.
+- **Timing elsewhere.** "Last to return wins" held in every run, but the natural
+  winner depends on process start time and on the machine.
+- **Other Claude Code versions and other harnesses.** Only 2.1.319 was run. Cursor,
+  Codex, Antigravity and KiroCrew were not ([harness
+  matrix](../reference/harness-matrix.md#several-hooks-rewriting-one-call-2026-11-06)).
+- **Fully wired Downshift next to cheap-subagents.** A run with every hook that
+  `setup` writes ended with a different Downshift decision for the same prompt,
+  so it did not test the lost-rewrite case; whether the honor check flags it is
+  open.
+- **Ask and deny rules together with RTK**, and project-level or plugin-carried
+  copies of either hook.
+
 ## Claude Code mods Downshift recommends
 
 Claude Code **mods** (released 2026-10-01 with Claude Code 2.1.287) are

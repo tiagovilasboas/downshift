@@ -801,6 +801,29 @@ Threat note: [compactor-default-on-adr.md](../design/compactor-default-on-adr.md
 
 If the command runs as typed with the hook on, Claude Code ignores the rewrite without a decision: nothing breaks and nothing is saved, and this feature should stay documented as not working there.
 
+## Several hooks rewriting one call (2026-11-06)
+
+When another hook on the same event and tool also returns a rewritten input, the
+harness picks one. Downshift computes the overlap for every harness whose hook
+file `doctor` reads: each Downshift hook that rewrites input carries
+`setup.Hook.Rewrites` (`model` or `shell`) in `setup.Targets`, and `doctor` warns
+(`hook overlap`) when a recognised rewriter of the same kind shares its event and
+tool. What the harness then does is a harness fact, and only one is measured.
+
+| Harness | Downshift hooks tagged as rewriters | Which rewrite runs when two hooks answer | Evidence |
+|---|---|---|---|
+| claude-code | `Agent\|Task` (model), `Bash` (shell) | Not merged, not guaranteed by the documentation; measured on 2.1.319: the hook that returns last, not the first in the file. A permission `allow` from either hook still applies | [hook coexistence](../evidence/hook-coexistence-2026-11-06.md) |
+| cursor | `Task` (model), `Shell` (shell) | not measured | none |
+| codex | `(^Agent$\|.*spawn_agent$)` (model), `^Bash$` (shell) | not measured | none |
+| antigravity | `invoke_subagent` (model), `run_command` (shell) | not measured | none |
+| kirocrew | none: the hook cannot rewrite in place | not applicable | none |
+| opencode | none in a hook file: the bridge is a plugin | not checked by `doctor` | none |
+
+On Claude Code this qualifies the sentence "No Bash allow rule is needed" in the
+shell-rewrite section below: Downshift emits no `permissionDecision`, so a hook
+that answers `allow` for the same call also approves Downshift's rewritten
+command, including when that hook's own rewrite was the one discarded.
+
 ## MCP registration (`setup`, on by default; `--no-mcp` skips it, 2026-10-28)
 
 Only Claude Code (through `claude mcp add -s user`, detection by reading `~/.claude.json`) and Codex (marked block in `~/.codex/config.toml`) are registered; the file formats of Cursor, OpenCode, Antigravity and Kiro are in `docs/internal/plans/mcp-registration.md` and arrive in a later stage. Unverified: what `claude mcp add` does on a duplicate name (setup never adds over an existing entry), where `.claude.json` lives under `CLAUDE_CONFIG_DIR`, and whether Codex loads the server without a trust step.

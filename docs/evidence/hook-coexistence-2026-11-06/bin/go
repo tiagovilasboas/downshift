@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Fixture stand-in for the go toolchain: logs argv and its parent's command line,
+# prints a failing test, exits 3 (so the exit code that survives is visible).
+echo "go-ran argv: $* | parent: $(ps -o args= -p $PPID | cut -c1-240)" >> "$FIXTURE_LOG"
+printf -- '--- FAIL: TestX (0.00s)\n    x_test.go:9: boom\nFAIL\nFAIL\texample.com/x\t0.003s\nFAIL\n'
+exit 3
