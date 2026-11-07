@@ -17,8 +17,7 @@ reports three numbers and never a dollar or cost figure, not even as an estimate
 `downshift report` and `downshift stats` show tokens only. Go computes no dollar figure; the price
 book stays as an internal routing signal (section 3). The price formula was removed (section 5), and
 the dollar accounting layer in [accounting-layer-adr.md](accounting-layer-adr.md) was rejected. Sections
-that mention prices or dollars are kept as rejected history. Plan history:
-[`../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md`](../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md).
+that mention prices or dollars are kept as rejected history..
 
 ---
 

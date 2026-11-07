@@ -6,9 +6,9 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Status: **Accepted, 2026-10-27.** This is the execution order. It consolidates the [routing v2 roadmap](roadmap.md)
 (D1 to D13), the external roadmap proposal (A1 to A4, kept outside this repository) and the owner decisions of
-2026-10-27 in section 2. Where they disagree, this file wins. Cards: [2026-10-27 MVP cards](../tasks/2026-10-27-mvp/README.md).
+2026-10-27 in section 2. Where they disagree, this file wins.
 
-Progress on 2026-10-29: stages 0 and 1 done; stage 2 done except the real-session proof (C0); stage 2b done, pending the owner's acceptance; stage 3 has V1 built, V2 open and V3 partial; stage 4 is partly built through the MCP worker tools, and its plan file runner is not started. The state record is in the [cards, closing state (2026-10-29)](../tasks/2026-10-27-mvp/README.md).
+Progress on 2026-10-29: stages 0 and 1 done; stage 2 done except the real-session proof (C0); stage 2b done, pending the owner's acceptance; stage 3 has V1 built, V2 open and V3 partial; stage 4 is partly built through the MCP worker tools, and its plan file runner is not started. The state record is in the MVP cards, closing state (2026-10-29).
 
 ## 1. Product thesis
 

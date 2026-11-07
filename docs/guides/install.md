@@ -107,7 +107,7 @@ downshift models available --harness claude-code          # the models, their ti
 
 If doctor reports `binary shadowed`, another `downshift` earlier on `PATH` (for example in `~/go/bin`) runs instead of the one you just installed, and so do the hooks. Remove the stale copy or link the newest one over it.
 
-`downshift version` reports the release even for a `go install …@v0.8.1` build (it falls back to the module version Go records). Doctor's `version sync` row compares the binary with the stamps setup left behind, offline: the Claude Code plugin's recorded version and the OpenCode bridge (a copy of what the binary embeds). A mismatch fails the check with the fix `downshift setup --yes`. The `newest on PATH` row runs `downshift version` on each copy on `PATH` and warns when the one that runs first is not the newest. `downshift doctor --check-latest` also asks the GitHub releases API for the latest tag (one request, 2 s timeout, cached 24 h under the state dir in `latest_release.json`); no network call happens without the flag or from a hook, and an offline answer is "unknown", never a failure.
+`downshift version` reports the release even for a `go install …@v0.9.1` build (it falls back to the module version Go records). Doctor's `version sync` row compares the binary with the stamps setup left behind, offline: the Claude Code plugin's recorded version and the OpenCode bridge (a copy of what the binary embeds). A mismatch fails the check with the fix `downshift setup --yes`. The `newest on PATH` row runs `downshift version` on each copy on `PATH` and warns when the one that runs first is not the newest. `downshift doctor --check-latest` also asks the GitHub releases API for the latest tag (one request, 2 s timeout, cached 24 h under the state dir in `latest_release.json`); no network call happens without the flag or from a hook, and an offline answer is "unknown", never a failure.
 
 **Step 4 — Confirm it's working.** Open a new Claude Code session and ask it to spawn a subagent for a trivial task. Then run `downshift session --why`: it lists each subagent with the model it asked for, the model it got and the reason. When the orchestrator starts the spawn's prompt with `[tier=small]`, the subagent runs on the small-tier model.
 
@@ -171,7 +171,8 @@ Build or install the single binary (nothing else to install at runtime):
 
 ```bash
 # Recommended — one-liner installer (macOS / Linux, detects arch automatically)
-# Installs to /usr/local/bin/downshift — no PATH changes needed
+# Installs to /usr/local/bin if it is writable, otherwise to ~/.local/bin (or ~/bin if that exists and ~/.local/bin does not);
+# the installer warns when the directory is not on your PATH
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 
 # Alternative — Go toolchain (any platform)
@@ -266,7 +267,7 @@ in a terminal for any harness. See [session-view.md](session-view.md).
 
 ## Install (Cursor)
 
-**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md)). On Cursor 3.27.12, Task `preToolUse` often omits `model` and `model_id`; Downshift remembers the parent composer slug from earlier hooks and from `subagentStop` ([internal spike](../internal/tasks/2026-10-24-cursor-live/spike.md)).
+**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md)). On Cursor 3.27.12, Task `preToolUse` often omits `model` and `model_id`; Downshift remembers the parent composer slug from earlier hooks and from `subagentStop`.
 
 **Fastest path:** `downshift setup cursor` (the wizard shows the diff and asks before writing). That merges the hooks below (and your existing entries) and points them at the binary that ran setup.
 

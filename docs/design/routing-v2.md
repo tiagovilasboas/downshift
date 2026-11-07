@@ -2,8 +2,7 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-Status: **Proposed** (owner review); **superseded in part by O8 (2026-10-28)**, see the section at the end. Date: 2026-10-26. Roadmap and task cards:
-[`../internal/tasks/2026-10-26-routing-v2/README.md`](../internal/tasks/2026-10-26-routing-v2/README.md).
+Status: **Proposed** (owner review); **superseded in part by O8 (2026-10-28)**, see the section at the end. Date: 2026-10-26..
 Inputs: a read-only diagnosis of today's routing (`origin/main` 800a8e4e) and a clean-room behavioural
 analysis of an external orchestrator (AGPL-3.0, read only; no code, prompt or schema copied).
 Scope: **model routing only**. The Compactor (`execwrap`, `compressor`) and DCI (`codeintel`) are kept as they are.
