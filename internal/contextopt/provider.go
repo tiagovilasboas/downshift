@@ -108,7 +108,9 @@ type Config struct {
 	// DOWNSHIFT_EXEC=0 still overrides both.
 	Exec *bool `json:"exec,omitempty"`
 	// CCR keeps the raw output of a compacted command so it can be retrieved
-	// later. Opt-in: absent or false means off; DOWNSHIFT_CCR overrides it.
+	// later. On by default: absent or true keeps every compacted run; an
+	// explicit false keeps only failed runs (see CCRFailures). DOWNSHIFT_CCR
+	// overrides the file.
 	CCR *bool `json:"ccr,omitempty"`
 	// CCRFailures keeps the raw output of a compacted failed command. On by
 	// default; an explicit false turns it off. DOWNSHIFT_CCR_FAILURES overrides.
@@ -118,11 +120,12 @@ type Config struct {
 // ExecOn reports whether the compact wrapper is on: absent or true.
 func (c Config) ExecOn() bool { return c.Exec == nil || *c.Exec }
 
-// CCROn reports whether raw-output retention is on: only an explicit true.
-func (c Config) CCROn() bool { return c.CCR != nil && *c.CCR }
+// CCROn reports whether raw-output retention is on: absent or true.
+func (c Config) CCROn() bool { return c.CCR == nil || *c.CCR }
 
 // CCREnabled resolves the retention switch. env "1" turns it on and "0" off,
-// and wins over the file; a config error means off.
+// and wins over the file. A config that cannot be read means off: a broken
+// file never starts keeping every run (failed runs follow CCRFailuresEnabled).
 func CCREnabled(cfg Config, cfgErr error, env string) bool {
 	switch env {
 	case "1":

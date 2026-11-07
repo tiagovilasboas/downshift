@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CCR is now on by default (owner decision, 2026-11-06). `downshift compact` keeps the raw output of every compacted command under `~/.downshift/ccr/` (0600, 24 h, 8 MiB per entry, 64 MiB total, secret-looking lines withheld), so repeated lines fold and `downshift retrieve <id>` reads any cut line back; before, only failed runs were kept. This is the one place Downshift writes command output to disk. `DOWNSHIFT_CCR=0` turns it off completely; `"ccr": false` in `context-optimization.json` goes back to keeping failed runs only (`"ccr_failures": false` turns that off too); `DOWNSHIFT_CCR=1` forces every run on. A config file that cannot be read never turns on keeping every run. To drop output already kept, remove `~/.downshift/ccr`. Redaction is a line heuristic: do not leave CCR on for commands that print secrets in other shapes. See `docs/guides/ccr.md`.
+
 ### Fixed
 
 - Claude Code: a spawn issued from inside a subagent (a nested spawn) read its parent model from the main session's transcript, because Claude Code hands every hook the main `transcript_path`. A nested spawn that named no model was then logged and "downshifted" from the main model, not from the model it would inherit from its spawner. It now has an unknown baseline and is held, and no `parent_model` is recorded for it. A model the call names, or a parent model the mod reports, routes as before. Nested spawns could not be produced on 2.1.319 (a subagent has no `Agent` tool), so the fix rests on the documented `agent_id` hook input; see the harness matrix.

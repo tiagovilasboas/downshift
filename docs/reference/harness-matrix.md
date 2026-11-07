@@ -484,7 +484,7 @@ decoders. Until then the safe answer is the documented one.
 
 ## Shell command rewrite: `downshift compact` (on by default, 2026-10-19)
 
-CCR (opt-in, `"ccr": true` or `DOWNSHIFT_CCR=1`) stores the raw output of a compacted command and adds `downshift retrieve <id>`. Both are plain commands, so CCR works in every harness, hooked or not; the MCP tool `retrieve` is the same read. See [ccr.md](../guides/ccr.md).
+CCR (on by default; `DOWNSHIFT_CCR=0` turns it off; `"ccr": false` keeps only failed runs) stores the raw output of a compacted command and adds `downshift retrieve <id>`. Both are plain commands, so CCR works in every harness, hooked or not; the MCP tool `retrieve` is the same read. See [ccr.md](../guides/ccr.md).
 
 On by default on Claude Code: the plugin registers the `Bash` PreToolUse hook. Set
 `"exec": false` in the Downshift config or `DOWNSHIFT_EXEC=0` to turn it off. The decision is

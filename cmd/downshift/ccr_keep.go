@@ -11,10 +11,11 @@ import (
 )
 
 // ccrKeep returns the ports that store raw output for `downshift retrieve`.
-// all is set when CCR is fully on (the `ccr` config key or DOWNSHIFT_CCR=1):
-// it keeps every compacted run. failed is the default: it keeps only a run
-// that exited non-zero, unless "ccr_failures": false or DOWNSHIFT_CCR_FAILURES=0
-// turns it off. Both are nil when the store cannot be opened; a store error
+// all is set when CCR is fully on, which is the default (DOWNSHIFT_CCR=0 or
+// `"ccr": false` turn it off, a config that cannot be read leaves it off): it
+// keeps every compacted run. failed is the fallback: it keeps only a run that
+// exited non-zero, unless "ccr_failures": false or DOWNSHIFT_CCR_FAILURES=0
+// turns it off, and DOWNSHIFT_CCR=0 turns off both. Both are nil when the store cannot be opened; a store error
 // leaves the compacted output as it is.
 func ccrKeep() (all, failed func(raw []byte) (string, bool)) {
 	cfg, err := contextopt.LoadConfig()
