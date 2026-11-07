@@ -75,7 +75,8 @@ Source: `internal/telemetry/aggregate.go` (`Aggregate`), `export.go`, [stats-exp
 ## C. Saving measured in controlled benchmarks
 
 Sources: [benchmark/report.md](../benchmark/report.md) (last updated 2026-10-15),
-[hardening-audit-2026-10-15.md](../evidence/hardening-audit-2026-10-15.md). Datasets live in the private downshift-labs
+[hardening-audit-2026-10-15.md](../evidence/hardening-audit-2026-10-15.md),
+[evaluation-suite-inventory.md](../evidence/evaluation-suite-inventory.md). Datasets live in the private downshift-labs
 repository; the public repo holds aggregates and two sample tasks under `internal/outcome/testdata/`.
 
 | Benchmark | n | Held constant | Result | Cost measured? |
@@ -90,6 +91,9 @@ repository; the public repo holds aggregates and two sample tasks under `interna
 
 Two notes. The small-versus-frontier gap on TRIVIAL+SIMPLE labels is −20.0 points on fixed-model runs, with
 overlapping intervals; the suite's own rule is to revisit the downshift below −5.
+The complete task inventory of the 40 development tasks, the 6-task GAP-SUITE held-out evaluation set, and the minimal
+reproducible smoke evaluation set for immediate post-O8 changes without requiring expensive API calls are documented in
+[evaluation-suite-inventory.md](../evidence/evaluation-suite-inventory.md).
 
 ## D. Saving demonstrated on real tasks
 
