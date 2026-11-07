@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-11-07
+
+Release notes: [docs/releases/v0.11.2.md](docs/releases/v0.11.2.md).
+
 ### Fixed
 
 - `install.sh` now replaces the downshift already on PATH (a regular file in a writable directory, such as `~/go/bin` after `go install`) instead of installing a second copy in `/usr/local/bin` or `~/.local/bin`, where one copy shadowed the other. A linked copy is left alone, and `DOWNSHIFT_INSTALL_DIR` still wins.

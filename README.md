@@ -346,7 +346,7 @@ invoice) and shows byte counts and percentages, not dollar figures.
 | **Reference** | [CLI](docs/reference/cli.md) · [Configuration options](docs/reference/config-options.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Session models](docs/reference/session-models.md) · [Supported tools](docs/reference/supported-tools.md) · [Accounting](docs/reference/accounting.md) · [Beta exit criteria](docs/reference/beta-exit.md) |
 | **Architecture** | [Architecture](docs/design/architecture.md) · [Domains](docs/domains/README.md) · [True north](docs/true-north.md) · [Evidence](docs/guides/evidence.md) · [Benchmark protocol](docs/guides/benchmark-protocol.md) |
 | **Contributing** | [Contributing guide](CONTRIBUTING.md) · [Development setup](docs/contributing/development.md) · [Adding compressors](docs/contributing/compressors.md) · [Layering rule](docs/contrib/layering.md) |
-| **Releases** | [CHANGELOG](CHANGELOG.md) · [v0.11.1 notes](docs/releases/v0.11.1.md) · [Releases](https://github.com/tiagovilasboas/downshift/releases) |
+| **Releases** | [CHANGELOG](CHANGELOG.md) · [v0.11.2 notes](docs/releases/v0.11.2.md) · [Releases](https://github.com/tiagovilasboas/downshift/releases) |
 
 ---
 
@@ -411,7 +411,7 @@ below your session model and the bytes compaction removed, per harness; how a pl
 
 ## Status
 
-**Beta** ([v0.11.1](docs/releases/v0.11.1.md); changes since are under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md)). Not yet stable:
+**Beta** ([v0.11.2](docs/releases/v0.11.2.md); changes since are under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md)). Not yet stable:
 the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
 
 ## License
