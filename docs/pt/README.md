@@ -1,5 +1,16 @@
 # Downshift
 
+> [!IMPORTANT]
+> **Hub Canônico de Documentação em Português:**  
+> A documentação oficial, moderna e atualizada em Português Brasileiro (PT-BR) reside no hub **[`docs/pt-br/README.md`](../pt-br/README.md)**.
+> 
+> Consulte os novos guias canônicos:
+> - 📖 **[Hub Principal PT-BR](../pt-br/README.md)** — Visão geral completa, tabela de benchmarks, arquitetura e comandos.
+> - 🚀 **[Guia de Início Rápido](../pt-br/guias/inicio-rapido.md)** — Instalação passo a passo, `setup` e `doctor`.
+> - 📦 **[Guia de Compactação e CCR](../pt-br/guias/compactacao-e-ccr.md)** — Como funciona o compactor e recuperação com CCR.
+> - 🔀 **[Guia de Roteamento de Modelos](../pt-br/guias/roteamento-de-modelos.md)** — Delegação de subagentes, guardrails e `policy.json`.
+> - 📊 **[Referência de Benchmarks](../pt-br/referencia/benchmarks.md)** — Tabela oficial de 107 fixtures e escada de evidência.
+
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 *Repositório GitHub: [`downshift`](https://github.com/tiagovilasboas/downshift) · CLI `downshift` · licença Apache 2.0.*
@@ -32,10 +43,10 @@ Toda funcionalidade é construída nas camadas compartilhadas e calculada para t
 |---|---|---|---|
 | **Claude Code** | Completed | Reescrita observada como honrada em um filho real, uso e fim do filho registrados, plugin e política de sessão | [reescrita honrada](../evidence/claude-code-rewrite-honored-2026-10-06.md) · [auditoria de cobrança](../evidence/billing-gap-audit.md) · [A/B de roteamento](../evidence/subagent-routing-ab-2026-10-15.md) |
 | **Codex** | Functional | O hook emite a reescrita em um spawn real; que o harness a aplicou é inferido, não observado; sem uso do filho | [Codex](../evidence/codex-rewrite-honored-2026-10-02.md) |
-| **Cursor** | Functional | O hook emite a reescrita em um spawn real; que o harness a aplicou não foi confirmado; sem uso do filho | [Cursor](../evidence/cursor-rewrite-honored-2026-10-10.md) · [diagnóstico](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md) |
+| **Cursor** | Functional | O hook emite a reescrita em um spawn real; que o harness a aplicou não foi confirmado; sem uso do filho | [Cursor](../evidence/cursor-rewrite-honored-2026-10-10.md) |
 | **OpenCode** | Beta | Integração de primeira classe em desenvolvimento: adapter, route wire e suíte de conformidade no repositório; plugin e primeira observação real ainda em andamento. Sem reivindicação de produção | [matriz (EN)](../reference/harness-matrix.md#status-per-harness) |
 
-**Experimental (prova de conceito).** Antigravity e KiroCrew têm um filho observado em um build cada (KiroCrew em modo política: bloqueia e pede novo spawn, sem reescrita no lugar) e nenhum fim de filho registrado. Os adapters, testes e hooks continuam no repositório e calculam todas as funcionalidades; a instalação está no [guia de instalação (EN)](../guides/install.md#experimental-harnesses). Evidência: [Antigravity](../evidence/antigravity-executor-ack.md) · [KiroCrew](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md). O Grok CLI continua apenas por configuração, sem reescrita por hook.
+**Experimental (prova de conceito).** Antigravity e KiroCrew têm um filho observado em um build cada (KiroCrew em modo política: bloqueia e pede novo spawn, sem reescrita no lugar) e nenhum fim de filho registrado. Os adapters, testes e hooks continuam no repositório e calculam todas as funcionalidades; a instalação está no [guia de instalação (EN)](../guides/install.md#experimental-harnesses). Evidência: [Antigravity](../evidence/antigravity-executor-ack.md). O Grok CLI continua apenas por configuração, sem reescrita por hook.
 
 O Downshift não é um chat secundário, não gera código, não é proxy HTTP e não altera a saída de ferramentas em voo. É uma **camada de otimização de infraestrutura**: intercepta o pedido no hook de spawn, classifica a demanda em milissegundos na CPU local, valida se a mudança é segura e, quando aplicável, reescreve o modelo do subagente de forma transparente.
 
