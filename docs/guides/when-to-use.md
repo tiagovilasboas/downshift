@@ -2,12 +2,12 @@
 
 Downshift gives your coding agent the right model and less noise, with no extra AI call. It runs locally, hooks into your coding harness, and rests on two pillars, in this order:
 
-1. **Model delegation per subagent.** The orchestrator chooses model and effort for each spawn; Downshift applies the choice within your declared policy, and when unsure your model stays. Implemented; honored on Claude Code (Completed), inferred on Codex and Cursor (Functional).
+1. **Model delegation per subagent.** The orchestrator chooses model and effort for each spawn; Downshift applies the choice within your declared policy, and when unsure your model stays. Implemented; honored on Claude Code (Completed), inferred on Codex (Functional), unconfirmed on Cursor (Experimental).
 2. **The Compactor** (`downshift compact`). Shorter output from allowlisted commands, exit code kept, failures left raw. Implemented, on by default. Automatic rewrite is Claude Code only; elsewhere the agent runs `downshift compact -- <command>`.
 
 Next: [install](install.md), [how it works](../design/architecture.md), [evidence](evidence.md). Numbers and their limits are in [evidence.md](evidence.md): the routing trial is up to about 12% on mechanical tasks (one operator, three runs per cell, one controlled run), and compaction is bytes on a synthetic corpus (82.3% on the 26 of 248 files compacted, 23.7% overall).
 
-Every harness with an adapter gets every feature, computed in shared layers. **Claude Code is the primary harness**: the most complete and the most verified. Start there if you can choose; the [harness matrix](../reference/harness-matrix.md) says what the others honor today. Harnesses carry one of four status words: Completed (Claude Code), Functional (Codex, Cursor), Beta (OpenCode; first-class integration in development) or Experimental (KiroCrew, Antigravity; policy mode or proof of concept), defined in the [status table](../reference/harness-matrix.md#status-per-harness).
+Every harness with an adapter gets every feature, computed in shared layers. **Claude Code is the primary harness**: the most complete and the most verified. Start there if you can choose; the [harness matrix](../reference/harness-matrix.md) says what the others honor today. Harnesses carry one of four status words: Completed (Claude Code), Functional (Codex), Beta (OpenCode; first-class integration in development) or Experimental (KiroCrew, Antigravity; policy mode or proof of concept), defined in the [status table](../reference/harness-matrix.md#status-per-harness).
 
 ## Use Downshift when
 

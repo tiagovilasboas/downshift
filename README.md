@@ -28,7 +28,7 @@ never calls an LLM.
 
 Two things burn Claude Code tokens and usage limits fastest: subagents that inherit your most expensive
 model, and long test and build output that stays in context. Downshift is a free, open-source tool for both,
-in Claude Code, Cursor, Codex, OpenCode, Antigravity (Experimental), and KiroCrew (Experimental). It compacts verbose
+in Claude Code, Cursor (Experimental), Codex, OpenCode, Antigravity (Experimental), and KiroCrew (Experimental). It compacts verbose
 command output before it fills the context window, applies the orchestrator's model choice for each
 subagent within the bounds you declare, and counts, per harness, the tokens compaction saved and the tokens
 that ran on a cheaper model.
@@ -123,7 +123,7 @@ does and does not show, and what is proven so far (and what is not) are in
 | Feature | Status |
 |---|---|
 | Output compaction (`downshift compact`; automatic rewrite in Claude Code) | Stable |
-| Model delegation through hooks | Stable on Claude Code; Functional on Codex and Cursor |
+| Model delegation through hooks | Stable on Claude Code; Functional on Codex; Experimental on Cursor (rewrite honored unconfirmed) |
 | Workers (MCP `delegate`) | Beta on Claude (read-only by default, macOS and Linux). In development on Codex (no verified real run yet) and on Windows (off by default). Write mode is opt-in. |
 | Planner (`downshift plan`) | In development |
 | Setup wizard (`downshift setup`) | Stable |
@@ -131,6 +131,7 @@ does and does not show, and what is proven so far (and what is not) are in
 | Token Accounting | Functional (`downshift report`, `downshift discover`) |
 | OpenCode | Beta |
 | Antigravity | Experimental (setup wizard and MCP server work; one observed child on one build) |
+| Cursor | Experimental |
 | KiroCrew | Experimental |
 
 In development means it works but its interface and behaviour may change between releases.
@@ -157,7 +158,7 @@ Docs: [Output Compaction](docs/features/compaction.md) · [Supported tools](docs
 [Harness matrix](docs/reference/harness-matrix.md) · [CCR](docs/guides/ccr.md) ·
 [Benchmark](docs/reference/bench.md) · [Classification](docs/features/classification.md)
 
-### 2. Subagent Model Delegation (stable on Claude Code, functional on Codex and Cursor)
+### 2. Subagent Model Delegation (stable on Claude Code, functional on Codex, experimental on Cursor)
 
 The lead session picks agent, model and effort for every delegation. Downshift applies that choice
 deterministically, enforces what you declared in `policy.json` (profiles, ordered rules, quota gates, tier
@@ -303,7 +304,7 @@ the [Harness matrix](docs/reference/harness-matrix.md):
 |---------|------------|---------------|--------|-------|
 | **Claude Code** | Automatic rewrite | Rewrite, observed honored | Completed | `downshift setup claude-code` |
 | **Codex** | `downshift compact` run by the agent | Rewrite emitted, honored inferred | Functional | `downshift setup codex` |
-| **Cursor** | `downshift compact` run by the agent | Rewrite emitted, honored unconfirmed | Functional | `downshift setup cursor` |
+| **Cursor** | `downshift compact` run by the agent | Rewrite emitted, honored unconfirmed | Experimental | `downshift setup cursor` |
 | **OpenCode** | Automatic rewrite through the bridge plugin | Rewrite, observed honored on OpenCode 2.2.5 | Beta | `downshift setup opencode` |
 | **Antigravity** | `downshift compact` run by the agent | One observed child on one build | Experimental | `downshift setup antigravity` |
 | **KiroCrew** | `downshift compact` run by the agent | Policy mode (allow/block, no rewrite) | Experimental | `downshift setup kirocrew` |

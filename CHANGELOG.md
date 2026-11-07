@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Cursor is now listed as Experimental, not Functional, in the README and the harness documentation (English and Portuguese). Its rewrite is emitted on a real spawn but never confirmed honored, and it is silently discarded on Free and legacy Pro plans. The harness matrix definition of Experimental now covers that case; Codex stays Functional (honored inferred).
 - `downshift doctor` lists a harness's declared capability limits (the `limitations` row and the two Claude Desktop surface rows) as `ok` instead of `warn`: they describe what the harness cannot do, not a fault on this machine. They stay in the output and the JSON, and now point to the new [known limitations](docs/reference/known-limitations.md) page.
 - The README maturity table no longer lists Antigravity as Functional (the harness matrix and the harness table already said Experimental), and a new [release policy](docs/contrib/release-policy.md) says who may cut a release and when a patch is warranted.
 

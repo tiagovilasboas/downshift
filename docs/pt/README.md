@@ -19,7 +19,7 @@ O **Downshift** dá ao seu agente de código o modelo certo e menos ruído, sem 
 
 **Os dois pilares, nesta ordem:**
 
-1. **Roteamento de modelo por subagente.** Cada subagente recebe um modelo e um esforço do tamanho certo; na dúvida, o seu modelo fica. Cerca de 1 em 10 spawns ficam sem roteamento, como grupo de controle. *Status:* Implemented. Claude Code Completed (reescrita observada como honrada); Codex e Cursor Functional; OpenCode Beta; Antigravity e KiroCrew Experimental ([matriz de harnesses (EN)](../reference/harness-matrix.md)).
+1. **Roteamento de modelo por subagente.** Cada subagente recebe um modelo e um esforço do tamanho certo; na dúvida, o seu modelo fica. Cerca de 1 em 10 spawns ficam sem roteamento, como grupo de controle. *Status:* Implemented. Claude Code Completed (reescrita observada como honrada); Codex Functional; OpenCode Beta; Cursor, Antigravity e KiroCrew Experimental ([matriz de harnesses (EN)](../reference/harness-matrix.md)).
 2. **O Compactor (`downshift compact`).** Saída mais curta de comandos da lista permitida. Ele envolve todo subcomando `git` e as famílias de teste e build listadas (a linha `git-*` da [matriz de harnesses (EN)](../reference/harness-matrix.md#shell-command-rewrite-downshift-compact-on-by-default-2026-10-19)), mantém o código de saída e deixa falhas intactas. Não é o comando `/compact`. *Status:* Implemented, ligado por padrão. A reescrita automática para a forma compacta é só no Claude Code; nos demais, o agente roda `downshift compact -- <comando>`.
 
 **Números, sempre com a ressalva ao lado:**
@@ -33,7 +33,7 @@ O **Downshift** dá ao seu agente de código o modelo certo e menos ruído, sem 
 `downshift setup` liga os hooks e, no Claude Code, o plugin e os modelos descobertos, em um único binário Go sem daemon.
 
 
-Quando você dispara um subagente em ferramentas como **Claude Code**, **Codex** ou **Cursor** (os harnesses Completed e Functional, abaixo), cada um é direcionado para a categoria de modelo adequada à complexidade da demanda **antes da execução começar**, e só quando o classificador está confiante e nenhum guardrail segura. O desenvolvedor continua operando normalmente.
+Quando você dispara um subagente em ferramentas como **Claude Code** ou **Codex** (os harnesses Completed e Functional, abaixo; o **Cursor** é Experimental), cada um é direcionado para a categoria de modelo adequada à complexidade da demanda **antes da execução começar**, e só quando o classificador está confiante e nenhum guardrail segura. O desenvolvedor continua operando normalmente.
 
 Toda funcionalidade é construída nas camadas compartilhadas e calculada para todos os harnesses. **O Claude Code é o harness principal**: é onde o Downshift está mais completo (modelo da sessão inferido, hooks de uso e de fim do filho, comando `/downshift`, statusline, política de sessão com `opusplan`) e mais verificado. Os demais rodam o mesmo núcleo; a [matriz de harnesses](../reference/harness-matrix.md) diz o que cada um honra hoje, e o [guia do Claude Code (EN)](../guides/claude-code.md) explica a relação com o `opusplan`.
 
@@ -43,7 +43,7 @@ Toda funcionalidade é construída nas camadas compartilhadas e calculada para t
 |---|---|---|---|
 | **Claude Code** | Completed | Reescrita observada como honrada em um filho real, uso e fim do filho registrados, plugin e política de sessão | [reescrita honrada](../evidence/claude-code-rewrite-honored-2026-10-06.md) · [auditoria de cobrança](../evidence/billing-gap-audit.md) · [A/B de roteamento](../evidence/subagent-routing-ab-2026-10-15.md) |
 | **Codex** | Functional | O hook emite a reescrita em um spawn real; que o harness a aplicou é inferido, não observado; sem uso do filho | [Codex](../evidence/codex-rewrite-honored-2026-10-02.md) |
-| **Cursor** | Functional | O hook emite a reescrita em um spawn real; que o harness a aplicou não foi confirmado; sem uso do filho | [Cursor](../evidence/cursor-rewrite-honored-2026-10-10.md) |
+| **Cursor** | Experimental | O hook emite a reescrita em um spawn real; que o harness a aplicou não foi confirmado; sem uso do filho | [Cursor](../evidence/cursor-rewrite-honored-2026-10-10.md) |
 | **OpenCode** | Beta | Integração de primeira classe em desenvolvimento: adapter, route wire e suíte de conformidade no repositório; plugin e primeira observação real ainda em andamento. Sem reivindicação de produção | [matriz (EN)](../reference/harness-matrix.md#status-per-harness) |
 
 **Experimental (prova de conceito).** Antigravity e KiroCrew têm um filho observado em um build cada (KiroCrew em modo política: bloqueia e pede novo spawn, sem reescrita no lugar) e nenhum fim de filho registrado. Os adapters, testes e hooks continuam no repositório e calculam todas as funcionalidades; a instalação está no [guia de instalação (EN)](../guides/install.md#experimental-harnesses). Evidência: [Antigravity](../evidence/antigravity-executor-ack.md). O Grok CLI continua apenas por configuração, sem reescrita por hook.
