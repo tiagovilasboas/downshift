@@ -11,8 +11,8 @@ Status: Proposed, 2026-10-27
 > **Note (2026-11-01).** Code intelligence (DCI) and `internal/codeintel` were removed from the product (#720). Where this record lists `codeintel` among the packages `core` imports, read it as the state on the date above. The text stays as the record of that design.
 
 Scope: Phase 1, units 2 to 4, of the [roadmap](../internal/plans/roadmap.md). Design context:
-[routing-v2.md](routing-v2.md) §7, [true-north-cleanup.md](../internal/tasks/2026-10-26-routing-v2/true-north-cleanup.md)
-(wave B), [core-engine-ports.md](core-engine-ports.md), [layering.md](../contrib/layering.md).
+[routing-v2.md](routing-v2.md) §7,
+ [core-engine-ports.md](core-engine-ports.md), [layering.md](../contrib/layering.md).
 All numbers were measured on branch `downshift/true-north` at `e79021ac`.
 
 ## 1. Problem

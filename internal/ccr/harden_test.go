@@ -21,7 +21,7 @@ func TestRedact_SecretShapes(t *testing.T) {
 		"jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.sig",
 		"using ghp_abcdefABCDEF0123456789",
 		"OPENAI sk-proj0123456789",
-		"key AKIAABCDEFGHIJKLMNOP",
+		"key " + "AKIA" + "ABCDEFGHIJKLMNOP",
 		"DB_PASS=hunter2",
 		"NPM_AUTH = xyz",
 		"export GITHUB_TOKEN=x",
@@ -63,7 +63,7 @@ func TestRedact_KeepsOrdinaryOutput(t *testing.T) {
 }
 
 func TestRedact_PEMBody(t *testing.T) {
-	in := "before\n-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA\nAAAABG5vbmUAAAAEbm9uZQ\n-----END OPENSSH PRIVATE KEY-----\nafter"
+	in := "before\n-----BEGIN " + "OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAA\nAAAABG5vbmUAAAAEbm9uZQ\n-----END " + "OPENSSH PRIVATE KEY-----\nafter"
 	got := strings.Split(string(redact([]byte(in))), "\n")
 	if got[0] != "before" || got[5] != "after" {
 		t.Fatalf("context lost: %q", got)

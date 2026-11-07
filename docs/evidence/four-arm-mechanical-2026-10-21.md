@@ -63,7 +63,7 @@ Per task, tokens per accepted run (accepted / runs):
 ## What it does not support
 
 - **The Compactor.** It is not measurable here: in arm D the agents ran their checks as `a; go test …`, a chain the
-  Compactor did not wrap until [#424](https://github.com/tiagovilasboas/downshift/pull/424), merged the same day.
+  Compactor did not wrap until PR #424, merged the same day.
   Only one shell command went through it. Part 2 uses a binary with #424.
 - **Everyday use.** These are forced-delegation mechanical tasks: the ceiling case for routing, not a typical session.
 - **Other harnesses, invoices, plan limits.** Claude Code only; token counts, not money; no plan-limit measurement.
