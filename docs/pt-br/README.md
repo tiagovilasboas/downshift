@@ -4,7 +4,7 @@
 > Repositório oficial: https://github.com/tiagovilasboas/downshift  
 > Licença: Apache 2.0 · CLI: `downshift` · Go 1.27
 
-## Pare de desperdiçar tokens no Claude Code
+## Economizar tokens no Claude Code com Downshift
 
 O **Downshift** é uma ferramenta gratuita e open source para otimizar tokens em agentes de programação
 com IA. Compacta a saída de testes e builds antes de ela ocupar o contexto e aplica, por subagente,

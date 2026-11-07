@@ -7,7 +7,7 @@
 
 # Downshift
 
-### Stop wasting Claude Code tokens on noisy output and oversized subagents.
+### Reduce Claude Code token usage. Stop wasting context on noisy output.
 
 Free, open-source token optimization for AI coding agents. Compact command output and apply the
 orchestrator's model choice per subagent, within your policy. No extra LLM call in Downshift's code.
@@ -47,7 +47,8 @@ then `downshift doctor`. A single Go binary. Free under Apache 2.0.
 in a controlled Claude Code trial (46 runs, mechanical tasks; 95% CI +2.1% to +46.7%).
 These are separate experiments, not additive savings or a promise about your bill or usage limit.
 
-**Guides:** [Do Claude Code subagents burn your usage limit faster?](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/) ·
+**Guides:** [Claude Code cost: settings and token usage](https://downshift-ai.vercel.app/guides/claude-code-cost-cheat-sheet/) ·
+[Do Claude Code subagents burn your usage limit faster?](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/) ·
 [Claude Code usage limit](https://downshift-ai.vercel.app/guides/claude-code-usage-limit/) ·
 [all guides](https://downshift-ai.vercel.app/guides/) · [guias em português](https://downshift-ai.vercel.app/pt-br/guias/)
 
