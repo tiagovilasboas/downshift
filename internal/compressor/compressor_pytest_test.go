@@ -27,6 +27,18 @@ func TestCompress_Pytest_PassCompaction(t *testing.T) {
 	}
 }
 
+func TestCompress_Pytest_QuietPassCompaction(t *testing.T) {
+	in := []byte("........................................                                 [100%]\n40 passed in 0.03s\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for passing pytest -q: %s", res.Reason)
+	}
+	want := "Pytest: PASS (40 passed in 0.03s)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+}
+
 func TestCompress_Pytest_PassWithSkipped(t *testing.T) {
 	in := []byte("============================= test session starts ==============================\ncollected 12 items\n\ntest_a.py ..........ss\n\n======================== 10 passed, 2 skipped in 1.15s =========================\n")
 	res := compressor.Compress(in, compressor.ModeSafe)
