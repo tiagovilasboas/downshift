@@ -46,7 +46,7 @@ clean     lockfile_diff  lockfile_diff_clean.txt
 preserve  lockfile_diff  lockfile_diff_danger.txt
 clean     git_show    gitshow_head.txt
 preserve  git_show    gitshow_danger_word.txt
-preserve  git_status  gitstatus_ansi.txt
+clean     git_status  gitstatus_ansi.txt
 preserve  git_status  gitstatus_clean_ahead.txt
 preserve  git_status  gitstatus_clean_behind.txt
 preserve  git_status  gitstatus_clean_bisecting.txt
@@ -60,11 +60,11 @@ clean     git_status  gitstatus_clean_uptodate.txt
 preserve  git_status  gitstatus_conflict.txt
 preserve  git_status  gitstatus_detached_dirty.txt
 preserve  git_status  gitstatus_merge_concluding.txt
-preserve  git_status  gitstatus_modified_staged.txt
+clean     git_status  gitstatus_modified_staged.txt
 preserve  git_status  gitstatus_porcelain_v2.txt
 preserve  git_status  gitstatus_rebase_in_progress.txt
 preserve  git_status  gitstatus_short.txt
-preserve  git_status  gitstatus_untracked.txt
+clean     git_status  gitstatus_untracked.txt
 preserve  go_test     go_verbose_fail.txt
 clean     go_test     go_verbose_pass.txt
 clean     go_test     go_verbose_subtests_pass.txt

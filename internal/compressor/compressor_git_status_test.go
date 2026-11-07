@@ -58,3 +58,44 @@ func TestCompress_GitStatus_KeepsTrackingAndDetached(t *testing.T) {
 		})
 	}
 }
+
+func TestCompress_GitStatus_DirtyStripsAdviceAndKeepsChanges(t *testing.T) {
+	in := []byte("On branch feat/compact-bench\n" +
+		"Your branch is ahead of 'origin/feat/compact-bench' by 2 commits.\n" +
+		"  (use \"git push\" to publish your local commits)\n" +
+		"\n" +
+		"Changes to be committed:\n" +
+		"  (use \"git restore --staged <file>...\" to unstage)\n" +
+		"\tnew file:   internal/compressor/bench_compare_test.go\n" +
+		"\trenamed:    internal/compressor/old_name.go -> internal/compressor/new_name.go\n" +
+		"\n" +
+		"Changes not staged for commit:\n" +
+		"  (use \"git add <file>...\" to update what will be committed)\n" +
+		"  (use \"git restore <file>...\" to discard changes in working directory)\n" +
+		"\tmodified:   internal/compressor/compressor.go\n" +
+		"\tmodified:   internal/execwrap/policy.go\n" +
+		"\n" +
+		"Untracked files:\n" +
+		"  (use \"git add <file>...\" to include in what will be committed)\n" +
+		"\tscripts/bench/scratch.txt\n" +
+		"\n" +
+		"no changes added to commit (use \"git add\" and/or \"git commit -a\")\n")
+	want := "On branch feat/compact-bench\n" +
+		"Your branch is ahead of 'origin/feat/compact-bench' by 2 commits.\n" +
+		"Changes to be committed:\n" +
+		"\tnew file:   internal/compressor/bench_compare_test.go\n" +
+		"\trenamed:    internal/compressor/old_name.go -> internal/compressor/new_name.go\n" +
+		"Changes not staged for commit:\n" +
+		"\tmodified:   internal/compressor/compressor.go\n" +
+		"\tmodified:   internal/execwrap/policy.go\n" +
+		"Untracked files:\n" +
+		"\tscripts/bench/scratch.txt\n"
+
+	res := compressor.CompressExit(in, compressor.ModeSafe, 0)
+	if !res.Applied {
+		t.Fatalf("expected dirty git status to compact, reason=%s", res.Reason)
+	}
+	if string(res.Output) != want {
+		t.Fatalf("unexpected compacted output:\ngot:\n%s\nwant:\n%s", string(res.Output), want)
+	}
+}
