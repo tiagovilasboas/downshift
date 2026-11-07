@@ -80,7 +80,7 @@ func codeEnv(t *testing.T, root string) map[string]bool {
 }
 
 // testEnv is every DOWNSHIFT_* name a test file reads, such as the bench's
-// DOWNSHIFT_BENCH_RTK. A doc may name these. This package's own tests are
+// DOWNSHIFT_BENCH_WRITE. A doc may name these. This package's own tests are
 // skipped: they spell stale names on purpose to prove the guards bite.
 func testEnv(t *testing.T, root string) map[string]bool {
 	t.Helper()
