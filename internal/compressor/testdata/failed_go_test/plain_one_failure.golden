@@ -1,4 +1,4 @@
-Go test: ok: 30 packages (failures kept verbatim)
+Go test: ok: 30 pkgs
 --- FAIL: TestCharge (0.01s)
     billing_test.go:42: got 100, want 110
 FAIL

@@ -5,6 +5,7 @@ package compressor_test
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -22,6 +23,25 @@ func TestCompress_GoTest_PassCompaction(t *testing.T) {
 	}
 	if res.ReducedBytes >= res.OriginalBytes {
 		t.Errorf("expected reduction in bytes")
+	}
+}
+
+func TestCompress_GoTest_ManyPassingPackagesCondensedToOneLine(t *testing.T) {
+	var b strings.Builder
+	for i := 1; i <= 12; i++ {
+		fmt.Fprintf(&b, "ok  \texample.com/svc/p%d\t0.320s\n", i)
+	}
+	in := []byte(b.String())
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for passing go test")
+	}
+	want := "Go test: PASS (12 packages ok)\n"
+	if string(res.Output) != want {
+		t.Errorf("expected single summary line %q, got %q", want, string(res.Output))
+	}
+	if strings.Contains(string(res.Output), "ok  ") || strings.Contains(string(res.Output), "ok p") {
+		t.Errorf("expected individual package lines to be omitted, got %s", string(res.Output))
 	}
 }
 

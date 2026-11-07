@@ -100,15 +100,15 @@ type cleanFixture struct {
 
 var cleanFixtures = []cleanFixture{
 	{"gotest_pass_coverage.txt", []string{"PASS", "12 packages", "internal/billing", "65.9%", "cmd/widget", "100.0%"}},
-	{"gotest_pass_cached.txt", []string{"PASS", "6 packages", "internal/config"}},
-	{"gotest_pass_plain.txt", []string{"PASS", "12 packages", "internal/store"}},
+	{"gotest_pass_cached.txt", []string{"PASS", "6 packages ok"}},
+	{"gotest_pass_plain.txt", []string{"PASS", "12 packages ok"}},
 	{"gotest_no_test_files.txt", []string{"PASS", "2 packages ok", "1 without tests", "cmd/widget", "internal/api", "internal/auth"}},
 	{"gotest_pass_mixed_no_test_files.txt", []string{"PASS", "6 packages ok", "3 without tests", "cmd/dsmon-server", "internal/adapt", "80.5%", "internal/session", "internal/testrace"}},
 	{"gitstatus_clean_uptodate.txt", []string{"On branch main", "working tree clean"}},
 	{"gitstatus_clean_no_upstream.txt", []string{"On branch feature/rate-limit", "working tree clean"}},
-	{"gitstatus_modified_staged.txt", []string{"On branch feature/rate-limit", "ahead of 'origin/feature/rate-limit' by 1 commit", "Changes to be committed:", "modified:   internal/httpx/limit.go", "new file:   internal/httpx/limit_test.go", "Changes not staged for commit:", "deleted:    internal/httpx/old.go"}},
-	{"gitstatus_untracked.txt", []string{"On branch main", "Untracked files:", "notes/todo.txt", "scratch.go"}},
-	{"gitstatus_ansi.txt", []string{"On branch main", "Untracked files:", "scratch.go"}},
+	{"gitstatus_modified_staged.txt", []string{"feature/rate-limit", "origin/feature/rate-limit", "ahead 1", "internal/httpx/limit.go", "internal/httpx/limit_test.go", "internal/httpx/old.go"}},
+	{"gitstatus_untracked.txt", []string{"main", "origin/main", "notes/todo.txt", "scratch.go"}},
+	{"gitstatus_ansi.txt", []string{"main", "scratch.go"}},
 	{"pytest_pass_clean.txt", []string{"25 passed"}},
 	{"vitest_pass_clean.txt", []string{"25 passed"}},
 	// Real vitest 5 bytes: colour codes, skipped and todo counts, a skipped file.
@@ -134,7 +134,7 @@ var cleanFixtures = []cleanFixture{
 	{"maven_pass_package.txt", []string{"jar:jar", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0", "BUILD SUCCESS", "Total time:  4.302 s"}},
 	// Colour codes are not content: a coloured clean run compacts like a plain
 	// one, and its summary is plain text (colour.go).
-	{"gotest_ansi.txt", []string{"PASS", "5 packages ok", "cmd/widget", "internal/cache"}},
+	{"gotest_ansi.txt", []string{"PASS", "5 packages ok"}},
 	{"dart_pass_ansi.txt", []string{"PASS", "3 passed", "1 skipped"}},
 	{"maven_ansi.txt", []string{"surefire:test", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0", "BUILD SUCCESS", "Total time:  2.915 s"}},
 	{"gradle_ansi.txt", []string{"BUILD SUCCESSFUL in 12s", "14 actionable tasks: 9 executed, 5 up-to-date"}},

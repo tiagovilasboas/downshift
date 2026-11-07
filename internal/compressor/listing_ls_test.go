@@ -27,16 +27,35 @@ func TestCompressLsTable(t *testing.T) {
 		wantReason  string
 	}{
 		{
-			name:        "long form stays raw: size, mtime and type are what the agent asked for",
+			name:        "long form compacts: permissions, owner, group and total line dropped",
 			input:       lsLongListing,
-			wantApplied: false,
-			wantReason:  "ls_long_form_kept_raw",
+			wantApplied: true,
+			wantOut:     "1518 Nov  4 10:00 AGENTS.md\n 288 Nov  4 10:00 cmd/\n   7 Nov  4 10:00 current -> cmd/app\n2290 Mar  2  2025 go.sum\n4102 2026-11-04 10:00 notes.md\n",
+			wantReason:  "ls long form compacted",
 		},
 		{
-			name:        "long row without a total line stays raw",
+			name:        "long row without a total line compacts",
 			input:       "-rw-r--r--  1 tiago.boas  staff  1518 Nov  4 10:00 AGENTS.md\n",
+			wantApplied: true,
+			wantOut:     "1518 Nov  4 10:00 AGENTS.md\n",
+			wantReason:  "ls long form compacted",
+		},
+		{
+			name: "long form with human-readable sizes and dot entries",
+			input: "total 32\n" +
+				"drwxr-xr-x  12 user  staff  4.0K Nov  4 10:00 .\n" +
+				"drwxr-xr-x   5 user  staff   160 Nov  4 09:12 ..\n" +
+				"-rw-r--r--   1 user  staff  1.5K Nov  4 10:00 app.go\n" +
+				"drwxr-xr-x   3 user  staff  512B Nov  4 10:00 pkg\n",
+			wantApplied: true,
+			wantOut:     "1.5K Nov  4 10:00 app.go\n512B Nov  4 10:00 pkg/\n",
+			wantReason:  "ls long form compacted",
+		},
+		{
+			name:        "long listing with only dot entries has no entry to keep",
+			input:       "total 16\ndrwxr-xr-x  12 user  staff  384 Nov  4 10:00 .\ndrwxr-xr-x   5 user  staff  160 Nov  4 09:12 ..\n",
 			wantApplied: false,
-			wantReason:  "ls_long_form_kept_raw",
+			wantReason:  "ls_empty_listing_preserved",
 		},
 		{
 			name:        "plain form keeps names and drops . and ..",
@@ -67,7 +86,7 @@ func TestCompressLsTable(t *testing.T) {
 			name:        "plain listing that holds a long-form row stays raw",
 			input:       "AGENTS.md\n-rw-r--r-- 1 tiago staff 12 Nov 4 10:00 x\n",
 			wantApplied: false,
-			wantReason:  "ls_long_form_kept_raw",
+			wantReason:  "ls_unrecognized_structure_preserved",
 		},
 		{
 			name:        "only dot entries has no entry to keep",

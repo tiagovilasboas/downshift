@@ -46,12 +46,12 @@ func grepRaw() string {
 	return b.String()
 }
 
-// ls -l carries size, mtime and type: the compactor leaves it untouched.
-func TestRun_LsLongFormStaysRaw(t *testing.T) {
+// ls -l / ls -la compacts by stripping permissions, links, owner and group.
+func TestRun_LsLongFormCompacts(t *testing.T) {
 	raw := lsLongRaw()
 	fakeBin(t, "ls", "cat <<'EOF'\n"+raw+"EOF")
 	r, out, _ := run(t, []string{"ls", "-la", "internal"}, true)
-	if r.ExitCode != 0 || r.Compacted || out != raw {
+	if r.ExitCode != 0 || !r.Compacted || !strings.Contains(out, "module_00.go") || !strings.Contains(out, "compressor/") {
 		t.Fatalf("exit=%d compacted=%v out=%.120q", r.ExitCode, r.Compacted, out)
 	}
 }
