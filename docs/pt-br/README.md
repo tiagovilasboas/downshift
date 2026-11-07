@@ -4,9 +4,33 @@
 > Repositório oficial: https://github.com/tiagovilasboas/downshift  
 > Licença: Apache 2.0 · CLI: `downshift` · Go 1.27
 
-O **Downshift** é uma ferramenta de otimização de contexto e delegação inteligente de modelos para agentes de codificação baseados em IA (como Claude Code, Codex, Cursor, OpenCode, Antigravity e KiroCrew). Ele ataca as duas coisas que mais gastam tokens e limite de uso no Claude Code: subagentes que herdam o seu modelo mais caro e saída longa de teste e build que fica no contexto. Ele atua diretamente na camada de infraestrutura de execução, reduzindo drasticamente o consumo desnecessário de tokens e garantindo que cada tarefa seja executada pelo modelo adequado dentro dos limites que você declarar.
+## Economizar tokens no Claude Code com Downshift
 
-Toda a lógica do Downshift roda localmente em código determinístico Go de altíssimo desempenho: **o código do Downshift nunca faz chamadas a LLMs, não grava prompts ou códigos em disco para telemetria, não envia dados para a rede e opera em modo *fail-open* (em caso de dúvida ou erro, a execução original é sempre preservada sem bloqueios).**
+O **Downshift** é uma ferramenta gratuita e open source para otimizar tokens em agentes de programação
+com IA. Compacta a saída de testes e builds antes de ela ocupar o contexto e aplica, por subagente,
+o modelo escolhido pelo orquestrador, dentro da sua política. Veja o resultado com `downshift report`.
+
+Criado com **Claude Code**, também integra **Codex, OpenCode, Cursor, Antigravity e KiroCrew**, com
+[capacidades diferentes por harness](#status-de-suporte-por-harness). Cursor, Antigravity e KiroCrew
+são experimentais. Um único binário Go, licença Apache 2.0.
+
+| Onde há desperdício | Como o Downshift atua |
+|---|---|
+| Saída repetitiva de testes e builds | Compacta comandos suportados e preserva falhas e códigos de saída |
+| Trabalho mecânico em modelo caro | Aplica a escolha de modelo por subagente dentro da política declarada |
+| Economia difícil de conferir | Mostra bytes compactados e tokens roteados por harness |
+
+**Comece aqui:** [instale](#instalação-e-configuração-rápida), execute `downshift setup` e confira
+com `downshift doctor`.
+
+**Evidência com escopo:** [72,0% menos bytes](../reference/bench.md) em um corpus sintético de 107
+fixtures com CCR ligado; [24,1% menos tokens por execução aceita](../evidence/four-arm-mechanical-2026-10-21.md)
+em um ensaio controlado de tarefas mecânicas no Claude Code (46 execuções; IC 95% +2,1% a +46,7%).
+São experimentos separados: não se somam nem garantem redução da fatura ou do limite do plano.
+
+O código do Downshift não chama um LLM para rotear. A telemetria guarda contagens, hashes e tempos
+localmente, sem prompts ou caminhos de arquivos. O harness continua usando o provedor de modelos;
+o CCR guarda saídas de comandos localmente, com limites documentados. Hooks falham abertos.
 
 ---
 
