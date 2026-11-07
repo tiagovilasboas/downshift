@@ -17,6 +17,11 @@ never calls an LLM.
 [![Go 1.27](https://img.shields.io/badge/go-1.27-868A90.svg?labelColor=0A0A0A)](https://go.dev)
 [![Release](https://img.shields.io/github/v/release/tiagovilasboas/downshift?include_prereleases&label=release&labelColor=0A0A0A&color=868A90)](https://github.com/tiagovilasboas/downshift/releases)
 
+<p align="center">
+  <a href="README.md"><b>English</b></a> •
+  <a href="docs/pt-br/README.md"><b>Português (Brasil)</b></a>
+</p>
+
 [Install](#install) · [Features](#features) · [Agents](#agents) · [Commands](#commands) · [Documentation](#documentation)
 
 </div>
@@ -115,11 +120,12 @@ does and does not show, and what is proven so far (and what is not) are in
 | Model delegation through hooks | Stable on Claude Code; Functional on Codex and Cursor |
 | Workers (MCP `delegate`) | Beta on Claude (read-only by default, macOS and Linux). In development on Codex (no verified real run yet) and on Windows (off by default). Write mode is opt-in. |
 | Planner (`downshift plan`) | In development |
-| Setup wizard (`downshift setup`) | In development: it works and asks before writing, but its flow and harness coverage still change |
-| Compressor Learning | In development |
-| Token Accounting | In development |
+| Setup wizard (`downshift setup`) | Stable |
+| Compressor Learning | Functional (`downshift learning`) |
+| Token Accounting | Functional (`downshift report`, `downshift discover`) |
 | OpenCode | Beta |
-| Antigravity, KiroCrew | Experimental |
+| Antigravity | Functional (supported setup wizard, MCP server, verified integration) |
+| KiroCrew | Experimental |
 
 In development means it works but its interface and behaviour may change between releases.
 
@@ -334,7 +340,7 @@ invoice) and shows byte counts and percentages, not dollar figures.
 | **Reference** | [CLI](docs/reference/cli.md) · [Configuration options](docs/reference/config-options.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Session models](docs/reference/session-models.md) · [Supported tools](docs/reference/supported-tools.md) · [Accounting](docs/reference/accounting.md) · [Beta exit criteria](docs/reference/beta-exit.md) |
 | **Architecture** | [Architecture](docs/design/architecture.md) · [Domains](docs/domains/README.md) · [True north](docs/true-north.md) · [Evidence](docs/guides/evidence.md) · [Benchmark protocol](docs/guides/benchmark-protocol.md) |
 | **Contributing** | [Contributing guide](CONTRIBUTING.md) · [Development setup](docs/contributing/development.md) · [Adding compressors](docs/contributing/compressors.md) · [Layering rule](docs/contrib/layering.md) |
-| **Releases** | [CHANGELOG](CHANGELOG.md) · [v0.10.0 notes](docs/releases/v0.10.0.md) · [Releases](https://github.com/tiagovilasboas/downshift/releases) |
+| **Releases** | [CHANGELOG](CHANGELOG.md) · [v0.11.0 notes](docs/releases/v0.11.0.md) · [Releases](https://github.com/tiagovilasboas/downshift/releases) |
 
 ---
 
@@ -383,7 +389,7 @@ complementary.
 
 ## Status
 
-**Beta** ([v0.10.0](docs/releases/v0.10.0.md); changes since are under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md)). Not yet stable:
+**Beta** ([v0.11.0](docs/releases/v0.11.0.md); changes since are under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md)). Not yet stable:
 the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
 
 ## License
