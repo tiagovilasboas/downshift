@@ -28,7 +28,7 @@ never calls an LLM.
 
 Two things burn Claude Code tokens and usage limits fastest: subagents that inherit your most expensive
 model, and long test and build output that stays in context. Downshift is a free, open-source tool for both,
-in Claude Code, Cursor, Codex, OpenCode, Antigravity, and KiroCrew (Experimental). It compacts verbose
+in Claude Code, Cursor, Codex, OpenCode, Antigravity (Experimental), and KiroCrew (Experimental). It compacts verbose
 command output before it fills the context window, applies the orchestrator's model choice for each
 subagent within the bounds you declare, and counts, per harness, the tokens compaction saved and the tokens
 that ran on a cheaper model.
@@ -130,7 +130,7 @@ does and does not show, and what is proven so far (and what is not) are in
 | Compressor Learning | Functional (`downshift learning`) |
 | Token Accounting | Functional (`downshift report`, `downshift discover`) |
 | OpenCode | Beta |
-| Antigravity | Functional (supported setup wizard, MCP server, verified integration) |
+| Antigravity | Experimental (setup wizard and MCP server work; one observed child on one build) |
 | KiroCrew | Experimental |
 
 In development means it works but its interface and behaviour may change between releases.

@@ -194,7 +194,7 @@ Windows path. The `test-os` CI job runs the OS-sensitive packages on
   differently on Windows.
 - Do not commit the **user override** catalog in the repo (lives under `~/.downshift/`).
   The **embedded** `internal/catalog/catalog.json` IS committed intentionally.
-- Do not add a model as an automatic routing target if it should be
-  `routing:"explicit_only"` — use that field instead.
+- A model that must not be picked automatically gets `routing:"explicit_only"`; never an automatic target.
+- Do not tag or release from an agent session unless the Author named the version; see [release-policy.md](docs/contrib/release-policy.md).
 - The project licence is Apache 2.0. Do not suggest relicensing to proprietary
   terms without explicit instruction from the Author.
