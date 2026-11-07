@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-07
+
 ### Changed
 
 - CCR is now on by default (owner decision, 2026-11-06). `downshift compact` keeps the raw output of every compacted command under `~/.downshift/ccr/` (0600, 24 h, 8 MiB per entry, 64 MiB total, secret-looking lines withheld), so repeated lines fold and `downshift retrieve <id>` reads any cut line back; before, only failed runs were kept. This is the one place Downshift writes command output to disk. `DOWNSHIFT_CCR=0` turns it off completely; `"ccr": false` in `context-optimization.json` goes back to keeping failed runs only (`"ccr_failures": false` turns that off too); `DOWNSHIFT_CCR=1` forces every run on. A config file that cannot be read never turns on keeping every run. To drop output already kept, remove `~/.downshift/ccr`. Redaction is a line heuristic: do not leave CCR on for commands that print secrets in other shapes. See `docs/guides/ccr.md`.
