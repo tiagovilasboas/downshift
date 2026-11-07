@@ -4,38 +4,27 @@ Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 CCR lets `downshift compact` cut more output without losing it: the raw output is
-kept on disk and one command brings back any part of it. Full CCR is **opt-in and off
-by default**; the raw output of a **failed** compacted command is kept by default.
+kept on disk and one command brings back any part of it. CCR is **native and always on**.
+It is part of the compactor, not an option: there is no config key, environment variable
+or flag that turns it off, and every output the compactor cuts is kept, a success as well as
+a failure.
 
-## Failures are kept by default
+## Always on
 
-When `downshift compact` compacts the output of a command that exited non-zero, the
-raw output is stored and the marker names the id, so the agent can run
-`downshift retrieve <id>` (or the MCP `retrieve` tool). Successful runs are not stored
-unless full CCR is on. Same limits, redaction and secret-path refusals as below; a
-file read of a secret path is never held, so never stored.
-
-| Setting | Effect |
-|---------|--------|
-| `"ccr_failures": false` in `context-optimization.json` | Off |
-| `DOWNSHIFT_CCR_FAILURES=0` | Off, even if the file says otherwise |
-| `DOWNSHIFT_CCR_FAILURES=1` | On, even if the file says `false` |
-| `DOWNSHIFT_CCR=0` | Off (this and full CCR) |
-| `"exec": false` / `DOWNSHIFT_EXEC=0` | Compaction is off, so nothing is stored |
-
-## Turn full CCR on
-
-| Setting | Effect |
-|---------|--------|
-| `"ccr": true` in `context-optimization.json` (state dir) | On |
-| `DOWNSHIFT_CCR=1` | On |
-| `DOWNSHIFT_CCR=0` | Off, even if the file says `true` |
-
-The environment wins over the file. See [config.md](config.md).
+- The only way to keep nothing is to turn compaction itself off (`"exec": false` in
+  `context-optimization.json`, or `DOWNSHIFT_EXEC=0`): then nothing is cut, so nothing needs
+  keeping. See [config.md](config.md).
+- `"ccr"`, `"ccr_failures"`, `DOWNSHIFT_CCR` and `DOWNSHIFT_CCR_FAILURES` of earlier versions are
+  ignored. A config file that still has the keys loads without error.
+- Refusals stay: the output of `curl`, `wget`, `glab` and of a read of a secret path (`.env`, keys)
+  is never stored, since it can carry cookies or tokens. Lines that look like secrets are
+  withheld from every entry (see Privacy).
+- If the store cannot be written (full disk, unwritable directory), the run still prints its
+  compacted output, without an id: a storage error never changes a command's output or exit code.
 
 ## What happens
 
-With CCR on, when `downshift compact -- <cmd>` compacts output:
+When `downshift compact -- <cmd>` compacts output:
 
 1. The raw output is stored at `~/.downshift/ccr/<id>.txt`.
 2. The marker line names the id:
@@ -71,15 +60,17 @@ The MCP tool `retrieve` takes `{id, grep, head, tail, lines}` and returns the sa
 
 ## Privacy
 
-CCR writes command output to disk, which telemetry never does; that is why it is
-opt-in. The output stays local, is redacted line by line, and expires. Prompts and
+CCR writes command output to disk, which telemetry never does, and since it is always
+on, that is true for every cut output. The output stays local, is redacted line by line,
+and expires after 24 hours. Prompts and
 file paths are still never stored in telemetry, but a stored output can contain
 paths or text the command echoed.
 
 - Redaction withholds whole lines that look like credentials (tokens, auth
   headers, cookies, URL credentials, JWTs, known key prefixes) and every line of
-  a PEM block. It is a heuristic: do not turn CCR on for commands that print
-  secrets in other shapes.
+  a PEM block. It is a heuristic, and CCR cannot be turned off: a command that prints
+  secrets in other shapes will have them in `~/.downshift/ccr/` until the entry expires,
+  so keep such commands out of the compactor's allowlist or run them unwrapped.
 - The store refuses a `ccr` directory that is a symlink or owned by another user,
   and never follows a link planted in place of an entry.
 - On Windows the 0700/0600 modes do not apply; files inherit the profile's ACL.
@@ -87,8 +78,8 @@ paths or text the command echoed.
 
 ## Measured effect
 
-`make bench` ([bench.md](../reference/bench.md)): total saving is 48.9% by default and
-76.1% with CCR on; the generic family goes from 18.4% to 93.1%.
+`make bench` ([bench.md](../reference/bench.md)): total saving is 76.1% with CCR; the lossless
+compressors alone give 48.9%, and the generic family goes from 18.4% to 93.1% with the fold.
 
 The exec log records raw and emitted bytes after the fold, so savings include CCR.
 Bytes later fetched with `retrieve` are taken off again; see the next section.

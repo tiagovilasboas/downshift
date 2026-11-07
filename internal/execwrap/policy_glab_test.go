@@ -56,19 +56,14 @@ func TestDecideWrapsReadOnlyGlab(t *testing.T) {
 	}
 }
 
-// glab output may carry a token, so neither storage port is ever used, not
-// even for a failed run (the KeepFailed path).
+// glab output may carry a token, so the storage port is never used for it.
 func TestGateKeeper_GlabGetsNoStore(t *testing.T) {
 	keep := func([]byte) (string, bool) { return "id", true }
 	if !rawStoreRefused[FamilyGlab] {
 		t.Fatal("glab may store raw output")
 	}
-	for _, g := range []*gate{{keep: keep, keepFailed: keep}, {keepFailed: keep}} {
-		for _, code := range []int{0, 1} {
-			if g.keeper(code, FamilyGlab) != nil {
-				t.Errorf("exit %d: got a storage port", code)
-			}
-		}
+	if (&gate{keep: keep}).keeper(FamilyGlab) != nil {
+		t.Error("glab got a storage port")
 	}
 }
 

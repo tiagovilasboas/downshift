@@ -107,34 +107,10 @@ type Config struct {
 	// on; an explicit false turns it off. There is no CLI command for it, and
 	// DOWNSHIFT_EXEC=0 still overrides both.
 	Exec *bool `json:"exec,omitempty"`
-	// CCR keeps the raw output of a compacted command so it can be retrieved
-	// later. Opt-in: absent or false means off; DOWNSHIFT_CCR overrides it.
-	CCR *bool `json:"ccr,omitempty"`
-	// CCRFailures keeps the raw output of a compacted failed command. On by
-	// default; an explicit false turns it off. DOWNSHIFT_CCR_FAILURES overrides.
-	CCRFailures *bool `json:"ccr_failures,omitempty"`
 }
 
 // ExecOn reports whether the compact wrapper is on: absent or true.
 func (c Config) ExecOn() bool { return c.Exec == nil || *c.Exec }
-
-// CCROn reports whether raw-output retention is on: only an explicit true.
-func (c Config) CCROn() bool { return c.CCR != nil && *c.CCR }
-
-// CCREnabled resolves the retention switch. env "1" turns it on and "0" off,
-// and wins over the file; a config error means off.
-func CCREnabled(cfg Config, cfgErr error, env string) bool {
-	switch env {
-	case "1":
-		return true
-	case "0":
-		return false
-	}
-	if cfgErr != nil {
-		return false
-	}
-	return cfg.CCROn()
-}
 
 // ExitCodeContractObserve is the rule Configure persists for the native provider.
 const ExitCodeContractObserve = "observe_only;nonzero_exit_preserved;hook_cannot_replace_tool_output"

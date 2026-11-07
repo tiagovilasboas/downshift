@@ -55,9 +55,6 @@ type Options struct {
 	// compacted and may store it; ok makes the marker carry the id. It never
 	// fails the run: a panic or false keeps the plain marker.
 	Keep func(raw []byte) (id string, ok bool)
-	// KeepFailed is Keep for a run that exited non-zero only, used when Keep
-	// is nil: CCR on failure, successes are not stored.
-	KeepFailed func(raw []byte) (id string, ok bool)
 	// Signals, when set, replaces signal.Notify as the source of signals to
 	// forward (tests).
 	Signals <-chan os.Signal
@@ -134,7 +131,7 @@ func Run(argv []string, o Options) (res Result) {
 
 	g := newGate(o.Stdout, o.Stderr, o.Compact && readCompactible(res.Family, argv), argv, res.Family)
 	g.skipObservation = o.SkipObservation
-	g.keep, g.keepFailed = o.Keep, o.KeepFailed
+	g.keep = o.Keep
 	cmd := exec.Command(path, argv[1:]...)
 	cmd.Args[0] = argv[0]
 	cmd.Env = append(os.Environ(), DepthEnv+"=1")

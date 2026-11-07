@@ -43,7 +43,7 @@ func TestRunExec_ExitCodeAndPromptFreeLog(t *testing.T) {
 		wantRC                 int
 		wantOut                string
 	}{
-		{"clean run compacts", "0", "", 0, string(compacted) + execwrap.Marker(len(rawSuite), len(compacted))},
+		{"clean run compacts", "0", "", 0, string(compacted) + "%MARKER%"},
 		{"non-zero exit stays raw and keeps the code", "1", "", 1, rawSuite},
 		{"kill switch keeps raw", "0", "0", 0, rawSuite},
 	}
@@ -53,7 +53,16 @@ func TestRunExec_ExitCodeAndPromptFreeLog(t *testing.T) {
 			t.Setenv("DOWNSHIFT_EXEC", tc.killSwitch)
 			var out, errb bytes.Buffer
 			rc := runExec([]string{"--", "go", "test", "./secret/..."}, strings.NewReader(""), &out, &errb)
-			if rc != tc.wantRC || out.String() != tc.wantOut {
+			want := tc.wantOut
+			if strings.Contains(want, "%MARKER%") {
+				// CCR is native: the marker names the id the raw output was kept under.
+				m := idNote.FindStringSubmatch(out.String())
+				if m == nil {
+					t.Fatalf("no retrieve id in %q", out.String())
+				}
+				want = strings.Replace(want, "%MARKER%", execwrap.MarkerWithID(len(rawSuite), len(compacted), m[1]), 1)
+			}
+			if rc != tc.wantRC || out.String() != want {
 				t.Fatalf("rc=%d out=%q stderr=%q", rc, out.String(), errb.String())
 			}
 		})

@@ -42,14 +42,17 @@ var idNote = regexp.MustCompile(`downshift retrieve ([0-9a-f]{12})\]`)
 func ccrTestEnv(t *testing.T) string {
 	state := t.TempDir()
 	t.Setenv(paths.EnvStateDir, state)
-	t.Setenv("DOWNSHIFT_CCR", "")
-	t.Setenv("DOWNSHIFT_CCR_FAILURES", "")
 	t.Setenv("DOWNSHIFT_EXEC", "")
 	t.Setenv(execwrap.DepthEnv, "")
 	return state
 }
 
-func TestCompactKeepsFailedOutputByDefault(t *testing.T) {
+// CCR is part of the compactor: every compacted run is stored, success or
+// failure, with no setting involved. The switches earlier versions read
+// (DOWNSHIFT_CCR, DOWNSHIFT_CCR_FAILURES, "ccr", "ccr_failures") do nothing, and
+// a config file that still has the keys loads without error. Only turning the
+// compactor itself off stores nothing, because nothing is cut.
+func TestCompactAlwaysKeepsTheRawOutput(t *testing.T) {
 	cases := []struct {
 		name   string
 		fail   bool
@@ -57,12 +60,11 @@ func TestCompactKeepsFailedOutputByDefault(t *testing.T) {
 		config string
 		wantID bool
 	}{
-		{"failure stored by default", true, nil, "", true},
-		{"success not stored by default", false, nil, "", false},
-		{"success stored when CCR is fully on", false, map[string]string{"DOWNSHIFT_CCR": "1"}, "", true},
-		{"env off switch", true, map[string]string{"DOWNSHIFT_CCR_FAILURES": "0"}, "", false},
-		{"config off switch", true, nil, `{"ccr_failures":false}`, false},
-		{"CCR=0 turns it off", true, map[string]string{"DOWNSHIFT_CCR": "0"}, "", false},
+		{"failure is stored", true, nil, "", true},
+		{"success is stored", false, nil, "", true},
+		{"old env off switch is ignored", true, map[string]string{"DOWNSHIFT_CCR_FAILURES": "0"}, "", true},
+		{"old CCR=0 is ignored", false, map[string]string{"DOWNSHIFT_CCR": "0"}, "", true},
+		{"old config off keys are ignored", false, nil, `{"ccr":false,"ccr_failures":false}`, true},
 		{"exec kill switch stores nothing", true, map[string]string{"DOWNSHIFT_EXEC": "0"}, "", false},
 	}
 	for _, tc := range cases {
@@ -107,7 +109,6 @@ func TestCompactKeepsFailedOutputByDefault(t *testing.T) {
 // A file read of a secret path is never held, so nothing is stored.
 func TestCompactDoesNotKeepSecretPathReads(t *testing.T) {
 	state := ccrTestEnv(t)
-	t.Setenv("DOWNSHIFT_CCR", "1")
 	secret := filepath.Join(t.TempDir(), ".env")
 	if err := os.WriteFile(secret, []byte(strings.Repeat("API_TOKEN=abc\n", 400)), 0o600); err != nil {
 		t.Fatal(err)

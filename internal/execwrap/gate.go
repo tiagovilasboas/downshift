@@ -36,7 +36,6 @@ type gate struct {
 	argv            []string                        // for learning hook
 	family          Family                          // for learning hook
 	keep            func(raw []byte) (string, bool) // Options.Keep, nil when off
-	keepFailed      func(raw []byte) (string, bool) // Options.KeepFailed
 	detail          string                          // passthrough detail set by finish
 	keptID          string                          // CCR id of the stored raw output, set by finish
 	skipObservation bool
@@ -160,7 +159,7 @@ func (g *gate) finish(exitCode int, family Family) (raw, emitted int64, compacte
 	var out []byte
 	out, passthrough, g.detail = compactOutputFor(g.argv, exitCode, data, family, g.nErr > 0)
 	compacted = passthrough == ""
-	keep := g.noteKept(g.keeper(exitCode, family))
+	keep := g.noteKept(g.keeper(family))
 	if compacted {
 		out = keepRaw(keep, data, out)
 	} else if foldedOut, ok := keepUncompacted(keep, data, exitCode, family, g.nErr > 0); ok {
@@ -220,15 +219,12 @@ func (g *gate) noteKept(keep func(raw []byte) (string, bool)) func(raw []byte) (
 	}
 }
 
-// keeper picks the storage port for a finished run: Keep for every run, else
-// KeepFailed for a run that exited non-zero. A family in rawStoreRefused (an
-// HTTP response may carry Set-Cookie) gets no storage port at all.
-func (g *gate) keeper(exitCode int, family Family) func(raw []byte) (string, bool) {
+// keeper picks the storage port for a finished run: Keep, for every run. A
+// family in rawStoreRefused (an HTTP response may carry Set-Cookie) gets no
+// storage port at all.
+func (g *gate) keeper(family Family) func(raw []byte) (string, bool) {
 	if rawStoreRefused[family] {
 		return nil
 	}
-	if g.keep != nil || exitCode == 0 {
-		return g.keep
-	}
-	return g.keepFailed
+	return g.keep
 }

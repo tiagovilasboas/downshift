@@ -377,7 +377,7 @@ downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]
 - `--tail` — Keep the last N lines
 - `--lines` — Keep lines A to B (1-based, inclusive), each prefixed with its number
 
-The id is the 12-hex marker the compactor prints when `DOWNSHIFT_CCR` is on. Kept output lives under
+The id is the 12-hex marker the compactor prints on every output it cuts. Kept output lives under
 the state directory for 24 hours (see [ccr.md](../guides/ccr.md)). Exit 0 on success, 1 when the output is gone
 or expired, 2 on bad arguments.
 

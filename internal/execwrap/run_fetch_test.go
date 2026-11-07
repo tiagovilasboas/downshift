@@ -32,7 +32,7 @@ func TestRun_CurlCapsAndRedactsAndNeverStores(t *testing.T) {
 	var out, errb bytes.Buffer
 	stored := false
 	keep := func([]byte) (string, bool) { stored = true; return "id", true }
-	r := Run([]string{"curl", "-si", srv.URL}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb, Compact: true, Keep: keep, KeepFailed: keep})
+	r := Run([]string{"curl", "-si", srv.URL}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb, Compact: true, Keep: keep})
 	text := out.String()
 	if !r.Compacted || r.Family != FamilyCurl {
 		t.Fatalf("not compacted: compacted=%v family=%q\n%.300s", r.Compacted, r.Family, text)
@@ -50,20 +50,16 @@ func TestRun_CurlCapsAndRedactsAndNeverStores(t *testing.T) {
 	}
 }
 
-// A fetch response may carry Set-Cookie, so neither storage port is ever used,
-// not even for a failed run (the KeepFailed path).
+// A fetch response may carry Set-Cookie, so the storage port is never used for
+// it, whatever the exit code.
 func TestGateKeeper_FetchFamiliesGetNoStore(t *testing.T) {
-	keep := func([]byte) (string, bool) { return "id", true }
-	for _, g := range []*gate{{keep: keep, keepFailed: keep}, {keepFailed: keep}} {
-		for _, f := range []Family{FamilyCurl, FamilyWget} {
-			for _, code := range []int{0, 22} {
-				if g.keeper(code, f) != nil {
-					t.Errorf("%s exit %d: got a storage port", f, code)
-				}
-			}
+	g := &gate{keep: func([]byte) (string, bool) { return "id", true }}
+	for _, f := range []Family{FamilyCurl, FamilyWget} {
+		if g.keeper(f) != nil {
+			t.Errorf("%s: got a storage port", f)
 		}
-		if g.keeper(22, FamilyGoTest) == nil {
-			t.Error("a family outside rawStoreRefused lost its storage port")
-		}
+	}
+	if g.keeper(FamilyGoTest) == nil {
+		t.Error("a family outside rawStoreRefused lost its storage port")
 	}
 }

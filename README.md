@@ -138,7 +138,7 @@ downshift compact -- git status
 
 Compresses `go test`, `git diff/show`, `eslint`, `ruff`, `mypy`, `golangci-lint`, `go build`, `cargo build`,
 `tsc`, `pytest`, `jest`, `vitest`, `playwright`, `cargo test`, `phpunit`, `gradle`, `maven` and more.
-Failures keep every failure line byte for byte, and anything unknown keeps the run raw. Opt-in CCR keeps
+Failures keep every failure line byte for byte, and anything unknown keeps the run raw. CCR (native, always on) keeps
 the raw output on disk so `downshift retrieve <id>` brings back any cut line.
 
 Docs: [Output Compaction](docs/features/compaction.md) · [Supported tools](docs/reference/supported-tools.md) ·

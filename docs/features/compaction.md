@@ -334,16 +334,16 @@ go through the generic chain. Forms that never exit or that act (watch, fix, ini
 inspect, archive, deploy) are refused. Each accepted form is listed in
 [harness-matrix.md](../reference/harness-matrix.md).
 
-## CCR: reversible compaction (opt-in)
+## CCR: reversible compaction (native, always on)
 
-With `"ccr": true` in the context config or `DOWNSHIFT_CCR=1` (`DOWNSHIFT_CCR=0`
-wins), `downshift compact` stores the raw output under `~/.downshift/ccr/<id>.txt`
-and its marker names the id: `full output: downshift retrieve <id>`. Runs of 8 or
+`downshift compact` stores the raw output of every run it cuts under
+`~/.downshift/ccr/<id>.txt`, with no setting to turn that off, and its marker names
+the id: `full output: downshift retrieve <id>`. Runs of 8 or
 more same-shape lines then fold, because every cut line can be read back with
 `downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]` or the
 MCP tool `retrieve`. On the bench corpus the total saving goes from 48.9% to 76.1%.
-Bytes later retrieved are not yet subtracted from the savings figures. Off by
-default; limits, privacy and retention are in [ccr.md](../guides/ccr.md).
+Bytes later retrieved are subtracted from the savings figures (per run, floored at
+zero). Limits, privacy and retention are in [ccr.md](../guides/ccr.md).
 
 ## Benchmark
 
