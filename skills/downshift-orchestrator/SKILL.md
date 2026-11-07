@@ -150,7 +150,27 @@ These older syntaxes still work:
 
 When explicit syntax is used, skip context reading and route directly.
 
-## 1. Split the work
+## 1. Split the work and decide whether to delegate
+
+Spawning a subagent is not free: each worker pays for its own system prompt, project context, and return review.
+Evaluate whether delegation saves tokens or adds overhead before splitting.
+
+### Delegation criteria
+
+- **When to delegate:**
+  - Independent, parallelizable, large bounded slices with disjoint file boundaries (`files` do not overlap).
+  - Mechanical multi-file operations (e.g. bulk renames, constant extraction, doc-comment sweeps, test mirroring) where small or mid tier workers can run concurrently.
+  - Slices of 3–5 story points where execution work substantially exceeds the prompt brief and review tokens.
+- **When NOT to delegate (do the work yourself):**
+  - Tightly coupled serial edits where step N+1 depends on step N's uncommitted code or intermediate state.
+  - Short, trivial, or 1–2 story point tasks: a single edit inline is faster and spends far fewer tokens than briefing and spawning a worker.
+  - High coordination overhead: when composing the prompt brief, specifying interfaces, and reviewing the return consumes more tokens than doing the work in the lead session.
+  - Overlapping file targets: never delegate concurrent edits touching the same files.
+- **Retain user choice and the natural baseline:**
+  - Single-session execution without delegation is the natural control baseline and the right choice for bounded work.
+  - Honor user intent: if the user asks for direct execution or does not request a squad, work sequentially in the lead session. Never force delegation simply because subagents or worker tools exist.
+
+### Step-by-step splitting
 
 1. Restate the task in one sentence. If it reads two ways, ask first.
 2. Estimate each part in story points (1, 2, 3, 5, 8, 13). Split any part of 8 or more.

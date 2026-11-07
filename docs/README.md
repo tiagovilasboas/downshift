@@ -137,6 +137,10 @@ The observability and verification domain delivers empirical proof of routing be
 | [evidence/closeout-recheck-2026-10-09.md](evidence/closeout-recheck-2026-10-09.md) | Evidence | Prior closeout verification audit |
 | [evidence/hardening-audit-2026-10-15.md](evidence/hardening-audit-2026-10-15.md) | Evidence | Hardening audit: defect triage, regression tests, benchmark impact |
 | [evidence/billing-gap-audit.md](evidence/billing-gap-audit.md) | Evidence | Audit of linked Claude Code usage records to native tokens/models |
+| [evidence/post-o8-benchmark-protocol-2026-11-07.md](evidence/post-o8-benchmark-protocol-2026-11-07.md) | Evidence | Three-arm benchmark smoke protocol post-O8: fixed Opus vs native opusplan vs Downshift |
+| [evidence/evaluation-suite-inventory.md](evidence/evaluation-suite-inventory.md) | Evidence | Inventory of 40 development outcome tasks, held-out GAP-SUITE, and zero-cost smoke harness |
+| [evidence/delegation-boundaries-and-overhead-2026-11-07.md](evidence/delegation-boundaries-and-overhead-2026-11-07.md) | Evidence | Benchmark delegation boundaries, coordination overhead, and four-arm framework |
+| [evidence/claude-execution-workflow-reconciliation-2026-11-07.md](evidence/claude-execution-workflow-reconciliation-2026-11-07.md) | Evidence | Claude Code execution, model honor, and workflow reconciliation |
 | [evidence/](evidence/) | Evidence | Dated runtime evidence directory (rewrite honored, audits) |
 | [benchmark/README.md](benchmark/README.md) | Benchmark | Benchmark dataset splits and evaluation harness |
 
