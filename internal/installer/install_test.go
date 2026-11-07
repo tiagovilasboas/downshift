@@ -115,6 +115,15 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 			if err := os.WriteFile(filepath.Join(fakeBin, "downshift"), []byte("#!/bin/sh\necho old\n"), 0o755); err != nil {
 				t.Fatal(err)
 			}
+		case "STALE_DOWNSHIFT_LINK=1":
+			// The same, reached through a link (Homebrew, a manual ln -s).
+			real := filepath.Join(tmp, "linked-downshift")
+			if err := os.WriteFile(real, []byte("#!/bin/sh\necho old\n"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(real, filepath.Join(fakeBin, "downshift")); err != nil {
+				t.Fatal(err)
+			}
 		}
 	}
 	path := fakeBin + string(os.PathListSeparator) + os.Getenv("PATH")
@@ -132,7 +141,7 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 	var seed string
 	keptEnv := make([]string, 0, len(extraEnv))
 	for _, env := range extraEnv {
-		if env == "NO_GH=1" || env == "STALE_DOWNSHIFT=1" {
+		if env == "NO_GH=1" || env == "STALE_DOWNSHIFT=1" || env == "STALE_DOWNSHIFT_LINK=1" {
 			continue
 		}
 		if strings.HasPrefix(env, "SEED_SESSION=") {

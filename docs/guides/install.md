@@ -171,8 +171,9 @@ Build or install the single binary (nothing else to install at runtime):
 
 ```bash
 # Recommended — one-liner installer (macOS / Linux, detects arch automatically)
-# Installs to /usr/local/bin if it is writable, otherwise to ~/.local/bin (or ~/bin if that exists and ~/.local/bin does not);
-# the installer warns when the directory is not on your PATH
+# Replaces the downshift already on your PATH (for example ~/go/bin after go install), so there is only ever one copy.
+# A first install goes to /usr/local/bin if it is writable, otherwise to ~/.local/bin (or ~/bin if that exists and ~/.local/bin does not);
+# the installer warns when the directory is not on your PATH. DOWNSHIFT_INSTALL_DIR overrides both.
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 
 # Alternative — Go toolchain (any platform)
