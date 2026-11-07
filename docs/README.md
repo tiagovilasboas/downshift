@@ -141,6 +141,8 @@ The observability and verification domain delivers empirical proof of routing be
 | [evidence/evaluation-suite-inventory.md](evidence/evaluation-suite-inventory.md) | Evidence | Inventory of 40 development outcome tasks, held-out GAP-SUITE, and zero-cost smoke harness |
 | [evidence/delegation-boundaries-and-overhead-2026-11-07.md](evidence/delegation-boundaries-and-overhead-2026-11-07.md) | Evidence | Benchmark delegation boundaries, coordination overhead, and four-arm framework |
 | [evidence/claude-execution-workflow-reconciliation-2026-11-07.md](evidence/claude-execution-workflow-reconciliation-2026-11-07.md) | Evidence | Claude Code execution, model honor, and workflow reconciliation |
+| [evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md](evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md) | Evidence | Reconciliation of Anthropic references, benchmark claims, and Downshift evidence |
+| [evidence/effort-retries-cache-analysis-2026-11-07.md](evidence/effort-retries-cache-analysis-2026-11-07.md) | Evidence | Evaluation of reasoning effort, retry strategies, quality, and prompt caching |
 | [evidence/](evidence/) | Evidence | Dated runtime evidence directory (rewrite honored, audits) |
 | [benchmark/README.md](benchmark/README.md) | Benchmark | Benchmark dataset splits and evaluation harness |
 

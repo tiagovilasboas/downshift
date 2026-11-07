@@ -48,7 +48,7 @@ eval, and multi-agent systems "use about 15× more tokens than chats".
   tasks involve fewer truly parallelizable tasks than research", and that multi-agent work only pays when the
   task is valuable enough to cover the extra tokens. Do not carry the 90.2% over to programming.
 
-### 3.2 The lead's intelligence matters more than the worker's
+### 3.2 The lead's intelligence matters more than the worker's, but search is not editing
 
 Claude Opus 4.5 system card, orchestration experiment on an internal search benchmark (as transcribed from
 a third-party summary; see section 8 for the verification gap):
@@ -66,6 +66,12 @@ a third-party summary; see section 8 for the verification gap):
 - Supports: P4 and the idea that routing should look at the planning step, not only at the implementation.
 - Limits: one internal benchmark, search not programming, models that are now older. Haiku (87.0%) ahead of
   Sonnet (85.4%) shows noise, not a ranking of worker models. The table says nothing about cost.
+- Vendor cost-reduction claims: Anthropic's *Optimizing for cost and intelligence* documents an orchestrator strategy
+  delegating bulk work with ~one-third cost reduction on defect search across SWE-bench repositories. This saving
+  reflects broad, read-only directory scanning across thousands of files. It does not generalize to standard software
+  engineering where tightly coupled edits, type checking, and test feedback loops impose a heavy coordination tax
+  ([reconciliation](evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md),
+  [delegation boundaries](evidence/delegation-boundaries-and-overhead-2026-11-07.md)).
 
 ### 3.3 More agents do not mean more efficiency
 
@@ -144,11 +150,12 @@ They are listed with links and with what each one changed in [routing v2](design
 | Claim | State | Record |
 |---|---|---|
 | The hook applies the orchestrator's model and tier hint on real Claude Code spawns | Observed. Rewrite honoured 10 of 10; the `[tier=small]` hint moved two real spawns (2026-10-28) | [rewrite honoured](evidence/claude-code-rewrite-honored-2026-10-06.md), [unprompted runs](evidence/mcp-unprompted-2026-10-29.md) |
-| Routing to a smaller tier lowers tokens on mechanical delegated work | Measured once, before the O8 change (classifier-driven routing): 24.1% fewer tokens per accepted run against `opusplan`, interval +2.1% to +46.7%, acceptance 12 of 12. Forced delegation, one operator, Claude Code only, token counts | [four-arm battery](evidence/four-arm-mechanical-2026-10-21.md) |
+| Routing to a smaller tier lowers tokens on mechanical delegated work | Measured once, before the O8 change (classifier-driven routing): 24.1% fewer tokens per accepted run against `opusplan`, interval +2.1% to +46.7%, acceptance 12 of 12. Forced delegation, one operator, Claude Code only, token counts across 46 runs | [four-arm battery](evidence/four-arm-mechanical-2026-10-21.md) |
+| Combined routing and compaction reduces tokens on real sessions | Directional real use: up to ~53% fewer tokens per task combining native policy routing and shell advice compaction across 6 control tasks on KiroCrew (2026-10-21) | [reconciliation](evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md), [roadmap](roadmap.md#now-beta) |
 | Routing saves tokens in everyday use | **Not established.** `downshift report` flips sign between a 30-day and a 7-day window | MVP closing state, 2026-10-29 |
-| The Compactor cuts command output | Measured in bytes on a synthetic corpus (82.3% on files it compacted, 23.7% overall) and on real use (186 of 2,491 commands, about 12k tokens in 30 days, bytes / 4). Not LLM tokens measured on a controlled suite | [corpus record](evidence/compaction-corpus-2026-10-21.md) |
+| The Compactor cuts command output | Measured in bytes on the 107-fixture synthetic corpus (51.1% raw, 72.0% with CCR; 65.2% on lossless test suites with zero diagnostic loss). Real use: 186 of 2,491 commands, about 12k tokens in 30 days (bytes / 4) | [bench](reference/bench.md), [corpus record](evidence/compaction-corpus-2026-10-21.md) |
 | The orchestrator calls the MCP tools unprompted | **Not observed** in two runs; it did add the hint by itself | [unprompted runs](evidence/mcp-unprompted-2026-10-29.md) |
-| Quality holds when work moves to a smaller tier | Checks passed in the four-arm battery; the 40-task outcome suite has recorded runs only for non-Claude models | `downshift-labs` outcome suite |
+| Quality holds when work moves to a smaller tier | Checks passed in the four-arm battery; the 40-task outcome suite has recorded runs only for non-Claude models | [suite inventory](evidence/evaluation-suite-inventory.md), `downshift-labs` outcome suite |
 
 The honest summary: the mechanism works and is measured; the claim that it saves tokens on real work is
 not proven.
@@ -199,12 +206,15 @@ through search summaries or third-party write-ups. "Not checked" means we have n
 | Source | Date | Status |
 |---|---|---|
 | [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system), Anthropic | 2025-06-13 | Read. The 90.2%, 15× and coding caveat match |
+| [Optimizing for cost and intelligence: orchestrator strategy](https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence#orchestrator-strategy-delegate-bulk-work), Anthropic | 2025–2026 | Read. Scoped to defect search on large repositories (~33% cost reduction); read-only directory scanning vs everyday code refactoring |
 | [Claude Opus 4.5 system card](https://assets.anthropic.com/m/64823ba7485345a7/Claude-Opus-4-5-System-Card.pdf), section 2.7 | 2025 | **Not checked.** The PDF is 11 MB and could not be extracted here. The table in 3.2 comes from a third-party summary. Check it against the PDF before quoting it outside this repository |
 | [Patterns and problems in emerging multiagent systems](https://www.anthropic.com/research/multiagent-systems), Anthropic | 2026-08-13 | Read. The 45 agents, 15 projects, 21 vs 266 findings, 6.5M vs 27M tokens and the caveats match |
 | [Riemann zeta research with 60 subagents](https://www.anthropic.com/research/riemann-zeta), Anthropic | 2026-08-10 | Read. The 2, 13, 30, 13 and 2 split matches |
 | [AI Organizations Can Be More Effective but Less Aligned](https://alignment.anthropic.com/2026/ai-organizations/), Anthropic Alignment Science | undated (arXiv 2604.10290) | Read. The 12 tasks and the model-dependent gap match |
 | [A model guide for the GPT-6 family](https://openai.com/index/practical-guide-building-gpt-6/), OpenAI | 2026-10-02 (secondary) | Secondary. The page returned HTTP 403; the model and effort trade and async independent work appear in search excerpts |
 | [The builder's guide to GPT-5.6](https://openai.com/index/builders-guide-to-gpt-5-6/), OpenAI | 2026-08-13 (secondary) | Secondary. The page returned HTTP 403; the 13.3% to 38.3% and the six-fold output reduction appear in search excerpts and third-party write-ups |
+| [Claude Code Model Configuration](https://code.claude.com/docs/en/model-config#opusplan-model-setting), Anthropic | 2026 | Read. Documents native `opusplan` (Opus plans, Sonnet executes subagents) |
+| [Source-to-claim reconciliation audit](evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md), Downshift | 2026-11-07 | Authoritative matrix resolving Issue #27: vendor defect search vs Downshift empirical measurements |
 | [Orchestrator-workers](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/orchestrator_workers.ipynb), [async multi-agent](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/async_multi_agent_orchestration.ipynb), [Plan big, execute small](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/CMA_plan_big_execute_small.ipynb), [Dynamic workflows](https://github.com/anthropics/claude-cookbooks/blob/main/claude_agent_sdk/08_Dynamic_workflows.ipynb), Anthropic cookbooks | 2026 | Used in the routing design; summarised in [routing v2](design/routing-v2.md), section 11 |
 | [Multi-agent coordination patterns](https://claude.com/blog/multi-agent-coordination-patterns), Anthropic | 2026 | Used in the routing design; not re-read for this page |
 
