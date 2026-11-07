@@ -14,6 +14,21 @@ downshift policy init
 
 This runs a dry-run preview showing the configuration and asks for confirmation before writing `.downshift/policy.json`.
 
+## The `explore` profile `policy init` offers
+
+`downshift policy init` (and `downshift setup`, unless `--no-policy`) shows, before writing anything, a
+`.downshift/policy.json` with one `explore` profile per harness whose hook can rewrite a subagent's model and
+whose model list is known: `{"name": "explore", "tier": "small", "harness": "claude-code", ...}`. A profile is
+matched to a spawn by the agent type's lower-cased name, so this one sends Claude Code's `Explore` spawns to the
+small tier. The plan's notes name the model it resolves to today and where that came from (the detected list, or
+the catalog stand-in on Claude Code, written as the `haiku` alias the harness accepts). A harness with no detected
+list gets no profile and a note naming `downshift models discover`, so nothing is promised that the hook could not
+write. `--bare` writes the version only.
+
+This is declared policy, not a built-in table: it exists only after your yes, in your project file, and you can
+delete it. Like any profile it bounds the orchestrator's choice on every spawn of that type, a model named on the
+call included (precedence 2 in [routing-v2](../design/routing-v2.md)); only a model the agent definition pins stays.
+
 ## No built-in table (owner decision O8)
 
 Downshift ships no default model for any agent type. The orchestrator chooses the model and the effort of each

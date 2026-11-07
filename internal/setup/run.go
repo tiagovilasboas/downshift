@@ -66,6 +66,9 @@ func Run(o Options) int {
 
 	fmt.Fprint(o.Out, Summary(plans))
 	fmt.Fprintln(o.Out, "Undo with: downshift setup --undo")
+	if o.ProjectDir == "" {
+		fmt.Fprintln(o.Out, "Send read-only Explore spawns to the small tier in a project: downshift policy init (shows the file first)")
+	}
 	if failed {
 		return 1
 	}

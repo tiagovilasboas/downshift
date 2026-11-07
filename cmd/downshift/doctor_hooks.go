@@ -144,13 +144,13 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	collectCommands(raw, nil, &cmds)
 	checkMainPolicy(add, h, raw)
 	checkModelForce(add, nc.Caps, raw, file, env.Getenv)
-	checkRewriteConflicts(add, nc, w, raw, file, env.Getenv(execEnvKillSwitch) != "0" && execConfigEnabled())
+	execOn := env.Getenv(execEnvKillSwitch) != "0" && execConfigEnabled()
 	viaPlugin := w.Plugin != "" && setup.PluginEnabled(raw, w.Plugin)
 
 	found, missing := matchWiredHooks(cmds, w.Hooks)
 	reportWiring(add, h, w, file, pathBin, viaPlugin, found, missing)
 	checkInstalledPluginHooks(add, env.Home, h, viaPlugin) // reads the plugin's own hooks.json
-	checkHookOverlap(add, env.Verbose, w, file, raw, viaPlugin)
+	checkHookOverlap(add, env.Verbose, w, file, raw, viaPlugin, execOn)
 	// With the plugin carrying the hooks, found is empty: no hook binary to check.
 	checkEvidence(add, env, nc, file, found, pathBin, events)
 	checkCrewRegistry(add, env, h, w)

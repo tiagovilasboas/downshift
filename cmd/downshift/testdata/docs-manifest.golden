@@ -394,6 +394,9 @@
         },
         {
           "name": "--harness"
+        },
+        {
+          "name": "--bare"
         }
       ]
     },

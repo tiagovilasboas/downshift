@@ -526,13 +526,14 @@ Validate and manage the routing policy file (`.downshift/policy.json`).
 
 ```bash
 downshift policy check
-downshift policy init [--dry-run] [--yes]
+downshift policy init [--dry-run] [--yes] [--bare]
 downshift policy apply --harness claude-code [--dry-run] [--yes]
 ```
 
 **Flags:**
 - `--dry-run` — Show the change, write nothing (`init`, `apply`)
 - `--yes`, `-y` — Do not ask before writing (`init`, `apply`)
+- `--bare` — Write only the version, no `explore` profile (`init`)
 - `--harness` — Harness to compile profiles for (`apply`; only `claude-code`)
 
 `check` reads the nearest project policy and the user policy and exits 0 when both are usable, or 1 with

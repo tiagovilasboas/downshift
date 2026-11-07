@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `downshift policy init` (and `downshift setup`, unless `--no-policy`) now proposes one `explore` profile per harness whose hook can rewrite a subagent's model and whose model list is known: the agent type of that name (Claude Code's `Explore`) runs on the small tier. The plan names the model each profile resolves to today and its source; a harness with no detected list gets a note naming `downshift models discover` and no profile. `--bare` writes the version only. Nothing is written before the yes, and the profile is declared policy the user can delete. Test: the generated file routes a COMPLEX `Explore` spawn to the small tier through the Claude Code hook, and the same spawn without the file is kept.
+
+### Changed
+
+- `downshift doctor` reports one `hook overlap` warning per rewriter, not two: the `hook conflict` check that landed beside it in 0.10.0 is gone. With the compact wrapper off (`"exec": false` or `DOWNSHIFT_EXEC=0`) a shell rewriter beside Downshift is no longer reported, since Downshift then rewrites no command; a model rewriter still is.
+
 ## [0.11.0] - 2026-11-07
 
 ### Added
