@@ -133,8 +133,28 @@ func TestRunExec_CCROnByDefault(t *testing.T) {
 			if !strings.Contains(out.String(), "full output: downshift retrieve "+id) {
 				t.Fatalf("marker does not name %s: %q", id, out.String())
 			}
+			evPath := filepath.Join(state, execwrap.EventsFileName)
+			before, err := execwrap.Summarize(evPath)
+			if err != nil || before.SavedBytes <= 0 || before.RetrievedBytes != 0 {
+				t.Fatalf("before retrieve: %+v err=%v", before, err)
+			}
+			// A narrow read takes back only its own bytes.
+			if code, got, errs := retrieve(id, "--head", "1"); code != 0 || got != "ok  \tsecret/pkg/p0\t0.1s\n" {
+				t.Fatalf("head retrieve rc=%d err=%q got %q", code, errs, got)
+			}
+			part, _ := execwrap.Summarize(evPath)
+			wantBack := int64(len("ok  \tsecret/pkg/p0\t0.1s\n"))
+			wantNet := max(before.SavedBytes-wantBack, 0) // this tiny run saved only a few bytes
+			if part.RetrievedBytes != wantBack || part.SavedBytes != wantNet {
+				t.Fatalf("after head: %+v (saved before %d, want net %d)", part, before.SavedBytes, wantNet)
+			}
+			// Reading everything back leaves no saving.
 			if code, got, errs := retrieve(id); code != 0 || got != rawSuite {
 				t.Fatalf("retrieve rc=%d err=%q\n got %q\nwant %q", code, errs, got, rawSuite)
+			}
+			after, _ := execwrap.Summarize(evPath)
+			if after.SavedBytes != 0 || after.RetrievedBytes != part.RetrievedBytes+int64(len(rawSuite)) {
+				t.Fatalf("after full retrieve: %+v", after)
 			}
 		})
 	}

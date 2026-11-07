@@ -86,4 +86,22 @@ paths or text the command echoed.
 76.1% with CCR on, which is now the default; the generic family goes from 18.4% to 93.1%.
 
 The exec log records raw and emitted bytes after the fold, so savings include CCR.
-Known gap: bytes later fetched with `retrieve` are not subtracted yet.
+
+### Bytes read back are subtracted
+
+A saving that the agent takes back is not a saving. Each compacted run that kept its
+raw output records the CCR id (a hash of the stored text) in `exec-events.jsonl`. Each
+`downshift retrieve` (the command and the MCP tool, both) appends the id and the
+number of bytes it returned to `exec-retrievals.jsonl`, and nothing else: no query,
+no output, no path. When the logs are read, the bytes returned for an id are matched
+to the runs that kept it and subtracted from their saving, never below zero.
+
+- `report`, `session`, the panel, the context summary and `stats` show the net saving.
+  The compactor line adds `Read back with retrieve: N bytes` when there is any.
+- A session counts only the retrievals of its own runs.
+- Two runs with the same output share one id, so one read is shared out between
+  them in log order, each up to what it saved.
+- Logs written before this change have no ids and no retrievals, and their totals
+  do not move.
+- A small run can end at zero: the marker that names the id costs bytes, and a
+  `retrieve` of the whole output returns more than the run saved.
