@@ -29,7 +29,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | git_log | lossy | 5 | 2265 | 610 | 73.1 | 566 | 152 | 840 | 62.9 |
 | git_show | lossless | 1 | 363 | 367 | -1.1 | 90 | 91 | 413 | -13.8 |
 | git_stash | lossy | 1 | 192 | 175 | 8.9 | 48 | 43 | 221 | -15.1 |
-| git_status | lossless | 2 | 167 | 179 | -7.2 | 41 | 44 | 271 | -62.3 |
+| git_status | lossless | 5 | 1113 | 689 | 38.1 | 278 | 172 | 919 | 17.4 |
 | glab | lossy | 2 | 1673 | 1672 | 0.1 | 418 | 418 | 1764 | -5.4 |
 | go_build | lossy | 2 | 632 | 500 | 20.9 | 158 | 125 | 592 | 6.3 |
 | go_test | lossless | 13 | 13395 | 6728 | 49.8 | 3348 | 1682 | 7326 | 45.3 |
@@ -61,7 +61,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | turbo | lossless | 1 | 494 | 101 | 79.6 | 123 | 25 | 147 | 70.2 |
 | vitest | lossless | 4 | 3624 | 931 | 74.3 | 906 | 232 | 1115 | 69.2 |
 | uncompacted (CCR only) | lossy | 3 | 6105 | 6105 | 0.0 | 1526 | 1526 | 1176 | 80.7 |
-| TOTAL | - | 104 | 129624 | 64186 | 50.5 | 32406 | 16046 | 36746 | 71.7 |
+| TOTAL | - | 107 | 130570 | 64696 | 50.5 | 32642 | 16174 | 37394 | 71.4 |
 
 ## Lossless and lossy split
 
@@ -69,9 +69,9 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 
 | Class | Fixtures | Raw bytes | Downshift bytes | Saving % |
 |---|--:|--:|--:|--:|
-| lossless | 56 | 41665 | 15145 | 63.7 |
+| lossless | 59 | 42611 | 15655 | 63.3 |
 | lossy | 48 | 87959 | 49041 | 44.2 |
 
 ## rtk column
 
-rtk executes the tools it wraps, so a fixture cannot be replayed through its per-tool filters. The rtk columns, absent from the committed report because rtk output is not stable between runs and present only with `DOWNSHIFT_BENCH_RTK=1` and `rtk` on PATH, replay each fixture through `rtk log` on stdin, its one generic stdin filter, on the same files. It is NOT a like-for-like comparison: `rtk log` is a lossy error/warning counter that drops test results and file lists (often a fixed ~100-byte summary), so its saving % is an upper bound that discards facts Downshift keeps. To add per-tool numbers by hand, run the real command under rtk and under `downshift compact --` on one machine and compare output bytes. That run was done on 15 commands (2026-11-07, rtk 0.49.0): [compact-vs-rtk-2026-11-07](../evidence/compact-vs-rtk-2026-11-07.md).
+rtk executes the tools it wraps, so a fixture cannot be replayed through its per-tool filters. The rtk columns, absent from the committed report because rtk output is not stable between runs and present only with `DOWNSHIFT_BENCH_RTK=1` and `rtk` on PATH, replay each fixture through `rtk log` on stdin, its one generic stdin filter, on the same files. It is NOT a like-for-like comparison: `rtk log` is a lossy error/warning counter that drops test results and file lists (often a fixed ~100-byte summary), so its saving % is an upper bound that discards facts Downshift keeps. To add per-tool numbers by hand, run the real command under rtk and under `downshift compact --` on one machine and compare output bytes.
