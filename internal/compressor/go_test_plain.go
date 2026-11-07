@@ -74,7 +74,11 @@ func foldGoTestPlain(input []byte) ([]byte, bool, string) {
 	minCov, maxCov, haveCov := goCoverRange(pkgs)
 	// Per-package figures are always kept (dropping them loses which package
 	// is low); the min/max in the header is a quick read for larger runs.
+	// When all packages pass without coverage and packages > 3, condense to a
+	// single summary line without listing each package.
+	hasAnyCov := haveCov
 	haveCov = haveCov && okCount > goCoverHeaderMin
+	allPassedNoCover := okCount > 3 && !hasAnyCov && noTestCount == 0
 
 	var b strings.Builder
 	if noTestCount > 0 {
@@ -86,7 +90,7 @@ func foldGoTestPlain(input []byte) ([]byte, bool, string) {
 		fmt.Fprintf(&b, ", coverage min %s%% max %s%%", minCov, maxCov)
 	}
 	b.WriteString(")")
-	if prefix != "" {
+	if !allPassedNoCover && prefix != "" {
 		fmt.Fprintf(&b, " under %s", prefix)
 	}
 	b.WriteString("\n")
@@ -96,17 +100,19 @@ func foldGoTestPlain(input []byte) ([]byte, bool, string) {
 			b.WriteString(l + "\n")
 		}
 	}
-	for _, p := range pkgs {
-		rel := strings.TrimPrefix(p.name, prefix)
-		if p.noTests {
-			b.WriteString("? " + rel + " [no test files]\n")
-			continue
+	if !allPassedNoCover {
+		for _, p := range pkgs {
+			rel := strings.TrimPrefix(p.name, prefix)
+			if p.noTests {
+				b.WriteString("? " + rel + " [no test files]\n")
+				continue
+			}
+			b.WriteString("ok " + rel)
+			if p.cover != "" {
+				b.WriteString(" " + p.cover)
+			}
+			b.WriteString("\n")
 		}
-		b.WriteString("ok " + rel)
-		if p.cover != "" {
-			b.WriteString(" " + p.cover)
-		}
-		b.WriteString("\n")
 	}
 	out := b.String()
 	if len(out) >= len(input) {

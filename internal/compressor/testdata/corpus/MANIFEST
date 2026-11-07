@@ -423,7 +423,7 @@ clean     markdown  gh_issue_view_clean.txt
 clean     markdown  gh_release_view_clean.txt
 preserve  markdown  gh_issue_view_error_text.txt
 preserve  markdown  gh_issue_view_open_fence_preserve.txt
-preserve  ls_listing  ls_listing_long_clean.txt
+clean     ls_listing  ls_listing_long_clean.txt
 clean     ls_listing  ls_listing_plain_clean.txt
 preserve  ls_listing  ls_listing_danger.txt
 preserve  ls_listing  ls_listing_headers.txt

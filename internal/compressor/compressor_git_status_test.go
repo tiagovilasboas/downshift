@@ -80,20 +80,43 @@ func TestCompress_GitStatus_DirtyStripsAdviceAndKeepsChanges(t *testing.T) {
 		"\tscripts/bench/scratch.txt\n" +
 		"\n" +
 		"no changes added to commit (use \"git add\" and/or \"git commit -a\")\n")
-	want := "On branch feat/compact-bench\n" +
-		"Your branch is ahead of 'origin/feat/compact-bench' by 2 commits.\n" +
-		"Changes to be committed:\n" +
-		"\tnew file:   internal/compressor/bench_compare_test.go\n" +
-		"\trenamed:    internal/compressor/old_name.go -> internal/compressor/new_name.go\n" +
-		"Changes not staged for commit:\n" +
-		"\tmodified:   internal/compressor/compressor.go\n" +
-		"\tmodified:   internal/execwrap/policy.go\n" +
-		"Untracked files:\n" +
-		"\tscripts/bench/scratch.txt\n"
+	want := "* feat/compact-bench...origin/feat/compact-bench [ahead 2]\n" +
+		"A  internal/compressor/bench_compare_test.go\n" +
+		"R  internal/compressor/old_name.go -> internal/compressor/new_name.go\n" +
+		" M internal/compressor/compressor.go\n" +
+		" M internal/execwrap/policy.go\n" +
+		"?? scripts/bench/scratch.txt\n"
 
 	res := compressor.CompressExit(in, compressor.ModeSafe, 0)
 	if !res.Applied {
 		t.Fatalf("expected dirty git status to compact, reason=%s", res.Reason)
+	}
+	if string(res.Output) != want {
+		t.Fatalf("unexpected compacted output:\ngot:\n%s\nwant:\n%s", string(res.Output), want)
+	}
+}
+
+func TestCompress_GitStatus_DirtyMixedStagedUnstaged(t *testing.T) {
+	in := []byte("On branch main\n" +
+		"Your branch is up to date with 'origin/main'.\n" +
+		"\n" +
+		"Changes to be committed:\n" +
+		"  (use \"git restore --staged <file>...\" to unstage)\n" +
+		"\tmodified:   file1.go\n" +
+		"\tdeleted:    file2.go\n" +
+		"\n" +
+		"Changes not staged for commit:\n" +
+		"  (use \"git add <file>...\" to update what will be committed)\n" +
+		"\tmodified:   file1.go\n" +
+		"\tdeleted:    file3.go\n")
+	want := "* main...origin/main\n" +
+		"MM file1.go\n" +
+		"D  file2.go\n" +
+		" D file3.go\n"
+
+	res := compressor.CompressExit(in, compressor.ModeSafe, 0)
+	if !res.Applied {
+		t.Fatalf("expected applied=true, reason=%s", res.Reason)
 	}
 	if string(res.Output) != want {
 		t.Fatalf("unexpected compacted output:\ngot:\n%s\nwant:\n%s", string(res.Output), want)
