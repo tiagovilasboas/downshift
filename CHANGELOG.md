@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `downshift doctor` reports a `hook overlap` warning, with a fix, when another `PreToolUse` hook in the same hook file rewrites the same field as an active Downshift hook: RTK on the shell command, or cheap-subagents on the subagent model, on a matcher that selects the same tool. Measured on Claude Code 2.1.319: the harness keeps one rewrite (the hook that returns last, whatever the file order) and drops the other with no error; nothing is double-wrapped. The check is shared code driven by the new `setup.Hook.Rewrites` data. Guide: [companions.md](docs/guides/companions.md#hook-coexistence-rtk-and-cheap-subagents-next-to-downshift-measured-2026-11-06). Evidence: [hook-coexistence-2026-11-06.md](docs/evidence/hook-coexistence-2026-11-06.md).
 
+### Fixed
+
+- Claude Code: a spawn issued from inside a subagent (a nested spawn) read its parent model from the main session's transcript, because Claude Code hands every hook the main `transcript_path`. A nested spawn that named no model was then logged and "downshifted" from the main model, not from the model it would inherit from its spawner. It now has an unknown baseline and is held, and no `parent_model` is recorded for it. A model the call names, or a parent model the mod reports, routes as before. Nested spawns could not be produced on 2.1.319 (a subagent has no `Agent` tool), so the fix rests on the documented `agent_id` hook input; see the harness matrix.
+
 ## [0.9.1] - 2026-11-06
 
 ### Fixed

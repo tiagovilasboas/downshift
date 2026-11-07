@@ -137,6 +137,11 @@ type HarnessCapabilities struct {
 	// WorkerReadOnlyVerified means a read-only worker on this harness was
 	// verified live to be unable to write (docs/evidence/mcp-claude-code-2026-10-31.md).
 	WorkerReadOnlyVerified bool
+	// SessionWideTranscript means the transcript_path a hook receives is the
+	// main session's even when the call is made inside a subagent. A spawn issued
+	// by a subagent (a nested spawn) cannot then read its parent's model from it:
+	// see TranscriptNamesSpawner.
+	SessionWideTranscript bool
 }
 
 // ShellPOSIX is the HarnessCapabilities.ShellDialect of a POSIX shell.
@@ -156,7 +161,7 @@ var (
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
 	// The same hook can return updatedInput.command for the Bash tool
 	// (CanRewriteShellCommand, opt-in exec wrapper).
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", ModelForceEnv: "CLAUDE_CODE_SUBAGENT_MODEL_FORCE", SessionFromCatalog: true, CanShowChildLine: true, CanReturnNote: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, ShellDialect: ShellPOSIX, SquadAgentPrefix: "downshift:", WorkerAgent: "claude", WorkerReadOnlyVerified: true, MainToolEvent: "PostToolUse", MainToolCategories: claudeCodeToolCategories,
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", ModelForceEnv: "CLAUDE_CODE_SUBAGENT_MODEL_FORCE", SessionFromCatalog: true, CanShowChildLine: true, CanReturnNote: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, ShellDialect: ShellPOSIX, SquadAgentPrefix: "downshift:", WorkerAgent: "claude", WorkerReadOnlyVerified: true, MainToolEvent: "PostToolUse", MainToolCategories: claudeCodeToolCategories, SessionWideTranscript: true,
 		// Explore is read-only search, Plan is design work (built-in types).
 		AgentTypeHints: map[string]Tier{"Explore": TierSmall, "Plan": TierMid}}
 
@@ -264,37 +269,4 @@ func CapsFor(harness string) (HarnessCapabilities, bool) {
 type NamedCaps struct {
 	Harness string
 	Caps    HarnessCapabilities
-}
-
-// RewritePlan is the concrete set of protocol actions an adapter should take.
-type RewritePlan struct {
-	Model        Model
-	RewriteModel bool // write WriteName into the hook output
-	// WriteName is the exact string to write when RewriteModel is true. Session
-	// and ownership checks still use Model.ID.
-	WriteName        string
-	ApplyEffort      bool // write effort value into the hook output
-	PreserveExplicit bool // current model is explicit_only; skip all rewrites
-	// HoldForeign means the requested id is not in this harness's session
-	// or exact catalog. Adapters must not write a model.
-	HoldForeign bool
-	// CreditHeld means the credit gate refused the rewrite: a present source
-	// or required mode left no writable target. Foreign, explicit-preserve,
-	// and risk holds do not set it.
-	CreditHeld bool
-	// Session is the list the plan was made against, including one inferred
-	// from the current model. Adapters pass it to CanWriteSessionID so the
-	// write guard sees the same list as the planner.
-	Session SessionList
-}
-
-// Plan translates a harness-agnostic Decision into protocol actions.
-// Without a session list it does not rewrite: the catalog is not an allowlist.
-// Adapters that know the session call PlanForSession instead.
-func (d Decision) Plan(c HarnessCapabilities, r ...Resolver) RewritePlan {
-	var res Resolver
-	if len(r) > 0 && r[0] != nil {
-		res = r[0]
-	}
-	return d.PlanForSession(c, res, UnknownSession())
 }
