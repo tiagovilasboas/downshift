@@ -11,7 +11,9 @@
 #   # Specific version:
 #   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh -s v0.9.1
 #
-# The binary is installed to /usr/local/bin/downshift (or ~/.local/bin or
+# A downshift already on PATH is replaced in place, so an update never leaves a
+# second copy behind (go install, for example, puts one in ~/go/bin). Otherwise
+# the binary is installed to /usr/local/bin/downshift (or ~/.local/bin or
 # ~/bin if /usr/local/bin is not writable without sudo). Set
 # DOWNSHIFT_INSTALL_DIR to choose another directory.
 
@@ -136,9 +138,25 @@ if ! fetch -fsSLI -o /dev/null "$URL" 2>/dev/null; then
 fi
 
 # ── Choose install dir ────────────────────────────────────────────────────────
+# The copy the shell runs today is the one to update: installing anywhere else
+# leaves two copies, and the one first on PATH keeps running the old build.
+# Only a regular file at an absolute path in a writable directory is replaced;
+# a link (Homebrew, a manual ln -s) is left alone.
+existing=$(command -v "$BINARY" 2>/dev/null || true)
+existing_dir=""
+case "$existing" in
+  /*)
+    if [ -f "$existing" ] && [ ! -L "$existing" ] && [ -w "$(dirname "$existing")" ]; then
+      existing_dir=$(dirname "$existing")
+    fi ;;
+esac
+
 if [ -n "${DOWNSHIFT_INSTALL_DIR:-}" ]; then
   INSTALL_DIR="$DOWNSHIFT_INSTALL_DIR"
   mkdir -p "$INSTALL_DIR"
+elif [ -n "$existing_dir" ]; then
+  INSTALL_DIR="$existing_dir"
+  echo "Updating the downshift already on PATH: ${existing}"
 elif [ -w "/usr/local/bin" ]; then
   INSTALL_DIR="/usr/local/bin"
 elif [ -d "$HOME/.local/bin" ]; then
