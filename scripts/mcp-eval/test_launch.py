@@ -12,7 +12,7 @@ class LaunchTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
             codex = root / 'codex'
-            codex.write_text('#!/bin/sh\nprintf "{\\"type\\":\\"mock\\"}\\n"\n')
+            codex.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "' + str(root / 'args') + '"\nprintf "{\\"type\\":\\"mock\\"}\\n"\n')
             codex.chmod(0o755)
             instructions = root / 'instructions.txt'
             instructions.write_text('fixture instructions')
@@ -28,6 +28,9 @@ class LaunchTest(unittest.TestCase):
             metadata = json.loads((output / 'run.json').read_text())
             self.assertFalse(metadata['scored'])
             self.assertEqual(metadata['case'], 'C02')
+            argv = (root / 'args').read_text().splitlines()
+            self.assertIn('multi_agent', argv)
+            self.assertIn('--model', json.loads(argv[argv.index('-c', argv.index('-c') + 1) + 1].split('=', 1)[1]))
             self.assertTrue((output / 'events.jsonl').exists())
             repeat = subprocess.run(['python3', str(launch), '--case', 'C02', '--model', 'test',
                                      '--arm', 'A', '--repetition', '1', '--instructions', str(instructions), '--fixture', str(fixture),

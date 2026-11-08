@@ -19,8 +19,9 @@ SCHEMAS = {
 
 
 class Fixture:
-    def __init__(self, case):
+    def __init__(self, case, model="synthetic-mid"):
         self.case = case
+        self.model = model
         self.workers = {}
         if case in {"C04", "C05", "C06", "C07", "C10", "C12"}:
             self.workers["worker-1"] = "running" if case in {"C05", "C07"} else "finished"
@@ -42,7 +43,7 @@ class Fixture:
         if name == "providers":
             if args.get("harness") != "codex":
                 return {"error": "unknown harness", "valid": ["codex"]}, True
-            return {"harness": "codex", "models": [{"id": "synthetic-mid", "tier": "mid"}]}, False
+            return {"harness": "codex", "models": [{"id": self.model, "tier": "mid"}]}, False
         if name == "read_fixture":
             values = {"answer.txt": "ready", "alpha": "alpha evidence", "beta": "beta evidence", "value": "17"}
             key = args.get("name")
@@ -91,8 +92,8 @@ class Fixture:
         return {}, False
 
 
-def serve(case, instructions, log):
-    fixture = Fixture(case)
+def serve(case, instructions, log, model="synthetic-mid"):
+    fixture = Fixture(case, model)
     for line in sys.stdin:
         try:
             req = json.loads(line)
@@ -119,12 +120,13 @@ def serve(case, instructions, log):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--case", required=True, choices=[f"C{i:02}" for i in range(3, 13)])
+    parser.add_argument("--case", required=True, choices=[f"C{i:02}" for i in range(1, 13)])
+    parser.add_argument("--model", default="synthetic-mid", help="model offered by the synthetic provider")
     parser.add_argument("--instructions", required=True, help="UTF-8 file with the exact arm instructions")
     parser.add_argument("--log", required=True, help="local synthetic event log (overwritten)")
     args = parser.parse_args()
     with open(args.instructions, encoding="utf-8") as instructions, open(args.log, "w", encoding="utf-8") as log:
-        serve(args.case, instructions.read(), log)
+        serve(args.case, instructions.read(), log, args.model)
 
 
 if __name__ == "__main__":

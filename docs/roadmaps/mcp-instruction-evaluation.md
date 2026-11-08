@@ -2,7 +2,7 @@
 
 # MCP instruction evaluation: manual A/B protocol
 
-Status: **not run**. This protocol defines a future experiment, not a quality or savings claim. The current wire-size baseline is [documented separately](../evidence/mcp-instructions-baseline-2026-11-06.md). The experiment needs a candidate instruction change and an isolated harness session capable of using the Downshift MCP tools. The existing `downshift-labs/tools/harness-runs/run.py` measures routing arms, not instruction variants; its Codex default arm does not wire the MCP server. Do not label its existing results as this experiment.
+Status: **not run as a complete comparison**. Exploratory pilots do not support a quality or savings claim. The current wire-size baseline is [documented separately](../evidence/mcp-instructions-baseline-2026-11-06.md). The existing `downshift-labs/tools/harness-runs/run.py` measures routing arms, not instruction variants; its Codex default arm does not wire the MCP server. Do not label its existing results as this experiment.
 
 ## Freeze before running
 
@@ -41,4 +41,4 @@ Compare acceptance per case and overall, critical failures, retries and human co
 
 ## Remaining implementation work
 
-A deterministic worker/tool-event fixture, isolated A/B launcher, and scoring record are not yet supplied by this repository. Exact scenario prompts and acceptance checks are supplied in the candidate case set above. Implement and verify those before claiming this protocol has run. A real Codex host-hook session proof is a separate experiment: its shell identifiers have not been shown to match the hook payload's session identifier, so neither a recent timestamp nor a synthetic hook call establishes current-session execution.
+The repository supplies a synthetic worker fixture, launcher and incomplete-record comparator. C01/C02 now have a disposable source/file fixture and enable native multi-agent tools, but a real pilot must establish whether the CLI exposes native-spawn events. The MCP log and CLI event stream are separate and currently lack a shared ordering mechanism, so they cannot establish whether providers preceded a native spawn. Until native event coverage and ordering are demonstrated, those cases remain **not evaluated**: lack of an event alone does not prove no worker was spawned. Scoring still requires independent observation and the production tool descriptions are simplified in the fixture. A real Codex host-hook session proof is a separate experiment: its shell identifiers have not been shown to match the hook payload's session identifier, so neither a recent timestamp nor a synthetic hook call establishes current-session execution.
