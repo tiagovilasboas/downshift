@@ -42,15 +42,15 @@ downshift doctor
 
 ## Otimização de tokens para agentes de programação
 
-Testes, builds e outros comandos de desenvolvimento podem gerar saídas longas. Quando um agente de programação com IA as lê, esse texto ocupa sua janela de contexto. O Downshift compacta a saída de comandos suportados antes de ela chegar ao agente, preservando códigos de saída e detalhes de falhas. Saídas menores podem reduzir os tokens de entrada usados nesses resultados.
+Para desenvolvedores que utilizam agentes de código com IA, suítes longas de testes e saídas verbosas de build não apenas gastam tokens — elas diluem a janela de contexto. À medida que o histórico de terminal se acumula, a capacidade do modelo de reter instruções anteriores, invariantes de arquitetura e regras de negócio se degrada. O Downshift compacta a saída de comandos suportados antes de ela chegar ao agente, preservando o foco da memória de trabalho, códigos de saída e detalhes de falhas intactos. Saídas menores protegem a capacidade do contexto e reduzem o consumo de tokens a cada turno.
 
-O Downshift também aplica escolhas de modelo ao trabalho delegado, dentro da política que você declara. O orquestrador decide o que delegar; a disponibilidade de modelos e a capacidade de aplicar uma decisão dependem do harness e da sessão.
+O Downshift também aplica escolhas de modelo e nível de esforço de raciocínio ao trabalho delegado, dentro da política que você declara. Modelos de fronteira com alto esforço permanecem dedicados a decisões de arquitetura, auditorias de segurança e investigação de bugs complexos, enquanto subagentes mecânicos rodam em modelos menores e mais ágeis, sem invalidar o cache de prompt da sessão principal.
 
 | Capacidade | O que faz |
 | --- | --- |
-| **Compactação de saída** | Mostra ao agente uma versão mais curta da saída de comandos suportados. |
-| **Roteamento de modelos por subagente** | Aplica escolhas de modelo na criação do subagente, dentro da sua política. |
-| **Relatórios locais** | Mostra informações de compactação e roteamento para você inspecionar. |
+| **Compactação de contexto & saída** | Evita a degradação do contexto ao encurtar o ruído de comandos limpos, preservando logs de falha. |
+| **Roteamento de modelo & esforço por subagente** | Aplica o tier do modelo e o nível de esforço de raciocínio na criação do subagente conforme a política. |
+| **Relatórios locais & telemetria** | Mede tokens e contexto preservados sem enviar prompts, código ou caminhos para fora da máquina. |
 
 [Quando usar o Downshift](../guides/when-to-use.md) · [Arquitetura](../design/architecture.md)
 
