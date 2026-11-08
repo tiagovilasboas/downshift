@@ -1,265 +1,132 @@
-# Downshift — Documentação Oficial em Português (PT-BR)
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../brand/downshift-mark-darkbg.svg">
+  <img src="../brand/downshift-mark-lightbg.svg" alt="Símbolo do Downshift" width="90">
+</picture>
 
-> **Maturidade do produto: beta.** A versão publicada `v1.0.0` usa uma tag e um release estáveis,
-> mas os [critérios de saída do beta](../reference/beta-exit.md) ainda não foram cumpridos.
-> A aplicação da troca de modelo no Cursor e o uso independente por múltiplos operadores
-> ainda precisam de comprovação. Veja também as [limitações conhecidas](../reference/known-limitations.md).
+# Downshift
 
-> Downshift por Tiago Vilas Boas  
-> Repositório oficial: https://github.com/tiagovilasboas/downshift  
-> Licença: Apache 2.0 · CLI: `downshift` · Go 1.27
+### Menos ruído nos comandos. Roteamento de subagentes com sua política.
 
-## Economizar tokens no Claude Code com Downshift
+CLI open source que ajuda a reduzir o consumo de tokens de LLM ao compactar a saída de comandos e roteia subagentes conforme sua política de modelos. Um único binário Go.
 
-O **Downshift** é uma ferramenta gratuita e open source para otimizar tokens em agentes de programação
-com IA. Compacta a saída de testes e builds antes de ela ocupar o contexto e aplica, por subagente,
-o modelo escolhido pelo orquestrador, dentro da sua política. Veja o resultado com `downshift report`.
+[Comece aqui](#comece-aqui) · [Documentação](../guides/install.md) · [Suporte por harness](../reference/harness-matrix.md) · [Evidências](#o-que-as-evidências-mostram) · [Como contribuir](../../CONTRIBUTING.md)
 
-Criado com **Claude Code**, também integra **Codex, OpenCode, Cursor, Antigravity e KiroCrew**, com
-[capacidades diferentes por harness](#status-de-suporte-por-harness). Cursor, Antigravity e KiroCrew
-são experimentais. Um único binário Go, licença Apache 2.0.
+[English](../../README.md) · [Português (Brasil)](README.md)
 
-| Onde há desperdício | Como o Downshift atua |
-|---|---|
-| Saída repetitiva de testes e builds | Compacta comandos suportados e preserva falhas e códigos de saída |
-| Trabalho mecânico em modelo caro | Aplica a escolha de modelo por subagente dentro da política declarada |
-| Economia difícil de conferir | Mostra bytes compactados e tokens roteados por harness |
+**Open source · Apache 2.0 · Maturidade do produto: beta**
+</div>
 
-**Comece aqui:** [instale](#instalação-e-configuração-rápida), execute `downshift setup` e confira
-com `downshift doctor`.
+![Agentes do Downshift trabalhando juntos sobre um fundo escuro](../brand/readme-media/hero.png)
 
-**Evidência com escopo:** [72,0% menos bytes](../reference/bench.md) em um corpus sintético de 107
-fixtures com CCR ligado; [24,1% menos tokens por execução aceita](../evidence/four-arm-mechanical-2026-10-21.md)
-em um ensaio controlado de tarefas mecânicas no Claude Code (46 execuções; IC 95% +2,1% a +46,7%).
-São experimentos separados: não se somam nem garantem redução da fatura ou do limite do plano.
+## Comece aqui
 
-O código do Downshift não chama um LLM para rotear. A telemetria guarda contagens, hashes e tempos
-localmente, sem prompts ou caminhos de arquivos. O harness continua usando o provedor de modelos;
-o CCR guarda saídas de comandos localmente, com limites documentados. Hooks falham abertos.
+Instale um binário de release compatível, escolha seu harness, revise a configuração proposta e verifique a instalação. Para o roteamento integrado, o harness compatível precisa estar instalado; o compactor também pode ser executado diretamente como CLI independente. O assistente interativo pode configurar hooks, MCP, skills e política de sessão conforme suas escolhas. Ele mostra as alterações propostas e pede confirmação antes de gravar.
 
----
+Os pacotes de release atendem macOS e Linux em arm64 e amd64, e Windows em amd64. A disponibilidade dos arquivos varia conforme o release; confira a página de releases para sua plataforma e os arquivos de verificação. O instalador shell do guia atende macOS e Linux.
 
-## Sumário
+[Releases](https://github.com/tiagovilasboas/downshift/releases) · [Instalação](../guides/install.md) · [Início rápido](../guides/quickstart.md) · [Configuração](../guides/config.md) · [Desfazer configuração](../reference/cli.md#downshift-setup) · [Desinstalar](../reference/cli.md#downshift-uninstall)
 
-- [Visão Geral e Propósito](#visão-geral-e-propósito)
-- [Instalação e Configuração Rápida](#instalação-e-configuração-rápida)
-- [Status de Suporte por Harness](#status-de-suporte-por-harness)
-- [Resumo dos Benchmarks e Economia de Tokens](#resumo-dos-benchmarks-e-economia-de-tokens)
-- [Compactor e CCR (Command Context Recovery)](#compactor-e-ccr-command-context-recovery)
-- [Roteamento e Delegação de Modelos por Subagente](#roteamento-e-delegação-de-modelos-por-subagente)
-- [Orquestração de Agentes e Gatilhos de Contexto](#orquestração-de-agentes-e-gatilhos-de-contexto)
-- [Comandos Essenciais do CLI](#comandos-essenciais-do-cli)
-- [Navegação da Documentação PT-BR](#navegação-da-documentação-pt-br)
-- [Segurança, Privacidade e Governança](#segurança-privacidade-e-governança)
-- [Perguntas Frequentes](#perguntas-frequentes)
+[![O assistente interativo detecta harnesses, permite escolher componentes e revisar alterações, grava após a confirmação e depois o usuário verifica a configuração](../brand/readme-media/setup-flow.svg)](../brand/readme-media/setup-flow.png)
 
----
+## Dê mais espaço para o agente trabalhar
 
-## Visão Geral e Propósito
+Testes, builds e outros comandos de desenvolvimento podem gerar saídas longas. Quando um agente de programação com IA as lê, esse texto ocupa contexto. O Downshift compacta a saída de comandos suportados antes de ela chegar ao agente, preservando códigos de saída e detalhes de falhas. Saídas menores podem reduzir os tokens de entrada usados nesses resultados.
 
-Agentes de codificação autônomos desperdiçam grande parte de suas janelas de contexto consumindo saídas gigantescas de comandos de terminal (como suítes de testes que passam com sucesso ou logs repetitivos de build) e delegando subtarefas mecânicas e simples aos modelos mais caros e lentos da categoria *frontier*.
+O Downshift também aplica escolhas de modelo ao trabalho delegado, dentro da política que você declara. O orquestrador decide o que delegar; a disponibilidade de modelos e a capacidade de aplicar uma decisão dependem do harness e da sessão.
 
-O Downshift resolve esses dois desafios por meio de dois pilares complementares:
+| Capacidade | O que faz |
+| --- | --- |
+| **Compactação de saída** | Mostra ao agente uma versão mais curta da saída de comandos suportados. |
+| **Roteamento de modelos por subagente** | Aplica escolhas de modelo na criação do subagente, dentro da sua política. |
+| **Relatórios locais** | Mostra informações de compactação e roteamento para você inspecionar. |
 
-1. **Compactor com CCR sem perda de informação:**  
-   Intercepta comandos permitidos (como `go test`, `vitest`, `pytest`, `cargo test`, `git status`, `npm install`, etc.) e resume execuções bem-sucedidas a sínteses concisas de `PASS/FAIL`. Com o sistema de CCR (*Command Context Recovery*) ativado por padrão, a saída bruta integral é gravada em um buffer seguro local (`~/.downshift/ccr/<id>.txt`), permitindo que o agente recupere qualquer trecho ou stack trace instantaneamente com `downshift retrieve <id>`. Em execuções com falha, 100% dos erros, asserções e stack traces do código da aplicação são preservados na íntegra.
+[Quando usar o Downshift](../guides/when-to-use.md) · [Arquitetura](../design/architecture.md)
 
-2. **Roteamento e Delegação de Modelos por Subagente:**  
-   O orquestrador líder da sessão decide o modelo e nível de esforço adequados para cada subagente delegado. O Downshift intercepta o evento de disparo via hook nativo (`PreToolUse`), valida a decisão contra as políticas declaradas em `policy.json` (pisos de modelo, travas de cota e regras por tipo de tarefa) e reescreve a chamada em tempo de execução. Trabalho mecânico ou simples é executado em modelos menores (*small*), economizando tokens e preservando o cache de prompt da sessão principal. Na dúvida, o modelo original solicitado pelo desenvolvedor é mantido inalterado.
+Selecione um diagrama para vê-lo em tamanho maior. Os rótulos das artes estão em inglês; o texto abaixo explica cada fluxo em português.
 
----
+## Onde o Downshift atua
 
-## Instalação e Configuração Rápida
+[![Um harness de programação acessa o Downshift por caminhos separados de roteamento de subagentes e execução de comandos; as observações dependem do harness](../brand/readme-media/operating-surfaces.svg)](../brand/readme-media/operating-surfaces.png)
 
-A instalação é feita em três comandos simples:
+O Downshift participa em dois pontos distintos: a criação de um subagente pode ser verificada contra a política e os modelos conhecidos da sessão, e a saída de comandos suportados pode ser compactada antes de chegar ao agente. Integração e observação variam entre harnesses; a execução direta do compactor está disponível quando não há encapsulamento automático.
 
-```bash
-# 1. Baixar e instalar o binário oficial
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+## Reduza a saída dos comandos e mantenha os detalhes
 
-# 2. Configurar os harnesses instalados na máquina (assistente interativo seguro)
-downshift setup
+[![Um comando de desenvolvimento gera uma saída completa; o Downshift mostra uma versão menor ao agente, enquanto a saída bruta elegível pode ser armazenada localmente com CCR e recuperada depois](../brand/readme-media/compaction.svg)](../brand/readme-media/compaction.png)
 
-# 3. Validar a integridade da instalação, hooks e permissões
-downshift doctor
-```
+Um comando suportado é executado normalmente. O Downshift mostra uma versão mais curta ao agente, preservando o código de saída e os detalhes de falhas. Com o **Command Context Recovery (CCR)** ativado, a saída bruta elegível pode ser armazenada localmente e recuperada depois; linhas repetidas podem ser agrupadas no resultado exibido. O encapsulamento depende do harness, e a execução direta do compactor está disponível. A redução da saída varia conforme o comando e o formato.
 
-- O assistente `downshift setup` detecta automaticamente os agentes e harnesses suportados presentes no sistema, exibe um diff claro de qualquer alteração de configuração e pede confirmação antes de gravar.
-- O utilitário `downshift doctor` executa um checklist rigoroso do binário, hooks ativos, diretórios de estado e conectividade de MCP, oferecendo comandos de autocorreção caso encontre inconsistências.
+[![As famílias reconhecidas incluem testes, builds e verificações, Git e infraestrutura; o comportamento depende do comando e do formato de saída](../brand/readme-media/command-families.svg)](../brand/readme-media/command-families.png)
 
-Para o passo a passo completo, consulte o [Guia de Início Rápido](guias/inicio-rapido.md).
+O Downshift reconhece formas específicas de comandos de teste, build, lint, Git e infraestrutura. Formatos reconhecidos podem ser compactados ou repassados conforme a família e a saída. Formatos de saída desconhecidos permanecem brutos; um comando fora da lista permitida é recusado pelo encapsulador e pode ser executado diretamente. Os detalhes de falhas e o código de saída são preservados. Consulte a referência de ferramentas para conhecer as formas exatas.
 
----
+[Compactação](../features/compaction.md) · [Ferramentas suportadas](../reference/supported-tools.md) · [CCR](../guides/ccr.md)
 
-## Status de Suporte por Harness
+## Roteie subagentes dentro da sua política
 
-O Downshift foi projetado segundo a regra de camadas arquiteturais: a inteligência vive nas camadas compartilhadas e os adapters traduzem os eventos nativos de cada harness.
+[![O orquestrador delega o trabalho; o Downshift verifica a política, os modelos conhecidos da sessão e as capacidades do harness antes de aplicar uma escolha ou manter o modelo solicitado](../brand/readme-media/routing.svg)](../brand/readme-media/routing.png)
 
-| Harness | Compactação | Roteamento de Modelos | Status Oficial | Modo de Configuração |
-|---|---|---|---|---|
-| **Claude Code** | Reescrita automática de comandos | Reescrita de modelo observada e honrada | **Completed** | `downshift setup claude-code` |
-| **Codex** | Execução direta via `downshift compact` | Reescrita emitida e honrada inferida | **Functional** | `downshift setup codex` |
-| **Cursor** | Execução direta via `downshift compact` | Reescrita emitida e honrada não confirmada | **Experimental** | `downshift setup cursor` |
-| **OpenCode** | Reescrita automática via bridge plugin | Reescrita observada e honrada | **Beta** | `downshift setup opencode` |
-| **Antigravity** | Execução direta via `downshift compact` | Suporte a rotas e subagentes locais | **Experimental** | `downshift setup antigravity` |
-| **KiroCrew** | Execução direta via `downshift compact` | Modo de política (allow/block, sem reescrita in-place) | **Experimental** | `downshift setup kirocrew` |
+O orquestrador escolhe o trabalho a delegar. O Downshift aplica decisões de modelo na criação do subagente, sujeito à sua política e às informações de modelos conhecidas para aquele harness e sessão. Quando não consegue estabelecer uma escolha segura, mantém o modelo solicitado.
 
-> **Nota:** Claude Code e OpenCode reescrevem comandos permitidos para sua forma compactada de forma automática (via hooks nativos `PreToolUse` e bridge plugin). Em outros ambientes, a compactação opera por reescrita via hooks, políticas de orientação/advise (como o código de saída 2 no KiroCrew) ou execução direta via `downshift compact -- <comando>` (universal em qualquer terminal). Detalhes por harness: [Matriz de Harnesses](../reference/harness-matrix.md) e [Reconciliação de Evidências](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
+A profundidade da integração varia. Uma reescrita emitida pelo Downshift, por si só, não comprova que o harness a aplicou. O código de roteamento do Downshift não faz uma chamada adicional a LLM. A escolha se aplica à criação do subagente; o Downshift não altera o modelo da sessão principal no meio do turno.
 
----
+[Roteamento de modelos](../features/routing.md) · [Política](../guides/policy.md) · [Modelos da sessão](../reference/session-models.md)
 
-## Resumo dos Benchmarks e Economia de Tokens
+## Veja seus agentes em ação
 
-Os ganhos do Downshift são medidos em bytes e contagens de tokens em um corpus de teste com **107 fixtures sintéticas** representativas do ciclo real de desenvolvimento:
+![Ilustração conceitual inspirada no painel Downshift Agents: um agente líder coordena agentes especialistas](../brand/readme-media/agents.png)
 
-| Métrica Avaliada | Resultado Obtido | Significado Técnico |
-|---|---|---|
-| **Corpus Geral (CCR desligado)** | **51.1%** de economia em bytes | Redução sem compactação agressiva de repetições |
-| **Corpus Geral (CCR ativado)** | **72.0%** de economia em bytes | **Padrão atual:** máxima redução com recuperação integral via `downshift retrieve` |
-| **Suítes Lossless (Testes)** | **65.2%** de economia em bytes | Preserva 100% de erros, falhas e stack traces da aplicação |
-| **Picos de Redução** | **80% a 95%** de economia | *Progress* (94.5%), `cargo test` (93.0%), `flutter test` (92.3%), *lockfile diff* (91.2%), `npm install` (89.1%), `pytest` (86.7%), `playwright` (81.6%), `turbo` (79.6%), `tsc` (78.4%), `vitest` (74.3%) |
+O Downshift inclui perfis de agentes e playbooks de orquestração para pesquisa, implementação, revisão, segurança, documentação e outras atividades. Um líder coordena o trabalho independente e reúne os resultados.
 
-Em test runners *lossless*, o compilador e o framework de testes continuam gerando suas mensagens de falha completas: o Downshift corta apenas as linhas repetidas de testes que passaram com sucesso (`PASS`, `ok`), evidenciando imediatamente as falhas.
+<p align="center"><img src="../brand/readme-media/agents-panel-illustration.png" width="420" alt="Ilustração sanitizada baseada em um painel Downshift Agents"></p>
 
-### Resultados Empíricos de Roteamento e Uso Real
+*Ilustração sanitizada baseada em um screenshot de uma sessão Claude Code. Nomes de tarefas, modelos e métricas da sessão foram ocultados. Esta é uma prévia visual editada, não um benchmark ou screenshot sem alterações.*
 
-Além do corpus de compactação, testes controlados mediram o impacto de roteamento e uso combinado:
-- **Roteamento de Subagentes (Claude Code):** Em bateria controlada de 46 execuções em tarefas mecânicas delegadas ([bateria de quatro braços](../evidence/four-arm-mechanical-2026-10-21.md)), o roteamento sob `opusplan` nativo alcançou **24.1% menos tokens por tarefa aceita** (IC 95% +2.1% a +46.7%) e 16.5% por execução (+0.6% a +29.7%), com 100% (12/12) de aceitação. Mais de 98% dos tokens foram leituras de prompt cache.
-- **Roteamento e Compactação Combinados (KiroCrew):** Em sessão real direcional avaliando 6 tarefas de controle, a combinação de política de roteamento com compactação via shell advise alcançou **até ~53% menos tokens por tarefa** ([reconciliação](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)).
-- **Uso Cotidiano:** A economia no uso cotidiano natural e não restrito ainda **não está estabelecida** (telemetria de 30 dias registrou variação de −1.9%, dentro da margem de ruído). O Downshift segue uma [Escada de Evidências](../guides/evidence.md) e reporta contagens de tokens, bytes e retrabalho, nunca faturas em dólares.
+[Guia de agentes](../guides/agents.md) · [Catálogo de agentes](../agents/README.md)
 
-Consulte a análise técnica aprofundada na [Referência de Benchmarks](referencia/benchmarks.md) e na [Reconciliação de Evidências](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
+## Funciona com seu harness de programação
 
----
+O Downshift foi criado com Claude Code e oferece suporte a outros harnesses em diferentes estágios de verificação.
 
-## Compactor e CCR (Command Context Recovery)
+| Harness | Status | Evidência de roteamento |
+| --- | --- | --- |
+| Claude Code | Concluído | Reescrita observada em um subagente real. |
+| Codex | Funcional | Reescrita emitida; aplicação inferida, sem observação direta. |
+| OpenCode | Beta | Roteamento e uso do subagente observados no OpenCode 2.2.5. |
+| Cursor | Experimental | Reescrita emitida; aplicação pelo executor não confirmada. |
+| Antigravity | Experimental | Um subagente observado em uma versão. |
+| KiroCrew | Experimental | Modo de política, sem reescrita de modelo no lugar. |
 
-O compactor envolve comandos verborrágicos mantendo integralmente o código de saída (*exit code*):
+Os modelos disponíveis para um harness ou sessão não são considerados disponíveis automaticamente em outro. Consulte a [matriz completa de harnesses](../reference/harness-matrix.md) para detalhes de integração, evidências e limites.
 
-```bash
-downshift compact -- go test ./...
-downshift compact -- git status
-```
+## O que as evidências mostram
 
-### Como Funciona o CCR
+| Medição | Resultado | Escopo |
+| --- | --- | --- |
+| Compactação de saída sem perda | **65,2% menos bytes** | 59 fixtures em um corpus sintético. |
+| Compactação de saída com CCR | **72,0% menos bytes** | Corpus sintético de 107 fixtures; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
+| Roteamento de subagentes | **24,1% menos tokens por execução aceita** | Estudo controlado com 46 execuções no Claude Code para tarefas mecânicas, realizado antes da decisão O8. |
 
-A partir de 6 de novembro de 2026, o CCR vem **ativado por padrão**:
-1. Toda saída bruta gerada é armazenada de forma segura em `~/.downshift/ccr/<id>.txt`.
-2. O compactor insere um marcador transparente ao final da saída compactada:
-   `[downshift compact: compacted 3956 to 998 bytes; full output: downshift retrieve 3f9a1c2b7d40]`
-3. Sequências de 8 ou mais linhas repetitivas ou idênticas são dobradas (exibindo as 3 primeiras e as 2 últimas, com `[... N similar lines folded]`).
-4. Se o agente ou o desenvolvedor precisar inspecionar a saída bruta completa ou linhas específicas, basta executar:
+São medições separadas, com unidades e cargas de trabalho diferentes. Os totais do corpus sintético incluem apenas fixtures processadas pelo compactor e excluem fixtures preservadas. O resultado de roteamento é evidência histórica; ele não estabelece o efeito da implementação após O8. A economia no uso cotidiano sem restrições ainda não foi estabelecida. Estimativas de tokens baseadas em bytes não são uma fatura nem uma medida dos limites do plano.
 
-```bash
-# Recuperar saída completa
-downshift retrieve 3f9a1c2b7d40
+[Benchmark de compactação](../reference/bench.md) · [Estudo de roteamento](../evidence/four-arm-mechanical-2026-10-21.md) · [Guia de evidências](../guides/evidence.md)
 
-# Filtrar por expressão regular ou intervalo de linhas
-downshift retrieve 3f9a1c2b7d40 --grep "FAIL|panic"
-downshift retrieve 3f9a1c2b7d40 --lines 50:120
-```
+## Feito para inspeção e controle
 
-Para detalhes de sanitização de credenciais e retenção de arquivos, veja o [Guia de Compactação e CCR](guias/compactacao-e-ccr.md).
+- Hooks falham abertos: erros ou timeouts mantêm a criação do subagente solicitada sem alteração.
+- O roteamento é local e não faz uma chamada adicional a LLM. A telemetria registra contagens, hashes e tempos, sem registrar prompts.
+- O CCR pode armazenar saídas brutas de comandos localmente. A sanitização cobre formatos comuns de credenciais, mas segredos em formatos arbitrários podem permanecer; consulte as [limitações de saída bruta](../reference/known-limitations.md#raw-output-kept-by-ccr) e a configuração antes de usá-lo com saídas sensíveis.
+- Workers com escrita exigem ativação explícita e usam worktrees separados. O Downshift não mescla suas branches nem oferece uma etapa de aprovação para deploys e outras ações de risco.
 
----
+[Segurança](../features/safety.md) · [Telemetria](../features/telemetry.md) · [Limitações conhecidas](../reference/known-limitations.md)
 
-## Roteamento e Delegação de Modelos por Subagente
+## Documentação e comunidade
 
-Quando a sessão orquestradora delega trabalho a um subagente, o Downshift avalia a solicitação em milissegundos seguindo uma ordem estrita de precedência (a primeira regra que der *match* vence):
+[Início rápido](../guides/quickstart.md) · [Referência de CLI](../reference/cli.md) · [Arquitetura](../design/architecture.md) · [English](../../README.md)
 
-```mermaid
-flowchart TD
-    Req["Spawn de Subagente Solicitado"] --> Pinned{"Modelo fixado (pinned)?"}
-    Pinned -- Sim --> Keep["Mantém Modelo Solicitado"]
-    Pinned -- Não --> Profile{"Perfil declarado em policy.json?"}
-    Profile -- Sim --> ApplyProfile["Aplica Perfil"]
-    Profile -- Não --> Rules{"Regra declarada (kind/effort/quota)?"}
-    Rules -- Sim --> ApplyRule["Aplica Regra Declarada"]
-    Rules -- Não --> Hint{"Orquestrador sugeriu tier menor?"}
-    Hint -- Sim --> ApplyHint["Desce para o Tier Indicado"]
-    Hint -- Não --> TaskClass{"Classe da Tarefa é TRIVIAL/SIMPLE sem risco?"}
-    TaskClass -- Sim --> ApplySmall["Desce para Small"]
-    TaskClass -- Não --> Keep
-```
+Encontrou um problema ou quer contribuir? Leia o [guia de contribuição](../../CONTRIBUTING.md) ou [abra uma issue](https://github.com/tiagovilasboas/downshift/issues).
 
-- **Dúvida mantém o modelo original:** Se a solicitação não puder ser classificada com alta confiança, o Downshift não altera o modelo solicitado (princípio *fail-open*).
-- **Sem elevação não autorizada:** O Downshift nunca eleva o modelo além do solicitado pelo orquestrador, salvo se `routing.raise_complex: true` for explicitamente configurado no `policy.json`.
-- **Integridade do cache de prompt:** O modelo da sessão principal do usuário nunca é alterado no meio do turno, garantindo 100% de reaproveitamento do *prompt cache*.
+## Licença
 
-Veja todos os detalhes no [Guia de Roteamento de Modelos](guias/roteamento-de-modelos.md).
-
----
-
-## Orquestração de Agentes e Gatilhos de Contexto
-
-O Downshift acompanha um squad com 14 papéis de agentes especializados em 6 domínios de engenharia:
-- **Core:** `coder`, `coder-back`, `coder-front`, `refactor`, `researcher`
-- **Quality:** `tester`, `debugger`, `reviewer`
-- **Security:** `security`
-- **Performance:** `performance`
-- **Support:** `documenter`
-- **Leadership:** `architect`, `platform`, `ai`
-
-### Gatilhos de Contexto (Context Triggers)
-
-Você pode invocar o esquadrão no chat do seu agente usando gatilhos em linguagem natural:
-
-```
-Usuário: Preciso refatorar o pool de conexões do banco de dados e cobrir com testes
-Usuário: downshift full-power
-```
-
-- `downshift full-power` (ou seus aliases em português `potência total` / `potencia-total`): Ativa os especialistas necessários para a tarefa atual (respeitando o limite de até 5 agentes simultâneos e checando as cotas de consumo antes de despachar).
-- `downshift shift <squad>`: Ativa um domínio específico de engenharia (`core`, `quality`, `security`, `leadership`). Exemplos:
-  - `downshift shift quality`
-  - `downshift shift security`
-  - `downshift shift coder "corrigir race condition no worker pool"`
-
----
-
-## Comandos Essenciais do CLI
-
-| Comando | Descrição e Finalidade |
-|---|---|
-| `downshift setup [--dry-run]` | Configura hooks nos harnesses detectados com diff prévio e confirmação |
-| `downshift doctor` | Diagnóstico de integridade do ambiente com comandos de correção automática |
-| `downshift compact -- <cmd>` | Executa um comando permitido e compacta a saída mantendo status e saída de erro |
-| `downshift retrieve <id>` | Recupera a saída bruta mantida no buffer seguro do CCR |
-| `downshift session [--why]` | Exibe a árvore de subagentes da sessão e a justificativa clara de cada decisão |
-| `downshift stats` | Apresenta resumo de decisões tomadas e estimativa de tokens economizados |
-| `downshift report` | Relatório consolidado de tokens direcionados por tarefa concluída |
-| `downshift policy check` | Valida a sintaxe e a semântica do arquivo de política `policy.json` |
-| `downshift quota` | Diagnóstico das cotas e janelas de consumo dos provedores configurados |
-| `downshift mcp serve` | Inicia o servidor MCP local (expondo 13 ferramentas nativas para agentes) |
-
----
-
-## Navegação da Documentação PT-BR
-
-Para aprofundar seu conhecimento em cada área do Downshift, explore os guias e referências dedicados:
-
-- 🚀 [Guia de Início Rápido](guias/inicio-rapido.md) — Instalação passo a passo, primeiro comando compactado e testes.
-- 📦 [Guia de Compactação e CCR](guias/compactacao-e-ccr.md) — Funcionamento interno do compactor, ferramentas suportadas e recuperação de logs via CCR.
-- 🔀 [Guia de Roteamento de Modelos](guias/roteamento-de-modelos.md) — Estrutura de regras BDI, guardrails, `policy.json` e otimização por subagente.
-- 📊 [Referência de Benchmarks](referencia/benchmarks.md) — Metodologia de testes, tabela oficial detalhada de 107 fixtures e escada de evidências.
-
----
-
-## Segurança, Privacidade e Governança
-
-- **Fail-Open Garantido:** Qualquer erro inesperado, payload corrompido, timeout ou tamanho superior a 1 MiB faz o hook liberar a execução original imediatamente sem alteração.
-- **Privacidade de Prompts e Código:** O Downshift nunca salva textos de prompts, arquivos do repositório ou parâmetros confidenciais em sua telemetria. O arquivo `events.jsonl` armazena apenas contagens, hashes e tempos.
-- **Sanitização Heurística no CCR:** O buffer de CCR filtra ativamente linhas com padrões de credenciais, chaves de API, tokens JWT e blocos PEM. O armazenamento é local, com permissões restritas (0600/0700) e expiração automática em 24 horas.
-- **Sem Portas dos Fundos ou LLMs Ocultos:** Toda decisão é tomada por código Go estático e determinístico inspecionável em código aberto.
-
----
-
-## Perguntas Frequentes
-
-**Os subagentes do Claude Code gastam o limite de uso mais rápido?** Podem gastar. A documentação de subagentes da Anthropic diz que cada subagente começa com um contexto novo e faz requisições próprias, que contam para os mesmos limites de uso da conversa principal, e roda no modelo principal se nada definir outro. O agente embutido Explore também roda no modelo principal. Coloque subagentes rotineiros num modelo menor; o `downshift policy init` oferece um perfil `explore` que manda o Explore para o tier pequeno e mostra antes em qual modelo isso resolve. [Guia](https://downshift-ai.vercel.app/pt-br/guias/subagentes-gastam-limite-claude-code/).
-
-**Qual a diferença para `CLAUDE_CODE_SUBAGENT_MODEL`?** Essa variável define um modelo padrão para todo subagente que nada mais define, e sozinha não muda os agentes embutidos Explore e Plan. O Downshift aplica o modelo escolhido em cada chamada, dentro de uma política que você declara, mantém o modelo pedido na dúvida, registra onde os tokens rodaram e também funciona no Codex, Cursor e OpenCode.
-
-**O Downshift economiza o limite do meu plano no Claude Code?** Ainda não foi medido. O Downshift mostra, por harness, os tokens que rodaram abaixo do modelo da sessão e os bytes que a compactação tirou; como um plano converte tokens nos limites de 5 horas e semanal não é publicado, então nenhuma economia de limite é prometida.
-
-Mais guias em português: [https://downshift-ai.vercel.app/pt-br/guias/](https://downshift-ai.vercel.app/pt-br/guias/).
+[Apache License 2.0](../../LICENSE). Downshift por [Tiago Vilas Boas](https://github.com/tiagovilasboas).
