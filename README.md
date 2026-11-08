@@ -42,15 +42,15 @@ downshift doctor
 
 ## Token optimization for AI coding agents
 
-For developers using AI coding agents, test runners, build tools and other development commands can return long outputs. When a coding agent reads them, that text takes up its context window. Downshift compacts supported command output before it reaches the agent, preserving exit codes and failure details. Shorter output can reduce the input tokens spent on those results.
+For developers using AI coding agents, long test suites, build logs, and repetitive terminal outputs do not just consume tokens — they cause context rot. As verbose scrollback accumulates in the context window, the model's recall of earlier system prompts, architectural invariants, and business constraints degrades. Downshift compacts supported command output before it reaches the agent, preserving working-memory focus, exit codes, and failure details verbatim. Shorter output protects context capacity and reduces billable tokens on every subsequent turn.
 
-Downshift also applies model choices for delegated work within the policy you declare. The orchestrator decides what to delegate; model availability and the ability to apply a decision depend on the harness and session.
+Downshift also applies model choices and reasoning effort for delegated work within the policy you declare. High-effort frontier models stay reserved for architectural trade-offs, security audits, and difficult root-cause debugging, while mechanical subagents run on proportional, cost-effective tiers without invalidating your main session's prompt cache.
 
 | Capability | What it does |
 | --- | --- |
-| **Output compaction** | Gives the agent a shorter view of supported command output. |
-| **Subagent model routing** | Applies model choices at the spawn boundary within your policy. |
-| **Local reporting** | Shows compaction and routing information you can inspect. |
+| **Context & output compaction** | Prevents context degradation by cutting clean command noise while preserving failure logs. |
+| **Subagent model & effort routing** | Applies model tier and reasoning effort at the spawn boundary within your policy. |
+| **Local reporting & telemetry** | Measures tokens and context preserved without sending prompts or code outside your machine. |
 
 [See when to use Downshift](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/when-to-use.md) · [Explore the architecture](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/design/architecture.md)
 
