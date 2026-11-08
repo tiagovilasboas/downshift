@@ -12,6 +12,7 @@ import (
 // or rewrite_emitted as honor.
 func tallySpawnSurface(events []Event, s *Stats) {
 	honor, usage := ObservedLinks(events)
+	refuted := RefutedRewrites(events)
 	for _, ev := range events {
 		if ev.Harness == "" || IsCostOnlyOutcome(ev.Outcome) || IsFailureOutcome(ev.Outcome) {
 			continue
@@ -21,9 +22,12 @@ func tallySpawnSurface(events []Event, s *Stats) {
 		// written model to confirm, so counting it "unobserved" buried the few
 		// real rewrites under every unchanged spawn.
 		if isShift(ev) {
-			switch surface.Honor {
-			case HonorObserved:
+			_, isRefuted := refuted[SurfaceKey(ev)]
+			switch {
+			case surface.Honor == HonorObserved:
 				s.HonorObserved++
+			case isRefuted:
+				s.HonorRefuted++
 			default:
 				s.HonorUnobserved++
 			}

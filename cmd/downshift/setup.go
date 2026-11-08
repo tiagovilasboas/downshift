@@ -142,7 +142,9 @@ Wire every Downshift hook into the harnesses found on this machine.
                        their own git worktree; never merged). Without it,
                        --yes writes nothing about workers and the wizard asks
   --no-policy          do not offer .downshift/policy.json in the current
-                       directory (see downshift policy init)
+                       directory (see downshift policy init). Never offered
+                       from the directory that holds the state directory
+                       (usually HOME): that file is the user policy
   --keep-binaries      do not offer to remove other downshift copies on PATH
                        and in the Go and per-user bin directories
   --allow-unsafe-binary

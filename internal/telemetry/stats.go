@@ -79,6 +79,9 @@ type Stats struct {
 	RewriteHonored  int
 	HonorObserved   int
 	HonorUnobserved int
+	// HonorRefuted counts applied rewrites a linked resolved record refutes:
+	// the harness reported another model. They are observed, not unobserved.
+	HonorRefuted    int
 	UsageObserved   int
 	UsageUnobserved int
 	QuotaAvailable  int

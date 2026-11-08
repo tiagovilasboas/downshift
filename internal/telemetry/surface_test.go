@@ -137,7 +137,9 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 
 		var report bytes.Buffer
 		telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true}, &report)
-		if !strings.Contains(report.String(), "Honor                 observed 0  unobserved") {
+		// The refuted shift is observed evidence against honor, so it has its
+		// own count instead of joining the unobserved ones.
+		if !strings.Contains(report.String(), "Honor                 observed 0  refuted 1  unobserved 2") {
 			t.Fatalf("report printed inference as honor:\n%s", report.String())
 		}
 	})

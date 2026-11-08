@@ -51,8 +51,9 @@ type aggregator struct {
 	s         Stats
 	decisions map[linkKey]Event
 	// refuted holds rewrites a linked "resolved" record says the harness did
-	// not run: they are not applied and save nothing.
-	refuted map[linkKey]bool
+	// not run: they are not applied and save nothing. The value is the model
+	// that record reports ("" when it names none).
+	refuted map[linkKey]string
 	// unrouted holds paused decisions and baseline lines older binaries wrote
 	// (outcome baseline): spawns the router left alone. They are not in decisions.
 	unrouted map[linkKey]bool
@@ -71,7 +72,7 @@ func newAggregator() *aggregator {
 			ByAgentType:  make(map[string]AgentTypeCount),
 		},
 		decisions: make(map[linkKey]Event),
-		refuted:   make(map[linkKey]bool),
+		refuted:   make(map[linkKey]string),
 		unrouted:  make(map[linkKey]bool),
 		linked:    make(map[linkKey]bool),
 	}
@@ -88,7 +89,7 @@ func (a *aggregator) indexDecisions(events []Event) {
 			a.unrouted[linkKey{ev.Harness, DecisionKey(ev)}] = true
 		}
 		if ev.Outcome == OutcomeResolved && ev.LinkedDecision != "" && ev.RewriteHonored != nil && !*ev.RewriteHonored {
-			a.refuted[linkKey{ev.Harness, ev.LinkedDecision}] = true
+			a.refuted[linkKey{ev.Harness, ev.LinkedDecision}] = ev.ToModel
 		}
 	}
 }
@@ -141,8 +142,8 @@ func (a *aggregator) countDecision(ev Event) {
 		a.s.PolicyFloor++
 	}
 	a.s.ByComplexity[ev.Complexity]++
-	isRefuted := a.refuted[linkKey{ev.Harness, DecisionKey(ev)}]
-	a.countModelMix(ev, isRefuted)
+	served, isRefuted := a.refuted[linkKey{ev.Harness, DecisionKey(ev)}]
+	a.countModelMix(ev, isRefuted, served)
 	a.countGatewayShadow(ev)
 	for _, code := range ev.ReasonCodes {
 		a.s.ReasonCodes[code]++
@@ -168,11 +169,13 @@ func (a *aggregator) countAgentType(ev Event) {
 	a.s.ByAgentType[ev.AgentType] = c
 }
 
-// countModelMix counts the model that actually ran.
-func (a *aggregator) countModelMix(ev Event, isRefuted bool) {
+// countModelMix counts the model that actually ran. For a refuted rewrite that
+// is the model the resolved record reports, which another hook on the same call
+// may have set; the requested model only when the record names none.
+func (a *aggregator) countModelMix(ev Event, isRefuted bool, served string) {
 	ran := ev.ToModel
 	if isRefuted {
-		ran = ev.FromModel // the harness kept the requested model
+		ran = ranOnRefute(ev, served)
 	}
 	if ran != "" && ran != "unknown" {
 		a.s.ModelMix[ShortModel(ran)]++

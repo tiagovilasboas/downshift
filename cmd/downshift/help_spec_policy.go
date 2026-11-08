@@ -29,7 +29,8 @@ the plan names the model it resolves to today; a harness with no list gets a
 note instead of a profile. --bare writes the version only. It asks before
 writing; --dry-run shows the file and writes nothing; --yes skips the question.
 An existing file is left untouched. downshift setup offers the same file, unless
---no-policy is passed.
+--no-policy is passed or the current directory holds the state directory
+(usually HOME), where that path is the user policy.
 
 policy apply compiles routing.profiles declared in policy.json into harness-native
 agent definitions. For --harness claude-code, it writes or updates

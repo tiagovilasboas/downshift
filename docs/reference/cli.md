@@ -30,7 +30,7 @@ downshift setup [harness...] [flags]
 - `--no-session-policy` — Skip session policy configuration
 - `--no-skills` — Skip the Downshift skills
 - `--no-steering` — Skip the harness instructions file (steering and agent triggers). With `--undo`, `--no-skills` and `--no-steering` also skip restoring those files
-- `--no-policy` — Do not offer `.downshift/policy.json` in the current directory
+- `--no-policy` — Do not offer `.downshift/policy.json` in the current directory. Setup never offers it from the directory that holds the state directory (usually HOME): there that path is the user policy, so setup prints `policy: skipped:` and plans nothing
 - `--keep-binaries` — Keep other `downshift` binaries on PATH
 - `--you-should-know` — Turn on the "You should know" mod (each check is a billed background request)
 - `--no-mcp` — Do not register the MCP server (`downshift mcp serve`) in Claude Code (through `claude mcp add -s user`) and Codex (a marked block in `~/.codex/config.toml`). Registration is on by default and shown in the dry run first; `--undo` removes only what setup added. `--mcp` is deprecated (registration is the default) and still accepted
