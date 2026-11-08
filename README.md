@@ -27,6 +27,15 @@ Release archives target macOS and Linux on arm64 and amd64, and Windows on amd64
 
 [Releases](https://github.com/tiagovilasboas/downshift/releases) · [Installation guide](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md) · [Quickstart](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/quickstart.md) · [Configuration](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/config.md) · [Undo setup](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/cli.md#downshift-setup) · [Uninstall](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/cli.md#downshift-uninstall)
 
+```bash
+# macOS & Linux (arm64 / amd64)
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | bash
+
+# In your repository:
+downshift setup
+downshift doctor
+```
+
 [![Interactive setup detects harnesses, lets you choose components and review changes, writes after confirmation, then the user verifies the setup](docs/brand/readme-media/setup-flow.svg)](docs/brand/readme-media/setup-flow.png)
 
 ## Give your coding agent more room to work
@@ -61,6 +70,13 @@ A supported command runs as usual. Downshift gives the agent a shorter view whil
 
 Downshift recognizes selected test, build, lint, Git and infrastructure command forms. Recognized formats can be compacted or passed through depending on the family and output. Unknown output formats stay raw; a command outside the allowlist is refused by the wrapper and can be run directly. Failure details and the command exit code are preserved. See the supported-tools reference for exact forms.
 
+```bash
+# Run any allowlisted command through the compactor:
+downshift compact -- go test ./...
+```
+
+Clean output is compacted to save context tokens, while non-zero exit codes and failure logs are preserved in full.
+
 [Compaction](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/compaction.md) · [Supported tools](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/supported-tools.md) · [CCR](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/ccr.md)
 
 ## Route subagents within your policy
@@ -82,6 +98,13 @@ Downshift includes agent profiles and orchestration playbooks for research, impl
 <p align="center"><img src="docs/brand/readme-media/agents-panel-illustration.png" width="420" alt="Sanitized illustration based on a Downshift Agents panel"></p>
 
 *Sanitized illustration based on a Claude Code session screenshot. Task labels, model names and session metrics are concealed. This is an edited visual preview, not a benchmark or an unaltered screenshot.*
+
+<a id="5-agent-orchestration-context-triggers"></a>
+### Agent orchestration (context triggers)
+
+In your coding harness chat, describe your task and type:
+- `downshift full-power` (alias `potencia-total`): activates the domain leads within your session capacity ceiling.
+- `downshift shift <squad>`: activates a specific domain squad (`core`, `quality`, `security`, `leadership`).
 
 [Agent guide](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/agents.md) · [Agent catalog](https://github.com/tiagovilasboas/downshift/blob/main/docs/agents/README.md)
 
@@ -118,6 +141,19 @@ These are separate measurements in different units and workloads. The synthetic 
 - Routing runs locally and makes no additional LLM call. Telemetry records counts, hashes and timings rather than prompts.
 - CCR can store raw command output locally. Redaction covers common credential shapes, but secrets in arbitrary formats can remain; review the [raw-output limitations](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/known-limitations.md#raw-output-kept-by-ccr) and configuration before using sensitive output.
 - Write workers are opt-in and run in separate worktrees. Downshift does not merge their branches or provide an approval gate for deploys and other risky actions.
+
+| Command | What it does |
+|---|---|
+| `downshift setup [--dry-run]` | Configure hooks for detected harnesses with preview |
+| `downshift doctor` | Diagnostic health check and automated repair |
+| `downshift compact -- <cmd>` | Run allowlisted command with compacted clean output |
+| `downshift retrieve <id>` | Retrieve raw output from local CCR storage |
+| `downshift session [--why]` | Show session subagent tree and decision reasons |
+| `downshift stats` | Summary of routing decisions and token savings |
+| `downshift report` | Consolidated report of tokens routed per completed task |
+| `downshift policy check` | Validate `.downshift/policy.json` |
+| `downshift quota` | Inspect model quotas and windows across providers |
+| `downshift mcp serve` | Run local stdio MCP server (13 native tools) |
 
 [Safety](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/safety.md) · [Telemetry](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/telemetry.md) · [Known limitations](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/known-limitations.md)
 

@@ -27,6 +27,15 @@ Os pacotes de release atendem macOS e Linux em arm64 e amd64, e Windows em amd64
 
 [Releases](https://github.com/tiagovilasboas/downshift/releases) · [Instalação](../guides/install.md) · [Início rápido](../guides/quickstart.md) · [Configuração](../guides/config.md) · [Desfazer configuração](../reference/cli.md#downshift-setup) · [Desinstalar](../reference/cli.md#downshift-uninstall)
 
+```bash
+# macOS & Linux (arm64 / amd64)
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | bash
+
+# No seu repositório:
+downshift setup
+downshift doctor
+```
+
 [![O assistente interativo detecta harnesses, permite escolher componentes e revisar alterações, grava após a confirmação e depois o usuário verifica a configuração](../brand/readme-media/setup-flow.svg)](../brand/readme-media/setup-flow.png)
 
 ## Dê mais espaço para o agente trabalhar
@@ -57,6 +66,12 @@ O Downshift participa em dois pontos distintos: a criação de um subagente pode
 
 Um comando suportado é executado normalmente. O Downshift mostra uma versão mais curta ao agente, preservando o código de saída e os detalhes de falhas. Com o **Command Context Recovery (CCR)** ativado, a saída bruta elegível pode ser armazenada localmente e recuperada depois; linhas repetidas podem ser agrupadas no resultado exibido. O encapsulamento depende do harness, e a execução direta do compactor está disponível. A redução da saída varia conforme o comando e o formato.
 
+```bash
+downshift compact -- go test ./...
+```
+
+A saída limpa é compactada enquanto falhas e códigos de saída são preservados.
+
 [![As famílias reconhecidas incluem testes, builds e verificações, Git e infraestrutura; o comportamento depende do comando e do formato de saída](../brand/readme-media/command-families.svg)](../brand/readme-media/command-families.png)
 
 O Downshift reconhece formas específicas de comandos de teste, build, lint, Git e infraestrutura. Formatos reconhecidos podem ser compactados ou repassados conforme a família e a saída. Formatos de saída desconhecidos permanecem brutos; um comando fora da lista permitida é recusado pelo encapsulador e pode ser executado diretamente. Os detalhes de falhas e o código de saída são preservados. Consulte a referência de ferramentas para conhecer as formas exatas.
@@ -78,6 +93,13 @@ A profundidade da integração varia. Uma reescrita emitida pelo Downshift, por 
 ![Ilustração conceitual inspirada no painel Downshift Agents: um agente líder coordena agentes especialistas](../brand/readme-media/agents.png)
 
 O Downshift inclui perfis de agentes e playbooks de orquestração para pesquisa, implementação, revisão, segurança, documentação e outras atividades. Um líder coordena o trabalho independente e reúne os resultados.
+
+<a id="5-agent-orchestration-context-triggers"></a>
+### Orquestração de agentes (gatilhos contextuais)
+
+No chat do seu harness de programação, descreva sua tarefa e digite:
+- `downshift full-power` (alias `potência total` / `potencia-total`): ativa os especialistas necessários respeitando o teto de capacidade da sessão.
+- `downshift shift <squad>`: ativa um domínio específico (`core`, `quality`, `security`, `leadership`).
 
 <p align="center"><img src="../brand/readme-media/agents-panel-illustration.png" width="420" alt="Ilustração sanitizada baseada em um painel Downshift Agents"></p>
 
@@ -113,6 +135,19 @@ São medições separadas, com unidades e cargas de trabalho diferentes. Os tota
 [Benchmark de compactação](../reference/bench.md) · [Estudo de roteamento](../evidence/four-arm-mechanical-2026-10-21.md) · [Guia de evidências](../guides/evidence.md)
 
 ## Feito para inspeção e controle
+
+| Comando | Descrição e Finalidade |
+|---|---|
+| `downshift setup [--dry-run]` | Configura hooks nos harnesses detectados com prévia |
+| `downshift doctor` | Diagnóstico de integridade do ambiente com correções automáticas |
+| `downshift compact -- <cmd>` | Executa comando permitido com compactação de saída limpa |
+| `downshift retrieve <id>` | Recupera saída bruta mantida no buffer seguro do CCR |
+| `downshift session [--why]` | Exibe a árvore de subagentes da sessão e a justificativa das decisões |
+| `downshift stats` | Resumo de decisões de roteamento e estimativa de tokens economizados |
+| `downshift report` | Relatório consolidado de tokens direcionados por tarefa concluída |
+| `downshift policy check` | Valida sintaxe e semântica do `policy.json` |
+| `downshift quota` | Diagnóstico de cotas e janelas de consumo dos provedores |
+| `downshift mcp serve` | Inicia servidor MCP local via stdio (13 ferramentas nativas) |
 
 - Hooks falham abertos: erros ou timeouts mantêm a criação do subagente solicitada sem alteração.
 - O roteamento é local e não faz uma chamada adicional a LLM. A telemetria registra contagens, hashes e tempos, sem registrar prompts.
