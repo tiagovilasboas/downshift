@@ -8,7 +8,9 @@
 
 ### Less command noise. Smarter subagent routing.
 
-Open-source CLI that helps reduce LLM token usage by compacting command output and routes subagents within your model policy. Single Go binary.
+Downshift is an open-source CLI for AI coding agents. It helps reduce LLM token usage through command output compaction and applies subagent model routing within your policy. Single Go binary.
+
+Works with coding harnesses including Claude Code and Codex CLI; integration capabilities and available models vary by harness and session.
 
 [Get started](#get-started) · [Documentation](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md) · [Harness support](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/harness-matrix.md) · [Evidence](#what-the-evidence-shows) · [Contributing](https://github.com/tiagovilasboas/downshift/blob/main/CONTRIBUTING.md)
 
@@ -38,9 +40,9 @@ downshift doctor
 
 [![Interactive setup detects harnesses, lets you choose components and review changes, writes after confirmation, then the user verifies the setup](docs/brand/readme-media/setup-flow.svg)](docs/brand/readme-media/setup-flow.png)
 
-## Give your coding agent more room to work
+## Token optimization for AI coding agents
 
-For developers using AI coding agents, test runners, build tools and other development commands can return long outputs. When a coding agent reads them, that text takes up context. Downshift compacts supported command output before it reaches the agent, preserving exit codes and failure details. Shorter output can reduce the input tokens spent on those results.
+For developers using AI coding agents, test runners, build tools and other development commands can return long outputs. When a coding agent reads them, that text takes up its context window. Downshift compacts supported command output before it reaches the agent, preserving exit codes and failure details. Shorter output can reduce the input tokens spent on those results.
 
 Downshift also applies model choices for delegated work within the policy you declare. The orchestrator decides what to delegate; model availability and the ability to apply a decision depend on the harness and session.
 
