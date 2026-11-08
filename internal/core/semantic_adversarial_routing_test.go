@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // TestSemAdvEnvOffIsNoop: DOWNSHIFT_MINILM in its off spellings makes the

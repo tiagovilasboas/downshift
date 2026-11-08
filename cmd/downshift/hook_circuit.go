@@ -9,7 +9,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // Routing circuit breaker: after repeated identical failures, stop and ask a

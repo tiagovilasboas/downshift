@@ -2,7 +2,7 @@
 
 # Routing v2: cutting the v1 decider out of `internal/core`
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 > Historical: superseded by `internal/routing/decide` + `internal/routing/guard` (audit 4.1).
 

@@ -1,7 +1,7 @@
 # Guia de Início Rápido — Downshift
 
 > Downshift por Tiago Vilas Boas  
-> Repositório oficial: https://github.com/tiagovilasboas/downshift  
+> Repositório oficial: https://github.com/tiagovilasboas/downshift-ai  
 > Licença: Apache 2.0
 
 Configure o **Downshift** no seu ambiente de desenvolvimento em menos de 5 minutos e comece a economizar tokens de contexto imediatamente.
@@ -21,7 +21,7 @@ Configure o **Downshift** no seu ambiente de desenvolvimento em menos de 5 minut
 Execute o instalador oficial via curl no seu terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
 ```
 
 O script baixa o binário pré-compilado para a sua arquitetura e sistema operacional e o posiciona no seu `PATH` (geralmente em `/usr/local/bin` ou `~/.local/bin`).
@@ -30,10 +30,10 @@ O script baixa o binário pré-compilado para a sua arquitetura e sistema operac
 
 - **Via Go Toolchain (se possuir Go 1.27+ instalado):**
   ```bash
-  go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
+  go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@latest
   ```
 - **Binários Manuais:**
-  Acesse a página de [Releases no GitHub](https://github.com/tiagovilasboas/downshift/releases), baixe o arquivo comprimido compatível e confira o hash com o arquivo `checksums.txt`.
+  Acesse a página de [Releases no GitHub](https://github.com/tiagovilasboas/downshift-ai/releases), baixe o arquivo comprimido compatível e confira o hash com o arquivo `checksums.txt`.
 
 Para confirmar a instalação bem-sucedida:
 
@@ -102,7 +102,7 @@ downshift compact -- git status
 Imagine uma suíte de testes com dezenas de pacotes que produzia mais de 3.900 bytes de saída para apenas dizer que tudo passou. O Downshift condensa essa saída para menos de 1.000 bytes:
 
 ```text
-Go test: PASS (53 packages ok, 4 without tests) under github.com/tiagovilasboas/downshift/internal/
+Go test: PASS (53 packages ok, 4 without tests) under github.com/tiagovilasboas/downshift-ai/internal/
 ok accounting
 ok adapters/antigravity
 ...

@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // Markers around the block setup owns inside ~/.codex/config.toml. Nothing

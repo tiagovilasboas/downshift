@@ -6,7 +6,7 @@ package compressor_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 const logHash = "4f2a9c1e0b7d6a5c4b3a2918f7e6d5c4b3a29180"

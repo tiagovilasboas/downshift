@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/headroom"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt/providers/headroom"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 func fake(installed bool, version string) *headroom.Provider {

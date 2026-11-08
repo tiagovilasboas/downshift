@@ -17,7 +17,7 @@ import (
 // hook. Any failure is "unknown", never a failed check.
 
 const (
-	latestReleaseURL = "https://api.github.com/repos/tiagovilasboas/downshift/releases/latest"
+	latestReleaseURL = "https://api.github.com/repos/tiagovilasboas/downshift-ai/releases/latest"
 	latestCacheTTL   = 24 * time.Hour
 	latestTimeout    = 2 * time.Second
 )

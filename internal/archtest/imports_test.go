@@ -43,7 +43,7 @@ import (
 	"testing"
 )
 
-const module = "github.com/tiagovilasboas/downshift/internal/"
+const module = "github.com/tiagovilasboas/downshift-ai/internal/"
 
 // rule: the production dependency closure of pkg must not contain any of
 // forbidden (each matches the package itself and its sub-packages).
@@ -183,15 +183,15 @@ func TestCommandsWithoutInstallDetectsMissingCall(t *testing.T) {
 	write("good", `package main
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry/fromcore"
 )
 
 func main() { fromcore.Install(nil); _ = telemetry.DeclaredHarnesses }
 `)
 	write("bad", `package main
 
-import "github.com/tiagovilasboas/downshift/internal/telemetry"
+import "github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 
 func main() { _ = telemetry.DeclaredHarnesses }
 `)

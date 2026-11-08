@@ -6,7 +6,7 @@ package accounting
 import (
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // topReasonLimit bounds the reasons listed per harness.

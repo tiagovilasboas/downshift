@@ -6,7 +6,7 @@ package execwrap
 import (
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // ════════════════════════════════════════════════════════════════════════════

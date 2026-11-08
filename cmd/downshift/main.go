@@ -15,11 +15,11 @@ import (
 	"io"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	_ "github.com/tiagovilasboas/downshift/internal/compressor/learning"
-	"github.com/tiagovilasboas/downshift/internal/hookport"
-	_ "github.com/tiagovilasboas/downshift/internal/quota"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	_ "github.com/tiagovilasboas/downshift-ai/internal/compressor/learning"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
+	_ "github.com/tiagovilasboas/downshift-ai/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry/fromcore"
 )
 
 // buildVersion, buildCommit and buildDate are set by release builds with

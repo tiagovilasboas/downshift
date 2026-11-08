@@ -6,8 +6,8 @@ package models
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/discovery"
-	"github.com/tiagovilasboas/downshift/internal/session"
+	"github.com/tiagovilasboas/downshift-ai/internal/discovery"
+	"github.com/tiagovilasboas/downshift-ai/internal/session"
 )
 
 // evidenceRow is the capability data a real source supplied for one id.

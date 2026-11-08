@@ -10,8 +10,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 // Model is the dialog state.

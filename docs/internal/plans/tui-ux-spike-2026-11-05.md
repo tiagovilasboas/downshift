@@ -2,7 +2,7 @@
 
 # TUI UX spike (2026-11-05)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 The owner asked for UX polish across the terminal UI. The setup wizard is "next, next" with no real choices, and `downshift report` is hard to read. Four read-only agents mapped the code: the wizard, the report, every console surface, and a shared design. Findings come from source reading. The report findings also come from a PTY capture at 80x24. Nothing was built.
 

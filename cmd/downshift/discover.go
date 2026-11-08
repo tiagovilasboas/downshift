@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/discovery"
-	"github.com/tiagovilasboas/downshift/internal/models"
+	"github.com/tiagovilasboas/downshift-ai/internal/discovery"
+	"github.com/tiagovilasboas/downshift-ai/internal/models"
 )
 
 // runModelsDiscover asks each harness which models the current account can use

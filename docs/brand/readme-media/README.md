@@ -1,6 +1,6 @@
 # Downshift README media kit
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 The assets in this directory support the English and Brazilian Portuguese project introductions. Diagrams are available as editable SVG and PNG exports. The official logo marks remain in the [brand directory](../).
 

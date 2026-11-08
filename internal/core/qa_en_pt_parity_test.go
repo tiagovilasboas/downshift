@@ -9,12 +9,12 @@ package core_test
 // classifier_ptbr_test.go and the EN/PT rows in signals.go / risk.go.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // enPtPair is one task written twice. risk marks twins whose Portuguese

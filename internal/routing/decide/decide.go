@@ -24,17 +24,17 @@
 // project tier floor (floor.go) runs last and only raises the tier.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package decide
 
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
-	"github.com/tiagovilasboas/downshift/internal/routing/guard"
-	"github.com/tiagovilasboas/downshift/internal/routing/headroom"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/guard"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/headroom"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // Catalog is the harness model catalog the decision reads. core.Resolver with

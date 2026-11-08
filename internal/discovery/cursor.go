@@ -19,7 +19,7 @@ import (
 // CursorCLI uses Cursor's read-only `models` command. It relies on the CLI's
 // existing authentication and never reads credentials or starts a login.
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 type CursorCLI struct{ Bin string }
 
 func (CursorCLI) Harness() string { return "cursor" }

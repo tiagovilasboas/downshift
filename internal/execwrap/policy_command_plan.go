@@ -3,7 +3,7 @@
 
 package execwrap
 
-import "github.com/tiagovilasboas/downshift/internal/compressor"
+import "github.com/tiagovilasboas/downshift-ai/internal/compressor"
 
 // commandPlan names the compressor format of a command-directed family and
 // what the compressor needs to know about the argv (compressor.CommandHint).

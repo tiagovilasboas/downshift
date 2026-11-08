@@ -6,7 +6,7 @@ package setup
 import (
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
 )
 
 // Run is `downshift setup` after argument parsing: it selects the targets,

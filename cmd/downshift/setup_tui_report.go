@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/console/setupwizard"
-	"github.com/tiagovilasboas/downshift/internal/gateway/ninerouter"
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/setupwizard"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway/ninerouter"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // renderSetupDone prints what follows a successful wizard apply: the gateway

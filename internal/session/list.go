@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package session is the allowlist a hook may write for Downshift by
-// Tiago Vilas Boas, https://github.com/tiagovilasboas/downshift.
+// Tiago Vilas Boas, https://github.com/tiagovilasboas/downshift-ai.
 //
 // It loads the list and reports token budget. It does not choose a model.
 package session
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quotamodel"
+	"github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
 )
 
 // SessionModel describes one exact selectable ID. An absent tier means

@@ -7,7 +7,7 @@
 // (route as if there were no file) and may surface the error in diagnostics.
 package policyfile
 
-import "github.com/tiagovilasboas/downshift/internal/routing/policy"
+import "github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 
 const (
 	// RelPath is the policy file location relative to a project directory.

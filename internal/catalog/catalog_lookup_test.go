@@ -6,7 +6,7 @@ package catalog
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 func TestLookupByID_Found(t *testing.T) {

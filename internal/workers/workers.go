@@ -10,7 +10,7 @@
 // Behaviour follows docs/internal/plans/mcp-delegation-spec.md, sections 1 and 5.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package workers
 
 import "time"

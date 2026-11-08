@@ -2,7 +2,7 @@
 
 # Controlled suite: routed versus control on Claude Code (2026-10-29)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Level: **measured once: one harness, one batch, four tasks, six repetitions per cell.** On this suite, routing kept
 acceptance within the pre-registered limit and reduced tokens in matched runs. It says nothing about other harnesses,

@@ -2,7 +2,7 @@
 
 # Baseline freeze manifest (2026-10-17)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this page answers: which evaluation sets are frozen, by which hash and commit, and which numbers the next run must
 reproduce before it may report a delta. It is the readable form of `eval/FREEZE.json` in the private downshift-labs

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/console/shared/confirm"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/confirm"
 )
 
 // newConfirm builds the final dialog; it defaults to No when anything destructive is chosen.

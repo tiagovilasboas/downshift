@@ -1,7 +1,7 @@
 # Billing linkage audit — 2026-10-09
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 ## Scope and limits
 

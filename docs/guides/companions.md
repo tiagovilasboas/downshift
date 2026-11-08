@@ -1,7 +1,7 @@
 # Companions: tools that work next to Downshift
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Downshift is a **suite for optimizing token use in coding agents**. Model
 routing is the **main lever today, not the whole product**: a deterministic

@@ -2,7 +2,7 @@
 
 # Reconciling Anthropic references, benchmark claims, and Downshift empirical evidence (2026-11-07)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this document establishes: a source-to-claim audit comparing official Anthropic documentation and published routing
 research against Downshift's empirical runtime measurements, resolving Issue #27 (parent spike #21, P1).

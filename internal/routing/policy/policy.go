@@ -11,13 +11,13 @@
 // empty policy, so the requested model is kept (doubt keeps).
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package policy
 
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // Defaults applied when a file leaves a setting out.

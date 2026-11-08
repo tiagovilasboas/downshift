@@ -23,7 +23,7 @@ package core_test
 // baseline with -v and copy the logged sets. Never lower a value to hide a loss.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 import (
 	"crypto/sha256"

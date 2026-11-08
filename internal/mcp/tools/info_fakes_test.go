@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
 )
 
 var errPort = errors.New("port failed at /secret/path")

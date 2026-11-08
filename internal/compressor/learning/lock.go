@@ -6,7 +6,7 @@ package learning
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // lockWait is how long Record waits for another process before it gives up

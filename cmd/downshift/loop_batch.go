@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/loop"
+	"github.com/tiagovilasboas/downshift-ai/internal/loop"
 )
 
 // runLoopBatch runs the tasks of a batch file in order and prints one summary.

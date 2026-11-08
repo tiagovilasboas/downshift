@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/models"
+	"github.com/tiagovilasboas/downshift-ai/internal/models"
 )
 
 // Anthropic's key travels in x-api-key, which Go does not strip on a redirect.

@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 	"os"
 	"path/filepath"
 	"testing"

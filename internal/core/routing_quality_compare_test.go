@@ -8,7 +8,7 @@ package core_test
 // recorded baseline.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 import "testing"
 

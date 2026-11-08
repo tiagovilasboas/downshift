@@ -2,7 +2,7 @@
 
 # Benchmark protocol: Opus fixed, native opusplan, opusplan with Downshift
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 A reproducible protocol for the question the [evidence ladder](evidence.md) leaves open: does Downshift save money
 beyond what Claude Code's native `opusplan` already saves, in which task categories, at what quality and failure

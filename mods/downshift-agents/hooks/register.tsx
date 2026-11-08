@@ -6,7 +6,7 @@
 // passes its event on unchanged, and nothing here calls a model.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 import type { Register } from 'claude-code'
 

@@ -2,7 +2,7 @@
 
 # Claude Code nested spawn: does a subagent reach the Agent hook?
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Date: 2026-11-07. Harness: Claude Code 2.1.319, `claude -p`, model alias `haiku`
 (the API reported `claude-haiku-5-5`). Two live sessions, about USD 0.01 in total.

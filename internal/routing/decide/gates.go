@@ -7,9 +7,9 @@ import (
 	"slices"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
-	"github.com/tiagovilasboas/downshift/internal/routing/headroom"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/headroom"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // gatesPass reports whether every gate admits the call. Each gate asks

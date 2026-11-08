@@ -1,7 +1,7 @@
 # Value roadmap: compaction where the tokens are, proof, and cheaper workers
 
 Owner direction, 2026-11-06. Downshift by Tiago Vilas Boas\
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 ## Why
 

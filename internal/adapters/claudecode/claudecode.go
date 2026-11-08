@@ -11,9 +11,9 @@ package claudecode
 import (
 	"encoding/json"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 const harnessID = "claude-code"

@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
 )
 
 const playbookUsage = `usage: downshift playbook <command>

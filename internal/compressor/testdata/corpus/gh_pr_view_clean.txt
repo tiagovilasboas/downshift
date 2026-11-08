@@ -7,7 +7,7 @@ reviewers:
 projects:
 milestone:
 number:	701
-url:	https://github.com/tiagovilasboas/downshift/pull/701
+url:	https://github.com/tiagovilasboas/downshift-ai/pull/701
 additions:	412
 deletions:	18
 auto-merge:	disabled

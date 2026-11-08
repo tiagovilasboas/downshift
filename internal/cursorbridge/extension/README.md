@@ -1,7 +1,7 @@
 # Downshift Cursor Quota Bridge (experimental)
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 This experimental extension attempts to export current quota and available model
 IDs through Cursor's native authenticated transport. It makes no model inference request,

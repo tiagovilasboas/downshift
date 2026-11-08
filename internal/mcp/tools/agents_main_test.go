@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // TestMain installs the agent to harness map the binary builds from the

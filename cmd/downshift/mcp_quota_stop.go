@@ -3,7 +3,7 @@
 
 package main
 
-import "github.com/tiagovilasboas/downshift/internal/routing/policy"
+import "github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 
 // mcpQuotaStop resolves the delegate stop line: the user's override, the policy
 // files (project under root, then the user's), then the default. It reads the

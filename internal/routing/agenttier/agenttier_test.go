@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/agents"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/agents"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // Every file in agents/ is a real agent and declares a valid tier (the README,

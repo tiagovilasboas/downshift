@@ -3,7 +3,7 @@
 
 package main
 
-import "github.com/tiagovilasboas/downshift/internal/telemetry"
+import "github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 
 // stampParentModel records the parent session model on a decision event.
 // Adapters expose it through the optional ParentModelIdentifier method; one

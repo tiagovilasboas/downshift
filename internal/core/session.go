@@ -6,8 +6,8 @@ package core
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quotamodel"
-	"github.com/tiagovilasboas/downshift/internal/session"
+	"github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
+	"github.com/tiagovilasboas/downshift-ai/internal/session"
 )
 
 // SessionList is the allowlist a hook may write. The loader lives in

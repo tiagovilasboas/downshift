@@ -6,7 +6,7 @@
 // LLM: the lead decides the parts, Downshift checks and tabulates them.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package plan
 
 import (

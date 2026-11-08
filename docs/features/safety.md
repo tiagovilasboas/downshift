@@ -1,6 +1,6 @@
 # Safety & Guardrails
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Downshift saves tokens, and it must not cost task success. Since decision O8
 (2026-10-28) the orchestrator LLM chooses the model for every delegation, and Downshift

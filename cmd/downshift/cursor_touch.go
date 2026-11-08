@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
 )
 
 // cursorRemember is the seam tests replace to force a panic.

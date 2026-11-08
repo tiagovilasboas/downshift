@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/codex"
 )
 
 // Characterization: the requested model is the baseline a rewrite is

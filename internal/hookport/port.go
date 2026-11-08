@@ -7,7 +7,7 @@
 // not inference.
 package hookport
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // HonorFunc reports the model a child actually ran, when the hook payload
 // carries that field. A nil HonorFunc means this harness hook does not report

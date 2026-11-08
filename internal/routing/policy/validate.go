@@ -8,8 +8,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // layer is one validated file. A setting the file leaves out stays nil, so the

@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/tiagovilasboas/downshift/internal/plan"
-	"github.com/tiagovilasboas/downshift/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/plan"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
 )
 
 const planSchema = `{"type":"object","properties":{"goal":{"type":"string","description":"One sentence: what the plan achieves."},"parts":{"type":"array","description":"The slices of work, as for downshift plan on stdin.","items":{"type":"object","properties":{"id":{"type":"string"},"title":{"type":"string"},"agent":{"type":"string"},"points":{"type":"integer"},"depends_on":{"type":"array","items":{"type":"string"}},"files":{"type":"array","items":{"type":"string"}},"worker":{"type":"string","description":"native (default), claude or codex."},"playbook":{"type":"string"}},"required":["id","title","agent","points"],"additionalProperties":false}}},"required":["goal","parts"],"additionalProperties":false}`

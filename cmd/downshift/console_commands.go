@@ -3,7 +3,7 @@
 
 package main
 
-import "github.com/tiagovilasboas/downshift/internal/console/shared/command"
+import "github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
 
 // consoleCommands is every user-facing command the console lists. Hook
 // plumbing (claude-code, cursor, honor, usage, end, …) is left out: the

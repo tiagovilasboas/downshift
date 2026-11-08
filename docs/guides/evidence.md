@@ -2,7 +2,7 @@
 
 # Evidence ladder: what each saving figure means
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Five kinds of "saving" appear around this project, and they are not the same number. This page separates them, quotes
 each figure from the file that holds it (checked against the current file on 2026-10-17), and says which rung the

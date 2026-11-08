@@ -3,7 +3,7 @@
 
 package hookutil
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // EffortRank orders the cross-harness effort vocabulary. Unknown values rank -1.
 func EffortRank(v string) int {

@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/mods"
+	"github.com/tiagovilasboas/downshift-ai/mods"
 )
 
 // planMods plans the target's mods as skills-dir plugins: the embedded folder

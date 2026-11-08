@@ -6,7 +6,7 @@ package loop
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 func acc(session, state string) telemetry.Event {

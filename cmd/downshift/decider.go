@@ -6,13 +6,13 @@ package main
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookctx"
-	"github.com/tiagovilasboas/downshift/internal/quota"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
-	"github.com/tiagovilasboas/downshift/internal/routing/decide"
-	"github.com/tiagovilasboas/downshift/internal/routing/hint"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookctx"
+	"github.com/tiagovilasboas/downshift-ai/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/decide"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/hint"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // init installs the routing v2 decider at the edge, like SetConfig: every

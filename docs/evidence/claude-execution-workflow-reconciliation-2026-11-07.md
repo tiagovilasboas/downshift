@@ -2,7 +2,7 @@
 
 # Claude Code execution, model honor, and workflow reconciliation (2026-11-07)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Issue #26 from parent spike #21. Reconciles official vendor documentation with observed runtime behavior,
 clarifies observed vs unobserved capabilities, and maps boundaries between local Claude Code hooks, built-in

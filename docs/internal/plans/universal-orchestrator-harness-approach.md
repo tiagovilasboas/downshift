@@ -2,7 +2,7 @@
 
 # Universal Orchestrator, MCP and Harness Engineering Approach
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: Owner direction, 2026-10-29. This document defines the engineering and testing
 strategy for multi-agent delegation, MCP tool conformance, and harness interoperability.

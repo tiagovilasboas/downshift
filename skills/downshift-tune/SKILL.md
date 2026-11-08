@@ -53,4 +53,4 @@ unverified). One change per row. After the user applies one, re-run step 1 next 
 `downshift report` compares routed and control from their own usage, in tokens per
 completed task.
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

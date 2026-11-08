@@ -2,12 +2,12 @@
 
 > **Status:** executed 2026-10-06 (module path, state dir, GitHub rename).  
 > **Brand:** Downshift  
-> **Repository:** `tiagovilasboas/downshift`  
+> **Repository:** `tiagovilasboas/downshift-ai`  
 > **CLI:** `downshift`  
 > **Legacy module:** `github.com/tiagovilasboas/harness-downshift` (last tag before rename).
 
 Downshift by Tiago Vilas Boas\
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 ---
 
@@ -16,7 +16,7 @@ https://github.com/tiagovilasboas/downshift
 | Goal | Detail |
 |------|--------|
 | Public identity | **Downshift** = marca; **Model Router** = categoria |
-| Repo URL | `github.com/tiagovilasboas/downshift` |
+| Repo URL | `github.com/tiagovilasboas/downshift-ai` |
 | Developer UX | `go install`, `curl install.sh`, and hooks keep working across one deprecation window |
 | Data on disk | Existing `~/.harness-downshift/` must keep working until users migrate |
 | Package ecosystems | Avoid `npm downshift` (React) and `pip downshift` ([ana-lan/downshift](https://github.com/ana-lan/downshift)) |
@@ -63,18 +63,18 @@ Add `downshift doctor` or extend `downshift try --verbose` to print **effective 
 
 ### Phase 2 — Go module path (breaking for importers)
 
-1. `go.mod`: `module github.com/tiagovilasboas/downshift`
-2. Mechanical replace: `github.com/tiagovilasboas/downshift` → `github.com/tiagovilasboas/downshift` (~**150+** import lines across `cmd/`, `internal/`, tests).
+1. `go.mod`: `module github.com/tiagovilasboas/downshift-ai`
+2. Mechanical replace: `github.com/tiagovilasboas/downshift-ai` → `github.com/tiagovilasboas/downshift-ai` (~**150+** import lines across `cmd/`, `internal/`, tests).
 3. Tag **`v0.x.0`** with CHANGELOG “Module path change; old path frozen at last harness-downshift tag”.
 4. Leave a **README stub** on old module path only if you publish a final tag from old name pointing users forward (optional).
 
 ### Phase 3 — GitHub repository rename
 
 1. Settings → Rename repository: `harness-downshift` → `downshift`.
-2. GitHub redirects `tiagovilasboas/downshift` → `tiagovilasboas/downshift` (stars/forks/issues preserved).
+2. GitHub redirects `tiagovilasboas/downshift-ai` → `tiagovilasboas/downshift-ai` (stars/forks/issues preserved).
 3. Update in same commit or immediately after:
    - `.goreleaser.yml` — `release.github.name`, header/footer URLs
-   - `install.sh` — `REPO=tiagovilasboas/downshift`
+   - `install.sh` — `REPO=tiagovilasboas/downshift-ai`
    - All badge URLs in `README.md`
    - `raw.githubusercontent.com/.../harness-downshift/...` → `.../downshift/...`
 
@@ -114,10 +114,10 @@ Until Phase 1 ships, only `DOWNSHIFT_EVENT_LOG` and `DOWNSHIFT_SESSION_MODELS` o
 
 | Artifact | Name | Notes |
 |----------|------|--------|
-| Go module | `github.com/tiagovilasboas/downshift` | After Phase 2 |
+| Go module | `github.com/tiagovilasboas/downshift-ai` | After Phase 2 |
 | CLI binary | `downshift` | Unchanged |
 | Goreleaser project | `downshift` | Already `project_name: downshift` in `.goreleaser.yml` |
-| Container | `ghcr.io/tiagovilasboas/downshift` | Prefer GHCR over ambiguous Docker Hub `downshift/downshift` |
+| Container | `ghcr.io/tiagovilasboas/downshift-ai` | Prefer GHCR over ambiguous Docker Hub `downshift/downshift` |
 | npm (future SDK) | `@downshift/router` or `downshift-router` | **Never** `downshift` ([downshift-js](https://github.com/downshift-js/downshift)) |
 | PyPI orchestration | `downshift-orchestration` | **Never** `downshift` ([PyPI project](https://pypi.org/project/downshift/)) |
 | User catalog override | `$STATE_DIR/catalog.json` | Today: `~/.harness-downshift/catalog.json` |
@@ -144,7 +144,7 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 
 | Pattern | ~Files |
 |---------|--------|
-| `github.com/tiagovilasboas/downshift/...` imports | All `internal/*`, `cmd/*` tests |
+| `github.com/tiagovilasboas/downshift-ai/...` imports | All `internal/*`, `cmd/*` tests |
 | `go.mod` module line | 1 |
 | `internal/installer/install_test.go` | install URL assertions |
 | Panic strings `harness-downshift: embedded catalog` | `internal/catalog/catalog.go` |
@@ -231,13 +231,13 @@ After rename to `downshift`:
 go test ./...
 ./scripts/smoke-test.sh
 rg -n 'harness-downshift' --glob '!CHANGELOG.md' --glob '!docs/brand/rename.md'   # trend to zero in user-facing files
-rg -n 'tiagovilasboas/downshift'                                          # should be zero after Phase 2+3
+rg -n 'tiagovilasboas/downshift-ai'                                          # should be zero after Phase 2+3
 ```
 
 Manual:
 
 - [ ] `curl -fsSL .../downshift/main/install.sh | sh` on clean VM
-- [ ] `go install github.com/tiagovilasboas/downshift/cmd/downshift@latest`
+- [ ] `go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@latest`
 - [ ] Hook smoke: `downshift claude-code < examples/claude-code-pretooluse-session.json` still rewrites model
 - [ ] `dsmon` reads events from effective state dir
 - [ ] Legacy install with only `~/.harness-downshift/` still works (Phase 1)
@@ -267,7 +267,7 @@ Manual:
 The project started as a **coding harness** router (Claude Code, Cursor, Codex hooks). The core is broader: **deterministic model routing** for AI workloads—classify task complexity, apply catalog policy, pick tier **without an LLM in the routing loop**.
 
 - **Same CLI:** `downshift`
-- **New repo:** `github.com/tiagovilasboas/downshift` (redirect from `harness-downshift`)
+- **New repo:** `github.com/tiagovilasboas/downshift-ai` (redirect from `harness-downshift`)
 - **Harness** is now an **integration category**, not the product name
 - State directory: moving to `~/.downshift` (legacy path supported during deprecation)
 
@@ -275,11 +275,11 @@ Full steps: [docs/brand/rename.md](rename.md).
 
 ### LinkedIn (PT)
 
-Apresentamos o **Downshift** (antes Harness Downshift): roteador open source de modelos por complexidade de tarefa—determinístico, local, com benchmarks e shadow mode. O binário continua `downshift`; o escopo agora é model routing para workloads de IA, não só IDEs. Repo: https://github.com/tiagovilasboas/downshift
+Apresentamos o **Downshift** (antes Harness Downshift): roteador open source de modelos por complexidade de tarefa—determinístico, local, com benchmarks e shadow mode. O binário continua `downshift`; o escopo agora é model routing para workloads de IA, não só IDEs. Repo: https://github.com/tiagovilasboas/downshift-ai
 
 ### X
 
-Harness Downshift → **Downshift**. Same `downshift` CLI. Broader mission: deterministic model routing for AI workloads (not just coding harnesses). OSS beta: https://github.com/tiagovilasboas/downshift
+Harness Downshift → **Downshift**. Same `downshift` CLI. Broader mission: deterministic model routing for AI workloads (not just coding harnesses). OSS beta: https://github.com/tiagovilasboas/downshift-ai
 
 ### Dev.to (angle)
 
@@ -298,7 +298,7 @@ Secondary category: AI infrastructure
 Tagline:            Deterministic model routing for AI workloads.
 GitHub description: Deterministic open-source model router — right-sized LLMs per workload. Agent hooks, catalog policy, shadow mode, published eval summary.
 State directory:    ~/.downshift (with legacy fallback)
-Go module:          github.com/tiagovilasboas/downshift
+Go module:          github.com/tiagovilasboas/downshift-ai
 ```
 
 ---

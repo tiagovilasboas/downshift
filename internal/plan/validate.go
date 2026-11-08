@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/playbook"
-	"github.com/tiagovilasboas/downshift/internal/routing/agenttier"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/agenttier"
 )
 
 // agentInfo maps a shipped agent name to its declared tier and playbook.

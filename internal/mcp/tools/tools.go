@@ -8,7 +8,7 @@
 // (docs/internal/plans/mcp-delegation-spec.md).
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package tools
 
 import (

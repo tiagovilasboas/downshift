@@ -3,7 +3,7 @@
 
 package core
 
-import "github.com/tiagovilasboas/downshift/internal/quotamodel"
+import "github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
 
 // RecordSession stamps the session and quota evidence on the decision: whether
 // the session list is known, the quota status of the model the spawn currently

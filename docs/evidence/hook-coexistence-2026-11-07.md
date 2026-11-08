@@ -3,7 +3,7 @@
 # Hook coexistence: Downshift next to other input-rewriting hooks, 2026-11-07
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Question: what happens when two PreToolUse hooks rewrite the same tool input on Claude Code? Downshift
 rewrites an allowlisted `Bash` command and the model of an `Agent` call. The runs paired it with another

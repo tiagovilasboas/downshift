@@ -21,11 +21,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/childend"
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/sensor"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/childend"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/sensor"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // SessionIdentifier returns the raw session id supplied by the harness, if

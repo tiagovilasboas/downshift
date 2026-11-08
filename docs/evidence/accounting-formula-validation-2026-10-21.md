@@ -2,7 +2,7 @@
 
 # S0: Accounting formula validation — four-arm battery part 1 (2026-10-21)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **Status: completed 2026-10-21. Script: `downshift-labs` (private).**
 

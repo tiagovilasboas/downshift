@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 const (

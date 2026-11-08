@@ -1,7 +1,7 @@
 # =============================================================================
 # Downshift Agent Configuration
 # =============================================================================
-# Documentation: https://github.com/tiagovilasboas/downshift
+# Documentation: https://github.com/tiagovilasboas/downshift-ai
 #
 # This file configures agent routing and orchestration for harnesses without
 # native memory (Claude Code, Cursor, Codex). The orchestrator skill reads

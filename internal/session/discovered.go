@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // SourceMCP marks a cache entry reported by the orchestrator through the MCP

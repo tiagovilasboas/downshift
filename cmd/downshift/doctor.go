@@ -15,12 +15,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/gateway"
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // doctorEnv is everything doctor reads from the machine, so tests can supply a
@@ -183,7 +183,7 @@ func pluginInstallHint() string {
 	var parts []string
 	for _, t := range setup.Targets {
 		if t.Plugin != "" {
-			parts = append(parts, fmt.Sprintf("%s: /plugin install %s --marketplace tiagovilasboas/downshift", t.Name, strings.SplitN(t.Plugin, "@", 2)[0]))
+			parts = append(parts, fmt.Sprintf("%s: /plugin install %s --marketplace tiagovilasboas/downshift-ai", t.Name, strings.SplitN(t.Plugin, "@", 2)[0]))
 		}
 	}
 	if len(parts) == 0 {

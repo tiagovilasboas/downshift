@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor/learning"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor/learning"
 )
 
 // runLearning is `downshift learning [subcommand]`: manage the compressor learning store.

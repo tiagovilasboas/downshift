@@ -1,7 +1,7 @@
 # Guia de Compactação e CCR (Command Context Recovery)
 
 > Downshift por Tiago Vilas Boas  
-> Repositório oficial: https://github.com/tiagovilasboas/downshift  
+> Repositório oficial: https://github.com/tiagovilasboas/downshift-ai  
 > Licença: Apache 2.0
 
 O **Compactor** do Downshift reduz a saída verborrágica de comandos de terminal, preservando rigorosamente os códigos de saída (*exit codes*) e cada detalhe das falhas, enquanto o **CCR** (*Command Context Recovery*) garante que nenhuma informação seja perdida permanentemente ao manter a saída bruta acessível localmente.

@@ -6,7 +6,7 @@ package policy
 import (
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // ConfigError refuses a policy file or a request. Source is the file path, or

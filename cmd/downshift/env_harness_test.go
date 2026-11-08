@@ -6,7 +6,7 @@ package main
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // clearHarnessEnv empties every identification variable any harness declares.

@@ -6,7 +6,7 @@ package childend
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // pricedCall reports that a usage record already attaches to the decision made

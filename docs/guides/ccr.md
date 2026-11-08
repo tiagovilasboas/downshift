@@ -1,7 +1,7 @@
 # CCR: compress, cache, retrieve
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 CCR lets `downshift compact` cut more output without losing it: the raw output is
 kept on disk and one command brings back any part of it. It is **on by default**

@@ -3,7 +3,7 @@
 
 package shellwrap
 
-import "github.com/tiagovilasboas/downshift/internal/execwrap"
+import "github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 
 // ReasonBackground is the skip code for a shell call the harness runs in the
 // background. The compactor holds output until the command exits, so a

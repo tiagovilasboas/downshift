@@ -6,7 +6,7 @@ package catalog
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // TestKiroCrewAnthropicIDsResolveExactly covers the Anthropic ids kiro-cli

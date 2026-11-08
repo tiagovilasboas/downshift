@@ -1,6 +1,6 @@
 # Downshift loop guide
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 `downshift loop` is a **sensor retry loop**. It does not plan, write code or
 spawn subagents; the harness (or you) does the work. The loop runs your check,

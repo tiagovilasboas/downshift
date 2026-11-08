@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 func TestRiskPatterns_NoFalsePositives(t *testing.T) {

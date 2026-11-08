@@ -6,10 +6,10 @@
 #
 # Usage:
 #   # Latest release:
-#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
 #
 #   # Specific version:
-#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh -s v0.12.0
+#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh -s v0.12.0
 #
 # A downshift already on PATH is replaced in place, so an update never leaves a
 # second copy behind (go install, for example, puts one in ~/go/bin). Otherwise
@@ -19,7 +19,7 @@
 
 set -e
 
-REPO="tiagovilasboas/downshift"
+REPO="tiagovilasboas/downshift-ai"
 BINARY="downshift"
 
 # Every download is https-only (also after a redirect) and at least TLS 1.2.

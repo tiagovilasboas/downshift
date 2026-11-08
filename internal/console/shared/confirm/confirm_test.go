@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 var update = flag.Bool("update", false, "rewrite golden files")

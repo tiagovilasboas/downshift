@@ -4,8 +4,8 @@
 package decide
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // noteAboveAgentDefault flags a spawn whose call named a model above the tier

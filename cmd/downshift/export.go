@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
-	"github.com/tiagovilasboas/downshift/internal/operatorexport"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/operatorexport"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // runExport is `downshift export [--days=N]`: the one artefact an outside

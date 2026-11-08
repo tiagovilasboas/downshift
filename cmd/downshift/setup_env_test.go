@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // The cmd tests that drive setup end to end (the flag parser, the TUI, policy

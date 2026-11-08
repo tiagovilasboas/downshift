@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 var updateFailedGolden = flag.Bool("update-failed-golden", false, "rewrite testdata/failed_go_test/*.golden")

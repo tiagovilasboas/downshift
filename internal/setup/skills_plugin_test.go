@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/skills"
+	"github.com/tiagovilasboas/downshift-ai/skills"
 )
 
 const pluginID = "downshift@downshift"

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
 )
 
 // The report shows the top passthrough details and metachar classes in both

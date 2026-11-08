@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/output"
-	"github.com/tiagovilasboas/downshift/internal/console/palette"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/command"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/output"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/palette"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
 )
 
 func press(a app, s string) app {

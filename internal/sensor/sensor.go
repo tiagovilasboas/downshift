@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // MetricState defines the confidence level of a reported metric.

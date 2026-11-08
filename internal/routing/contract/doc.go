@@ -34,5 +34,5 @@
 // booleans and times (enforced by reflection in note_test.go).
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package contract

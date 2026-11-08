@@ -3,7 +3,7 @@
 # ADR: Compactor rewrite on by default, without a Bash allow rule
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Status: accepted (owner decision 2026-10-20; recorded 2026-10-21 from the
 staff review, item 5 in [review-2026-10-20.md](../product/review-2026-10-20.md)).

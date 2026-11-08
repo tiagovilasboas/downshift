@@ -2,7 +2,7 @@
 
 > **Status: stable on Claude Code; functional on Codex and Cursor.**
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **The orchestrator chooses, Downshift applies, your policy bounds it, and Downshift measures** (owner decision
 O8, 2026-10-28). The lead session picks agent, model and effort for every delegation. Downshift never picks a

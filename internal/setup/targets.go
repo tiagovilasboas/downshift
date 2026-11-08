@@ -4,8 +4,8 @@
 package setup
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
-	"github.com/tiagovilasboas/downshift/mods"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/mods"
 )
 
 // Harness hook wiring for `downshift setup` is data. Each row says where a

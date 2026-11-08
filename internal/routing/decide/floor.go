@@ -4,8 +4,8 @@
 package decide
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // raiseToFloor applies the project tier floor after the guard. The floor only

@@ -3,7 +3,7 @@
 
 package execwrap
 
-import "github.com/tiagovilasboas/downshift/internal/compressor"
+import "github.com/tiagovilasboas/downshift-ai/internal/compressor"
 
 // genericFamilies lists the families whose clean output may also be compacted
 // by the generic chain (compressor.FormatGeneric) when it matches none of the

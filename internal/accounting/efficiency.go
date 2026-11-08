@@ -6,7 +6,7 @@ package accounting
 import (
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // Efficiency is, per harness, how much work finished without premium

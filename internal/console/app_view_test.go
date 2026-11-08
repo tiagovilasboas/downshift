@@ -11,10 +11,10 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/output"
-	"github.com/tiagovilasboas/downshift/internal/console/palette"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/command"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/output"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/palette"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
 )
 
 func sized(a app, w, h int) app {

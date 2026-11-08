@@ -8,7 +8,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
 )
 
 // gatewayCat holds a native deepseek row (the homonym the vendor strip would

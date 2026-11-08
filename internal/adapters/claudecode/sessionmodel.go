@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
 )
 
 // inheritingAgentTypes run on the parent session's model when the Task call

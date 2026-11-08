@@ -23,4 +23,4 @@ and applies the answers. Every call is fail-open: a missing binary, a timeout or
 a bad answer leaves OpenCode's own behaviour in place. Edit the files here, never
 the installed copies; `downshift doctor` reports a copy that differs from these.
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

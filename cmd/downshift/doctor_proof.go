@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quota"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // These checks read shared historical state. Doctor does not receive the host's

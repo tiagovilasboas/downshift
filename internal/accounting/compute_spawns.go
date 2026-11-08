@@ -3,7 +3,7 @@
 
 package accounting
 
-import "github.com/tiagovilasboas/downshift/internal/telemetry"
+import "github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 
 // countSpawns folds the panel counts of every session with the same helper
 // the Agents panel uses (telemetry.BuildPanel). Events without a session id

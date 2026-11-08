@@ -11,7 +11,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/discover"
+	"github.com/tiagovilasboas/downshift-ai/internal/discover"
 )
 
 // runDiscover scans harness transcripts for commands the compactor would have

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // ownedMatchers lists the non-empty matchers this setup writes for event.

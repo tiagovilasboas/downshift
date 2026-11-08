@@ -6,8 +6,8 @@ package shellwrap
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // Compound and chain shapes are wrapped only for a POSIX shell; one plain

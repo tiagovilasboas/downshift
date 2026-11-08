@@ -8,7 +8,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/mainwork"
+	"github.com/tiagovilasboas/downshift-ai/internal/mainwork"
 )
 
 // mainWorkRows reads the main-session work log and summarizes it per harness.

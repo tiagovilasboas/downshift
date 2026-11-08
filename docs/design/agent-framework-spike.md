@@ -572,4 +572,4 @@ The new tools **wrap** existing tools, they don't replace them:
 
 ---
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

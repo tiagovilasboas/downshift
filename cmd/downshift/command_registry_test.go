@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/clispec"
+	"github.com/tiagovilasboas/downshift-ai/internal/clispec"
 )
 
 // dispatchedNames reads main.go's switch on args[0] and the hook table, so the

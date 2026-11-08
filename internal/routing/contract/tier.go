@@ -3,7 +3,7 @@
 
 package contract
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // Tier is the serialized form of core.Tier with an explicit unknown. The
 // contract does not reuse core.Tier directly because its zero value is

@@ -2,7 +2,7 @@
 
 # Benchmark protocol: routing, output cutting and a third-party tool
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Routing alone saved about 12% on mechanical delegated work and an estimated 3% in natural use
 ([evidence.md](evidence.md), rungs D and B). Output cutting, which shrinks tool output before it reaches the model,

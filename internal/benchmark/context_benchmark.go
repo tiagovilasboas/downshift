@@ -9,7 +9,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 //go:embed fixtures/go_test_all_ok.txt fixtures/go_test_non_ok.txt fixtures/repetitive_logs.txt fixtures/search_hits.txt

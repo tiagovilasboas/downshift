@@ -3,7 +3,7 @@
 
 package core
 
-import "github.com/tiagovilasboas/downshift/internal/classify"
+import "github.com/tiagovilasboas/downshift-ai/internal/classify"
 
 // Complexity and Classification stay addressable as core types so route
 // policy and adapters do not import the classifier. The values are the

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
 )
 
 // EquivalentCommand renders the non-interactive command for a selection.

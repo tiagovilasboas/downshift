@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/benchmark"
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/benchmark"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // The classifier regression gate. It replaces the `downshift benchmark --gate`

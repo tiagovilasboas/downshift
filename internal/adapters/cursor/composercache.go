@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // Cursor Task preToolUse often omits model and model_id (live 3.27.12) while the

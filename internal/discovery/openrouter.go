@@ -83,7 +83,7 @@ func fetchOpenRouterList(ctx context.Context, rawURL string, client *http.Client
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "downshift-discovery (+https://github.com/tiagovilasboas/downshift)")
+	req.Header.Set("User-Agent", "downshift-discovery (+https://github.com/tiagovilasboas/downshift-ai)")
 	resp, err := base.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("openrouter: %w", err)

@@ -3,7 +3,7 @@
 
 package core
 
-import "github.com/tiagovilasboas/downshift/internal/fuse"
+import "github.com/tiagovilasboas/downshift-ai/internal/fuse"
 
 // ClassifyWithSemantic runs the regex classifier plus the in-process
 // FNV hash semantic boost (DOWNSHIFT_SEMANTIC_BOOST). The boost policy lives in internal/fuse.

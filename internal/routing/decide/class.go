@@ -4,8 +4,8 @@
 package decide
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // The class steps read the classifier class of the task (owner request

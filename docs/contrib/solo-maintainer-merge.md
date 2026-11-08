@@ -15,8 +15,8 @@ Cloud Agents use the **`cursor`** GitHub App for `git push`; they **cannot** cha
 ## Quick merge (local `gh`, after step 2)
 
 ```bash
-gh pr merge 166 --repo tiagovilasboas/downshift --squash --delete-branch
-gh pr merge 168 --repo tiagovilasboas/downshift --squash --delete-branch
+gh pr merge 166 --repo tiagovilasboas/downshift-ai --squash --delete-branch
+gh pr merge 168 --repo tiagovilasboas/downshift-ai --squash --delete-branch
 ```
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

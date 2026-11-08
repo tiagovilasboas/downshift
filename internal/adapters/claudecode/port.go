@@ -4,8 +4,8 @@
 package claudecode
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
 )
 
 // Port is Claude Code's honor and usage registration. Honor reports the

@@ -2,7 +2,7 @@
 
 # MCP server: a real Claude Code session calls the tools (2026-10-28)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Level: **observed once, one machine, one session.** It shows the server works end to end with a real client; it says
 nothing about savings, and nothing about how often a model would use the tools unprompted.

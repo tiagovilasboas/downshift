@@ -1,6 +1,6 @@
 # Routing v2: declare, bound, apply, measure
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: **Proposed** (owner review); **superseded in part by O8 (2026-10-28)**, see the section at the end. Date: 2026-10-26..
 Inputs: a read-only diagnosis of today's routing (`origin/main` 800a8e4e) and a clean-room behavioural

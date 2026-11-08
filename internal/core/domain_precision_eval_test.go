@@ -11,7 +11,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // Independent evaluation prompts: manually labeled by requested scope before

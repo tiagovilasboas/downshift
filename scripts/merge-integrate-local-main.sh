@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One-shot: gh auth (if needed), open PR, wait for CI, squash merge.
 set -euo pipefail
-REPO="tiagovilasboas/downshift"
+REPO="tiagovilasboas/downshift-ai"
 HEAD="integrate/local-main-2026-10-25"
 BASE="main"
 

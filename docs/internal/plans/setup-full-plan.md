@@ -2,7 +2,7 @@
 
 # Full setup plan
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: **Draft, 2026-10-28.** Sizing and order for the setup that the roadmap, the business plan and the MCP spec
 describe, measured against what `downshift setup` does today. Premise: owner decision O8 (the orchestrator LLM

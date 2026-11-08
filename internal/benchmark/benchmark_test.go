@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/benchmark"
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/benchmark"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // writeDataset writes tasks as JSON to a temp file and returns the path.

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
 )
 
 // cursor-pretooluse-task.json names a frontier model and carries no session

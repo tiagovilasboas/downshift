@@ -6,7 +6,7 @@ package guard
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 const testHarness contract.HarnessID = "test-harness"

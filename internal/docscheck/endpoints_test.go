@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway/ninerouter"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway/ninerouter"
 )
 
 var localEndpoint = regexp.MustCompile(`(?:localhost|127\.0\.0\.1):\d+`)

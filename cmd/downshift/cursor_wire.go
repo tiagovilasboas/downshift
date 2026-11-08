@@ -6,8 +6,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
-	"github.com/tiagovilasboas/downshift/internal/shellwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/shellwrap"
 )
 
 // cursorWire is Cursor's hook wire: one JSON line on stdout, exit 0 always.

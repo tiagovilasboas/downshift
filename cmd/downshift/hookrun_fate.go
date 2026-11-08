@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // spawnFate is what the runner did with one spawn. The stderr line and the

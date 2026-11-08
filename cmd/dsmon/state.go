@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // ── state (polling tail) ──────────────────────────────────────────────────────

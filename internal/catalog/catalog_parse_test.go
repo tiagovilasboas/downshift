@@ -6,7 +6,7 @@ package catalog
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // v0.1.0-beta.1 shipped "claude-haiku-4" as the small-tier id, and the release

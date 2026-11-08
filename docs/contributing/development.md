@@ -10,7 +10,7 @@ Guide for contributing to Downshift.
 ## Clone and Build
 
 ```bash
-git clone https://github.com/tiagovilasboas/downshift.git
+git clone https://github.com/tiagovilasboas/downshift-ai.git
 cd downshift
 make build
 ```

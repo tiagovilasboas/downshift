@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/console/shared/command"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 func TestParseHealthOrdersFailsFirst(t *testing.T) {

@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
 )
 
 const wait = 10 * time.Second

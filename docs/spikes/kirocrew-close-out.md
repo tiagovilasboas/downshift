@@ -2,7 +2,7 @@
 
 # KiroCrew: fechamento do spike e do REA
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **Data:** 2026-10-26 · **Escopo:** o que o Downshift faz no KiroCrew hoje, o que foi
 provado, o que não foi, e a nota honesta.

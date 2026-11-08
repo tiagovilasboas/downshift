@@ -2,7 +2,7 @@
 
 # Post-O8 three-arm benchmark smoke protocol: fixed Opus, native opusplan, and Downshift O8 (2026-11-07)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this document establishes: a reproducible, small, directional post-O8 benchmark smoke protocol comparing fixed
 Opus, native `opusplan`, and Downshift O8 on Claude Code. It reconciles Issue #22 (parent spike #21),

@@ -6,8 +6,8 @@ package claudecode
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/childend"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/childend"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // linkTargetBy keeps the linking tests of this package on the shared

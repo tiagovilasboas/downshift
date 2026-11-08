@@ -3,7 +3,7 @@
 
 package sensor
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // Observes reports whether a tool result of this category feeds the context
 // sensor. Read and search results are counted only as main-session work

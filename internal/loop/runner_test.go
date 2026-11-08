@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/cascade"
+	"github.com/tiagovilasboas/downshift-ai/internal/cascade"
 )
 
 func TestRunner_SuccessOnPass(t *testing.T) {
@@ -82,7 +82,7 @@ func TestRunner_AllowlistedSensorPass(t *testing.T) {
 
 	cfg := Config{
 		Task:          "Run paths unit test",
-		SensorCmd:     "go test github.com/tiagovilasboas/downshift/internal/paths",
+		SensorCmd:     "go test github.com/tiagovilasboas/downshift-ai/internal/paths",
 		SessionID:     "sess_loop_paths",
 		MaxIterations: 1,
 		Timeout:       10 * time.Second,

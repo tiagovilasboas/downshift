@@ -79,7 +79,7 @@
   "parent_step": 8,
   "parent_step_sha256": "9bd873de0a97179c47c3c97bd5f5d9cae6776d5056ecfe850b62553f2a1a5da3",
   "project": "Downshift by Tiago Vilas Boas",
-  "repository": "https://github.com/tiagovilasboas/downshift",
+  "repository": "https://github.com/tiagovilasboas/downshift-ai",
   "requested_alias": "pro",
   "schema_version": 1,
   "source": "manual_antigravity_sqlite",

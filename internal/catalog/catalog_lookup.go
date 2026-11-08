@@ -6,7 +6,7 @@ package catalog
 import (
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // --- core.Resolver implementation ---

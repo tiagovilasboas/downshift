@@ -4,9 +4,9 @@
 package main
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/models"
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/models"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // resolveSmallTargets answers, for every harness whose hook can rewrite a

@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/agenttier"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/agenttier"
 )
 
 const providersSchema = `{"type":"object","properties":{"harness":{"type":"string","description":"Harness id, for example the one running you."},"models":{"type":"array","items":{"type":"string","maxLength":128},"maxItems":64,"description":"Optional: the model ids your own harness shows. Stored only as a hint; detection wins."}},"required":["harness"],"additionalProperties":false}`

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // detailFamilies is how many families a harness shows; --json carries all.

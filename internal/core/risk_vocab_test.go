@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // Web and host security vocabulary added to the risk table: CORS, cookie

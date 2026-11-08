@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/session"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/session"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // TestHookRunnerReadsConfigOnce proves the shared runner is the one place

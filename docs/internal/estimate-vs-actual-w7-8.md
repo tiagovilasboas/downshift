@@ -1,6 +1,6 @@
 # W7.8 estimate against actual: what is measured and what is not
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **Date:** 2026-10-28
 **Status:** Partial. Estimates come from the cards. **No actual effort was

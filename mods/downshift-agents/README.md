@@ -6,7 +6,7 @@ Downshift routing decisions. It only observes. It never calls a model and never
 changes a model, prompt, tool result or routing decision.
 
 > Downshift by Tiago Vilas Boas
-> https://github.com/tiagovilasboas/downshift
+> https://github.com/tiagovilasboas/downshift-ai
 
 ## What you get
 
@@ -65,7 +65,7 @@ claude --plugin-dir ./mods/downshift-agents
 From the repository's marketplace instead of setup:
 
 ```bash
-claude plugin marketplace add tiagovilasboas/downshift
+claude plugin marketplace add tiagovilasboas/downshift-ai
 ```
 
 ```bash

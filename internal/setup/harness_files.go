@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/hooks"
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/hooks"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // HarnessFile is one file setup writes verbatim into a harness-owned

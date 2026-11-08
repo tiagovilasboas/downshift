@@ -33,4 +33,4 @@ What Downshift does not do yet, in one place. The beta label stays until the [ex
 - Savings are tokens, never money. How a plan turns tokens into its 5-hour and weekly limits is not published, so no limit saving is claimed.
 - Quota routing reads a statusline snapshot that only an interactive Claude Code terminal writes; elsewhere it can be stale.
 
-Found something not listed? [Open an issue](https://github.com/tiagovilasboas/downshift/issues).
+Found something not listed? [Open an issue](https://github.com/tiagovilasboas/downshift-ai/issues).

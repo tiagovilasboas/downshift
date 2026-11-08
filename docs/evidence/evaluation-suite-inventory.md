@@ -2,7 +2,7 @@
 
 # Evaluation suite inventory: development tasks, held-out smoke set, and post-O8 verification
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this document answers: which evaluation tasks and benchmark datasets are recorded in Downshift's evidence ladder,
 what each task tests, how acceptance is verified, which commits establish baselines, and how the minimal reproducible

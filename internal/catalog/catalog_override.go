@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // applyUserOverride merges the user catalog into base. A user catalog is an

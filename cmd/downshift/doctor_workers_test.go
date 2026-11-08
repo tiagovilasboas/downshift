@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
 )
 
 // workersReport runs checkWorkers against a temp state dir with the given

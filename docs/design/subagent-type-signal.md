@@ -3,7 +3,7 @@
 # Design note: `subagent_type` is not a routing signal (FinOps P1-5)
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Status: investigation, 2026-10-19. No routing behaviour changed by this note.
 

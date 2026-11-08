@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/opencode"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // hookWire is how one harness receives the routed decision: the only

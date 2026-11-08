@@ -3,7 +3,7 @@
 High-level view for adopters and contributors. Implementation details live in
 code and [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 ---
 

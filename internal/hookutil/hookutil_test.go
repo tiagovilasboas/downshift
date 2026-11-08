@@ -6,7 +6,7 @@ package hookutil_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
 )
 
 func TestStringField(t *testing.T) {

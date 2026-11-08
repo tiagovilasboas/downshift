@@ -35,4 +35,4 @@ a spawn changed or not.
 Other harnesses have no agent files in this format; the same rule applies to
 whatever field pins a child's model there ([harness matrix](../reference/harness-matrix.md)).
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

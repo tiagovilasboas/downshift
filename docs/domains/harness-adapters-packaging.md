@@ -61,7 +61,7 @@ For Claude Code operators, Downshift packages hooks, skills, commands, and optio
 
 - **Claude Code Plugin (`.claude-plugin/plugin.json`)**: Installs hooks (`PreToolUse`, `PostToolUse`, `SubagentStop`), custom commands (`/downshift`), and agent skills with a single command:
   ```bash
-  /plugin install downshift --marketplace tiagovilasboas/downshift
+  /plugin install downshift --marketplace tiagovilasboas/downshift-ai
   ```
 
 ---

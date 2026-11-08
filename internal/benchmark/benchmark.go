@@ -31,7 +31,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // Task is one entry in the benchmark dataset.

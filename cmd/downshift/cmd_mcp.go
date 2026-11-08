@@ -15,12 +15,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
-	"github.com/tiagovilasboas/downshift/internal/mcp/transport"
-	"github.com/tiagovilasboas/downshift/internal/models"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/transport"
+	"github.com/tiagovilasboas/downshift-ai/internal/models"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // defaultWorkers is how many read-only workers run at once (spec R17 and 5.3 use four).

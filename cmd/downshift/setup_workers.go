@@ -3,7 +3,7 @@
 
 package main
 
-import "github.com/tiagovilasboas/downshift/internal/console/setupwizard"
+import "github.com/tiagovilasboas/downshift-ai/internal/console/setupwizard"
 
 // workersChoice is the wizard question. Read comes first so Enter picks the
 // recommended answer; write is last and never preselected.

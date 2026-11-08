@@ -3,7 +3,7 @@
 
 package catalog
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // TierView is a core.Resolver seen through the plain view telemetry ranks
 // models with (telemetry.ModelCatalog). Its method set matches that interface,

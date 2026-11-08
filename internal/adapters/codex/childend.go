@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/hookport"
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // ParseChildEnd is Codex's side of the shared child-end contract. It reads the

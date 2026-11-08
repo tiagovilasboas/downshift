@@ -6,8 +6,8 @@ package surface
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/console/shared/command"
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 var testSpecs = []command.Spec{

@@ -9,9 +9,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway"
-	"github.com/tiagovilasboas/downshift/internal/plan"
-	"github.com/tiagovilasboas/downshift/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/plan"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
 )
 
 // runPlan is `downshift plan`: it validates the plan the lead LLM wrote on

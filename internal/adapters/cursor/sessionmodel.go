@@ -6,7 +6,7 @@ package cursor
 import (
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
 )
 
 // Cursor preToolUse on Task often omits model_id (live 3.27.12). The parent

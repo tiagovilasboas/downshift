@@ -9,7 +9,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 type fakeHistory struct {

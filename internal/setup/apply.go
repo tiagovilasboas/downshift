@@ -6,7 +6,7 @@ package setup
 import (
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // ApplyPlans shows every plan, asks once when a change would be written, then

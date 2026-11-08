@@ -6,7 +6,7 @@ package kirocrew
 import (
 	"encoding/json"
 
-	"github.com/tiagovilasboas/downshift/internal/shellwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/shellwrap"
 )
 
 // isShellTool reports whether name is KiroCrew's shell tool. A live payload

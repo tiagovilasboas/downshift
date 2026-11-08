@@ -196,4 +196,4 @@ Call `downshift providers` before spawning to see available models.
 
 ---
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

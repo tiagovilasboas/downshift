@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // defaultEventPath returns the routing telemetry JSONL path under the state dir.

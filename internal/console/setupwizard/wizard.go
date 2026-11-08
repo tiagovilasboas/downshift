@@ -9,11 +9,11 @@ package setupwizard
 
 import (
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/confirm"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/diffview"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/pick"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/confirm"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/diffview"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/pick"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 // Harness is a coding harness the wizard can set up. A detected one starts selected.

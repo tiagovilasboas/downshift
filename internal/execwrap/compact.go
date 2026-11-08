@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // How a finished run's held output is compacted: which compressor reads it,

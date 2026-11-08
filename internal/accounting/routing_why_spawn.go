@@ -6,7 +6,7 @@ package accounting
 import (
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // noteMissing is the cell text for a spawn whose decision holds no note.

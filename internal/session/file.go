@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // SessionFromHook returns the first non-nil allowlist from the hook payload.

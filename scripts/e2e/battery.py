@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (c) 2026 Tiago Vilas Boas.
 # SPDX-License-Identifier: Apache-2.0
-# Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+# Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 """End-to-end battery for a downshift binary, in a throwaway state dir.
 
 Each check drives the real hook commands with Claude Code shaped payloads and

@@ -10,7 +10,7 @@
 // library does; see docs/internal/plans/mcp-delegation-spec.md, R1.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package transport
 
 import (
@@ -21,7 +21,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
 )
 
 // MaxMessageBytes caps one incoming message, like the 1 MiB cap of the hooks.

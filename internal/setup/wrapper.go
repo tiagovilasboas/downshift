@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // Wrapper hooks. KiroCrew registers a hook as one absolute executable path with
@@ -49,7 +49,7 @@ func wrapperScript(goos, binary, args string) (string, error) {
 			"rem Copyright (c) 2026 Tiago Vilas Boas.",
 			"rem SPDX-License-Identifier: Apache-2.0",
 			"rem Downshift by Tiago Vilas Boas",
-			"rem https://github.com/tiagovilasboas/downshift",
+			"rem https://github.com/tiagovilasboas/downshift-ai",
 			"rem " + configfile.OwnedPhrase + ", which rewrites it. Edit nothing here.",
 			"rem The harness takes one executable and no arguments, so this carries the subcommand.",
 			"if not exist " + q + " (",
@@ -67,7 +67,7 @@ func wrapperScript(goos, binary, args string) (string, error) {
 		"# Copyright (c) 2026 Tiago Vilas Boas.",
 		"# SPDX-License-Identifier: Apache-2.0",
 		"# Downshift by Tiago Vilas Boas",
-		"# https://github.com/tiagovilasboas/downshift",
+		"# https://github.com/tiagovilasboas/downshift-ai",
 		"# " + configfile.OwnedPhrase + ", which rewrites it. Edit nothing here.",
 		"# The harness takes one executable and no arguments, so this carries the subcommand.",
 		"# The recorded binary wins while it exists; otherwise the downshift on PATH.",

@@ -3,7 +3,7 @@
 
 package tools
 
-import "github.com/tiagovilasboas/downshift/internal/plan"
+import "github.com/tiagovilasboas/downshift-ai/internal/plan"
 
 // WorkerState is the worker setting the server resolved at start: the mode,
 // the agents it can run, where the setting came from and any ignored values.

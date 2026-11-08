@@ -2,7 +2,7 @@
 
 # Worker lifecycle through an MCP client (2026-10-29)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this page answers: do `delegate`, `collect` and `cancel` work end to end when a client we did not write drives
 them over stdio, for the read route and the write route? No model was called: the worker program is a fake `claude`.

@@ -123,4 +123,4 @@ Then update this document with the human-readable explanation.
 
 ---
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

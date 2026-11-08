@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
 )
 
 func TestHandle_ParentModelIDIsGuessedBaseline(t *testing.T) {

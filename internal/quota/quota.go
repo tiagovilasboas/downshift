@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package quota supplies offline budget evidence for harness-downshift by
-// Tiago Vilas Boas, https://github.com/tiagovilasboas/downshift.
+// Tiago Vilas Boas, https://github.com/tiagovilasboas/downshift-ai.
 package quota
 
 import (
@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/quotamodel"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
 )
 
 // Aliases keep adapters and commands on quota.Snapshot after the pure model

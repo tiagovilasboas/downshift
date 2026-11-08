@@ -7,8 +7,8 @@
 package fuse
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/classify"
-	"github.com/tiagovilasboas/downshift/internal/semantic"
+	"github.com/tiagovilasboas/downshift-ai/internal/classify"
+	"github.com/tiagovilasboas/downshift-ai/internal/semantic"
 )
 
 // Apply runs the regex classifier plus the in-process FNV hash semantic

@@ -15,7 +15,7 @@ package core_test
 //	go test ./internal/core -run TestClassifierStability -update-stability
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 import (
 	"encoding/json"

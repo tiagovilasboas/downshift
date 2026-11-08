@@ -2,7 +2,7 @@
 
 # Spike: o KiroCrew chama o hook do Downshift num spawn real?
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **Data:** 2026-10-26 · **Status:** aberto — falta prova operacional · **Dono:** Downshift (hook e doctor).
 

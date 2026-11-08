@@ -1,7 +1,7 @@
 # Downshift agent triggers
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 These phrases in the user's message are commands to dispatch subagents now,
 in this same turn:

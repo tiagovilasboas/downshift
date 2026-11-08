@@ -2,7 +2,7 @@
 
 # MCP delegation server (`downshift mcp serve`)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Shipped (2026-11-01): eleven tools, `providers`, `playbook`, `status`, `apply`, `delegate`, `collect`, `cancel`,
 `diff`, `send`, `steer` and `release`. The `result` tool named below shipped as `collect`; continuation (`send`,

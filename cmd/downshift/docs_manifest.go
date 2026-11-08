@@ -8,11 +8,11 @@ import (
 	"io"
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/clispec"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/gateway"
-	"github.com/tiagovilasboas/downshift/internal/gateway/ninerouter"
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/clispec"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway/ninerouter"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
 )
 
 // docsManifest is what the documentation is checked against: the commands,

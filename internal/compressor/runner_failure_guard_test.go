@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // runnerFormats are the formats of test runners and build tools whose failures

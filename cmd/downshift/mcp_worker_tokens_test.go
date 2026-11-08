@@ -6,7 +6,7 @@ package main
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 func TestWorkerTokenBudgetParsing(t *testing.T) {

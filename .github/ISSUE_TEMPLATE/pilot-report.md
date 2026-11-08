@@ -5,7 +5,7 @@ title: 'pilot: <team> week <n>'
 labels: beta-exit
 ---
 
-Protocol: [docs/guides/pilot.md](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/pilot.md).
+Protocol: [docs/guides/pilot.md](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/pilot.md).
 Paste numbers only. No prompts, task text, paths or account identifiers.
 
 ## Setup

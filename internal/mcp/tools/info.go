@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/plan"
-	"github.com/tiagovilasboas/downshift/internal/playbook"
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/plan"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // Model is one model detected for a harness. The JSON tags mirror what

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/claudecode"
 )
 
 // The sensor measured 598 Bash results and recorded 0 bytes for all of them:

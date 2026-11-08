@@ -1,7 +1,7 @@
 # Referência Técnica de Benchmarks de Compactação
 
 > Downshift por Tiago Vilas Boas  
-> Repositório oficial: https://github.com/tiagovilasboas/downshift  
+> Repositório oficial: https://github.com/tiagovilasboas/downshift-ai  
 > Licença: Apache 2.0
 
 Este documento apresenta a análise técnica detalhada e os resultados oficiais do benchmark de compactação de saídas de comando do **Downshift**, gerados diretamente a partir do corpus sintético de 107 fixtures (`internal/compressor/testdata/corpus`) através do comando `make bench`.

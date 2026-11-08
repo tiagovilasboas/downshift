@@ -3,7 +3,7 @@
 # Product roadmap: from router to cost control plane
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Owner-facing plan. Status as of 2026-10-13. The public summary stays in
 [roadmap.md](../roadmap.md).

@@ -6,7 +6,7 @@ package policy
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // Rules are first-match-wins, in declaration order. A disabled rule is skipped.

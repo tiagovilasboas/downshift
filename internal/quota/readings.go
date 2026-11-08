@@ -6,7 +6,7 @@ package quota
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // nativeWindowRoles names the headroom window that each native window reports.

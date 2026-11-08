@@ -6,7 +6,7 @@ package mainwork
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // HarnessRow is one harness's main-session work. Rows are never summed across

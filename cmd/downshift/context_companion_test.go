@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/headroom"
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt/providers/headroom"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt/providers/native"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 func fakeHeadroom(installed bool) *headroom.Provider {

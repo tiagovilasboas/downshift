@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
 )
 
 // catalogLoader is the catalog entry point; tests replace it.

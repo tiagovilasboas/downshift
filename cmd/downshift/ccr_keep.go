@@ -6,8 +6,8 @@ package main
 import (
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/ccr"
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/ccr"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
 )
 
 // ccrKeep returns the ports that store raw output for `downshift retrieve`.
