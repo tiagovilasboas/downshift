@@ -9,11 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-08
+
+Release notes: [docs/releases/v1.0.0.md](docs/releases/v1.0.0.md).
+
+### Security
+
+- CCR in-place credential redaction (`internal/ccr`): structured AWS STS temporary credentials (`AccessKeyId`, `SecretAccessKey`, `SessionToken`, and `ASIA...` access keys across JSON, CLI table, text, and key-value outputs), AWS SSM Parameter Store values (`Value` inside `Parameter`/`Parameters` JSON blocks, CLI text, and table rows), and AWS environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `AWS_SECURITY_TOKEN`) are now redacted in place to `[REDACTED]` while preserving surrounding JSON syntax and non-secret `Value` fields. Whole-line withholding and PEM-block redaction remain active alongside in-place sanitization. Updated [CCR guide](docs/guides/ccr.md) and [known limitations](docs/reference/known-limitations.md).
+
 ### Changed
 
 - Cursor is now listed as Experimental, not Functional, in the README and the harness documentation (English and Portuguese). Its rewrite is emitted on a real spawn but never confirmed honored, and it is silently discarded on Free and legacy Pro plans. The harness matrix definition of Experimental now covers that case; Codex stays Functional (honored inferred).
 - `downshift doctor` lists a harness's declared capability limits (the `limitations` row and the two Claude Desktop surface rows) as `ok` instead of `warn`: they describe what the harness cannot do, not a fault on this machine. They stay in the output and the JSON, and now point to the new [known limitations](docs/reference/known-limitations.md) page.
 - The README maturity table no longer lists Antigravity as Functional (the harness matrix and the harness table already said Experimental), and a new [release policy](docs/contrib/release-policy.md) says who may cut a release and when a patch is warranted.
+- `README.md` and `docs/pt-br/README.md` lead on the first screen with Claude Code token optimization, a clear summary of where tokens are wasted versus how Downshift acts, and scoped empirical evidence separating synthetic corpus compaction (72.0% with CCR on) from controlled subagent routing trials (24.1% fewer tokens per accepted mechanical run) and combined directional trials (~53% fewer tokens per task).
+- Reconciled benchmark and routing evidence across documentation, adding [Anthropic references & benchmark reconciliation](docs/evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md), [effort, retries & prompt cache analysis](docs/evidence/effort-retries-cache-analysis-2026-11-07.md), and [RouteLLM router comparison](docs/evidence/router-comparison-routellm-2026-11-07.md), clarifying operator export privacy guarantees in [operator.md](docs/guides/operator.md), and removing `.github/dependabot.yml`.
 
 ### Fixed
 
@@ -22,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `downshift stats --detail` counts refuted rewrites on their own (`Honor observed N  refuted N  unobserved N`); they were added to `unobserved`, though a resolved record had observed them.
 - `downshift setup` no longer offers a project policy when run from the directory that holds the state directory (usually HOME): there `.downshift/policy.json` is the user policy, and through the nearest-file search it would have applied to every project below. It prints `policy: skipped:` with the reason. `downshift policy init` still writes it when asked.
 - `make check`, `make check-changed` and the lefthook pre-commit hook run the gofmt of the toolchain `go.mod` selects (`go env GOROOT`), the one CI runs, not the first gofmt on PATH. An older system gofmt listed `internal/telemetry/report_test.go` as unformatted, and the pre-commit hook would have rewritten files into a form CI rejects.
+- OpenCode plugin test suite (`hooks/opencode_plugin_test.go`, `hooks/opencode/wire.ts`): scaled Bun subprocess timeouts under parallel test load (`TEST_CALL_TIMEOUT_MS`, `TEST_SHELL_TIMEOUT_MS`, `DOWNSHIFT_TEST_TIMEOUT_SCALE`) and synchronized stub capture-file reads to prevent flaky fail-open timeouts on loaded machines.
+- MCP instruction evaluation harness (`scripts/mcp-eval/`): prepared isolated file fixtures (`internal/telemetry/stats_test.go`, `internal/core/route_test.go`, `docs/guides/mcp.md`) and native multi-agent settings (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) for evaluation cases C01 and C02.
 
 ## [0.11.2] - 2026-11-07
 

@@ -76,7 +76,7 @@ release:
     Model control layer for coding harnesses (Claude Code, Cursor, Codex, and more).
     The orchestrator chooses each subagent's model; Downshift applies it within your policy and measures the result. It adds no LLM call of its own.
 
-    **⚠️ Beta release** — functional and tested, but APIs and catalog format may still change before v1.0.
+    Release notes: [docs/releases/{{ .Tag }}.md](https://github.com/tiagovilasboas/downshift/blob/main/docs/releases/{{ .Tag }}.md) · [Known limitations](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/known-limitations.md).
 
   footer: |
     ---
