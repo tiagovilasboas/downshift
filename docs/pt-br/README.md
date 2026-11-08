@@ -8,7 +8,9 @@
 
 ### Menos ruído nos comandos. Roteamento de subagentes com sua política.
 
-CLI open source que ajuda a reduzir o consumo de tokens de LLM ao compactar a saída de comandos e roteia subagentes conforme sua política de modelos. Um único binário Go.
+Downshift é uma CLI open source para agentes de programação com IA. Ajuda a reduzir o consumo de tokens de LLM ao compactar a saída de comandos e aplica roteamento de modelos por subagente dentro da sua política. Um único binário Go.
+
+Funciona com harnesses de programação, incluindo Claude Code e Codex CLI; as capacidades de integração e os modelos disponíveis variam por harness e sessão.
 
 [Comece aqui](#comece-aqui) · [Documentação](../guides/install.md) · [Suporte por harness](../reference/harness-matrix.md) · [Evidências](#o-que-as-evidências-mostram) · [Como contribuir](../../CONTRIBUTING.md)
 
@@ -38,9 +40,9 @@ downshift doctor
 
 [![O assistente interativo detecta harnesses, permite escolher componentes e revisar alterações, grava após a confirmação e depois o usuário verifica a configuração](../brand/readme-media/setup-flow.svg)](../brand/readme-media/setup-flow.png)
 
-## Dê mais espaço para o agente trabalhar
+## Otimização de tokens para agentes de programação
 
-Testes, builds e outros comandos de desenvolvimento podem gerar saídas longas. Quando um agente de programação com IA as lê, esse texto ocupa contexto. O Downshift compacta a saída de comandos suportados antes de ela chegar ao agente, preservando códigos de saída e detalhes de falhas. Saídas menores podem reduzir os tokens de entrada usados nesses resultados.
+Testes, builds e outros comandos de desenvolvimento podem gerar saídas longas. Quando um agente de programação com IA as lê, esse texto ocupa sua janela de contexto. O Downshift compacta a saída de comandos suportados antes de ela chegar ao agente, preservando códigos de saída e detalhes de falhas. Saídas menores podem reduzir os tokens de entrada usados nesses resultados.
 
 O Downshift também aplica escolhas de modelo ao trabalho delegado, dentro da política que você declara. O orquestrador decide o que delegar; a disponibilidade de modelos e a capacidade de aplicar uma decisão dependem do harness e da sessão.
 
