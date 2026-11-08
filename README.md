@@ -1,448 +1,168 @@
 <div align="center">
-
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/downshift-logo-dark.svg">
-  <img src="docs/brand/downshift-logo-light.svg" alt="Downshift — token optimization and model routing for AI coding agents" width="320">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/downshift-mark-darkbg.svg">
+  <img src="docs/brand/downshift-mark-lightbg.svg" alt="Downshift mark" width="90">
 </picture>
 
 # Downshift
 
-### Reduce Claude Code token usage. Stop wasting context on noisy output.
+### Less command noise. Smarter subagent routing.
 
-Free, open-source token optimization for AI coding agents. Compact command output and apply the
-orchestrator's model choice per subagent, within your policy. No extra LLM call in Downshift's code.
+Open-source CLI that helps reduce LLM token usage by compacting command output and routes subagents within your model policy. Single Go binary.
 
-[![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-868A90.svg?labelColor=0A0A0A)](LICENSE)
-[![Go 1.27](https://img.shields.io/badge/go-1.27-868A90.svg?labelColor=0A0A0A)](https://go.dev)
-[![Release](https://img.shields.io/github/v/release/tiagovilasboas/downshift?include_prereleases&label=release&labelColor=0A0A0A&color=868A90)](https://github.com/tiagovilasboas/downshift/releases)
+[Get started](#get-started) · [Documentation](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md) · [Harness support](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/harness-matrix.md) · [Evidence](#what-the-evidence-shows) · [Contributing](https://github.com/tiagovilasboas/downshift/blob/main/CONTRIBUTING.md)
 
-<p align="center">
-  <a href="README.md"><b>English</b></a> •
-  <a href="docs/pt-br/README.md"><b>Português (Brasil)</b></a>
-</p>
+[English](README.md) · [Português (Brasil)](https://github.com/tiagovilasboas/downshift/blob/main/docs/pt-br/README.md)
 
-[Install](#install) · [Features](#features) · [Agents](#agents) · [Commands](#commands) · [Documentation](#documentation)
-
+**Open source · Apache 2.0 · Product status: beta**
 </div>
 
-Keep your context window focused on the work. Downshift shrinks verbose test and build output before
-it reaches your coding agent, preserves failure details and exit codes, and applies the model your
-orchestrator chose for each subagent. See what changed with `downshift report`.
+![Downshift agents working together on a dark background](docs/brand/readme-media/hero.png)
 
-Built with **Claude Code**, with support for **Codex, OpenCode, Cursor, Antigravity and KiroCrew**.
-Integration depth varies: Cursor, Antigravity and KiroCrew are experimental. [Harness support](#harness-support).
+## Get started
 
-| Where tokens go | What Downshift does |
-|---|---|
-| Repetitive test and build output | Compacts supported commands; keeps failures and exit codes |
-| Routine work on an expensive subagent model | Applies per-spawn model choices within your declared policy |
-| Savings you cannot inspect | Reports compacted bytes and routed tokens per harness |
+Install a compatible release binary, choose your harness, review the proposed configuration, and verify the setup. For integrated routing, the relevant supported harness must be installed; the direct compactor can also be run as a standalone CLI. The interactive setup wizard can configure hooks, MCP, skills and session policy depending on your selections. It shows its proposed changes and asks before writing.
 
-**For developers using AI coding agents:** start with [installation](#install), run `downshift setup`,
-then `downshift doctor`. A single Go binary. Free under Apache 2.0.
+Release archives target macOS and Linux on arm64 and amd64, and Windows on amd64. Asset availability varies by release; check the release page for your platform and verification files. The shell installer in the guide is for macOS and Linux.
 
-**Measured, with scope:** [72.0% fewer command-output bytes](docs/reference/bench.md) on a synthetic
-107-fixture corpus with CCR enabled; [24.1% fewer tokens per accepted run](docs/evidence/four-arm-mechanical-2026-10-21.md)
-in a controlled Claude Code trial (46 runs, mechanical tasks; 95% CI +2.1% to +46.7%).
-These are separate experiments, not additive savings or a promise about your bill or usage limit.
-
-**Guides:** [Claude Code cost: settings and token usage](https://downshift-ai.vercel.app/guides/claude-code-cost-cheat-sheet/) ·
-[Do Claude Code subagents burn your usage limit faster?](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/) ·
-[Claude Code usage limit](https://downshift-ai.vercel.app/guides/claude-code-usage-limit/) ·
-[all guides](https://downshift-ai.vercel.app/guides/) · [guias em português](https://downshift-ai.vercel.app/pt-br/guias/)
-
-## Contents
-
-- [Install](#install)
-- [What it does](#what-it-does)
-- [Maturity](#maturity)
-- [Features](#features)
-- [Agents](#agents)
-- [Commands](#commands)
-- [Harness support](#harness-support)
-- [Token savings](#token-savings)
-- [Documentation](#documentation)
-- [Safety, privacy and limits](#safety-privacy-and-limits)
-- [FAQ](#faq) · [Status](#status) · [License](#license)
-
----
-
-## Install
+[Releases](https://github.com/tiagovilasboas/downshift/releases) · [Installation guide](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md) · [Quickstart](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/quickstart.md) · [Configuration](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/config.md) · [Undo setup](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/cli.md#downshift-setup) · [Uninstall](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/cli.md#downshift-uninstall)
 
 ```bash
-# Install
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
-# "has no <os>/<arch> archive yet"? Pick a tag from https://github.com/tiagovilasboas/downshift/releases
-# (sh -s <tag>) or run: go install github.com/tiagovilasboas/downshift/cmd/downshift@<tag>
+# macOS & Linux (arm64 / amd64)
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | bash
 
-# Configure your harness. In a terminal this opens the setup wizard: it shows the diff and asks before writing.
+# In your repository:
 downshift setup
-
-# Verify
 downshift doctor
 ```
 
-On Claude Code, Downshift now rewrites allowlisted commands and applies the orchestrator's subagent model
-choices within your policy. Other harnesses differ; see [Harness support](#harness-support). To check the
-download first, get the archive from [Releases](https://github.com/tiagovilasboas/downshift/releases) and
-verify it with `checksums.txt`; each release carries a build-provenance attestation.
+[![Interactive setup detects harnesses, lets you choose components and review changes, writes after confirmation, then the user verifies the setup](docs/brand/readme-media/setup-flow.svg)](docs/brand/readme-media/setup-flow.png)
 
-Guides: [Installation](docs/guides/install.md) · [Quickstart](docs/guides/quickstart.md) ·
-[Configuration](docs/guides/config.md) · [Claude Code](docs/guides/claude-code.md)
+## Give your coding agent more room to work
 
----
+For developers using AI coding agents, test runners, build tools and other development commands can return long outputs. When a coding agent reads them, that text takes up context. Downshift compacts supported command output before it reaches the agent, preserving exit codes and failure details. Shorter output can reduce the input tokens spent on those results.
 
-## What it does
+Downshift also applies model choices for delegated work within the policy you declare. The orchestrator decides what to delegate; model availability and the ability to apply a decision depend on the harness and session.
 
-AI coding agents spend much of their context window on verbose command output that carries little signal.
-A `go test -count=1 ./internal/...` run on this repository prints **3,957 bytes** to say that everything
-passed. Downshift compacts it to a header and one line per package:
+| Capability | What it does |
+| --- | --- |
+| **Output compaction** | Gives the agent a shorter view of supported command output. |
+| **Subagent model routing** | Applies model choices at the spawn boundary within your policy. |
+| **Local reporting** | Shows compaction and routing information you can inspect. |
 
-```
-Go test: PASS (53 packages ok, 4 without tests) under github.com/tiagovilasboas/downshift/internal/
-ok accounting
-ok adapters/antigravity
-...
-```
+[See when to use Downshift](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/when-to-use.md) · [Explore the architecture](https://github.com/tiagovilasboas/downshift/blob/main/docs/design/architecture.md)
 
-**3,956 → 998 bytes** for that run, as the compactor reports it, with the PASS/FAIL status and the exit
-code kept. One run on this repository, not a benchmark. Measurements on a synthetic corpus are in
-[Token savings](#token-savings).
+Select any diagram to view it at full size.
 
-- **Mechanical subagent work runs on a smaller model.** The orchestrator picks the agent, model and
-  effort; Downshift applies that choice within your `policy.json`, and `downshift report` measures the
-  tokens it moved. On Claude Code the small tier is the newest Haiku, run through its native alias
-  (observed 2026-10-28). [Evidence](docs/guides/evidence.md)
-- **Doubt keeps the requested model.** An unconfident routing decision leaves the spawn unchanged. A wrong
-  choice by the orchestrator is not caught by a built-in floor: declare one in `policy.json` if a task must
-  never go to a small model. [Architecture](docs/design/architecture.md)
-- **No LLM call in Downshift's code, no prompts in telemetry.** Routing is deterministic code. Telemetry
-  keeps counts, hashes and timings in `~/.downshift/events.jsonl`.
+## Where Downshift works
 
-**Direction.** The orchestrator LLM decides; Downshift applies the decision inside your policy, keeps the
-context small, and measures the result as cost per accepted task. The research behind it, what each study
-does and does not show, and what is proven so far (and what is not) are in
-**[docs/true-north.md](docs/true-north.md)**. When to use it, and when not:
-[when-to-use](docs/guides/when-to-use.md).
+[![A coding harness reaches Downshift through separate subagent routing and command execution paths; observations depend on the harness](docs/brand/readme-media/operating-surfaces.svg)](docs/brand/readme-media/operating-surfaces.png)
 
----
+Downshift participates at two distinct points: a subagent spawn can be checked against policy and known session models, and supported command output can be compacted before it reaches the agent. Integration and observation differ across harnesses; direct compactor invocation is available where automatic wrapping is not.
 
-## Maturity
+## Reduce command output, keep the details
 
-| Feature | Status |
-|---|---|
-| Output compaction (`downshift compact`; automatic rewrite in Claude Code) | Stable |
-| Model delegation through hooks | Stable on Claude Code; Functional on Codex; Experimental on Cursor (rewrite honored unconfirmed) |
-| Workers (MCP `delegate`) | Beta on Claude (read-only by default, macOS and Linux). In development on Codex (no verified real run yet) and on Windows (off by default). Write mode is opt-in. |
-| Planner (`downshift plan`) | In development |
-| Setup wizard (`downshift setup`) | Stable |
-| Compressor Learning | Functional (`downshift learning`) |
-| Token Accounting | Functional (`downshift report`, `downshift discover`) |
-| OpenCode | Beta |
-| Antigravity | Experimental (setup wizard and MCP server work; one observed child on one build) |
-| Cursor | Experimental |
-| KiroCrew | Experimental |
+[![A development command produces full output; Downshift gives the agent a shorter result while eligible raw output can be stored locally with CCR and retrieved later](docs/brand/readme-media/compaction.svg)](docs/brand/readme-media/compaction.png)
 
-In development means it works but its interface and behaviour may change between releases.
+A supported command runs as usual. Downshift gives the agent a shorter view while preserving the exit code and failure details. With **Command Context Recovery (CCR)** enabled, eligible raw output can be stored locally and retrieved later; repeated lines may be folded in the displayed result. Wrapping depends on the harness, and direct compactor invocation is available. Output reduction varies by command and format.
 
----
+[![Recognized families include tests, builds and checks, Git, and infrastructure; behavior depends on the exact command and output format](docs/brand/readme-media/command-families.svg)](docs/brand/readme-media/command-families.png)
 
-## Features
-
-### 1. Output Compaction (default: on, stable)
-
-Wraps allowlisted commands to compress verbose output while preserving exit codes and failure details.
+Downshift recognizes selected test, build, lint, Git and infrastructure command forms. Recognized formats can be compacted or passed through depending on the family and output. Unknown output formats stay raw; a command outside the allowlist is refused by the wrapper and can be run directly. Failure details and the command exit code are preserved. See the supported-tools reference for exact forms.
 
 ```bash
+# Run any allowlisted command through the compactor:
 downshift compact -- go test ./...
-downshift compact -- git status
 ```
 
-Compresses `go test`, `git diff/show`, `eslint`, `ruff`, `mypy`, `golangci-lint`, `go build`, `cargo build`,
-`tsc`, `pytest`, `jest`, `vitest`, `playwright`, `cargo test`, `phpunit`, `gradle`, `maven` and more.
-Failures keep every failure line byte for byte, and anything unknown keeps the run raw. CCR, on by default, keeps
-the raw output on disk so `downshift retrieve <id>` brings back any cut line.
+Clean output is compacted to save context tokens, while non-zero exit codes and failure logs are preserved in full.
 
-Docs: [Output Compaction](docs/features/compaction.md) · [Supported tools](docs/reference/supported-tools.md) ·
-[Harness matrix](docs/reference/harness-matrix.md) · [CCR](docs/guides/ccr.md) ·
-[Benchmark](docs/reference/bench.md) · [Classification](docs/features/classification.md)
+[Compaction](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/compaction.md) · [Supported tools](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/supported-tools.md) · [CCR](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/ccr.md)
 
-### 2. Subagent Model Delegation (stable on Claude Code, functional on Codex, experimental on Cursor)
+## Route subagents within your policy
 
-The lead session picks agent, model and effort for every delegation. Downshift applies that choice
-deterministically, enforces what you declared in `policy.json` (profiles, ordered rules, quota gates, tier
-floors), and when nothing decided a spawn, moves a decisive `TRIVIAL` or `SIMPLE` task with no risk category
-down to `small`. It never raises a tier on its own, and your main session's model is never touched
-mid-turn, so your prompt cache stays intact. Precedence (first match wins): a pinned model; a declared
-profile; the first matching declared rule; the orchestrator's tier hint (down only); the task-class rule;
-else the requested model.
+[![The orchestrator delegates work; Downshift checks the policy, known session models and harness capabilities before applying a model choice or keeping the requested model](docs/brand/readme-media/routing.svg)](docs/brand/readme-media/routing.png)
 
-- **Playbooks:** `downshift playbook` edits the work rules a delegated worker receives.
-- **Orchestrator skill:** `downshift setup` installs `downshift-orchestrator`.
-- **MCP server:** `downshift mcp serve` exposes 13 tools. Six inform the orchestrator: `providers`,
-  `status`, `playbook`, `apply`, `plan`, `retrieve`. Seven run workers: `delegate`, `collect`, `cancel`,
-  `diff`, `send`, `steer`, `release`. Write workers run in their own git worktree and only when the owner
-  turns on write mode.
+The orchestrator chooses the work to delegate. Downshift applies model decisions at the subagent spawn boundary, subject to your policy and the model information known for that harness and session. When it cannot establish a safe choice, the requested model stays in place.
 
-Removed on 2026-10-28 (decision O8): the built-in agent-type table, the automatic upgrade after a failure
-and the built-in risk floor. A project that wants a hard floor must declare one in `policy.json`.
+Integration depth varies. A rewrite emitted by Downshift does not by itself prove that the harness honored it. Downshift's routing code makes no additional LLM call. The choice applies to a subagent spawn; Downshift does not change the main session's model mid-turn.
 
-Docs: [Model Routing](docs/features/routing.md) · [Policy](docs/guides/policy.md) ·
-[Quota](docs/guides/quota.md) · [Subagents](docs/guides/subagents.md) · [Plan](docs/guides/plan.md) ·
-[Safety](docs/features/safety.md) · [MCP server](docs/reference/cli.md#downshift-mcp-serve)
+[Model routing](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/routing.md) · [Policy](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/policy.md) · [Session models](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/session-models.md)
 
-### 3. Compressor Learning (in development)
+## See your agents at work
 
-Observes uncompacted commands and ranks candidates for new compressors with `downshift learning
-suggestions`. It runs after the output is written and stores counts and output shapes, never output text.
+![Concept illustration inspired by the Downshift Agents panel: a lead coordinates specialist agents](docs/brand/readme-media/agents.png)
 
-Docs: [Compressor Learning](docs/features/learning.md) · [Guide](docs/guides/compressor-learning.md)
+Downshift includes agent profiles and orchestration playbooks for research, implementation, review, security, documentation and more. A lead coordinates independent work and brings the results together.
 
-### 4. Token Accounting (v1, in development)
+<p align="center"><img src="docs/brand/readme-media/agents-panel-illustration.png" width="420" alt="Sanitized illustration based on a Downshift Agents panel"></p>
 
-Local token accounting, per harness and never summed across harnesses: the tokens compaction removed from
-command output (a bytes-per-4 estimate), and the tokens that ran on a cheaper model than the session's.
-Routing tokens are never added to tokens saved, and no figure is converted to money.
+*Sanitized illustration based on a Claude Code session screenshot. Task labels, model names and session metrics are concealed. This is an edited visual preview, not a benchmark or an unaltered screenshot.*
 
-Docs: [Accounting](docs/reference/accounting.md) · [Report](docs/guides/report.md) ·
-[Telemetry](docs/features/telemetry.md) · [Evidence ladder](docs/guides/evidence.md)
+<a id="5-agent-orchestration-context-triggers"></a>
+### Agent orchestration (context triggers)
 
-### 5. Agent Orchestration (context triggers)
+In your coding harness chat, describe your task and type:
+- `downshift full-power` (alias `potencia-total`): activates the domain leads within your session capacity ceiling.
+- `downshift shift <squad>`: activates a specific domain squad (`core`, `quality`, `security`, `leadership`).
 
-A 14-agent squad you activate in natural language. Describe the task in chat, then say the trigger; see
-[Agents](#agents).
+[Agent guide](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/agents.md) · [Agent catalog](https://github.com/tiagovilasboas/downshift/blob/main/docs/agents/README.md)
 
-Docs: [Agent System](docs/guides/agents.md) · [docs/agents](docs/agents/README.md)
+## Works with your coding harness
 
-### Inside your harness
+Downshift was built with Claude Code and supports other harnesses at different stages of verification.
 
-- **Skills:** `downshift-setup`, `downshift-audit`, `harness-engineer` and `downshift-tune` ship with
-  Downshift. In the Claude Code plugin they are `/downshift:<name>`, and `/downshift:status` shows the
-  session's subagent tree and routing reasons. [Skills](skills/README.md)
-- **Mod (Claude Code):** `downshift setup` installs the `downshift-agents` mod, a band above the prompt
-  and a `/ds-agents` pane. It only observes; `--no-mods` skips it. [Mod](mods/downshift-agents/README.md)
-- **MCP server:** registered in Claude Code and Codex by `downshift setup` (`--no-mcp` skips it).
+| Harness | Status | Routing evidence |
+| --- | --- | --- |
+| Claude Code | Completed | Rewrite observed on a real child. |
+| Codex | Functional | Rewrite emitted; honor inferred, not directly observed. |
+| OpenCode | Beta | Routing and child usage observed on OpenCode 2.2.5. |
+| Cursor | Experimental | Rewrite emitted; executor honor unconfirmed. |
+| Antigravity | Experimental | One child observed on one build. |
+| KiroCrew | Experimental | Policy mode, without in-place model rewrite. |
 
----
+Models available to one harness or session are not assumed to be available to another. See the [full harness matrix](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/harness-matrix.md) for integration details, evidence and limits.
 
-## Agents
+## What the evidence shows
 
-Downshift ships 14 agents in 6 domains. The orchestrator reads [`agents/config.toml`](agents/config.toml)
-to decide which agent handles a task; the default tier is shown below.
+| Measurement | Result | Scope |
+| --- | --- | --- |
+| Lossless output compaction | **65.2% fewer bytes** | 59 fixtures in a synthetic corpus. |
+| Output compaction with CCR | **72.0% fewer bytes** | 107-fixture synthetic corpus; displayed repetitions may be folded and raw output is recoverable. |
+| Subagent routing | **24.1% fewer tokens per accepted run** | Controlled 46-run Claude Code study on mechanical tasks, conducted before decision O8. |
 
-| Agent | Domain | Default tier | One line |
-|-------|--------|--------------|----------|
-| [coder](agents/coder.md) | core | mid | Full-stack integrator: vertical slices, end-to-end integration |
-| [coder-back](agents/coder-back.md) | core | mid | Backend: Go, Node, PHP, APIs, databases, concurrency |
-| [coder-front](agents/coder-front.md) | core | mid | Frontend: React, Next.js, Tailwind, Canvas 2D, PWA |
-| [refactor](agents/refactor.md) | core | mid | Code restructuring, cleanup |
-| [researcher](agents/researcher.md) | core | small | Code analysis, dependency tracing |
-| [tester](agents/tester.md) | quality | small | Run tests, coverage analysis |
-| [debugger](agents/debugger.md) | quality | mid | Test failures, flaky tests |
-| [reviewer](agents/reviewer.md) | quality | mid | Code review, test strategy, quality gates |
-| [security](agents/security.md) | security | frontier | Security audit, threat modeling |
-| [performance](agents/performance.md) | performance | mid | Profiling, bottleneck analysis |
-| [documenter](agents/documenter.md) | support | small | READMEs, API docs, guides |
-| [architect](agents/architect.md) | leadership | frontier | System design, cross-layer architecture |
-| [platform](agents/platform.md) | leadership | frontier | Infra, DevOps, CI/CD, databases |
-| [ai](agents/ai.md) | leadership | frontier | AI/LLM architecture, model routing, FinOps |
+These are separate measurements in different units and workloads. The synthetic corpus totals include only fixtures the compactor processed, excluding preserved fixtures. The routing result is historical evidence; it does not establish the effect of the implementation after O8. Savings in unconstrained everyday use have not been established. Token estimates based on bytes are not an invoice or a measurement of plan limits.
 
-**Triggers.** Describe your task in chat, then say the trigger, without quotes:
+[Compaction benchmark](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/bench.md) · [Routing study](https://github.com/tiagovilasboas/downshift/blob/main/docs/evidence/four-arm-mechanical-2026-10-21.md) · [Evidence guide](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/evidence.md)
 
-```
-User: I need to add rate limiting to the /api/users endpoint with tests
-User: downshift full-power
-```
+## Built for inspection and control
 
-- `downshift full-power` (aliases `potencia-total`, `potência-total`): the squad the task needs, up to 5
-  agents at once. The orchestrator checks the `providers` strain block first and shrinks the squad when
-  quota is low.
-- `downshift shift <squad>`: one domain. Squads: `security`, `quality` (tester, debugger, reviewer),
-  `core` (coder, coder-back, coder-front, refactor, researcher), `leadership` (architect, platform, ai).
-- Explicit tasks work too: `downshift shift coder "fix the nil pointer in pool.go"`.
+- Hooks fail open: errors or timeouts leave the requested spawn unchanged.
+- Routing runs locally and makes no additional LLM call. Telemetry records counts, hashes and timings rather than prompts.
+- CCR can store raw command output locally. Redaction covers common credential shapes, but secrets in arbitrary formats can remain; review the [raw-output limitations](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/known-limitations.md#raw-output-kept-by-ccr) and configuration before using sensitive output.
+- Write workers are opt-in and run in separate worktrees. Downshift does not merge their branches or provide an approval gate for deploys and other risky actions.
 
-`downshift setup` writes the triggers into each harness's always-loaded instructions
-([install](docs/guides/install.md#agent-triggers-every-harness-with-an-instructions-file)).
+| Command | What it does |
+|---|---|
+| `downshift setup [--dry-run]` | Configure hooks for detected harnesses with preview |
+| `downshift doctor` | Diagnostic health check and automated repair |
+| `downshift compact -- <cmd>` | Run allowlisted command with compacted clean output |
+| `downshift retrieve <id>` | Retrieve raw output from local CCR storage |
+| `downshift session [--why]` | Show session subagent tree and decision reasons |
+| `downshift stats` | Summary of routing decisions and token savings |
+| `downshift report` | Consolidated report of tokens routed per completed task |
+| `downshift policy check` | Validate `.downshift/policy.json` |
+| `downshift quota` | Inspect model quotas and windows across providers |
+| `downshift mcp serve` | Run local stdio MCP server (13 native tools) |
 
-Docs: [Agent catalog and architecture](docs/agents/README.md) · [Routing](docs/agents/routing.md) ·
-[Handoff](docs/agents/protocols/handoff.md) · [Escalation](docs/agents/protocols/escalation.md) ·
-[Parallel slices](docs/agents/protocols/parallel-slices.md) · [Agent System guide](docs/guides/agents.md)
+[Safety](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/safety.md) · [Telemetry](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/telemetry.md) · [Known limitations](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/known-limitations.md)
 
----
+## Documentation and community
 
-## Commands
+[Quickstart](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/quickstart.md) · [CLI reference](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/cli.md) · [Architecture](https://github.com/tiagovilasboas/downshift/blob/main/docs/design/architecture.md) · [Português (Brasil)](https://github.com/tiagovilasboas/downshift/blob/main/docs/pt-br/README.md)
 
-Full list: [CLI reference](docs/reference/cli.md), or `downshift help --all`.
-
-| Command | What it does | Docs |
-|---------|--------------|------|
-| `downshift setup [--dry-run]` | Wires the hooks into every harness found (backup, diff, `--undo`) | [setup](docs/reference/cli.md#downshift-setup) |
-| `downshift doctor` | Checklist: binary, hooks per harness, state, with a fix per failure | [doctor](docs/reference/cli.md#downshift-doctor) |
-| `downshift` | Full-screen console in a terminal on a configured machine | [console](docs/reference/cli.md#downshift-no-arguments-the-console) |
-| `downshift compact -- <cmd>` | Cuts an allowlisted command's output to its PASS/FAIL summary, exit code kept | [compactor](docs/reference/cli.md#downshift-compactor) |
-| `downshift retrieve <id>` | Reads back output the compactor kept in CCR | [retrieve](docs/reference/cli.md#downshift-retrieve) |
-| `downshift session [--why]` | This session's subagents as a tree, and why each spawn changed or was kept | [session](docs/reference/cli.md#downshift-session) |
-| `downshift stats` | Decisions and estimated token savings (not an invoice) | [stats](docs/reference/cli.md#downshift-stats) |
-| `downshift report` | Routed tokens per completed task and rework; Compactor per harness and family | [report](docs/guides/report.md) |
-| `downshift export` | One privacy-safe export an operator shares | [export](docs/reference/cli.md#downshift-export) |
-| `downshift watch` | Live terminal view of routing events | [watch](docs/reference/cli.md#downshift-watch) |
-| `downshift config` | Every effective setting with its value and source | [config](docs/reference/cli.md#downshift-config) |
-| `downshift policy` | Check and manage `policy.json` | [policy](docs/reference/cli.md#downshift-policy) |
-| `downshift quota` | Quota state and advice | [quota](docs/reference/cli.md#downshift-quota) |
-| `downshift plan < plan.json` | Validates a delegation plan and prints it as a table | [plan](docs/guides/plan.md) |
-| `downshift playbook` | Lists and edits worker playbooks | [playbook](docs/reference/cli.md#downshift-playbook) |
-| `downshift models` | List, check, pull and discover the model catalog | [models](docs/reference/cli.md#downshift-models) |
-| `downshift gateway on\|off` | Routes delegate workers through a local gateway such as 9router | [gateway](docs/reference/cli.md#downshift-gateway) |
-| `downshift learning suggestions\|stats\|export\|clear` | Compressor Learning | [learning](docs/reference/cli.md#compressor-learning) |
-| `downshift mcp serve` | MCP server, 13 tools: `providers`, `status`, `playbook`, `apply`, `plan`, `retrieve` inform; `delegate`, `collect`, `cancel`, `diff`, `send`, `steer`, `release` run workers | [mcp serve](docs/reference/cli.md#downshift-mcp-serve) |
-| `downshift full-power`, `downshift shift <squad>` | Agent triggers | [Agents](#agents) |
-| `downshift uninstall` | Removes what setup wrote | [uninstall](docs/reference/cli.md#downshift-uninstall) |
-| `downshift version` | Prints the binary version | [version](docs/reference/cli.md#downshift-version) |
-
-Read-only commands such as `session`, `doctor` and `report` open in the console when run by a person in a
-terminal. Pipes, `--json`, `CI`, `DOWNSHIFT_PLAIN=1` and agent shells keep plain text.
-
----
-
-## Harness support
-
-Downshift was built with Claude Code. The status word says how much was verified on the real harness, per
-the [Harness matrix](docs/reference/harness-matrix.md):
-
-| Harness | Compaction | Model Routing | Status | Setup |
-|---------|------------|---------------|--------|-------|
-| **Claude Code** | Automatic rewrite | Rewrite, observed honored | Completed | `downshift setup claude-code` |
-| **Codex** | `downshift compact` run by the agent | Rewrite emitted, honored inferred | Functional | `downshift setup codex` |
-| **Cursor** | `downshift compact` run by the agent | Rewrite emitted, honored unconfirmed | Experimental | `downshift setup cursor` |
-| **OpenCode** | Automatic rewrite through the bridge plugin | Rewrite, observed honored on OpenCode 2.2.5 | Beta | `downshift setup opencode` |
-| **Antigravity** | `downshift compact` run by the agent | One observed child on one build | Experimental | `downshift setup antigravity` |
-| **KiroCrew** | `downshift compact` run by the agent | Policy mode (allow/block, no rewrite) | Experimental | `downshift setup kirocrew` |
-
-Claude Code and OpenCode rewrite allowlisted commands into their compact form automatically (via native
-PreToolUse hooks and bridge plugin); on other harnesses, compaction operates through hook-based command
-rewriting, advise policies (such as KiroCrew's exit-2 advise), or direct execution via `downshift compact`.
-KiroCrew's preToolUse hook only supports allow/block decisions, so routing there is policy mode, and the ACP
-provider exposes no token counts. Details per harness: [Harness matrix](docs/reference/harness-matrix.md) ·
-[Capability matrix](docs/reference/capability-matrix.md) · [Session models](docs/reference/session-models.md) ·
-[KiroCrew guide](docs/guides/kirocrew-routing-guide.md) · [Reconciliation](docs/evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)
-
----
-
-## Token savings
-
-Compaction is measured in bytes (not LLM tokens) on the synthetic corpus across supported command families (see [benchmark report](docs/reference/bench.md)):
-
-| Metric | Value |
-|--------|-------|
-| Compacted fixtures across families | 107 fixtures |
-| Lossless runs | 65.2% fewer bytes (preserves 100% of failure lines and exit codes) |
-| Best cases | 90–95% fewer bytes (progress 94.5%, cargo test 93.0%, flutter test 92.3%, lockfile diff 91.2%, npm install 89.1%, pytest 86.7%, cypress 83.2%, playwright 81.6%, turbo 79.6%, rspec 79.5%, tsc 78.4%, vitest 74.3%) |
-| Overall corpus (CCR off) | 51.1% fewer bytes |
-| Overall corpus (CCR on) | 72.0% fewer bytes |
-
-With CCR (Command Context Recovery) enabled, the full raw output is stored on disk and recoverable anytime via `downshift retrieve <id>`.
-
-Empirical live trials evaluated subagent routing and compaction:
-- **Subagent Routing (Claude Code):** In a controlled 46-run trial on mechanical delegated tasks ([four-arm battery](docs/evidence/four-arm-mechanical-2026-10-21.md)), routing subagents under native `opusplan` achieved **24.1% fewer tokens per accepted run** (95% CI +2.1% to +46.7%) and 16.5% fewer tokens per run (+0.6% to +29.7%), with 12/12 accepted. Prompt cache reads represented >98% of total tokens.
-- **Combined Routing & Compaction (KiroCrew):** In a real-use directional trial across 6 control tasks, combining native policy routing with shell advice compaction achieved **up to ~53% fewer tokens per task** ([reconciliation](docs/evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)).
-- **Everyday Baseline:** Savings on unconstrained, natural everyday use are not established yet (30-day telemetry normalized delta −1.9%, within noise). Downshift follows an [Evidence Ladder](docs/guides/evidence.md) and reports token counts, bytes, and rework, not dollar invoices.
-
----
-
-## Documentation
-
-| Area | Pages |
-|------|-------|
-| **Getting started** | [Install](docs/guides/install.md) · [Quickstart](docs/guides/quickstart.md) · [Configuration](docs/guides/config.md) · [Claude Code](docs/guides/claude-code.md) · [When to use it](docs/guides/when-to-use.md) · [Public beta](docs/guides/public-beta.md) |
-| **Features** | [Compaction](docs/features/compaction.md) · [Routing](docs/features/routing.md) · [Learning](docs/features/learning.md) · [Classification](docs/features/classification.md) · [Safety](docs/features/safety.md) · [Telemetry](docs/features/telemetry.md) |
-| **Guides** | [Policy](docs/guides/policy.md) · [Quota](docs/guides/quota.md) · [Plan](docs/guides/plan.md) · [Report](docs/guides/report.md) · [CCR](docs/guides/ccr.md) · [Companions](docs/guides/companions.md) · [Operator](docs/guides/operator.md) · [Verification](docs/guides/verification.md) |
-| **Agents** | [Overview](docs/agents/README.md) · [Routing](docs/agents/routing.md) · [Handoff](docs/agents/protocols/handoff.md) · [Escalation](docs/agents/protocols/escalation.md) · [Parallel slices](docs/agents/protocols/parallel-slices.md) · [Agent System guide](docs/guides/agents.md) · [Skills](skills/README.md) |
-| **Reference** | [CLI](docs/reference/cli.md) · [Configuration options](docs/reference/config-options.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Session models](docs/reference/session-models.md) · [Supported tools](docs/reference/supported-tools.md) · [Accounting](docs/reference/accounting.md) · [Beta exit criteria](docs/reference/beta-exit.md) |
-| **Architecture** | [Architecture](docs/design/architecture.md) · [Domains](docs/domains/README.md) · [True north](docs/true-north.md) · [Evidence](docs/guides/evidence.md) · [Benchmark protocol](docs/guides/benchmark-protocol.md) |
-| **Contributing** | [Contributing guide](CONTRIBUTING.md) · [Development setup](docs/contributing/development.md) · [Adding compressors](docs/contributing/compressors.md) · [Layering rule](docs/contrib/layering.md) |
-| **Releases** | [CHANGELOG](CHANGELOG.md) · [v1.0.0 notes](docs/releases/v1.0.0.md) · [Releases](https://github.com/tiagovilasboas/downshift/releases) |
-
----
-
-## Safety, privacy and limits
-
-- **Hooks fail open.** A hook that errors, times out or receives a payload over 1 MiB leaves the spawn with
-  the model the orchestrator asked for.
-- **A broken policy is refused.** `downshift policy check` names the bad field; a `policy.json` that does
-  not load applies nothing.
-- **No LLM call in Downshift's code, and telemetry holds no prompts or file paths.** Prompts never leave
-  memory; telemetry is local counts, hashes and timings.
-- **Write workers are off by default.** Read-only workers are on by default for Claude (not on Windows, not
-  yet for Codex). Write workers need `DOWNSHIFT_WORKERS=bypass` or `orchestration.workers: "write"`, each in
-  its own git worktree, and Downshift never merges their branches.
-- **Worker tokens are counted, not priced.** Each `collect` delivery carries the `tokens` its CLI reported, and
-  `DOWNSHIFT_WORKER_TOKEN_BUDGET` (off by default) refuses new `delegate` calls for a CLI once its finished
-  workers in the session have spent that many tokens. A worker killed before it reports usage is not counted.
-- **No approval gate for risky actions.** Downshift does not stop a deploy, merge or secret change on its
-  own; enforce that in your harness or your policy.
-
-Docs: [Safety](docs/features/safety.md) · [Telemetry](docs/features/telemetry.md) ·
-[When to use Downshift](docs/guides/when-to-use.md)
-
----
-
-## FAQ
-
-**How do I reduce token usage in Claude Code, Cursor, or Codex?** Install Downshift and run
-`downshift setup`. Verbose command output is compacted before it reaches the context window, and each
-subagent runs on the model the orchestrator chose, bounded by your policy. On Claude Code the rewrite is
-automatic; elsewhere the agent runs `downshift compact -- <command>`. Check your numbers with
-`downshift session` and `downshift report`.
-
-**Does subagent model routing break prompt caching?** No. The choice applies to whole subagent spawns, not
-turns of your main session, which keeps one model for the whole conversation.
-
-**Does it work with harnesses other than Claude Code?** Yes, see [Harness support](#harness-support).
-Compaction works everywhere because it is a plain shell command. Routing depth varies and is documented in
-the [harness matrix](docs/reference/harness-matrix.md).
-
-**How is this different from `/compact` in Claude Code?** `/compact` summarizes conversation history already
-in the context window. Downshift shrinks command output before it enters the context. They are
-complementary.
-
-**Do Claude Code subagents burn my usage limit faster?** They can. Anthropic's subagent docs say each
-subagent starts with a fresh context and sends its own requests, which count toward the same usage limits
-as your main conversation, and it runs on your main model unless something sets another. The built-in
-Explore agent runs on the main model too. Put routine subagents on a smaller model; `downshift policy init`
-offers an `explore` profile that sends Explore to the small tier and shows which model that resolves to
-first. [Guide](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/).
-
-**How is this different from `CLAUDE_CODE_SUBAGENT_MODEL`?** That variable sets one default model for every
-subagent nothing else sets, and by itself it does not change the built-in Explore and Plan agents.
-Downshift applies the model chosen for each spawn, within a policy you declare, keeps the requested model
-when in doubt, records where tokens ran, and also works in Codex, Cursor and OpenCode.
-
-**Does Downshift save my Claude Code usage limit?** Not measured yet. Downshift reports the tokens that ran
-below your session model and the bytes compaction removed, per harness; how a plan converts tokens into its
-5-hour and weekly limits is not published, so no limit saving is claimed.
-
----
-
-## Status
-
-**Product maturity: beta.** The published [v1.0.0](docs/releases/v1.0.0.md) is a stable-version
-tag and GitHub release, but the product has not met its beta exit criteria. In particular, Cursor
-rewrite honor and independent multi-operator usage remain unverified. The version number does not
-mean those criteria have been met; see [Beta Exit Criteria](docs/reference/beta-exit.md).
-Changes since v1.0.0 are under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md).
-What does not work yet, harness by harness: [Known limitations](docs/reference/known-limitations.md).
+Found a bug or want to contribute? Read the [contributing guide](https://github.com/tiagovilasboas/downshift/blob/main/CONTRIBUTING.md) or [open an issue](https://github.com/tiagovilasboas/downshift/issues).
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
-
----
-
-<div align="center">
-
-**Downshift** by [Tiago Vilas Boas](https://github.com/tiagovilasboas)
-
-Conceptual backbone: [Harness engineering (Fowler)](https://martinfowler.com/articles/harness-engineering.html)
-
-</div>
+[Apache License 2.0](https://github.com/tiagovilasboas/downshift/blob/main/LICENSE). Downshift by Tiago Vilas Boas.
