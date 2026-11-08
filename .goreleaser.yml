@@ -67,7 +67,7 @@ release:
     - glob: release-assets/docs-manifest.json
   github:
     owner: tiagovilasboas
-    name: downshift
+    name: downshift-ai
   # Pre-release flag is set automatically for tags containing -beta, -alpha, -rc
   prerelease: auto
   header: |
