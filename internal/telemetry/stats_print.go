@@ -75,7 +75,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Baseline (unrouted)   %8d  (paused sessions and older baseline lines, excluded from rates)\n", s.Baseline)
 	}
 	if s.Total > 0 {
-		fmt.Fprintf(w, "Honor                 observed %d  unobserved %d  (applied rewrites only)\n", s.HonorObserved, s.HonorUnobserved)
+		fmt.Fprintf(w, "Honor                 observed %d  refuted %d  unobserved %d  (applied rewrites only)\n", s.HonorObserved, s.HonorRefuted, s.HonorUnobserved)
 		fmt.Fprintf(w, "Quota                 available %d  held %d  unknown %d\n", s.QuotaAvailable, s.QuotaHeld, s.QuotaUnknown)
 		fmt.Fprintf(w, "Usage                 observed %d  unobserved %d\n", s.UsageObserved, s.UsageUnobserved)
 		fmt.Fprintf(w, "Frontier decisions    %d  (rewritten on doubt, no deterministic lift: %d)\n", s.FrontierDecisions, s.FrontierOnDoubt)

@@ -4,6 +4,9 @@ BINARY=downshift
 # DEVCHECK is the gate binary behind check-full and check-fast. Built, not go run, so a
 # failure prints no extra "exit status 1" line; dist/ is git-ignored.
 DEVCHECK=dist/devcheck$(shell go env GOEXE)
+# GOFMT is the gofmt of the toolchain go.mod selects, the one CI runs. A gofmt
+# from an older Go on PATH formats some files differently.
+GOFMT := $(shell go env GOROOT)/bin/gofmt$(shell go env GOEXE)
 
 # Version stamp, same main.build* variables as .goreleaser.yml. Falls back to
 # "dev" outside a git checkout. Untagged repos get a "main-" prefix.
@@ -51,7 +54,7 @@ HOOK_TEST = $(HOOK_ENV) go test -count=1 -p $${DOWNSHIFT_HOOK_TEST_P:-4}
 ## check-changed: gofmt, then go vet (host, windows, linux) on the changed packages and their dependents; run by the pre-push hook
 check-changed:
 	@echo "[1/2] gofmt -l ."
-	@out=$$(gofmt -l .); if [ -n "$$out" ]; then echo "$$out"; echo "gofmt: format the files above (gofmt -w <file>)"; exit 1; fi
+	@out=$$("$(GOFMT)" -l .); if [ -n "$$out" ]; then echo "$$out"; echo "gofmt: format the files above (gofmt -w <file>)"; exit 1; fi
 	@$(CHANGED_PKGS); \
 	if [ -z "$$pkgs" ]; then echo "[2/2] go vet: no Go packages changed"; exit 0; fi; \
 	echo "[2/2] go vet (host, GOOS=windows, GOOS=linux) $$(echo $$pkgs)"; \

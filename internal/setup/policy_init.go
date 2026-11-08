@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/tiagovilasboas/downshift/internal/routing/policy"
@@ -65,6 +66,14 @@ func PlanPolicyInit(o Options) (plan Plan, ok bool) {
 		return Plan{}, false
 	}
 	path := policy.ProjectPath(o.ProjectDir)
+	// From the directory that holds the state directory (usually HOME) the
+	// project file is the user policy (<state dir>/policy.json). Writing it there
+	// would make it every project's policy through the nearest-file search, so
+	// setup offers nothing and says why. `policy init` still writes it on request.
+	if filepath.Clean(path) == filepath.Clean(filepath.Join(o.StatePath(), policy.FileName)) {
+		return Plan{Target: policyInitTarget, Path: path,
+			Skip: Display(o.Home, path) + " is your user policy file, not a project's; run `downshift setup` inside a project to create that project's policy"}, true
+	}
 	doc, notes := PolicyInitDocumentFor(o.SmallTargets, o.BarePolicy)
 	plan = Plan{Target: policyInitTarget, Path: path, After: []byte(doc), Notes: notes}
 	_, err := os.Lstat(path)

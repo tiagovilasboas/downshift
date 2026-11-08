@@ -99,13 +99,25 @@ func isShift(ev Event) bool {
 }
 
 // RefutedRewrites returns the decisions (harness + "\n" + decision key) that
-// a linked "resolved" record refutes: the harness ran another model.
-func RefutedRewrites(events []Event) map[string]bool {
-	out := map[string]bool{}
+// a linked "resolved" record refutes: the harness ran another model. The value
+// is the model the resolved record reports (its final_model), "" when it names
+// none. That model is not always the one the decision was asked for: another
+// hook on the same call can set a third model and win.
+func RefutedRewrites(events []Event) map[string]string {
+	out := map[string]string{}
 	for _, ev := range events {
 		if ev.Outcome == OutcomeResolved && ev.LinkedDecision != "" && ev.RewriteHonored != nil && !*ev.RewriteHonored {
-			out[ev.Harness+"\n"+ev.LinkedDecision] = true
+			out[ev.Harness+"\n"+ev.LinkedDecision] = ev.ToModel
 		}
 	}
 	return out
+}
+
+// ranOnRefute is the model a refuted rewrite ran on: the one the resolved
+// record reports, else the model the decision was asked for.
+func ranOnRefute(decision Event, served string) string {
+	if served != "" && served != "unknown" {
+		return served
+	}
+	return decision.FromModel
 }

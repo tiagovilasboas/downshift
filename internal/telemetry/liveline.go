@@ -93,9 +93,12 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 		case StateHeld:
 			s.Held++
 		}
-		isRefuted := refuted[ev.Harness+"\n"+DecisionKey(ev)]
+		served, isRefuted := refuted[ev.Harness+"\n"+DecisionKey(ev)]
 		ran := ev.FromModel
-		if AppliedRewrite(ev.Outcome, ev.Corrections) && ev.Outcome == OutcomeRewriteEmitted && !isRefuted {
+		switch {
+		case isRefuted:
+			ran = ranOnRefute(ev, served)
+		case AppliedRewrite(ev.Outcome, ev.Corrections) && ev.Outcome == OutcomeRewriteEmitted:
 			ran = ev.ToModel
 		}
 		if ran != "" && ran != "unknown" {

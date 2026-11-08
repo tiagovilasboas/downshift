@@ -12,7 +12,9 @@ pre-commit:
   commands:
     gofmt:
       glob: "*.go"
-      run: gofmt -w {staged_files}
+      # The toolchain's gofmt (go.mod), not the first one on PATH: an older
+      # gofmt would rewrite files into a form CI rejects.
+      run: '"$(go env GOROOT)/bin/gofmt" -w {staged_files}'
       stage_fixed: true
     vet:
       glob: "*.go"

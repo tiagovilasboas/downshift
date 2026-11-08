@@ -148,6 +148,7 @@ func RoutingTokens(events []Event) RoutingView {
 		}
 		key := linkKey{ev.Harness, ev.LinkedDecision}
 		decision, found := decisions[key]
+		_, isRefuted := a.refuted[key]
 		id := ev.Harness + "\n" + ev.LinkedDecision
 		if !found {
 			id = ev.Harness + "\nusage:" + DecisionKey(ev)
@@ -158,12 +159,12 @@ func RoutingTokens(events []Event) RoutingView {
 			if found && decision.AgentType != "" {
 				sp.agent = decision.AgentType
 			}
-			sp.rewritten = found && isShift(decision) && !a.refuted[key]
+			sp.rewritten = found && isShift(decision) && !isRefuted
 			spawns[id] = sp
 		}
 		sp.billable += c.Billable()
 		sp.cacheRead += c.CacheRead
-		requested, ran := tokenModels(ev, decision, found, a.refuted[key])
+		requested, ran := tokenModels(ev, decision, found, isRefuted)
 		if found && decision.ParentModel != "" {
 			if d := directionVs(ev.Harness, decision.ParentModel, ran); d != TokenUnattributed {
 				sp.onSession = true

@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The `[0.10.0]` heading was missing from this file (its entries sat under `[0.11.0]`); it is restored.
+- A model rewrite the harness refuted is now counted on the model the linked `resolved` record reports. `downshift stats` (`Models:`) and the statusline assumed the harness kept the requested model, which is wrong when another hook on the same call set a third model and won: a child served sonnet was shown as opus. The requested model is used only when the record names none. Token attribution is unchanged (a refuted rewrite still saves nothing for routing). Evidence: [refuted-rewrite-third-model-2026-11-08.md](docs/evidence/refuted-rewrite-third-model-2026-11-08.md).
+- `downshift stats --detail` counts refuted rewrites on their own (`Honor observed N  refuted N  unobserved N`); they were added to `unobserved`, though a resolved record had observed them.
+- `downshift setup` no longer offers a project policy when run from the directory that holds the state directory (usually HOME): there `.downshift/policy.json` is the user policy, and through the nearest-file search it would have applied to every project below. It prints `policy: skipped:` with the reason. `downshift policy init` still writes it when asked.
+- `make check`, `make check-changed` and the lefthook pre-commit hook run the gofmt of the toolchain `go.mod` selects (`go env GOROOT`), the one CI runs, not the first gofmt on PATH. An older system gofmt listed `internal/telemetry/report_test.go` as unformatted, and the pre-commit hook would have rewritten files into a form CI rejects.
 
 ## [0.11.2] - 2026-11-07
 

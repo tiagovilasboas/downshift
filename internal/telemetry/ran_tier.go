@@ -47,8 +47,9 @@ func RanTiers(events []Event) map[SpawnRef]RanTier {
 			records = []Event{{}}
 		}
 		best := RanUnknown
+		_, isRefuted := a.refuted[k]
 		for _, u := range records {
-			_, ran := tokenModels(u, d, true, a.refuted[k])
+			_, ran := tokenModels(u, d, true, isRefuted)
 			best = higherRan(best, ranTierOf(d.Harness, ran))
 		}
 		out[SpawnRef{d.Harness, k.decision}] = best
