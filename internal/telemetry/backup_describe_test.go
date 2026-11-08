@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 func writeBackup(t *testing.T, dir, name, content string) {

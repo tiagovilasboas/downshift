@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // TestRun_RecordIsOnDiskWhenRunReturns runs an allowlisted command whose

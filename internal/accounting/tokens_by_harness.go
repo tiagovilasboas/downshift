@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // Quota statuses of a harness row.

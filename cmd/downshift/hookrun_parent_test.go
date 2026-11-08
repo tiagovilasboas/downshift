@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // TestHookRunnerRecordsParentModel: the shared runner stamps the parent session

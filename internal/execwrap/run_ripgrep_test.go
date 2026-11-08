@@ -8,7 +8,7 @@ package execwrap
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 func TestRun_SearchFormsCompactLikeGrepAndFind(t *testing.T) {

@@ -15,9 +15,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // conformanceEnv isolates one scenario: fresh HOME and state dir, a private

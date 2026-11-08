@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/antigravity"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // Child 0 is rewritten; child 1 (the last) is held by R5. The single event the

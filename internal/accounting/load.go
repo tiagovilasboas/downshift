@@ -4,7 +4,7 @@
 package accounting
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // ReadExecEvents reads the exec log of the state directory. A missing log is

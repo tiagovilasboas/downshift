@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
 )
 
 var numberWords = map[string]int{

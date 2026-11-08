@@ -16,11 +16,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/opencode"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 const openCodeChild = "5ab1c2d3e4f5a6b7c8d9e0f1a2b3c4d5"

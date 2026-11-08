@@ -71,4 +71,4 @@
     --- PASS: TestTaskText/no_keys_provided_returns_empty (0.00s)
     --- PASS: TestTaskText/nil_map_returns_empty (0.00s)
 PASS
-ok  	github.com/tiagovilasboas/downshift/internal/hookutil	0.004s
+ok  	github.com/tiagovilasboas/downshift-ai/internal/hookutil	0.004s

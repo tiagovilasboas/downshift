@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // spawnRunTool is the KiroCrew spawn tool whose tasks[] array is a batch.

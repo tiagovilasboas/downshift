@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
 )
 
 func touchWith(t *testing.T, in io.Reader) (int, string) {

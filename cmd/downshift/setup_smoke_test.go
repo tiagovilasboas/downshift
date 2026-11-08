@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 var smokeHarnesses = []string{"claude-code", "cursor", "codex", "antigravity", "kirocrew", "opencode"}

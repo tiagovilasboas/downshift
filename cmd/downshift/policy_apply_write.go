@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // appliedPlan records what one plan has done so far, so it can be undone.

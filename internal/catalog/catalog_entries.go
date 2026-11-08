@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // --- Accessors for commands (models list / check / pull) ---

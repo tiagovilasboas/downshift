@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/pelletier/go-toml/v2"
-	"github.com/tiagovilasboas/downshift/internal/setup"
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // The MCP registration check for every target setup writes an entry for, read

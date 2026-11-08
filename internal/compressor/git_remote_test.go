@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // remoteCase is one synthetic fixture under testdata/remote_runs: the exit

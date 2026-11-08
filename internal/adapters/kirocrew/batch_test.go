@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/kirocrew"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
 )
 
 const trivialTask = "rename the userId variable to userIdentifier"

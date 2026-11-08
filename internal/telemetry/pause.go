@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // PauseTTL is how long a pause marker stays in force. A forgotten pause must

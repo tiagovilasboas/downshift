@@ -2,7 +2,7 @@
 
 # Benchmark RouteLLM and coding-agent routers against Downshift (2026-11-07)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this document answers: how Downshift's deterministic, hook-local routing architecture compares against academic
 and commercial LLM routers (RouteLLM, RouterBench, LLMRouterBench, SWE-Router, Agent-as-a-Router, and FrugalGPT),

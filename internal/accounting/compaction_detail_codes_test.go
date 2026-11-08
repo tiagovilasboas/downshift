@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // The passthrough details and metachar classes are counted per harness, most

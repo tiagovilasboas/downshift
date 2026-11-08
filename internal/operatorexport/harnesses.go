@@ -6,7 +6,7 @@ package operatorexport
 import (
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // knownHarnessNames is the set of adapter names that may appear as a harness

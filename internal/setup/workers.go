@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // workersTarget labels the plan in the output. The file belongs to the user,

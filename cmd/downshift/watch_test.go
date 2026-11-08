@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 var watchT0 = time.Date(2026, 10, 13, 9, 0, 0, 0, time.UTC)

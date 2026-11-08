@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
 )
 
 func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []string, w, errW io.Writer) int {

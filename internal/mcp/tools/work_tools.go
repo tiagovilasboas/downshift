@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // The worker tools start read-only workers and read what they report. They are

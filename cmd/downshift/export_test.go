@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/operatorexport"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/operatorexport"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 func isolateExport(t *testing.T) {

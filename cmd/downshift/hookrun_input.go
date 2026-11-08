@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // foreignPayloadOwner names the harness that sent a payload to the hook of

@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // PolicyInitDocument is the bare file `downshift policy init --bare` creates,

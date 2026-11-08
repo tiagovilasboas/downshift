@@ -9,7 +9,7 @@
 // streamed. Any failure exits 1; make turns that into its own exit 2, as before.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package main
 
 import (

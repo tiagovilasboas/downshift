@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/console/shared/command"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 // maxIssues caps the issues listed on the home screen; doctor shows them all.

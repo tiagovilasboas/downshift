@@ -12,12 +12,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // PluginMarketplaceSource is the GitHub repository that hosts the Downshift
 // plugin marketplace (see .claude-plugin/marketplace.json).
-const PluginMarketplaceSource = "tiagovilasboas/downshift"
+const PluginMarketplaceSource = "tiagovilasboas/downshift-ai"
 
 func RealExec() Exec {
 	return Exec{

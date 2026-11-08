@@ -6,7 +6,7 @@ package shellwrap
 import (
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // ReasonQuotedRule is the skip code for a quoted command left unwrapped

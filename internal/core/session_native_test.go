@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quotamodel"
+	"github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
 )
 
 func nativeFixture(now time.Time) map[string]any {

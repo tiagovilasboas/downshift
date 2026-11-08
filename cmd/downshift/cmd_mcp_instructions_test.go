@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // Claude Code cuts server instructions at 4096 characters and loads them at

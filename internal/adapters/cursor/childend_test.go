@@ -6,9 +6,9 @@ package cursor_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
-	"github.com/tiagovilasboas/downshift/internal/hookport"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // Unverified: needs a real payload. These fixtures only pin the mapping from

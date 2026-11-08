@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
-	"github.com/tiagovilasboas/downshift/skills"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/skills"
 )
 
 // installedSkills lists the skills setup installs, by folder name in skills.FS.

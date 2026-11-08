@@ -6,7 +6,7 @@ package core_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // poolGatedID is the cursor catalog entry flagged pool_gated; the slug a

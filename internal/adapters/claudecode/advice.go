@@ -3,7 +3,7 @@
 
 package claudecode
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // complexOnSmallNote is the note the orchestrator reads when a decisive COMPLEX
 // task was asked to run on the small tier and nothing raised it. It names no

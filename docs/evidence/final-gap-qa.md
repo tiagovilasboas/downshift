@@ -1,7 +1,7 @@
 # Gate final de QA — 2026-10-09
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 **PASS**, no escopo do código, sensores e evidências delimitadas deste patch.
 Não há falha de software confirmada pendente neste gate. A coleta real do Cursor
@@ -38,8 +38,8 @@ nem execução de um filho pelo Cursor.
 Trechos dos resultados locais:
 
 ```text
-ok  github.com/tiagovilasboas/downshift/internal/core       coverage: 89.9% of statements
-ok  github.com/tiagovilasboas/downshift/internal/telemetry  coverage: 88.3% of statements
+ok  github.com/tiagovilasboas/downshift-ai/internal/core       coverage: 89.9% of statements
+ok  github.com/tiagovilasboas/downshift-ai/internal/telemetry  coverage: 88.3% of statements
 Node: tests 6 / pass 6 / fail 0
 Python 3.14.7: Ran 12 tests / OK
 Python 3.9.6: Ran 12 tests / OK

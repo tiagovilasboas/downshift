@@ -2,7 +2,7 @@
 
 # MCP unprompted and the tier hint, two real Claude Code runs (2026-10-29)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Level: **observed twice, one machine.** It answers one question: does the orchestrator call the Downshift MCP
 tools by itself, without being told to? It does not, in these runs. It does add the `[tier=small]` hint to the spawn

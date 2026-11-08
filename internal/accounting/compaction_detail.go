@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // CompactionDetail breaks the Compactor down per harness: by command family,

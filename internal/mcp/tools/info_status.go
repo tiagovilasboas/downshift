@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 const statusSchema = `{"type":"object","properties":{},"additionalProperties":false}`

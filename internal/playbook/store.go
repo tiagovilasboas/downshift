@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // Dir is the playbooks folder under the state directory. One file per set:

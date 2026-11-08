@@ -6,7 +6,7 @@ package transport
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
 )
 
 // Every registered tool must declare its four hints here, so a new tool cannot

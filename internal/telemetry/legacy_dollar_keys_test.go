@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // Event logs written before the tokens-only cut carry dollar keys. Nothing

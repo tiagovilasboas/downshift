@@ -2,7 +2,7 @@
 
 # The Downshift MCP server in Claude Code (2026-10-30 to 2026-10-31)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Level: **observed on one machine** (macOS, Claude Code 2.1.314 CLI and the 2.1.309 build in Claude Desktop),
 binaries `v0.2.0-75-gb2bc0d20` to `v0.2.0-78-g22899752`. Raw notes live in the private labs repository.

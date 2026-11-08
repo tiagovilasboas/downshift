@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/ccr"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/ccr"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 func keepForTest(t *testing.T, raw string) string {

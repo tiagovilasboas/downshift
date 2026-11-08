@@ -2,7 +2,7 @@
 
 # Spike: o KiroCrew depende do kiro-cli?
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **Data:** 2026-10-26 · **Pergunta:** um usuário que tem só o KiroCrew instalado, sem o
 `kiro-cli` no PATH, consegue usar o Downshift com o KiroCrew? E o `kiro-cli` funciona

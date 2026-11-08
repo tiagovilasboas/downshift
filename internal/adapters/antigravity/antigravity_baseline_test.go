@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/antigravity"
 )
 
 // Characterization: the requested model is the Model of the last subagent

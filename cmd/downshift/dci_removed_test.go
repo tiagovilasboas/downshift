@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // An older harness setup still calls `downshift dci hook <harness>` on every

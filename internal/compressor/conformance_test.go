@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 const (

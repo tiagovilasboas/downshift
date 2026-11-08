@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // A routing decision whose hook response leaves the spawn unchanged must be

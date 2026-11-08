@@ -4,7 +4,7 @@
 
 > **Removed 2026-10-29.** The prototype (`mods/downshift-router/`) is gone. This design stays as history.
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Date: 2026-10-17. Status: design plus an opt-in prototype (`mods/downshift-router/`, Experimental).
 Claude Code 2.1.302 on this machine; declarations read from the bundled `claude-code.d.ts` written

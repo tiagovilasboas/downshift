@@ -12,9 +12,9 @@ Downshift is an open-source CLI for AI coding agents. It helps reduce LLM token 
 
 Works with coding harnesses including Claude Code and Codex CLI; integration capabilities and available models vary by harness and session.
 
-[Get started](#get-started) · [Documentation](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md) · [Harness support](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/harness-matrix.md) · [Evidence](#what-the-evidence-shows) · [Contributing](https://github.com/tiagovilasboas/downshift/blob/main/CONTRIBUTING.md)
+[Get started](#get-started) · [Documentation](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/install.md) · [Harness support](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/harness-matrix.md) · [Evidence](#what-the-evidence-shows) · [Contributing](https://github.com/tiagovilasboas/downshift-ai/blob/main/CONTRIBUTING.md)
 
-[English](README.md) · [Português (Brasil)](https://github.com/tiagovilasboas/downshift/blob/main/docs/pt-br/README.md)
+[English](README.md) · [Português (Brasil)](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/pt-br/README.md)
 
 **Open source · Apache 2.0 · Product status: beta**
 </div>
@@ -27,11 +27,11 @@ Install a compatible release binary, choose your harness, review the proposed co
 
 Release archives target macOS and Linux on arm64 and amd64, and Windows on amd64. Asset availability varies by release; check the release page for your platform and verification files. The shell installer in the guide is for macOS and Linux.
 
-[Releases](https://github.com/tiagovilasboas/downshift/releases) · [Installation guide](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md) · [Quickstart](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/quickstart.md) · [Configuration](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/config.md) · [Undo setup](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/cli.md#downshift-setup) · [Uninstall](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/cli.md#downshift-uninstall)
+[Releases](https://github.com/tiagovilasboas/downshift-ai/releases) · [Installation guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/install.md) · [Quickstart](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/quickstart.md) · [Configuration](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/config.md) · [Undo setup](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/cli.md#downshift-setup) · [Uninstall](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/cli.md#downshift-uninstall)
 
 ```bash
 # macOS & Linux (arm64 / amd64)
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | bash
 
 # In your repository:
 downshift setup
@@ -52,7 +52,7 @@ Downshift also applies model choices for delegated work within the policy you de
 | **Subagent model routing** | Applies model choices at the spawn boundary within your policy. |
 | **Local reporting** | Shows compaction and routing information you can inspect. |
 
-[See when to use Downshift](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/when-to-use.md) · [Explore the architecture](https://github.com/tiagovilasboas/downshift/blob/main/docs/design/architecture.md)
+[See when to use Downshift](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/when-to-use.md) · [Explore the architecture](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/design/architecture.md)
 
 Select any diagram to view it at full size.
 
@@ -79,7 +79,7 @@ downshift compact -- go test ./...
 
 Clean output is compacted to save context tokens, while non-zero exit codes and failure logs are preserved in full.
 
-[Compaction](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/compaction.md) · [Supported tools](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/supported-tools.md) · [CCR](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/ccr.md)
+[Compaction](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/compaction.md) · [Supported tools](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/supported-tools.md) · [CCR](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/ccr.md)
 
 ## Route subagents within your policy
 
@@ -89,7 +89,7 @@ The orchestrator chooses the work to delegate. Downshift applies model decisions
 
 Integration depth varies. A rewrite emitted by Downshift does not by itself prove that the harness honored it. Downshift's routing code makes no additional LLM call. The choice applies to a subagent spawn; Downshift does not change the main session's model mid-turn.
 
-[Model routing](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/routing.md) · [Policy](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/policy.md) · [Session models](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/session-models.md)
+[Model routing](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/routing.md) · [Policy](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/policy.md) · [Session models](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/session-models.md)
 
 ## See your agents at work
 
@@ -108,7 +108,7 @@ In your coding harness chat, describe your task and type:
 - `downshift full-power` (alias `potencia-total`): activates the domain leads within your session capacity ceiling.
 - `downshift shift <squad>`: activates a specific domain squad (`core`, `quality`, `security`, `leadership`).
 
-[Agent guide](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/agents.md) · [Agent catalog](https://github.com/tiagovilasboas/downshift/blob/main/docs/agents/README.md)
+[Agent guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/agents.md) · [Agent catalog](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/agents/README.md)
 
 ## Works with your coding harness
 
@@ -123,7 +123,7 @@ Downshift was built with Claude Code and supports other harnesses at different s
 | Antigravity | Experimental | One child observed on one build. |
 | KiroCrew | Experimental | Policy mode, without in-place model rewrite. |
 
-Models available to one harness or session are not assumed to be available to another. See the [full harness matrix](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/harness-matrix.md) for integration details, evidence and limits.
+Models available to one harness or session are not assumed to be available to another. See the [full harness matrix](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/harness-matrix.md) for integration details, evidence and limits.
 
 ## What the evidence shows
 
@@ -135,13 +135,13 @@ Models available to one harness or session are not assumed to be available to an
 
 These are separate measurements in different units and workloads. The synthetic corpus totals include only fixtures the compactor processed, excluding preserved fixtures. The routing result is historical evidence; it does not establish the effect of the implementation after O8. Savings in unconstrained everyday use have not been established. Token estimates based on bytes are not an invoice or a measurement of plan limits.
 
-[Compaction benchmark](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/bench.md) · [Routing study](https://github.com/tiagovilasboas/downshift/blob/main/docs/evidence/four-arm-mechanical-2026-10-21.md) · [Evidence guide](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/evidence.md)
+[Compaction benchmark](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/bench.md) · [Routing study](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/evidence/four-arm-mechanical-2026-10-21.md) · [Evidence guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/evidence.md)
 
 ## Built for inspection and control
 
 - Hooks fail open: errors or timeouts leave the requested spawn unchanged.
 - Routing runs locally and makes no additional LLM call. Telemetry records counts, hashes and timings rather than prompts.
-- CCR can store raw command output locally. Redaction covers common credential shapes, but secrets in arbitrary formats can remain; review the [raw-output limitations](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/known-limitations.md#raw-output-kept-by-ccr) and configuration before using sensitive output.
+- CCR can store raw command output locally. Redaction covers common credential shapes, but secrets in arbitrary formats can remain; review the [raw-output limitations](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/known-limitations.md#raw-output-kept-by-ccr) and configuration before using sensitive output.
 - Write workers are opt-in and run in separate worktrees. Downshift does not merge their branches or provide an approval gate for deploys and other risky actions.
 
 | Command | What it does |
@@ -157,14 +157,14 @@ These are separate measurements in different units and workloads. The synthetic 
 | `downshift quota` | Inspect model quotas and windows across providers |
 | `downshift mcp serve` | Run local stdio MCP server (13 native tools) |
 
-[Safety](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/safety.md) · [Telemetry](https://github.com/tiagovilasboas/downshift/blob/main/docs/features/telemetry.md) · [Known limitations](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/known-limitations.md)
+[Safety](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/safety.md) · [Telemetry](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/telemetry.md) · [Known limitations](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/known-limitations.md)
 
 ## Documentation and community
 
-[Quickstart](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/quickstart.md) · [CLI reference](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/cli.md) · [Architecture](https://github.com/tiagovilasboas/downshift/blob/main/docs/design/architecture.md) · [Português (Brasil)](https://github.com/tiagovilasboas/downshift/blob/main/docs/pt-br/README.md)
+[Quickstart](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/quickstart.md) · [CLI reference](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/cli.md) · [Architecture](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/design/architecture.md) · [Português (Brasil)](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/pt-br/README.md)
 
-Found a bug or want to contribute? Read the [contributing guide](https://github.com/tiagovilasboas/downshift/blob/main/CONTRIBUTING.md) or [open an issue](https://github.com/tiagovilasboas/downshift/issues).
+Found a bug or want to contribute? Read the [contributing guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/CONTRIBUTING.md) or [open an issue](https://github.com/tiagovilasboas/downshift-ai/issues).
 
 ## License
 
-[Apache License 2.0](https://github.com/tiagovilasboas/downshift/blob/main/LICENSE). Downshift by Tiago Vilas Boas.
+[Apache License 2.0](https://github.com/tiagovilasboas/downshift-ai/blob/main/LICENSE). Downshift by Tiago Vilas Boas.

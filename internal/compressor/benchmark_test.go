@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 func BenchmarkCompress_GoTest(b *testing.B) {

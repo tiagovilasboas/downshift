@@ -3,7 +3,7 @@
 
 package setupwizard
 
-import "github.com/tiagovilasboas/downshift/internal/console/shared/pick"
+import "github.com/tiagovilasboas/downshift-ai/internal/console/shared/pick"
 
 func componentItems(cs []Component) []pick.Item {
 	items := make([]pick.Item, 0, len(cs))

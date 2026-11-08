@@ -3,7 +3,7 @@
 
 package kirocrew
 
-import "github.com/tiagovilasboas/downshift/internal/hookport"
+import "github.com/tiagovilasboas/downshift-ai/internal/hookport"
 
 // Port registers only the child-end parser (`downshift end kirocrew`). Honor
 // and usage stay nil: this harness's hooks do not send those fields to the

@@ -4,16 +4,16 @@
 package claudecode
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/testenv"
-	"github.com/tiagovilasboas/downshift/internal/testrace"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/testrace"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
 )
 
 func writeTranscript(t *testing.T, body string) string {

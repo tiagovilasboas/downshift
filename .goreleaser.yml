@@ -76,18 +76,18 @@ release:
     Model control layer for coding harnesses (Claude Code, Cursor, Codex, and more).
     The orchestrator chooses each subagent's model; Downshift applies it within your policy and measures the result. It adds no LLM call of its own.
 
-    Release notes: [docs/releases/{{ .Tag }}.md](https://github.com/tiagovilasboas/downshift/blob/main/docs/releases/{{ .Tag }}.md) · [Known limitations](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/known-limitations.md).
+    Release notes: [docs/releases/{{ .Tag }}.md](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/releases/{{ .Tag }}.md) · [Known limitations](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/known-limitations.md).
 
   footer: |
     ---
     **Install** (macOS / Linux):
     ```bash
-    curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+    curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
     ```
 
     **Install** (Go toolchain):
     ```bash
-    go install github.com/tiagovilasboas/downshift/cmd/downshift@{{ .Tag }}
+    go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@{{ .Tag }}
     ```
 
     **Verify checksum:**
@@ -95,9 +95,9 @@ release:
     sha256sum -c checksums.txt
     ```
 
-    **Verify signature and provenance:** see [Verify a release](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md#verify-a-release).
+    **Verify signature and provenance:** see [Verify a release](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/install.md#verify-a-release).
 
-    **Licence:** Apache License 2.0. See [LICENSE](https://github.com/tiagovilasboas/downshift/blob/main/LICENSE).
+    **Licence:** Apache License 2.0. See [LICENSE](https://github.com/tiagovilasboas/downshift-ai/blob/main/LICENSE).
 
 changelog:
   sort: asc

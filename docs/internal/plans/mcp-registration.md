@@ -2,7 +2,7 @@
 
 # Registering `downshift mcp serve` in each harness
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: **Research, 2026-10-28**, input to card K6 (`setup --mcp`) and to the spec's open item G-MCP1. Evidence levels:
 **docs** (official documentation), **local** (read-only `--help` or file structure on this machine), **binary**

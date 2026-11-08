@@ -1,7 +1,7 @@
 # Close-out recheck — 2026-10-09
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Afternoon recheck after `739ecec`. This records what was observed and what that
 observation does **not** close. No prompts, transcript paths, account

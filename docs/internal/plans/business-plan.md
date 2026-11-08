@@ -2,7 +2,7 @@
 
 # Business plan: routing v2 and the open-core model
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: **Proposal, 2026-10-26; updated 2026-10-27 and 2026-10-28.** Execution order and the owner decisions (O1 to O8) are in the [MVP plan](mvp-plan.md). O8 (2026-10-28) changes who decides the model: the orchestrator LLM chooses and Downshift applies and measures; the sections below are updated to match. Remaining open items are in section 9.
 

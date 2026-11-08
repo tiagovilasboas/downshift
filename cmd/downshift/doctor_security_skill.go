@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // securityAuditSkill is Cloudflare's security-audit skill (MIT), which the

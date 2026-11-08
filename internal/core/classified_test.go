@@ -3,7 +3,7 @@
 
 package core_test
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // classifiedRoute is what the classifier alone says about a prompt, shaped as
 // a Decision: complexity, tier, confidence, risk and the classifier guards. No

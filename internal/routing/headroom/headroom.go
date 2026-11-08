@@ -24,7 +24,7 @@
 // (section 5, "Staleness"). Here a reading past its TTL is unknown.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package headroom
 
 import (
@@ -32,7 +32,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // DefaultCriticalThreshold is the used percentage at which a provider is

@@ -3,7 +3,7 @@
 
 package benchmark
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // Accuracy returns the fraction of exact complexity-label matches.
 func Accuracy(results []Result) float64 {

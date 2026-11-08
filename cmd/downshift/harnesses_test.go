@@ -7,8 +7,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
 )
 
 // A registry entry alone gives a new harness hook and port.

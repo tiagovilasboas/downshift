@@ -3,7 +3,7 @@
 
 package hookport
 
-import "github.com/tiagovilasboas/downshift/internal/telemetry"
+import "github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 
 // TokenUsage is the token count a child reported. Zero fields mean "not
 // reported", never a measured zero.

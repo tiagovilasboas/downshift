@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // colourEveryLine wraps each line of in in a green SGR sequence, the way a

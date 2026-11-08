@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/playbook"
-	"github.com/tiagovilasboas/downshift/internal/routing/agenttier"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/agenttier"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 var shippedIDs = playbook.ShippedIDs()

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // goCoverRun builds a clean `go test -cover ./...` transcript over n packages.

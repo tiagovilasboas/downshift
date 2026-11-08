@@ -9,11 +9,11 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt/providers/native"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 func TestRegistry_RegistrationAndRetrieval(t *testing.T) {

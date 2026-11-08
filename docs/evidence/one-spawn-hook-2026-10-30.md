@@ -2,7 +2,7 @@
 
 # One real spawn through the Claude Code hook (2026-10-30)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Level: **observed once, one machine, one spawn.** It shows that the PreToolUse hook installed by `downshift setup`
 fires on a real subagent spawn and records its decision. It does not show that an effort value can be applied.

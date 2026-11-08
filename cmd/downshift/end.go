@@ -9,10 +9,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/childend"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookport"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/childend"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // runEnd is the shared child-end runner behind `downshift end <harness>`. The

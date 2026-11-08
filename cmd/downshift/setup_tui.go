@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/console/setupwizard"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/diffview"
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/setupwizard"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/diffview"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // The wizard is a seam so tests can run the flow without a terminal.

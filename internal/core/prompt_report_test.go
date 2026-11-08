@@ -10,7 +10,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // TestPromptReport scores a directory of prompt files through core.Route and

@@ -2,7 +2,7 @@
 
 # Routing v2: phased roadmap
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: Accepted 2026-10-26 (D1 to D13); sequencing superseded 2026-10-27 by the [MVP plan](mvp-plan.md), which wins where they differ. Scope: model routing and its channels. The Compactor (`execwrap`, `compressor`, `shellwrap`) and DCI (`codeintel`) do not change.
 

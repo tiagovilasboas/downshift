@@ -38,7 +38,7 @@ package opencode
 import (
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // Handle processes one route request. An invalid request returns the

@@ -7,7 +7,7 @@ to add new compressors, run tests, and submit changes.
 
 ```bash
 # Clone
-git clone https://github.com/tiagovilasboas/downshift.git
+git clone https://github.com/tiagovilasboas/downshift-ai.git
 cd downshift
 
 # Build
@@ -343,8 +343,8 @@ test(classify): add edge case for empty prompts
 
 ## Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/tiagovilasboas/downshift/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/tiagovilasboas/downshift/discussions)
+- **Issues**: [GitHub Issues](https://github.com/tiagovilasboas/downshift-ai/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/tiagovilasboas/downshift-ai/discussions)
 
 ---
 

@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // The installed-plugin hook check for `doctor`. A plugin is pinned to the

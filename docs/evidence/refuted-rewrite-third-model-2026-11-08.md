@@ -3,7 +3,7 @@
 # A refuted rewrite that ran on a third model, 2026-11-08
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Question: when another `PreToolUse` hook wins the same `Agent` call ([hook
 coexistence](hook-coexistence-2026-11-07.md)), does Downshift notice that its model

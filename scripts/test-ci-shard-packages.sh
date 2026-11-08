@@ -45,7 +45,7 @@ for total in 2 3; do
 
   shard0="$(SHARD_INDEX=0 SHARD_TOTAL=$total bash scripts/ci-shard-packages.sh)"
   check "N=$total: cmd/downshift pinned to shard 0" \
-    "$(printf '%s\n' "$shard0" | grep -qx 'github.com/tiagovilasboas/downshift/cmd/downshift' && echo 0 || echo 1)"
+    "$(printf '%s\n' "$shard0" | grep -qx 'github.com/tiagovilasboas/downshift-ai/cmd/downshift' && echo 0 || echo 1)"
   check "N=$total: shard 0 holds only cmd/downshift" \
     "$([ "$(printf '%s\n' "$shard0" | grep -c .)" = 1 ] && echo 0 || echo 1)"
 done

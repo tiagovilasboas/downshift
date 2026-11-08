@@ -6,7 +6,7 @@ package session
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quotamodel"
+	"github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
 )
 
 // LoadQuotaHook reads the canonical quota cache for one harness.

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // stubProc is a worker that finishes at once, so a delegate test never touches

@@ -6,9 +6,9 @@ package claudecode
 import (
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/mainwork"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/mainwork"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // observeMainWork records one main-session tool call (tool, category code and

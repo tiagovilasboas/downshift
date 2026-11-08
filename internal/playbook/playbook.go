@@ -8,7 +8,7 @@
 // agent, never lint: nothing here enforces them.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package playbook
 
 import (

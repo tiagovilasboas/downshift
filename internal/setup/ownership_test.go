@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 const kiroSteeringPath = ".kiro/crew/workspace/.kiro/steering/downshift-compact.md"

@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // DeadEnd records one failed subagent execution or test run.

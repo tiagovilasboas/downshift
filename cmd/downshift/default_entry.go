@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/setup"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // isConfigured reports whether Downshift is already set up on the host machine.

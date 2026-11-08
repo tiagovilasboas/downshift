@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // Regression cases from the routing audit (labs research/routing-audit.md):

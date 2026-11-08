@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // A canary placed in an argument, the working directory, the environment and

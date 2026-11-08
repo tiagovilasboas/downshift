@@ -15,7 +15,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // `downshift probe <event>` is a maintainer tool. Wired as a harness hook, it

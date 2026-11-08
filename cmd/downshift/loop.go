@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/loop"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/loop"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 const loopUsage = `Usage: downshift loop [--task=<desc>] [--sensor=<cmd>] [--iterations=<n>] [--timeout=<dur>] [--session=<id>] [--batch=<tasks.json>] [--continue-on-error] [--json] [-- <sensor-cmd>]`

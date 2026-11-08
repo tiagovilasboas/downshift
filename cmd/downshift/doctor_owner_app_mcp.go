@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // checkOwnerAppMcp reports, during the claude-code check, whether an MCP entry

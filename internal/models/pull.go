@@ -12,8 +12,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // pullFile is the JSON structure written to disk.

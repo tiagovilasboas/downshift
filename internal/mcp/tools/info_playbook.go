@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/playbook"
-	"github.com/tiagovilasboas/downshift/internal/routing/agenttier"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/agenttier"
 )
 
 const playbookSchema = `{"type":"object","properties":{"name":{"type":"string","description":"Playbook name. Omit to list the names."}},"additionalProperties":false}`

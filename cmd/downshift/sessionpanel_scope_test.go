@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // The panel names the scope of each figure: the bar is the report window over

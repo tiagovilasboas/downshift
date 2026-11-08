@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/ccr"
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/ccr"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // runRetrieve prints the raw output the compactor kept for an id, optionally

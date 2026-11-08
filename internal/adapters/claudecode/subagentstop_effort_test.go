@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/claudecode"
 )
 
 // Claude Code writes the effort a turn ran at on each assistant line of the

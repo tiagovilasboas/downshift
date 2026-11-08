@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
 )
 
 // efficiencyPointer is the one line that sends readers to the Compactor

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // TestCorpus_Pytest verifies the pytest contract:

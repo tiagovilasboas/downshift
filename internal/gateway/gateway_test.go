@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway"
-	"github.com/tiagovilasboas/downshift/internal/gateway/ninerouter"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway/ninerouter"
 )
 
 func TestGatewayRegistry(t *testing.T) {

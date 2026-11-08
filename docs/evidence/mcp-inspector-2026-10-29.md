@@ -2,7 +2,7 @@
 
 # MCP server checked with the official inspector (2026-10-29)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this page answers: does `downshift mcp serve` speak MCP over stdio to a client we did not write? The client is
 the MCP project's own inspector, run in its CLI mode. One machine, one run, read-only tools only.

@@ -2,7 +2,7 @@
 rem Copyright (c) 2026 Tiago Vilas Boas.
 rem SPDX-License-Identifier: Apache-2.0
 rem Downshift by Tiago Vilas Boas
-rem https://github.com/tiagovilasboas/downshift
+rem https://github.com/tiagovilasboas/downshift-ai
 rem
 rem Windows sibling of kirocrew-pre-tool-use.sh. KiroCrew wants an absolute
 rem executable with no arguments; this forwards stdin to `downshift kirocrew`

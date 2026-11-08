@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
 )
 
 func runSave(t *testing.T, stdin string, args ...string) (int, string, string) {

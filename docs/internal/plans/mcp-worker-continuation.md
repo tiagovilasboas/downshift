@@ -2,7 +2,7 @@
 
 # Plan: worker continuation for the MCP (`send`, `steer`, `answer`, `release`)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Owner decision 2026-10-31: break the three-week feature freeze
 (`proof-of-value-roadmap.md`, P-freeze) for this one piece of work. The alethe

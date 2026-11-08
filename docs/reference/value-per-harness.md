@@ -2,7 +2,7 @@
 
 # Value per harness and per API: what is measured, what blocks, what the catalog prices
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Checked against the repository on 2026-10-19: `internal/core/capabilities.go` (`HarnessCapabilities`, `UsageSource`),
 `internal/catalog/catalog.json` (`updated` and `prices_as_of` 2026-10-19), [harness-matrix.md](harness-matrix.md) and

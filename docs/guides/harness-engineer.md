@@ -20,7 +20,7 @@ etapas: instalação, configuração, troubleshooting e otimização.
 - Roteia para o modelo certo por tier de complexidade
 - Aprende padrões do projeto específico
 
-Repositório: https://github.com/tiagovilasboas/downshift
+Repositório: https://github.com/tiagovilasboas/downshift-ai
 
 ## Comandos Principais
 
@@ -28,7 +28,7 @@ Repositório: https://github.com/tiagovilasboas/downshift
 
 ```bash
 # Via Go install
-go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
+go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@latest
 
 # Verificar instalação
 downshift version
@@ -155,7 +155,7 @@ O classificador deve ser sub-millisecond. Se lento:
 downshift doctor
 
 # Rebuild se necessário
-go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
+go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@latest
 ```
 
 ### "Compaction not working"
@@ -183,7 +183,7 @@ downshift compactor -- go test ./...
 ### 2. Verifique o doctor após atualizações
 
 ```bash
-go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
+go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@latest
 downshift doctor
 ```
 
@@ -277,11 +277,11 @@ Prompt do usuário
 3. **Hook não dispara**: Setup correto mas hook não executa
 4. **Regressão de qualidade**: Tasks que funcionavam agora falham
 
-Para reportar: https://github.com/tiagovilasboas/downshift/issues
+Para reportar: https://github.com/tiagovilasboas/downshift-ai/issues
 
 ## Referências
 
-- README: https://github.com/tiagovilasboas/downshift/blob/main/README.md
+- README: https://github.com/tiagovilasboas/downshift-ai/blob/main/README.md
 - Arquitetura (fonte viva): [`docs/design/architecture.md`](../design/architecture.md)
 - Harness Matrix: `docs/reference/harness-matrix.md`
 - Config Options: `docs/reference/config-options.md`
@@ -289,4 +289,4 @@ Para reportar: https://github.com/tiagovilasboas/downshift/issues
 ---
 
 Downshift by Tiago Vilas Boas  
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai

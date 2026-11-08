@@ -7,8 +7,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/discovery"
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/discovery"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
 )
 
 // mcpReporter hands the model ids the orchestrator reports to the discovery

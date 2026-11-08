@@ -256,4 +256,4 @@ All `gh` subcommands are supported:
 
 Run `downshift learning suggestions` to see which uncompacted commands you use
 most frequently. Then [contribute a compressor](../contributing/compressors.md)
-or [open an issue](https://github.com/tiagovilasboas/downshift/issues).
+or [open an issue](https://github.com/tiagovilasboas/downshift-ai/issues).

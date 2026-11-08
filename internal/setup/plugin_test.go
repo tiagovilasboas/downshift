@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 const staleSettings = `{
@@ -114,7 +114,7 @@ func TestSetupInstallsPluginAndDropsSettingsHooks(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
 	}
-	want := []string{"claude plugin marketplace add tiagovilasboas/downshift", "claude plugin install downshift@downshift"}
+	want := []string{"claude plugin marketplace add tiagovilasboas/downshift-ai", "claude plugin install downshift@downshift"}
 	got := strings.Join(f.calls, "\n")
 	for _, w := range want {
 		if !strings.Contains(got, w) {

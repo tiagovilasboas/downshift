@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/session"
+	"github.com/tiagovilasboas/downshift-ai/internal/session"
 )
 
 // Environment variables read by internal/core.

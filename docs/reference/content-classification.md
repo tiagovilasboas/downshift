@@ -147,4 +147,4 @@ versions; rotation is not automatic.
 ---
 
 Downshift by Tiago Vilas Boas\
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai

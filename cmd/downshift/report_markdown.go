@@ -8,8 +8,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // printReportMarkdown writes the default report: the sections of the text

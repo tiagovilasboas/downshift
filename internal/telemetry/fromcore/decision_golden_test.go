@@ -12,10 +12,10 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry/fromcore"
 )
 
 var updateGolden = flag.Bool("update-decision-golden", false, "rewrite testdata/decision_events.golden.jsonl")

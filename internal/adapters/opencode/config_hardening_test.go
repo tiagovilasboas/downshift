@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/opencode"
 )
 
 const agentWithPermission = "---\npermission:\n  bash: deny\n---\n"

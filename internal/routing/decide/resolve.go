@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // choice is what the precedence ladder picked, before the guard sees it. A

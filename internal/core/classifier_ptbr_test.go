@@ -8,12 +8,12 @@ package core_test
 // prompts must keep their floor.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 var ptbrCheap = []string{

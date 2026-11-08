@@ -14,10 +14,10 @@ Migration context: [rename.md](rename.md)
 ```markdown
 # Downshift
 
-[![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
+[![Build](https://github.com/tiagovilasboas/downshift-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift-ai/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Go 1.27](https://img.shields.io/badge/go-1.27-00ADD8.svg)](https://go.dev)
-[![Status: beta](https://img.shields.io/badge/status-beta%20%E2%80%94%20practical%20testing-yellow)](https://github.com/tiagovilasboas/downshift/releases)
+[![Status: beta](https://img.shields.io/badge/status-beta%20%E2%80%94%20practical%20testing-yellow)](https://github.com/tiagovilasboas/downshift-ai/releases)
 ```
 
 ---
@@ -60,7 +60,7 @@ Subagent / request
 ### Quickstart
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
 
 downshift try "rename the userId variable" claude-code
 # → TRIVIAL → small tier
@@ -93,7 +93,7 @@ downshift: TRIVIAL task → downshift to claude-haiku-5-5 (smaller model)
 
 **Integrations** (docs): Coding harnesses · Catalog & session models · Shadow classifier · Outcome benchmarks
 
-*Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift*
+*Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai*
 ```
 
 ---
@@ -108,7 +108,7 @@ downshift: TRIVIAL task → downshift to claude-haiku-5-5 (smaller model)
 Open-source, local model router for agents and apps. Classify the workload, pick the tier, run—no LLM in the routing loop.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
 downshift try "list files in src/" cursor
 ```
 
@@ -138,7 +138,7 @@ Teams default every spawn to the most expensive model in the session. Downshift 
 ![Downshift](docs/img/hero.svg)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
 ```
 
 [Why Downshift?](#why-downshift) · [Benchmarks](docs/benchmark/README.md) · [Licence](LICENSE)

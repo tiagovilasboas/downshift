@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
 )
 
 // A Cursor picker slug such as grok-4.7 is not the catalog id (grok-4.7-xhigh)

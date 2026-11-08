@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
-	"github.com/tiagovilasboas/downshift/internal/models"
-	"github.com/tiagovilasboas/downshift/internal/playbook"
-	"github.com/tiagovilasboas/downshift/internal/quota"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
-	"github.com/tiagovilasboas/downshift/internal/routing/headroom"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/models"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/headroom"
 )
 
 // mcpModels adapts the detected-models resolver (K1) to the tools port.

@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/console/setupwizard"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/diffview"
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/setupwizard"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/diffview"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // previewSetup runs the dry-run planner for a selection and returns its diff.

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // End to end: `setup --dry-run` from HOME plans no "project" policy (that path

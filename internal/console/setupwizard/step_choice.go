@@ -6,8 +6,8 @@ package setupwizard
 import (
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/pick"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/pick"
 )
 
 // Choice is an optional single-answer question asked after the components.

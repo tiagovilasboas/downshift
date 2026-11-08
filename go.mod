@@ -1,4 +1,4 @@
-module github.com/tiagovilasboas/downshift
+module github.com/tiagovilasboas/downshift-ai
 
 go 1.27.3
 

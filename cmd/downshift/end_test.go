@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/setup"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // endEnv isolates state for the shared end runner.

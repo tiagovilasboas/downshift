@@ -1,7 +1,7 @@
 # Prompt corpus and refinement protocol
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 How classifier signals are refined without fitting them to the data they are
 judged on.

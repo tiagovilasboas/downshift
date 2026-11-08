@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
 )
 
 // fill applies the defaults: tier and playbook from the agent, route from the

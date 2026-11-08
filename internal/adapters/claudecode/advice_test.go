@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
 )
 
 // A decision that keeps the model but carries advice reaches the orchestrator

@@ -11,9 +11,9 @@
 > - 🔀 **[Guia de Roteamento de Modelos](../pt-br/guias/roteamento-de-modelos.md)** — Delegação de subagentes, guardrails e `policy.json`.
 > - 📊 **[Referência de Benchmarks](../pt-br/referencia/benchmarks.md)** — Tabela oficial de 107 fixtures e escada de evidência.
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
-*Repositório GitHub: [`downshift`](https://github.com/tiagovilasboas/downshift) · CLI `downshift` · licença Apache 2.0.*
+*Repositório GitHub: [`downshift`](https://github.com/tiagovilasboas/downshift-ai) · CLI `downshift` · licença Apache 2.0.*
 
 O **Downshift** dá ao seu agente de código o modelo certo e menos ruído, sem nenhuma chamada extra de IA. Tudo roda localmente: prompts nunca são guardados, nada sai pela rede e todo hook falha aberto.
 
@@ -173,7 +173,7 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 | [08 · Telemetria e Métricas](08-telemetria.md) | Observabilidade | Estrutura do `events.jsonl`, métricas normalizadas e auditoria sem vazamento de prompt |
 | [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |
 | [11 · Compressor Nativo de Contexto](../design/context-optimization.md) | Otimização | Compressor determinístico em Go e sensor de telemetria passiva |
-| [13 · Plugin, skills e agente (EN)](../design/architecture.md#packaging-layers-what-an-agent-harness-loads) | Empacotamento | As cinco camadas que um harness carrega: memória (`AGENTS.md`), skills (`skills/`), hooks (binário; `hooks/hooks.json` no plugin), agente de exemplo (`agents/`) e o plugin do Claude Code (`/plugin install downshift --marketplace tiagovilasboas/downshift`) |
+| [13 · Plugin, skills e agente (EN)](../design/architecture.md#packaging-layers-what-an-agent-harness-loads) | Empacotamento | As cinco camadas que um harness carrega: memória (`AGENTS.md`), skills (`skills/`), hooks (binário; `hooks/hooks.json` no plugin), agente de exemplo (`agents/`) e o plugin do Claude Code (`/plugin install downshift --marketplace tiagovilasboas/downshift-ai`) |
 | [14 · Companions (EN)](../guides/companions.md) | Ecossistema | Headroom como companion padrão (detectado e registrado, nunca instalado pelo Downshift), mods do Claude Code recomendados (You should know, Token Weather, Replay Theater, reflect-mod), padrões que o Downshift segue mas não empacota |
 
 ---

@@ -6,8 +6,8 @@ package kirocrew_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/kirocrew"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 func TestParseChildEnd(t *testing.T) {

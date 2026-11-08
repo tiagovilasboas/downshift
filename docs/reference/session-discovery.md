@@ -1,7 +1,7 @@
 # Session discovery
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Downshift asks each harness which models the current account can use, instead of
 relying only on a compiled-in catalog or a hand-written list. The embedded catalog

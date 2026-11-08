@@ -6,8 +6,8 @@ package accounting
 import (
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // Ledger is the token ledger every surface shows over one Scope, tokens only,

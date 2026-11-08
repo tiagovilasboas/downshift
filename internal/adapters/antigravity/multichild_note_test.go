@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/antigravity"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
 )
 
 const mcTrivial = "fix typo in README"

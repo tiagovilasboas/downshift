@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"charm.land/lipgloss/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 var keys = []Key{

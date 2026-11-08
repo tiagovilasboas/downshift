@@ -6,8 +6,8 @@ package decide
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // The agent's declared tier applies only to an inherited model, only downward,

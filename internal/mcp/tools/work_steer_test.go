@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // The steer tool corrects a worker mid-turn without losing its conversation. It

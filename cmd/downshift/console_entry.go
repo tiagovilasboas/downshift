@@ -9,8 +9,8 @@ import (
 	"os"
 
 	"github.com/charmbracelet/x/term"
-	"github.com/tiagovilasboas/downshift/internal/console"
-	"github.com/tiagovilasboas/downshift/internal/console/surface"
+	"github.com/tiagovilasboas/downshift-ai/internal/console"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/surface"
 )
 
 // wantsConsole reports whether a bare `downshift` should open the console. The

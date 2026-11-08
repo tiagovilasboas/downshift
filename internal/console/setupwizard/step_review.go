@@ -5,9 +5,9 @@ package setupwizard
 
 import (
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/diffview"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/diffview"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 // startReview moves to the review step and computes the diff as a command.

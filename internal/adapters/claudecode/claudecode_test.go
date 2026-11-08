@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
 )
 
 // cat is the shared test resolver — same embedded catalog the binary uses.

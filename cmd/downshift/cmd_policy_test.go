@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // isolatePolicy points HOME and the state directory at fresh temp dirs and

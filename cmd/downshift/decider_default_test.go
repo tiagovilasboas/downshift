@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookctx"
 )
 
 // TestRoutingDeciderDefaultProfile runs the built-in agent types through the

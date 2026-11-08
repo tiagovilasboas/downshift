@@ -4,9 +4,9 @@
 package main
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // mcpParallel resolves the squad fan-out cap of one harness: the user's

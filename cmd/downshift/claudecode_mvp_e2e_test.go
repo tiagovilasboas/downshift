@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/cascade"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/cascade"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // TestClaudeCodeMVP_E2E verifies the complete Onda 1 MVP lifecycle for Claude Code:

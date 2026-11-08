@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
-	"github.com/tiagovilasboas/downshift/internal/hookport"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/codex"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // Fixtures follow the documented shapes only: PostToolUse common fields

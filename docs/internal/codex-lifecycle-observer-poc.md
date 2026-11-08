@@ -1,7 +1,7 @@
 # Codex lifecycle observer POC (DS-04)
 
 Downshift by Tiago Vilas Boas\
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 **Removed on 2026-11-02:** the POC was never wired to a command or hook, so its
 code was deleted as dead code. This page and `ds-04-codex-observer-contract.md`

@@ -10,8 +10,8 @@ import (
 	"slices"
 
 	"github.com/charmbracelet/x/term"
-	"github.com/tiagovilasboas/downshift/internal/console"
-	"github.com/tiagovilasboas/downshift/internal/console/surface"
+	"github.com/tiagovilasboas/downshift-ai/internal/console"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/surface"
 )
 
 // stripPlain removes the human --plain escape hatch so handlers never see it.

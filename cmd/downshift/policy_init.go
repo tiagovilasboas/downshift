@@ -9,9 +9,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/models"
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/models"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 const policyInitUsage = `usage: downshift policy init [--dry-run] [--yes] [--bare]

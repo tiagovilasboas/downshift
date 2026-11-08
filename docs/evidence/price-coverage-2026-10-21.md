@@ -2,7 +2,7 @@
 
 # S2: Price coverage — exec event log and battery (2026-10-21)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **Status: completed 2026-10-21.**
 

@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/clispec"
+	"github.com/tiagovilasboas/downshift-ai/internal/clispec"
 )
 
 // maxSuggestDistance is the largest edit distance at which an unknown command

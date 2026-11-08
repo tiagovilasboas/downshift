@@ -4,12 +4,12 @@
 package core_test
 
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 import (
 	"encoding/json"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
 	"os"
 	"path/filepath"
 	"reflect"

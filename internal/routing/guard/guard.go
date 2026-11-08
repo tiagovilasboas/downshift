@@ -18,12 +18,12 @@
 // catalog.Catalog satisfies it, and routing never imports catalog.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package guard
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // Catalog is the part of the harness model catalog the guard reads.

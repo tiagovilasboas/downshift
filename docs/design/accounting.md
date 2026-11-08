@@ -2,7 +2,7 @@
 
 # Accounting — Specification v1
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **Status (2026-10-29):** the accounting is a token ledger, tokens only, forever (owner decision). It
 reports three numbers and never a dollar or cost figure, not even as an estimate:

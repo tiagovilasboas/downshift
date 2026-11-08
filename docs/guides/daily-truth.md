@@ -1,7 +1,7 @@
 # Daily truth
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Downshift routes a subagent. It does not orchestrate a session. The daily
 product is three claims. Each claim is absolute only for the spawn whose own

@@ -7,8 +7,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 const testExe = "/opt/down shift/bin/downshift"

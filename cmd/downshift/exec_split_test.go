@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // fakeGoOnPath puts a `go` script on PATH that prints a line on stdout and on

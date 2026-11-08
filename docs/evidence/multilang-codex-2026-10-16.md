@@ -3,7 +3,7 @@
 # Multilingual routing checks from Codex, 2026-10-16
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 ## Scope
 

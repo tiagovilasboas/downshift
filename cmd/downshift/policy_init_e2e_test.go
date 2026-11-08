@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/downshift/internal/classify"
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift-ai/internal/classify"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core/decidertest"
 )
 
 // The file `policy init` writes is a real routing policy: through the Claude

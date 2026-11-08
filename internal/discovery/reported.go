@@ -6,8 +6,8 @@ package discovery
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/session"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/session"
 )
 
 // MaxReported caps the ids accepted from one report.

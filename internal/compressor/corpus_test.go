@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 func TestCorpusRawStaysByteIdentical(t *testing.T) {

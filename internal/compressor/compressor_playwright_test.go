@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 func TestCompress_Playwright_PassCompaction(t *testing.T) {

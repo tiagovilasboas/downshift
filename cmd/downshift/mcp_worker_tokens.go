@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // workerAgentHarnesses builds the worker agent to harness map from the

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // stats shows tokens; report shows the routed spawns, their rework and tokens.

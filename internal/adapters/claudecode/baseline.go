@@ -6,8 +6,8 @@ package claudecode
 import (
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
 )
 
 // currentModel is the model the subagent would run on without a rewrite: the

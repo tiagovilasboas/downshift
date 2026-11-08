@@ -22,7 +22,7 @@ import (
 
 	_ "embed"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 //go:embed catalog.json

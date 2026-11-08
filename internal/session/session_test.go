@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quotamodel"
+	"github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
 )
 
 // pin installs c for one test and isolates the package hooks.

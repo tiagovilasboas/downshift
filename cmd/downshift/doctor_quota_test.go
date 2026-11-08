@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/quota"
 )
 
 func TestCheckQuotaSource_Desktop(t *testing.T) {

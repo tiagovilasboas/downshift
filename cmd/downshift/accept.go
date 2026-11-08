@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // runAccept is `downshift accept [--session=<id>] [--status=used|discarded]`:

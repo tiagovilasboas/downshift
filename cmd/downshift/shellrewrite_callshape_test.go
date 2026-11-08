@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // bashCallPayload is a Claude Code Bash PreToolUse payload with the given

@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/hookport"
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // ParseChildEnd is KiroCrew's side of the shared child-end contract. It reads

@@ -7,8 +7,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/discovery"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/discovery"
 )
 
 // Background model discovery trigger (shared hook runner, no harness names).

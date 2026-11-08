@@ -3,7 +3,7 @@
 
 package main
 
-import "github.com/tiagovilasboas/downshift/internal/routing/policy"
+import "github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 
 // mcpBudgetTokens resolves the orchestration token cap: the user's override,
 // the policy files (project under root, then the user's), then none (0). It

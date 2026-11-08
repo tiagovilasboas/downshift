@@ -1,7 +1,7 @@
 # Guia de Roteamento e Delegação de Modelos por Subagente
 
 > Downshift por Tiago Vilas Boas  
-> Repositório oficial: https://github.com/tiagovilasboas/downshift  
+> Repositório oficial: https://github.com/tiagovilasboas/downshift-ai  
 > Licença: Apache 2.0
 
 O **Downshift** atua como uma camada determinística de infraestrutura para delegação e roteamento de modelos em agentes de codificação. Ele garante que cada subagente dispare no modelo e esforço ideais para a sua responsabilidade, respeitando rigorosamente as políticas declaradas pelo desenvolvedor.
@@ -98,7 +98,7 @@ downshift policy check
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/tiagovilasboas/downshift/main/schemas/policy.schema.json",
+  "$schema": "https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/schemas/policy.schema.json",
   "routing": {
     "by_class": true,
     "raise_complex": false

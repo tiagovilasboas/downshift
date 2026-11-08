@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 func circuitRow(version, field string, age time.Duration) telemetry.Event {

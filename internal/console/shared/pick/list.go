@@ -5,7 +5,7 @@ package pick
 
 import (
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
 )
 
 // List is a single-choice picker.

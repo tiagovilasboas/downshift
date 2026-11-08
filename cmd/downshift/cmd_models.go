@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/models"
+	"github.com/tiagovilasboas/downshift-ai/internal/models"
 )
 
 // runModels dispatches the 'models' subcommands: list, check, pull.

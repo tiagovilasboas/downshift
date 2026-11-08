@@ -2,7 +2,7 @@
 
 # Four-arm battery, part 1: mechanical delegated tasks (2026-10-21)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this page answers: on delegated mechanical work in Claude Code, how many tokens does each setup spend per
 accepted task, and how much of the difference does Downshift's routing explain? It follows the

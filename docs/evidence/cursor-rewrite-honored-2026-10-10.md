@@ -1,7 +1,7 @@
 # Cursor rewrite honor — 2026-10-10
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 One spawn on this machine, Cursor **3.24.9** build
 `cd6d2a1f2e56e9841f0ed9c7c24542087b4e69b0`. The hook binary was `downshift`

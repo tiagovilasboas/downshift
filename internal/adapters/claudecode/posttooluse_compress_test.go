@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 const toolEvidence = "ok  github.com/acme/a  0.1s\nok  github.com/acme/b  0.2s\nKEEP_TOOL_EVIDENCE_LINE\n"

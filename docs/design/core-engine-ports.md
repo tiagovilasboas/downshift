@@ -3,7 +3,7 @@
 # Design note: a `core.Engine` with explicit ports (Fullstack P1-1)
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Status: proposal, 2026-10-19. Nothing here is implemented.
 

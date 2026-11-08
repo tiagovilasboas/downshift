@@ -4,8 +4,8 @@
 package main
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/mcp/tools"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // recordMCPToolCall writes one adoption record for a plan or delegate call:

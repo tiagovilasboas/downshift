@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry/fromcore"
 )
 
 // main sets the direction catalog at startup; tests stand in for it.

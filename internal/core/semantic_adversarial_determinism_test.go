@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // TestSemAdvMonotonic: fusion never lowers the regex complexity, a confident

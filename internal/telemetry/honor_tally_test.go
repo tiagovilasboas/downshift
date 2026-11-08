@@ -6,7 +6,7 @@ package telemetry_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 func tallyShift(id, session string) telemetry.Event {

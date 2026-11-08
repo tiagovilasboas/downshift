@@ -2,7 +2,7 @@
 
 # Claude Desktop Code tab: routing, MCP and compaction (2026-10-30)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Level: **observed on one machine, from real sessions the owner ran in the Claude Desktop Code tab.** No session was
 started for this record; the evidence was read afterwards from the Claude Code transcripts and the Downshift logs.

@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // RefusalBudget: the orchestration already spent its token cap, so no wave started.

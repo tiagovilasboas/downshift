@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/diffview"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/diffview"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 func sampleOptions(preview func(Selection) ([]diffview.File, error)) Options {

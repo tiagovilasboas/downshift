@@ -5,8 +5,8 @@ package main
 
 import (
 	"bytes"
-	"github.com/tiagovilasboas/downshift/internal/setup"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 	"os"
 	"path/filepath"
 	"strings"

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/benchmark"
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/benchmark"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // The context benchmark prints measured compressor bytes for the checked-in

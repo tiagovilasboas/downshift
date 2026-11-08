@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // viewProc is a worker a test ends by hand, with a report and tokens it chooses.

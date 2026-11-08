@@ -2,7 +2,7 @@
 
 # Evaluation of reasoning effort, retry strategies, quality, and prompt caching (2026-11-07)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this document establishes: a systematic evaluation of Anthropic's official optimization recommendations
 ("Optimizing for cost and intelligence") against Downshift's runtime architecture, per-harness hook reality, prompt

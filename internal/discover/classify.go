@@ -15,7 +15,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // Kind is what the compact policy makes of one recorded command.

@@ -6,7 +6,7 @@ package main
 import (
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
 )
 
 // reportData is the report with no presentation: the header, one summary row

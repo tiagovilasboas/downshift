@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/playbook"
+	"github.com/tiagovilasboas/downshift-ai/internal/playbook"
 )
 
 // providers stores the model ids the orchestrator passes as a hint, so it is

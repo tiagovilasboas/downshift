@@ -1,6 +1,6 @@
 # Verification evidence
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Cost alone cannot show whether a cheaper subagent checked its work. On Claude
 Code, `SubagentStop` reads the child's transcript and records the last recognized

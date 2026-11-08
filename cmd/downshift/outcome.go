@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/downshift/internal/outcome"
+	"github.com/tiagovilasboas/downshift-ai/internal/outcome"
 )
 
 // Public OSS has no in-tree benchmark files; maintainer reports use labs paths via flags.

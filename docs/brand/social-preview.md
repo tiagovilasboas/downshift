@@ -2,7 +2,7 @@
 
 Upload once in the repository settings:
 
-1. Open [downshift → Settings → General](https://github.com/tiagovilasboas/downshift/settings).
+1. Open [downshift → Settings → General](https://github.com/tiagovilasboas/downshift-ai/settings).
 2. **Social preview** → upload `downshift-github-social-preview.png` (1280×640).
 3. Source SVGs live alongside this folder (`downshift-routing-runtime-*.svg`).
 

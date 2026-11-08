@@ -23,9 +23,9 @@ repository names, session IDs, model text, hostnames, or usernames leave your ma
    `downshift export --help`: it prints the export's help. `unknown command "export"` means the
    build is too old; install from `main`:
    ```bash
-   go install github.com/tiagovilasboas/downshift/cmd/downshift@main
+   go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@main
    ```
-   A later release from the [Releases](https://github.com/tiagovilasboas/downshift/releases) page
+   A later release from the [Releases](https://github.com/tiagovilasboas/downshift-ai/releases) page
    works too. See [install.md](install.md) for the installer and PATH notes.
 2. **Wire the hooks.** `downshift setup` finds Claude Code and merges its hooks, with a diff and a
    backup. Then `downshift doctor` must show the Claude Code hooks as wired.
@@ -66,7 +66,7 @@ values, and refuses to print anything that does not pass. That check is continuo
 ### Submitting your export
 
 1. Copy the output of `downshift export --days=7` or attach `downshift-export.json`.
-2. Post it as a comment on the measurement-week tracking issue ([#104](https://github.com/tiagovilasboas/downshift/issues/104)), accompanied by the four facts noted on Day 1 (Claude Code plan, `downshift --version`, start date, end date).
+2. Post it as a comment on the measurement-week tracking issue ([#104](https://github.com/tiagovilasboas/downshift-ai/issues/104)), accompanied by the four facts noted on Day 1 (Claude Code plan, `downshift --version`, start date, end date).
 3. A public GitHub handle is sufficient as your contributor reference (or state that you prefer to stay anonymous in release notes).
 
 > [!TIP]

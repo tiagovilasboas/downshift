@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 func ago(d time.Duration) string { return time.Now().UTC().Add(-d).Format(time.RFC3339Nano) }

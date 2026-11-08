@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-const modulePath = "github.com/tiagovilasboas/downshift"
+const modulePath = "github.com/tiagovilasboas/downshift-ai"
 
 // externalAllowed lists the internal packages that may import a module outside
 // the standard library, and which module prefixes they may import. Every other

@@ -2,7 +2,7 @@
 
 # Stage 4 specification: the plan runner
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: **Draft, 2026-10-27; model choice changed 2026-10-28 (O8).** Stage 4 of the [MVP plan](mvp-plan.md). Clean-room: written from a behaviour
 report on an external batch runner (kept outside this repository, no code, no names from that project), the owner

@@ -14,15 +14,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry/fromcore"
 )
 
 // ── config ────────────────────────────────────────────────────────────────────

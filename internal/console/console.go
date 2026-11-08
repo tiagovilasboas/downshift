@@ -9,14 +9,14 @@
 // theme, the frame and the command runner.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package console
 
 import (
 	"io"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/command"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
 )
 
 // Options configures one console run.

@@ -6,7 +6,7 @@ package loop
 import (
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // SessionReport counts the acceptance observations of one session.

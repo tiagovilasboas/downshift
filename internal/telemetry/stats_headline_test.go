@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 func headlineEvent(from, to, tier string, actual, baseline *float64) telemetry.Event {

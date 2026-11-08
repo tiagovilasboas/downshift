@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // compactorFamilyPanel is one command family of the session's Compactor runs.

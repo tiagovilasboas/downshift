@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // setupArgFlags are the switches the CLI resolves itself: the hook binary

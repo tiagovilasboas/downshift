@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 func TestParse(t *testing.T) {

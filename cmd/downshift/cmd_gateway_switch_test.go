@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
 )
 
 func TestGatewayOnOffStatus(t *testing.T) {

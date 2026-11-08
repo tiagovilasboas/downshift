@@ -4,7 +4,7 @@
 // Package quotamodel is the filesystem-free quota evidence model.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package quotamodel
 
 import (

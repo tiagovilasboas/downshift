@@ -6,7 +6,7 @@ package main
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // TestMcpTargetsTableInvariants keeps the doctor rows unique: every

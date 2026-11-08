@@ -1,7 +1,7 @@
 # Observed usage quota
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Discovery answers which models a harness offers. Quota answers whether a fresh
 usage observation permits an available candidate. `session-models.json` remains

@@ -9,9 +9,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
-	"github.com/tiagovilasboas/downshift/internal/console/reportview"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/reportview"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // styledReportData maps the report to what the styled screen draws. The detail

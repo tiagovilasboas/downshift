@@ -6,7 +6,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 	"path/filepath"
 	"strings"
 	"testing"

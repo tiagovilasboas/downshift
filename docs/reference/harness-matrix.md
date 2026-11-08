@@ -3,7 +3,7 @@
 > **Status:** Claude Code stable; Codex and Cursor functional; OpenCode beta; Antigravity and KiroCrew experimental.
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 ## Status per harness
 

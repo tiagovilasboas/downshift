@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/reportview"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
-	"github.com/tiagovilasboas/downshift/internal/console/surface"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/reportview"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/surface"
 )
 
 // styledReportWanted is set once by main, from the raw argv (so --plain is

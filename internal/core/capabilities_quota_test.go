@@ -6,8 +6,8 @@ package core_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/quota"
 )
 
 func TestNativeCapsAgreeWithQuotaTable(t *testing.T) {

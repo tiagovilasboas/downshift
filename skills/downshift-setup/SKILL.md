@@ -13,14 +13,14 @@ delete it; the plugin copy stays and costs one description line).
 ## 1. Binary
 
 1. `downshift version`. If missing, or older than the latest release
-   (`gh release view --repo tiagovilasboas/downshift --json tagName` or the Releases page):
-   `curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh`
+   (`gh release view --repo tiagovilasboas/downshift-ai --json tagName` or the Releases page):
+   `curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh`
    (macOS / Linux) or the Releases page or `go install`; see `docs/guides/install.md`. Never
    skip this because hooks are wired: `setup` reports "up to date" for the config, not the
    binary. Then `which -a downshift`: the first one must be the new build. An older copy
    earlier on PATH (often `~/go/bin`) shadows it; replace or remove that copy, then recheck
    `downshift version`.
-2. Claude Code only: the plugin (`/plugin marketplace add tiagovilasboas/downshift`, then
+2. Claude Code only: the plugin (`/plugin marketplace add tiagovilasboas/downshift-ai`, then
    `/plugin install downshift@downshift`) wires the same hooks and the `/downshift:status`
    slash command without touching `~/.claude/settings.json`. Use one
    path, plugin or `setup`, not both: `setup` skips the hooks when it sees the plugin enabled,
@@ -60,4 +60,4 @@ delete it; the plugin copy stays and costs one description line).
 Do not invent hook paths, matchers or catalog entries; everything above is in
 `docs/guides/install.md` and `examples/`.
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

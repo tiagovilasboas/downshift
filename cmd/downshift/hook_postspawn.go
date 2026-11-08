@@ -9,8 +9,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
 )
 
 // runObserver runs an observation command (honor, usage or end) for the one

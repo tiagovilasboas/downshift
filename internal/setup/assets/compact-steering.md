@@ -1,7 +1,7 @@
 # Downshift compactor: wrap allowlisted commands
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 This harness has no shell-rewrite hook, so compaction is not automatic. When
 you run an allowlisted command yourself, invoke it through the compactor:

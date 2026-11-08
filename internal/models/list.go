@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // List prints the effective catalog as a formatted table to w.

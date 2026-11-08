@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
 )
 
 const (

@@ -6,7 +6,7 @@ package core_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // TestSetDecider_RouteAsksTheInstalledDeciderAndRestores pins the seam: Route

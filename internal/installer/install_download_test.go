@@ -48,9 +48,9 @@ func TestInstallExplainsAMissingReleaseArchive(t *testing.T) {
 	for _, want := range []string{
 		"release v0.1.0 has no ",
 		"/" + runtime.GOARCH + " archive yet",
-		"go install github.com/tiagovilasboas/downshift/cmd/downshift@v0.1.0",
-		"https://github.com/tiagovilasboas/downshift/releases",
-		"https://github.com/tiagovilasboas/downshift/issues",
+		"go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@v0.1.0",
+		"https://github.com/tiagovilasboas/downshift-ai/releases",
+		"https://github.com/tiagovilasboas/downshift-ai/issues",
 		"sh -s <tag>",
 	} {
 		if !strings.Contains(r.output, want) {

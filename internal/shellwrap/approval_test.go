@@ -6,7 +6,7 @@ package shellwrap
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // fakeShell is a RewriteAdapter whose rewrite output is the wrapped command.

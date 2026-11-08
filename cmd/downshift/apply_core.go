@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookctx"
-	"github.com/tiagovilasboas/downshift/internal/routing/agenttier"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
-	"github.com/tiagovilasboas/downshift/internal/routing/decide"
-	"github.com/tiagovilasboas/downshift/internal/routing/hint"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookctx"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/agenttier"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/decide"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/hint"
 )
 
 // decideSpawn is the one answer to "what would Downshift apply for this

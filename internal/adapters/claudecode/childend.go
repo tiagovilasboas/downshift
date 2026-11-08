@@ -6,8 +6,8 @@ package claudecode
 import (
 	"encoding/json"
 
-	"github.com/tiagovilasboas/downshift/internal/hookport"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // ParseChildEnd is Claude Code's side of the shared child-end contract. It

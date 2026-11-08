@@ -70,7 +70,7 @@ func TestInstallVerifiesAttestationWithGH(t *testing.T) {
 		t.Fatalf("attestation not reported\noutput:\n%s", r.output)
 	}
 	log, _ := os.ReadFile(r.ghLog)
-	if !strings.Contains(string(log), "attestation verify") || !strings.Contains(string(log), "--repo tiagovilasboas/downshift") {
+	if !strings.Contains(string(log), "attestation verify") || !strings.Contains(string(log), "--repo tiagovilasboas/downshift-ai") {
 		t.Fatalf("gh called as %q", log)
 	}
 }

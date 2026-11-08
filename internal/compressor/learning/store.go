@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // StoreFileName is the local store under the state directory.

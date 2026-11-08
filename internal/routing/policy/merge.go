@@ -6,7 +6,7 @@ package policy
 import (
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // combine merges the project layer over the user layer. A setting the project

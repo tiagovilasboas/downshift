@@ -1,6 +1,6 @@
 # 01 · Entrada do Fluxo
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 O **Downshift** atua exclusivamente no momento exato em que um **subagente está prestes a ser instanciado**. Um chat comum de turno único, sem invocação de ferramentas de delegação, não passa pelo roteador.
 

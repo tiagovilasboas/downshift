@@ -27,11 +27,11 @@ Instale um binário de release compatível, escolha seu harness, revise a config
 
 Os pacotes de release atendem macOS e Linux em arm64 e amd64, e Windows em amd64. A disponibilidade dos arquivos varia conforme o release; confira a página de releases para sua plataforma e os arquivos de verificação. O instalador shell do guia atende macOS e Linux.
 
-[Releases](https://github.com/tiagovilasboas/downshift/releases) · [Instalação](../guides/install.md) · [Início rápido](../guides/quickstart.md) · [Configuração](../guides/config.md) · [Desfazer configuração](../reference/cli.md#downshift-setup) · [Desinstalar](../reference/cli.md#downshift-uninstall)
+[Releases](https://github.com/tiagovilasboas/downshift-ai/releases) · [Instalação](../guides/install.md) · [Início rápido](../guides/quickstart.md) · [Configuração](../guides/config.md) · [Desfazer configuração](../reference/cli.md#downshift-setup) · [Desinstalar](../reference/cli.md#downshift-uninstall)
 
 ```bash
 # macOS & Linux (arm64 / amd64)
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | bash
 
 # No seu repositório:
 downshift setup
@@ -162,7 +162,7 @@ São medições separadas, com unidades e cargas de trabalho diferentes. Os tota
 
 [Início rápido](../guides/quickstart.md) · [Referência de CLI](../reference/cli.md) · [Arquitetura](../design/architecture.md) · [English](../../README.md)
 
-Encontrou um problema ou quer contribuir? Leia o [guia de contribuição](../../CONTRIBUTING.md) ou [abra uma issue](https://github.com/tiagovilasboas/downshift/issues).
+Encontrou um problema ou quer contribuir? Leia o [guia de contribuição](../../CONTRIBUTING.md) ou [abra uma issue](https://github.com/tiagovilasboas/downshift-ai/issues).
 
 ## Licença
 

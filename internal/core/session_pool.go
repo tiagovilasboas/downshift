@@ -3,7 +3,7 @@
 
 package core
 
-import "github.com/tiagovilasboas/downshift/internal/quotamodel"
+import "github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
 
 // A pool-gated model (catalog flag pool_gated, Model.PoolGated) is a model
 // whose use draws on a token pool the hook can only trust when this call

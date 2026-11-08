@@ -3,7 +3,7 @@
 
 package execwrap
 
-import "github.com/tiagovilasboas/downshift/internal/compressor"
+import "github.com/tiagovilasboas/downshift-ai/internal/compressor"
 
 // expectedFormats is the set of compressor formats each family may be
 // compacted as. A command of the family is compacted only when the compressor

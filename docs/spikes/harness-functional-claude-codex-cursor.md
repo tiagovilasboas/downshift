@@ -5,7 +5,7 @@
 **Contexto:** KiroCrew já entrega valor diário (roteamento `spawn_run`, compactor via backend Claude ou advise no kiro-cli). Claude Code, Codex e Cursor têm adaptadores maduros no repositório, mas a matriz ainda marca lacunas de **honra**, **fim de child**, **usage** e **prova ao vivo** — o que impede promover confiança e o `doctor` de contar a história certa.
 
 Downshift by Tiago Vilas Boas  
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 **Relacionado:** [harness-matrix.md](../reference/harness-matrix.md), [gap-tasks.md](../internal/gap-tasks.md), [shell-wrap-harness-matrix.md](shell-wrap-harness-matrix.md) (parcialmente desatualizado em relação ao código).
 

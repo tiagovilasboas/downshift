@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/clispec"
+	"github.com/tiagovilasboas/downshift-ai/internal/clispec"
 )
 
 const cliDoc = "docs/reference/cli.md"

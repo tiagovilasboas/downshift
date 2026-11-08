@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
 )
 
 func efficiencyOutputs(t *testing.T) (md, text, js string) {

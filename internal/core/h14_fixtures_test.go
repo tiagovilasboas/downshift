@@ -4,7 +4,7 @@
 package core_test
 
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 // Canonical M3 / H14 evaluation prompts (downshift-labs multilang m3-v1).
 // Single source for acceptance and unit tests in this package.

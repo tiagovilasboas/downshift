@@ -6,7 +6,7 @@ package semantic_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/semantic"
+	"github.com/tiagovilasboas/downshift-ai/internal/semantic"
 )
 
 func TestPrototypeStoreValidate(t *testing.T) {

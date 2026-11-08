@@ -2,7 +2,7 @@
 
 # Roadmap: proof of value in production (2026-10-31 to 2026-11-21)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 ## Why this plan
 

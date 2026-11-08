@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // rotateLockWait bounds how long an append waits for the rotation lock.

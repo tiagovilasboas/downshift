@@ -11,8 +11,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // gatewayWorkerEnv is the MCP delegate hook: the env a worker of the agent gets

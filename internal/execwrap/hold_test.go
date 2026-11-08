@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 // Stdout is not held past HoldBound: a slow program shows its first output

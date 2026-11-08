@@ -2,7 +2,7 @@
 
 # Benchmark delegation boundaries and coordination overhead (2026-11-07)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this document answers: when does delegating coding tasks to subagents reduce total token spend, when does
 coordination overhead wipe out any saving, how do the four canonical evaluation arms compare, and why vendor claims

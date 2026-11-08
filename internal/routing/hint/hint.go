@@ -18,7 +18,7 @@
 // only checks that it is a plain identifier.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package hint
 
 import (
@@ -26,7 +26,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 // Keys of the prefix. The spelling is the hint convention; a rename breaks the

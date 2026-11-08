@@ -1,7 +1,7 @@
 # Spawn state: when Downshift works and when it switches
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Every subagent spawn the hook sees gets exactly one **state**, computed once in
 `internal/telemetry/spawn_state.go` from the decision event. Every harness

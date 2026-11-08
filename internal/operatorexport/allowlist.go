@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
 )
 
 // The allowlist is the sensor for issue #104: an outside operator must be able

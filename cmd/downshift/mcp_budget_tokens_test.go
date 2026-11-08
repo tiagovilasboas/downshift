@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 func TestMcpBudgetTokensPrecedence(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway/ninerouter"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway/ninerouter"
 )
 
 func TestNineRouterNormalizeID(t *testing.T) {

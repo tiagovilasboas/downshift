@@ -6,7 +6,7 @@ package main
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // recentFailureTailBytes bounds the event-log read the hook makes to find a

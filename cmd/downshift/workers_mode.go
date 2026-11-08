@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // workerAgentLists reads the worker agents from the harness capabilities:

@@ -6,9 +6,9 @@ package decide
 import (
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 const h contract.HarnessID = "test-harness"

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry/fromcore"
 )
 
 // TestMain isolates HOME before any test runs. Several tests drive the real

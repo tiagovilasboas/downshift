@@ -3,7 +3,7 @@
 
 package codex
 
-import "github.com/tiagovilasboas/downshift/internal/hookutil"
+import "github.com/tiagovilasboas/downshift-ai/internal/hookutil"
 
 // sessionModelFromTranscript returns the parent session's current model: the
 // last turn_context payload.model in the rollout tail. A spawn_agent call

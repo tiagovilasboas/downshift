@@ -6,7 +6,7 @@ package core_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // TestShiftMatrix checks the universal gear rule on the real catalog:

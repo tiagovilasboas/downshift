@@ -6,8 +6,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/models"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/models"
 )
 
 // checkAvailableModels says whether a real source lists the models a spawn can

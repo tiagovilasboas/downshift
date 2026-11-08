@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
-	"github.com/tiagovilasboas/downshift/internal/workers"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/workers"
 )
 
 // RefusalQuota: quota is at or past the stop line, so no worker was started.

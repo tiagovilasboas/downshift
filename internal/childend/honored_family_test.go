@@ -6,7 +6,7 @@ package childend
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
 )
 
 // A harness alias can resolve to a newer release of the family the hook

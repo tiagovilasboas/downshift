@@ -2,7 +2,7 @@
 
 # Downshift MVP plan: from a clean base to the complete product
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: **Accepted, 2026-10-27.** This is the execution order. It consolidates the [routing v2 roadmap](roadmap.md)
 (D1 to D13), the external roadmap proposal (A1 to A4, kept outside this repository) and the owner decisions of

@@ -3,7 +3,7 @@
 
 package decidertest
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+import "github.com/tiagovilasboas/downshift-ai/internal/core"
 
 // Unconfident returns a Decider that routes to tier t like Tier but without
 // confidence and with no guardrail correction: the decision a classifier

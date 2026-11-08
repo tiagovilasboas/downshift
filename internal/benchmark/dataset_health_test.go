@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/benchmark"
+	"github.com/tiagovilasboas/downshift-ai/internal/benchmark"
 )
 
 // --- LoadDataset duplicate guard (table-driven) ---

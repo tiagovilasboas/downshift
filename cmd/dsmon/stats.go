@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // ── stats ─────────────────────────────────────────────────────────────────────

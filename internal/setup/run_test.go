@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/hooks"
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/hooks"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 const testBin = "/opt/ds/downshift"

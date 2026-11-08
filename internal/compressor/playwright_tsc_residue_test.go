@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // A passing line whose title carries a danger word is not a plain success

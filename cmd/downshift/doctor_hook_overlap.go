@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // Hook overlap check for `doctor`.

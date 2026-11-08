@@ -10,8 +10,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/console/shared/command"
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // Facts is everything the decision reads.

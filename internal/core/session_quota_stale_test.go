@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quotamodel"
+	"github.com/tiagovilasboas/downshift-ai/internal/quotamodel"
 )
 
 // writeQuotaCache writes one harness snapshot in the canonical cache shape

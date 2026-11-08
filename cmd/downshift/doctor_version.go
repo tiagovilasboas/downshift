@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
-	"github.com/tiagovilasboas/downshift/internal/setup/configfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
 // The version-sync check for `doctor`. A binary left at an old release while
@@ -210,5 +210,5 @@ func checkLatestRelease(rep *doctorReport, latest func() (string, bool), binary 
 	}
 	rep.add(doctorCheck{ID: id, Status: doctorWarn,
 		Detail: fmt.Sprintf("%s is available, this binary is %s", tag, binary),
-		Fix:    "reinstall (install.sh or `go install github.com/tiagovilasboas/downshift/cmd/downshift@" + tag + "`), then run `downshift setup --yes`"})
+		Fix:    "reinstall (install.sh or `go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@" + tag + "`), then run `downshift setup --yes`"})
 }

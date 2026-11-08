@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 const selfStamp = "2026-10-28T06:00:00Z"

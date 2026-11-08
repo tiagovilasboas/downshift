@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // pathCopies lists the distinct downshift executables found in dirs, in PATH

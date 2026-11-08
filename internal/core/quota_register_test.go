@@ -7,4 +7,4 @@ package core_test
 // blank import lives in the external test package: quota imports core, so an
 // internal test (package core) cannot import it. The hooks are set before any
 // test in this binary runs, including package core tests that read quota files.
-import _ "github.com/tiagovilasboas/downshift/internal/quota"
+import _ "github.com/tiagovilasboas/downshift-ai/internal/quota"

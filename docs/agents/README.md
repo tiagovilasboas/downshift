@@ -187,4 +187,4 @@ tools: Read, Grep, Glob, Edit, Bash
 
 ---
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

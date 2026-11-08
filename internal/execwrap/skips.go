@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 // SkipsFileName is the log of commands the shell-rewrite hook declined to wrap.

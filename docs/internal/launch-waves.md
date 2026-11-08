@@ -4,7 +4,7 @@
 > **Não pule ondas com dependência** sem aceitar o risco (tabela abaixo).  
 > Contexto: [rename.md](../brand/rename.md) · hero: [readme-hero.md](../brand/readme-hero.md)
 
-**Estado do repo (baseline):** `tiagovilasboas/downshift` · CLI `downshift` · licença **Apache 2.0** (desde 2026-10-06) · beta ([beta-exit.md](../reference/beta-exit.md)).
+**Estado do repo (baseline):** `tiagovilasboas/downshift-ai` · CLI `downshift` · licença **Apache 2.0** (desde 2026-10-06) · beta ([beta-exit.md](../reference/beta-exit.md)).
 
 ---
 
@@ -102,12 +102,12 @@
 
 ## Onda 4 — Rename técnico (P0 para launch “oficial”)
 
-**Meta:** `github.com/tiagovilasboas/downshift` + module path novo.
+**Meta:** `github.com/tiagovilasboas/downshift-ai` + module path novo.
 
 | ID | Task | Arquivos / ação | Done |
 |----|------|-----------------|------|
-| W4-1 | `go.mod` → `github.com/tiagovilasboas/downshift`; replace imports em massa | `go.mod`, `**/*.go` | [x] |
-| W4-2 | `install.sh` `REPO=tiagovilasboas/downshift` | `install.sh` | [x] |
+| W4-1 | `go.mod` → `github.com/tiagovilasboas/downshift-ai`; replace imports em massa | `go.mod`, `**/*.go` | [x] |
+| W4-2 | `install.sh` `REPO=tiagovilasboas/downshift-ai` | `install.sh` | [x] |
 | W4-3 | `.goreleaser.yml` release name, header/footer URLs | `.goreleaser.yml` | [x] |
 | W4-4 | Badges e raw URLs no README, SECURITY, docs | vários `.md` | [x] |
 | W4-5 | `LICENSE` Licensed Work: Downshift | `LICENSE` | [ ] |
@@ -118,7 +118,7 @@
 
 **PR(s):** código primeiro; rename GitHub no merge day.
 
-**Exit:** `go install github.com/tiagovilasboas/downshift/cmd/downshift@latest` funciona.
+**Exit:** `go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@latest` funciona.
 
 ---
 
@@ -148,14 +148,14 @@
 | ID | Task | Done |
 |----|------|------|
 | W6-1 | Tag semver (ex. `v0.2.0` ou `v1.0.0-beta.2`) + Goreleaser | [x] |
-| W6-2 | GitHub Discussion pinned: anúncio rename + COMMERCIAL link | [x] [#55](https://github.com/tiagovilasboas/downshift/discussions/55) — pin na UI se ainda não |
+| W6-2 | GitHub Discussion pinned: anúncio rename + COMMERCIAL link | [x] [#55](https://github.com/tiagovilasboas/downshift-ai/discussions/55) — pin na UI se ainda não |
 | W6-3 | Habilitar **Discussions** (Q&A, Show and tell) | [x] |
 | W6-0 | CI fast (`ci`) + nightly `ci-full`; public repo without dataset gates (eval in labs) | [x] |
 | W6-4 | Dev.to: artigo problema (subagent cost) — não propaganda | [ ] |
 | W6-5 | HN: Show HN (técnico, link ARCHITECTURE + honest limits) | [ ] |
 | W6-6 | LinkedIn + X (versões rename.md §23) | [ ] |
 | W6-7 | `examples/` mínimo: fixtures PreToolUse por harness (`claude-code-pretooluse-*.json`, `cursor-pretooluse-task.json`; root `hook-input.json` removed) | [x] |
-| W6-8 | Publicar imagem `ghcr.io/tiagovilasboas/downshift` + doc (P1 se atrasar) | [ ] |
+| W6-8 | Publicar imagem `ghcr.io/tiagovilasboas/downshift-ai` + doc (P1 se atrasar) | [ ] |
 
 ---
 
@@ -232,4 +232,4 @@ Não bloqueia launch; ordem sugerida:
 ---
 
 Downshift by Tiago Vilas Boas\
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai

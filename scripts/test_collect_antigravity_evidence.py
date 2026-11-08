@@ -4,7 +4,7 @@
 """Fixture-only tests for the manual Antigravity evidence sensor.
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 """
 
 import importlib.util
@@ -77,7 +77,7 @@ class EvidenceSensorTests(unittest.TestCase):
     def test_valid_chain_has_executor_and_generation_proof_without_private_content(self):
         report = SENSOR.collect(self.parent, self.child, 8)
         self.assertEqual(report["project"], "Downshift by Tiago Vilas Boas")
-        self.assertEqual(report["repository"], "https://github.com/tiagovilasboas/downshift")
+        self.assertEqual(report["repository"], "https://github.com/tiagovilasboas/downshift-ai")
         self.assertEqual(report["requested_alias"], "pro")
         self.assertEqual(report["applied_alias"], "flash_lite")
         self.assertEqual(report["effective_model"], "gemini-3.5-flash-lite")

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
 )
 
 func TestCanonicalizeModels(t *testing.T) {

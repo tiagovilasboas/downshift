@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Tiago Vilas Boas.
 # SPDX-License-Identifier: Apache-2.0
 # Downshift by Tiago Vilas Boas
-# https://github.com/tiagovilasboas/downshift
+# https://github.com/tiagovilasboas/downshift-ai
 # Register this absolute file path in agent.kiro_hooks.preToolUse.
 set -eu
 router_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)

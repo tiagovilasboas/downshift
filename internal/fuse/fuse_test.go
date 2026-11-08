@@ -6,7 +6,7 @@ package fuse
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/classify"
+	"github.com/tiagovilasboas/downshift-ai/internal/classify"
 )
 
 func TestApply_DisabledMatchesClassify(t *testing.T) {

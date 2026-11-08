@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/command"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/frame"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/command"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 // Hints are the palette's key hints.

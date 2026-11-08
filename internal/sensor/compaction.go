@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
-	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
 const compactionMaxAge = 90 * 24 * time.Hour

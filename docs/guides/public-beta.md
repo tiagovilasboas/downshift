@@ -1,6 +1,6 @@
 # Public beta — honesty, blockers, and how to help
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 The **beta** label stays until [beta-exit.md](../reference/beta-exit.md) is signed.
 This page is what an external developer can verify locally, and what still needs
@@ -74,7 +74,7 @@ Open these only if a search shows no duplicate:
 
 ## LinkedIn draft (do not post until the maintainer says so)
 
-Downshift is a local hook that applies the orchestrator's model choice for a coding-agent subtask within your declared policy, with no LLM call in its own code. (Since O8, 2026-10-28, it no longer picks a model with classifier rules.) It is still **beta**: Claude Code is the path with honor evidence; Cursor honor and real billing comparisons are open. If you run it for a week, `downshift stats --export` (counts only, no prompts) is the most useful thing you can send. Apache-2.0. https://github.com/tiagovilasboas/downshift
+Downshift is a local hook that applies the orchestrator's model choice for a coding-agent subtask within your declared policy, with no LLM call in its own code. (Since O8, 2026-10-28, it no longer picks a model with classifier rules.) It is still **beta**: Claude Code is the path with honor evidence; Cursor honor and real billing comparisons are open. If you run it for a week, `downshift stats --export` (counts only, no prompts) is the most useful thing you can send. Apache-2.0. https://github.com/tiagovilasboas/downshift-ai
 
 ## Cost of this readiness pass
 

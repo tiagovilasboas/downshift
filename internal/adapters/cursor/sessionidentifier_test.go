@@ -6,7 +6,7 @@ package cursor_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
 )
 
 func TestSessionIdentifier(t *testing.T) {

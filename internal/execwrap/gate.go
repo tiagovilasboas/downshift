@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // HoldBound, when positive, bounds how long stdout of an allowlisted family

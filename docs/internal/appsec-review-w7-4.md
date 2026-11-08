@@ -1,6 +1,6 @@
 # W7.4 hook-path security: self-review draft
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 **Date:** 2026-10-28
 **Status:** **Self-review draft, not a gate.** Written by the implementing

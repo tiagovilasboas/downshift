@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
-	"github.com/tiagovilasboas/downshift/internal/mainwork"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/mainwork"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // defaultReportDays is the window `downshift report` uses without --days. The

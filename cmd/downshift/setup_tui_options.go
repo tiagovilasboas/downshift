@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/tiagovilasboas/downshift/internal/console/setupwizard"
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/setupwizard"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 // setupComponent is one wizard choice and the flag that expresses it. The

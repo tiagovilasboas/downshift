@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/testenv"
-	"github.com/tiagovilasboas/downshift/internal/testrace"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/testrace"
 )
 
 // A leftover lock file with no live holder (a hook killed mid-append) must

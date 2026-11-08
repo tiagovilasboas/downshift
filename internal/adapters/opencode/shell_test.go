@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/opencode"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 const shellChild = "0123456789abcdef0123456789abcdef"

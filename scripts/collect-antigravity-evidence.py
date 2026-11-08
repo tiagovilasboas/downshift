@@ -4,7 +4,7 @@
 """Manual, read-only evidence sensor for Antigravity 2.21.1 local SQLite.
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 This private storage schema is build-specific. It is never used by routing or
 automatic honor telemetry. Output omits prompts, paths, and raw conversation IDs.
@@ -141,7 +141,7 @@ def collect(parent, child, step_index):
     return {
         "schema_version": 1,
         "project": "Downshift by Tiago Vilas Boas",
-        "repository": "https://github.com/tiagovilasboas/downshift",
+        "repository": "https://github.com/tiagovilasboas/downshift-ai",
         "observed_at": datetime.now(timezone.utc).isoformat(),
         "source": "manual_antigravity_sqlite",
         "storage_contract": "Antigravity 2.21.1; private protobuf field paths",

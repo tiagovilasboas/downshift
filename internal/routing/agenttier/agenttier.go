@@ -7,7 +7,7 @@
 // the catalog maps a tier to a model per harness.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 package agenttier
 
 import (
@@ -17,8 +17,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tiagovilasboas/downshift/agents"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift-ai/agents"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
 
 var (

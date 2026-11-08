@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookctx"
-	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookctx"
+	"github.com/tiagovilasboas/downshift-ai/internal/quota"
 )
 
 var deciderNow = time.Date(2026, 10, 27, 12, 0, 0, 0, time.UTC)

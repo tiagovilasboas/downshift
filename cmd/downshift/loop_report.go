@@ -9,8 +9,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/loop"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/loop"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 const loopReportUsage = `Usage: downshift loop report [--session=<id>] [--json]`

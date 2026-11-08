@@ -6,7 +6,7 @@ package cursor
 import (
 	"encoding/json"
 
-	"github.com/tiagovilasboas/downshift/internal/shellwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/shellwrap"
 )
 
 // shellExecEvent is the hook_event_name of Cursor's beforeShellExecution hook

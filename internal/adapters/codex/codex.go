@@ -19,9 +19,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookutil"
-	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
+	"github.com/tiagovilasboas/downshift-ai/internal/quota"
 )
 
 const harnessID = "codex"

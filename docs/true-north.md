@@ -2,7 +2,7 @@
 
 # True north
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 Status: owner direction, 2026-10-29. This page says what Downshift is for, which published studies the
 direction rests on, what each study does and does not show, and what our own data proves so far. Where a

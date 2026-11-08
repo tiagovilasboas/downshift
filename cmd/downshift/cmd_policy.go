@@ -10,8 +10,8 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/tiagovilasboas/downshift/internal/policyfile"
-	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+	"github.com/tiagovilasboas/downshift-ai/internal/policyfile"
+	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 )
 
 // policyEconomyRemoved is printed by 'downshift policy economy': the command

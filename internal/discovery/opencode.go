@@ -18,7 +18,7 @@ import (
 // provider/model id per line for the providers the local install is set up
 // with. It reads no credentials and starts no login.
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 type OpenCodeCLI struct{ Bin string }
 
 func (OpenCodeCLI) Harness() string { return "opencode" }

@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // knownHarnessNames lists the harnesses Downshift has an adapter for, in a

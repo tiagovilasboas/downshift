@@ -6,7 +6,7 @@ package mainwork
 import (
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // sessionFrontier reads the event log once and reports, per "harness/session",

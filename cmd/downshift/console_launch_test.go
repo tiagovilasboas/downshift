@@ -13,8 +13,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/console"
-	"github.com/tiagovilasboas/downshift/internal/console/surface"
+	"github.com/tiagovilasboas/downshift-ai/internal/console"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/surface"
 )
 
 func TestLaunchDecision(t *testing.T) {

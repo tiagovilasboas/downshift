@@ -2,7 +2,7 @@
 
 # Plugin and mods smoke test, headless Claude Code 2.1.302 (2026-10-17)
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 What this page answers: do the Downshift plugin and the sibling mods load under `claude -p`, and does routing still work
 when they are loaded? It is a smoke test: three sessions, one per round, one operator. Aggregates only; no prompts or paths
@@ -105,4 +105,4 @@ Pass the prompt on stdin: `--allowedTools` is variadic and swallows a trailing p
 `python3 -I` (one JSON object per line; `outcome`, `requested_model`, `final_model`, `decision_intelligence.reasons`).
 Total spend for the three rounds: $0.45 at list price.
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai

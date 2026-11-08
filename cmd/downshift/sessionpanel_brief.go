@@ -3,7 +3,7 @@
 
 package main
 
-import "github.com/tiagovilasboas/downshift/internal/telemetry"
+import "github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 
 // panelBrief is `session --panel --brief`: exactly what the agents band draws.
 // The session counts, the summary and the spawn rows are the PanelView's

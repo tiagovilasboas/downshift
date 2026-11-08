@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/plan"
+	"github.com/tiagovilasboas/downshift-ai/internal/plan"
 )
 
 const goodPlan = `{"goal":"Export","parts":[

@@ -3,7 +3,7 @@
 > **Status: setup wizard (`downshift setup`) in development.** It works and asks before writing, but its flow and harness coverage still change.
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Canonical guide for humans and coding agents installing Downshift on a user machine.
 
@@ -39,25 +39,25 @@ received a live usage observation.
 
 **Step 1 — Install** (macOS / Linux):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
 ```
 
 The installer downloads the release archive and `checksums.txt` from the same
 GitHub release and verifies the sha256 before anything is installed; a mismatch
 or a missing checksum file stops it. `DOWNSHIFT_SKIP_CHECKSUM=1` installs
 unverified and says so. Releases are also on the
-[Releases page](https://github.com/tiagovilasboas/downshift/releases) with the
+[Releases page](https://github.com/tiagovilasboas/downshift-ai/releases) with the
 same `checksums.txt`.
 
 **Build provenance (optional).** Releases built by the `release` job carry a GitHub
 build-provenance attestation. After the sha256 check, if the `gh` CLI is installed,
-`install.sh` runs `gh attestation verify <archive> --repo tiagovilasboas/downshift`
+`install.sh` runs `gh attestation verify <archive> --repo tiagovilasboas/downshift-ai`
 and prints `Build provenance verified`. It never blocks on this by default: with no
 `gh`, no `gh auth login`, or a release older than the attestations, it prints a
 warning and continues on the sha256 alone. `DOWNSHIFT_REQUIRE_ATTESTATION=1` makes
 any outcome other than "verified" an error that installs nothing;
 `DOWNSHIFT_SKIP_ATTESTATION=1` skips the check. The installer ends by saying what was proven: "sha256 and GitHub build provenance" or "sha256 only" (an intact download, not proof of who published it). It accepts only a strict `vMAJOR.MINOR.PATCH[-prerelease]` version, downloads with `curl --proto '=https' --tlsv1.2`, and installs through a temporary name plus a rename. By hand:
-`gh attestation verify downshift_<ver>_<os>_<arch>.tar.gz --repo tiagovilasboas/downshift`.
+`gh attestation verify downshift_<ver>_<os>_<arch>.tar.gz --repo tiagovilasboas/downshift-ai`.
 
 ### Verify a release
 
@@ -71,11 +71,11 @@ attestation, and run the binary on Linux, macOS and Windows runners.
 ```bash
 cosign verify-blob checksums.txt \
   --bundle checksums.txt.sigstore.json \
-  --certificate-identity-regexp '^https://github\.com/tiagovilasboas/downshift/\.github/workflows/ci\.yml@refs/tags/v[0-9]' \
+  --certificate-identity-regexp '^https://github\.com/tiagovilasboas/downshift-ai/\.github/workflows/ci\.yml@refs/tags/v[0-9]' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 sha256sum -c checksums.txt --ignore-missing          # Linux
 shasum -a 256 -c checksums.txt --ignore-missing      # macOS
-gh attestation verify downshift_<ver>_<os>_<arch>.tar.gz --repo tiagovilasboas/downshift
+gh attestation verify downshift_<ver>_<os>_<arch>.tar.gz --repo tiagovilasboas/downshift-ai
 ```
 
 `install.sh` treats a non-flag argument as the release version and refuses an unknown flag. (The `--explicit-upshift` flag and the `DOWNSHIFT_EXPLICIT_UPSHIFT` runtime switch were removed 2026-10-31: Downshift never raises a tier on its own, so there was nothing to opt into. The installer now rejects the removed flag. See [session-models.md](../reference/session-models.md#explicit_only-models).)
@@ -174,10 +174,10 @@ Build or install the single binary (nothing else to install at runtime):
 # Replaces the downshift already on your PATH (for example ~/go/bin after go install), so there is only ever one copy.
 # A first install goes to /usr/local/bin if it is writable, otherwise to ~/.local/bin (or ~/bin if that exists and ~/.local/bin does not);
 # the installer warns when the directory is not on your PATH. DOWNSHIFT_INSTALL_DIR overrides both.
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
 
 # Alternative — Go toolchain (any platform)
-go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
+go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@latest
 ```
 
 > **Go toolchain note:** `go install` places the binary in `~/go/bin`.
@@ -189,7 +189,7 @@ go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
 > The `curl` installer above avoids this by installing directly to `/usr/local/bin`.
 
 Pre-built binaries for macOS (arm64/amd64), Linux (arm64/amd64), and Windows (amd64)
-are available on the [Releases](https://github.com/tiagovilasboas/downshift/releases) page.
+are available on the [Releases](https://github.com/tiagovilasboas/downshift-ai/releases) page.
 
 **Fastest path:** `downshift setup` finds Claude Code, Cursor, Codex, Antigravity and KiroCrew (Experimental) on this machine and merges every hook (plus the Claude Code statusline when none is set) into their hook files, using this binary's absolute path. It keeps unrelated keys and existing hooks, is idempotent, prints a diff, and saves a timestamped backup. In a terminal it runs as the setup wizard; `--dry-run` writes nothing, `--yes` skips the wizard and the question, `--undo` restores the latest backup. For KiroCrew it also writes a wrapper script (see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook)). The manual JSON follows.
 
@@ -223,10 +223,10 @@ above) and replaces step 2 for Claude Code only. `downshift setup` does this ins
 `downshift setup`.
 
 ```text
-/plugin install downshift --marketplace tiagovilasboas/downshift      # Claude Code 2.1.275+
+/plugin install downshift --marketplace tiagovilasboas/downshift-ai      # Claude Code 2.1.275+
 ```
 
-or in two steps, `/plugin marketplace add tiagovilasboas/downshift` then
+or in two steps, `/plugin marketplace add tiagovilasboas/downshift-ai` then
 `/plugin install downshift@downshift`. The plugin wires `PreToolUse`,
 `PostToolUse`, `PostToolUseFailure`, `SubagentStop`, and `UserPromptSubmit` (for Downshift Code Intelligence) from
 [`hooks/hooks.json`](../../hooks/hooks.json) (each entry only calls the binary),
@@ -781,11 +781,11 @@ The tag exists, but its release has no archive for your platform (for example a
 release created before its build finished). Nothing is wrong on your machine,
 and the installer never falls back to another version on its own. Options:
 
-1. Pick another tag from [Releases](https://github.com/tiagovilasboas/downshift/releases), then
-   `curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh -s <tag>`.
-2. With Go installed: `go install github.com/tiagovilasboas/downshift/cmd/downshift@<tag>`
+1. Pick another tag from [Releases](https://github.com/tiagovilasboas/downshift-ai/releases), then
+   `curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh -s <tag>`.
+2. With Go installed: `go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@<tag>`
    (the binary lands in `~/go/bin`).
-3. Report it at https://github.com/tiagovilasboas/downshift/issues.
+3. Report it at https://github.com/tiagovilasboas/downshift-ai/issues.
 
 ### `downshift: command not found` after `go install`
 

@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/gateway"
-	"github.com/tiagovilasboas/downshift/internal/gateway/ninerouter"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway"
+	"github.com/tiagovilasboas/downshift-ai/internal/gateway/ninerouter"
 )
 
 // defaultDoctorGateways returns the standard companion gateways checked by doctor.

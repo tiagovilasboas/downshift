@@ -1,7 +1,7 @@
 # Runtime and evidence task queue
 
 Downshift by Tiago Vilas Boas
-https://github.com/tiagovilasboas/downshift
+https://github.com/tiagovilasboas/downshift-ai
 
 Execution snapshot: **2026-10-09** (open items from the 2026-10-11 review are listed at the end). These are the remaining tasks from the runtime
 and evidence review, linked to [beta exit](../reference/beta-exit.md). Code shipped, native

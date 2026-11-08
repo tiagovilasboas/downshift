@@ -10,7 +10,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // promptCase is one hand-labelled prompt. Labels are judgement calls about the

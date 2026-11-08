@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/sensor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/paths"
+	"github.com/tiagovilasboas/downshift-ai/internal/sensor"
 )
 
 func TestSensor_RecordToolOutput_AggregatesWithoutRawText(t *testing.T) {

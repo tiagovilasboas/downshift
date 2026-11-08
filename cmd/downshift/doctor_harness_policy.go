@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/discovery"
-	"github.com/tiagovilasboas/downshift/internal/limits"
-	"github.com/tiagovilasboas/downshift/internal/quota"
-	"github.com/tiagovilasboas/downshift/internal/setup"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/discovery"
+	"github.com/tiagovilasboas/downshift-ai/internal/limits"
+	"github.com/tiagovilasboas/downshift-ai/internal/quota"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // Policy, limitations, completion and session status checks for `doctor`.

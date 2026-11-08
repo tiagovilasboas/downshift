@@ -6,7 +6,7 @@ package claudecode
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/testenv"
+	"github.com/tiagovilasboas/downshift-ai/internal/testenv"
 )
 
 func TestClientIdentifierReadsEntrypointEnv(t *testing.T) {

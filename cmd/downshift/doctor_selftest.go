@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 )
 
 // These probes exercise components in isolation, not the host application's hooks.

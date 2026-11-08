@@ -6,8 +6,8 @@ package fromcore
 import (
 	"sort"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
 // heldReason maps each self-check rule ID to its hold code.

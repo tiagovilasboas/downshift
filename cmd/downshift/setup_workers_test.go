@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/console/setupwizard"
-	"github.com/tiagovilasboas/downshift/internal/setup"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/setupwizard"
+	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
 const workersPolicyRel = ".downshift/policy.json"

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/semantic"
+	"github.com/tiagovilasboas/downshift-ai/internal/semantic"
 )
 
 func TestMaybeAugment_OptOut(t *testing.T) {

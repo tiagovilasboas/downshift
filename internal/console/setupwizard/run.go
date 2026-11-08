@@ -7,7 +7,7 @@ import (
 	"io"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/tiagovilasboas/downshift/internal/console/shared/theme"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 // program adapts Model to tea.Model and quits once the wizard is over.

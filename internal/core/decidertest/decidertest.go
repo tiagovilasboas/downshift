@@ -11,7 +11,7 @@ package decidertest
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // Keep returns a Decider that always keeps the requested model: a checked,

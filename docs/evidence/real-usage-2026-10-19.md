@@ -6,7 +6,7 @@ What this page answers: what did Downshift do on a real working day in Claude Co
 Source: `downshift stats --days=1 --detail`, `downshift stats --days=30 --detail`, `downshift report --days=1` and
 `--days=30`, run on 2026-10-19 on the maintainer's machine. Aggregates only: no prompts, task text, paths or session ids.
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
 ## The day
 

@@ -11,10 +11,10 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/tiagovilasboas/downshift/internal/compressor"
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/sensor"
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
+	"github.com/tiagovilasboas/downshift-ai/internal/contextopt"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/sensor"
 )
 
 func runContextMetrics(ctx context.Context, reg *contextopt.Registry, w, errW io.Writer) int {

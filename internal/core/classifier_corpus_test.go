@@ -12,12 +12,12 @@ package core_test
 // Assertions are on Decision.Tier only, never on model ids.
 //
 // Downshift by Tiago Vilas Boas
-// https://github.com/tiagovilasboas/downshift
+// https://github.com/tiagovilasboas/downshift-ai
 
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 )
 
 // corpusExpect is the bound a corpus prompt must satisfy.
