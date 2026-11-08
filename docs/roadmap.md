@@ -3,7 +3,7 @@
 Public direction for the open-source project. Timelines are indicative.
 
 **Status:** beta — exit criteria in [docs/reference/beta-exit.md](reference/beta-exit.md).  
-**Product roadmap (owner, milestones and tasks):** [docs/product/roadmap.md](product/roadmap.md)  
+**Product roadmap (owner, milestones and tasks):** [docs/product/roadmap.md](product/roadmap.md) · [Context & reasoning](product/roadmap-context-and-reasoning.md)  
 **Value roadmap (compaction, proof, cheaper workers, 2026-11):** [docs/product/value-roadmap.md](product/value-roadmap.md)  
 **Maintainer execution:** [docs/internal/launch-waves.md](internal/launch-waves.md) (see [publishing boundaries](reference/publishing-boundaries.md)).  
 **Latest handoff (open PRs, findings, next steps):** 2026-11-02, routing, compactor and MCP ([milestone](https://github.com/tiagovilasboas/downshift-ai/milestone/1)).

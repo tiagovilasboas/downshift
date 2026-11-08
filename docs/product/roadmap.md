@@ -8,6 +8,7 @@ https://github.com/tiagovilasboas/downshift-ai
 Owner-facing plan. Status as of 2026-10-13. The public summary stays in
 [roadmap.md](../roadmap.md).
 Staff review follow-up checklist: [review-2026-10-20.md](review-2026-10-20.md).
+Context protection & reasoning roadmap (empirical evolution): [roadmap-context-and-reasoning.md](roadmap-context-and-reasoning.md).
 
 **2026-11-02:** the built-in control group (P1.1) was removed by owner decision, so every spawn is routed. Where this plan says "routed vs control", that comparison is the original design and cannot be measured now. `downshift report` is routed-only.
 
