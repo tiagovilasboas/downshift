@@ -1,5 +1,10 @@
 # Downshift — Documentação Oficial em Português (PT-BR)
 
+> **Maturidade do produto: beta.** A versão publicada `v1.0.0` usa uma tag e um release estáveis,
+> mas os [critérios de saída do beta](../reference/beta-exit.md) ainda não foram cumpridos.
+> A aplicação da troca de modelo no Cursor e o uso independente por múltiplos operadores
+> ainda precisam de comprovação. Veja também as [limitações conhecidas](../reference/known-limitations.md).
+
 > Downshift por Tiago Vilas Boas  
 > Repositório oficial: https://github.com/tiagovilasboas/downshift  
 > Licença: Apache 2.0 · CLI: `downshift` · Go 1.27

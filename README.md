@@ -426,8 +426,11 @@ below your session model and the bytes compaction removed, per harness; how a pl
 
 ## Status
 
-**Beta** ([v1.0.0](docs/releases/v1.0.0.md); changes since are under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md)). Not yet stable:
-the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
+**Product maturity: beta.** The published [v1.0.0](docs/releases/v1.0.0.md) is a stable-version
+tag and GitHub release, but the product has not met its beta exit criteria. In particular, Cursor
+rewrite honor and independent multi-operator usage remain unverified. The version number does not
+mean those criteria have been met; see [Beta Exit Criteria](docs/reference/beta-exit.md).
+Changes since v1.0.0 are under `[Unreleased]` in the [CHANGELOG](CHANGELOG.md).
 What does not work yet, harness by harness: [Known limitations](docs/reference/known-limitations.md).
 
 ## License
