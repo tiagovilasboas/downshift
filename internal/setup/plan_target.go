@@ -50,9 +50,14 @@ func Select(o Options) ([]Target, int) {
 		}
 	}
 	if len(out) == 0 {
+		seen := map[string]bool{}
 		var dirs []string
 		for _, t := range Targets {
-			dirs = append(dirs, "~/"+t.ConfigDir)
+			d := "~/" + t.ConfigDir
+			if !seen[d] {
+				seen[d] = true
+				dirs = append(dirs, d)
+			}
 		}
 		fmt.Fprintf(o.Err, "setup: no supported harness found (looked for %s)\n", strings.Join(dirs, ", "))
 		return nil, 1

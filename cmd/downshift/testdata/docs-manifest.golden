@@ -65,6 +65,16 @@
       "summary": "Codex PreToolUse hook: rewrites a subagent's model"
     },
     {
+      "name": "codex-post-tool-use",
+      "summary": "Codex post-spawn observation",
+      "hidden": true
+    },
+    {
+      "name": "codex-session-start",
+      "summary": "Codex session-start hook",
+      "hidden": true
+    },
+    {
       "name": "compact",
       "summary": "Cut a test, build or status command's output to its PASS/FAIL summary",
       "flags": [
@@ -275,6 +285,20 @@
     {
       "name": "honor",
       "summary": "Post-spawn observation: records whether the routing was honored"
+    },
+    {
+      "name": "kiro",
+      "summary": "Kiro IDE PreToolUse hook: rewrites a subagent's model"
+    },
+    {
+      "name": "kiro-post-tool-use",
+      "summary": "Kiro IDE post-spawn observation",
+      "hidden": true
+    },
+    {
+      "name": "kiro-session-start",
+      "summary": "Kiro IDE session-start hook",
+      "hidden": true
     },
     {
       "name": "kirocrew",
@@ -876,6 +900,41 @@
       "UnknownUserRules": true,
       "ShellDialect": "posix",
       "CanAdviseShellWrap": true,
+      "AgentTypeHints": null,
+      "SquadAgentPrefix": "",
+      "MainToolEvent": "",
+      "MainToolCategories": null,
+      "MaxParallel": 0,
+      "WorkerAgent": "",
+      "WorkerReadOnlyVerified": false,
+      "SessionWideTranscript": false
+    },
+    "kiro": {
+      "CanRewriteModel": true,
+      "CanApplyEffort": false,
+      "RewritePreservesInput": true,
+      "StrictModelName": false,
+      "ModelOverrideEnv": "",
+      "ModelForceEnv": "",
+      "NativeSessionEnv": "",
+      "NativeUsageSource": "",
+      "TranscriptQuota": false,
+      "SingleModelReasoning": false,
+      "SessionFromCatalog": false,
+      "CanShowChildLine": false,
+      "CanReturnNote": false,
+      "SessionEnv": "",
+      "ShellEnv": "",
+      "AgentEnv": null,
+      "ChildEndEvent": "PostToolUse",
+      "UsageSource": "none",
+      "HookEntries": null,
+      "PayloadMarkers": null,
+      "CanRewriteShellCommand": true,
+      "RewriteImpliesApproval": false,
+      "UnknownUserRules": true,
+      "ShellDialect": "posix",
+      "CanAdviseShellWrap": false,
       "AgentTypeHints": null,
       "SquadAgentPrefix": "",
       "MainToolEvent": "",

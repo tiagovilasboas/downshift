@@ -89,39 +89,39 @@ so flip the code and this table together. `NativeUsageSource` and
 `MainToolCategories` have no row: they only qualify `NativeSessionEnv` and
 `MainToolEvent`. Grok is not in `AllHarnessCaps()` and has no column.
 
-| capability | claude-code | cursor | codex | kirocrew | antigravity | opencode | meaning |
-|---|---|---|---|---|---|---|---|
-| `CanRewriteModel` | yes | yes | yes | no | yes | yes | The hook can replace the subagent model. |
-| `CanApplyEffort` | no | no | yes | no | no | no | The hook can set reasoning effort. |
-| `RewritePreservesInput` | yes | yes | yes | no | yes | no | The rewrite echoes every sibling field of the spawn input. |
-| `StrictModelName` | yes | no | no | no | no | no | The harness rejects model names outside its own aliases. |
-| `ModelOverrideEnv` | yes | no | no | no | no | no | An env var is known to make the harness ignore a rewrite. |
-| `ModelForceEnv` | yes | no | no | no | no | no | An env var forces one model for every subagent. |
-| `NativeSessionEnv` | no | yes | no | no | no | no | Env var naming the native session or usage export. |
-| `TranscriptQuota` | no | no | yes | no | no | no | Quota can be collected from an explicit transcript. |
-| `SingleModelReasoning` | no | no | no | no | no | no | One model, only reasoning effort is tunable. |
-| `SessionFromCatalog` | yes | no | no | no | no | no | Unknown session built from catalog `session_candidates`. |
-| `CanShowChildLine` | yes | no | no | no | no | no | The hook protocol can show the child-end line. |
-| `CanReturnNote` | yes | no | no | no | no | no | The PreToolUse answer can carry a note the model reads. |
-| `SessionEnv` | yes | no | no | yes | no | no | Env var holding the current session id. |
-| `ShellEnv` | no | no | yes | no | no | yes | Env var the harness sets in agent shells. |
-| `AgentEnv` | no | no | no | no | no | yes | Env vars whose presence means an agent runs the command. |
-| `ChildEndEvent` | yes | yes | yes | yes | no | yes | A hook event carries the end of a child spawn. |
-| `UsageSource` | yes | no | no | no | no | yes | Child token usage is read (payload or transcript). |
-| `HookEntries` | yes | no | no | no | no | no | Known spawn-time entry points are listed. |
-| `PayloadMarkers` | no | yes | no | no | no | no | Payload keys only this harness sends. |
-| `CanRewriteShellCommand` | yes | yes | yes | no | yes | yes | The hook can rewrite the shell command in place. |
-| `RewriteImpliesApproval` | no | no | yes | no | no | no | The shell rewrite answer also approves the command, so only one read-only command is rewritten. |
-| `UnknownUserRules` | no | yes | yes | no | yes | no | The user's deny/ask rules cannot be read, so only one read-only command is rewritten (a rule on the original text could miss the wrapped form). |
-| `ShellDialect` | yes | yes | yes | no | yes | yes | The shell is declared POSIX (`posix`). Only then are the compound (a `tail -N` pipe, a `cd d &&` prefix) and chain (`&&`, `;`) shapes rewritten; a harness with an empty or other dialect keeps them as written, and one plain command is wrapped either way (KiroCrew declares none, so its advise path skips those shapes too). |
-| `CanAdviseShellWrap` | no | yes | no | yes | no | no | The hook can advise a wrapped shell command (exit 2). |
-| `AgentTypeHints` | yes | no | no | no | no | no | Subagent type names map to a tier. |
-| `SquadAgentPrefix` | yes | no | no | no | no | no | Squad agents arrive with a type prefix. |
-| `MainToolEvent` | yes | no | no | no | no | no | An event reports main-session tool calls. |
-| `MaxParallel` | no | no | no | no | no | no | A parallel subagent cap is known. |
-| `WorkerAgent` | yes | no | yes | no | no | no | A worker agent CLI runs on this harness. |
-| `WorkerReadOnlyVerified` | yes | no | no | no | no | no | A read-only worker was verified unable to write. |
-| `SessionWideTranscript` | yes (nested spawn, 2026-11-06, Claude Code 2.1.319: transcript_path verified, nested spawn payload unverified) | no | no | no | no | no | A hook fired inside a subagent still gets the main session's `transcript_path`, so a nested spawn (a subagent spawning a subagent) cannot read its parent's model from it. With `agent_id` set the baseline is unknown and the spawn is held; no parent model is recorded. Other harnesses: nesting not assessed. See the note below. |
+| capability | claude-code | cursor | codex | kiro | kirocrew | antigravity | opencode | meaning |
+|---|---|---|---|---|---|---|---|---|
+| `CanRewriteModel` | yes | yes | yes | yes | no | yes | yes | The hook can replace the subagent model. |
+| `CanApplyEffort` | no | no | yes | no | no | no | no | The hook can set reasoning effort. |
+| `RewritePreservesInput` | yes | yes | yes | yes | no | yes | no | The rewrite echoes every sibling field of the spawn input. |
+| `StrictModelName` | yes | no | no | no | no | no | no | The harness rejects model names outside its own aliases. |
+| `ModelOverrideEnv` | yes | no | no | no | no | no | no | An env var is known to make the harness ignore a rewrite. |
+| `ModelForceEnv` | yes | no | no | no | no | no | no | An env var forces one model for every subagent. |
+| `NativeSessionEnv` | no | yes | no | no | no | no | no | Env var naming the native session or usage export. |
+| `TranscriptQuota` | no | no | yes | no | no | no | no | Quota can be collected from an explicit transcript. |
+| `SingleModelReasoning` | no | no | no | no | no | no | no | One model, only reasoning effort is tunable. |
+| `SessionFromCatalog` | yes | no | no | no | no | no | no | Unknown session built from catalog `session_candidates`. |
+| `CanShowChildLine` | yes | no | no | no | no | no | no | The hook protocol can show the child-end line. |
+| `CanReturnNote` | yes | no | no | no | no | no | no | The PreToolUse answer can carry a note the model reads. |
+| `SessionEnv` | yes | no | no | no | yes | no | no | Env var holding the current session id. |
+| `ShellEnv` | no | no | yes | no | no | no | yes | Env var the harness sets in agent shells. |
+| `AgentEnv` | no | no | no | no | no | no | yes | Env vars whose presence means an agent runs the command. |
+| `ChildEndEvent` | yes | yes | yes | yes | yes | no | yes | A hook event carries the end of a child spawn. |
+| `UsageSource` | yes | no | no | no | no | no | yes | Child token usage is read (payload or transcript). |
+| `HookEntries` | yes | no | no | no | no | no | no | Known spawn-time entry points are listed. |
+| `PayloadMarkers` | no | yes | no | no | no | no | no | Payload keys only this harness sends. |
+| `CanRewriteShellCommand` | yes | yes | yes | yes | no | yes | yes | The hook can rewrite the shell command in place. |
+| `RewriteImpliesApproval` | no | no | yes | no | no | no | no | The shell rewrite answer also approves the command, so only one read-only command is rewritten. |
+| `UnknownUserRules` | no | yes | yes | yes | no | yes | no | The user's deny/ask rules cannot be read, so only one read-only command is rewritten (a rule on the original text could miss the wrapped form). |
+| `ShellDialect` | yes | yes | yes | yes | no | yes | yes | The shell is declared POSIX (`posix`). Only then are the compound (a `tail -N` pipe, a `cd d &&` prefix) and chain (`&&`, `;`) shapes rewritten; a harness with an empty or other dialect keeps them as written, and one plain command is wrapped either way (KiroCrew declares none, so its advise path skips those shapes too). |
+| `CanAdviseShellWrap` | no | yes | no | no | yes | no | no | The hook can advise a wrapped shell command (exit 2). |
+| `AgentTypeHints` | yes | no | no | no | no | no | no | Subagent type names map to a tier. |
+| `SquadAgentPrefix` | yes | no | no | no | no | no | no | Squad agents arrive with a type prefix. |
+| `MainToolEvent` | yes | no | no | no | no | no | no | An event reports main-session tool calls. |
+| `MaxParallel` | no | no | no | no | no | no | no | A parallel subagent cap is known. |
+| `WorkerAgent` | yes | no | yes | no | no | no | no | A worker agent CLI runs on this harness. |
+| `WorkerReadOnlyVerified` | yes | no | no | no | no | no | no | A read-only worker was verified unable to write. |
+| `SessionWideTranscript` | yes (nested spawn, 2026-11-06, Claude Code 2.1.319: transcript_path verified, nested spawn payload unverified) | no | no | no | no | no | no | A hook fired inside a subagent still gets the main session's `transcript_path`, so a nested spawn (a subagent spawning a subagent) cannot read its parent's model from it. With `agent_id` set the baseline is unknown and the spawn is held; no parent model is recorded. Other harnesses: nesting not assessed. See the note below. |
 
 **Nested spawns (Claude Code 2.1.319, 2026-11-06).** Verified live: a `PreToolUse` hook fired inside a subagent (a Bash call) carries `agent_id` and `agent_type`, and its `session_id` and `transcript_path` equal the main session's; the subagent's own transcript appears only as `agent_transcript_path` on `SubagentStop`. Verified live: a subagent has no `Agent` tool, even when its definition lists one (two runs), so a nested `Agent` spawn could not be captured and its `PreToolUse` payload is **unverified**; routes that do nest (teammates, workflow agents) are not captured here either (workflow agents never reach `PreToolUse`, see the evidence note of 2026-10-11). The rule follows the documented hook input: a spawn with `agent_id` set and no model named by the call, the agent definition or the environment is held with an unknown baseline, and the main model is not recorded as its `parent_model`; a model the call names, or a parent model the mod reports, still routes as usual. Test: `TestHookE2E_ClaudeCodeNestedSpawn`. Telemetry keys decisions by the main session's hash, so a nested spawn counts under the main session, once. Detailed write-up and reconciliation: `docs/evidence/claude-code-nested-spawn-2026-11-07.md` and `docs/evidence/claude-execution-workflow-reconciliation-2026-11-07.md`.
 

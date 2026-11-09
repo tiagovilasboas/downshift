@@ -71,6 +71,17 @@ var conformanceDrivers = map[string]conformanceDriver{
 		},
 		decode: decodeHookSpecificOutput,
 	},
+	"kiro": {
+		build: func(s spawnSpec) []byte {
+			return mustJSON(map[string]any{
+				"hook_event_name": "PreToolUse",
+				"tool_name":       "invoke_sub_agent",
+				"cwd":             s.cwd,
+				"tool_input":      conformanceToolInput("prompt", s),
+			})
+		},
+		decode: decodeHookSpecificOutput,
+	},
 	"cursor": {
 		build: func(s spawnSpec) []byte {
 			payload := map[string]any{

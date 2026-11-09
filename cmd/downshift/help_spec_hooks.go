@@ -34,10 +34,15 @@ var hookHelpTopics = map[string]string{
 	"codex":                     hookHelp("codex", "Codex PreToolUse hook: rewrites a subagent's model"),
 	"antigravity":               hookHelp("antigravity", "Antigravity PreToolUse hook: rewrites a subagent's model"),
 	"kirocrew":                  hookHelp("kirocrew", "KiroCrew preToolUse hook: policy mode, exit 0 allow or 2 block"),
+	"kiro":                      hookHelp("kiro", "Kiro IDE PreToolUse hook: routes invoke_sub_agent spawns via updatedInput"),
 	"opencode":                  hookHelp("opencode", "OpenCode subagent_spawn_intent route hook (wire v1)"),
 	"claude-code-post-tool-use": hookHelp("claude-code-post-tool-use", "Claude Code post-spawn observation: records what the subagent did"),
 	"claude-code-subagent-stop": hookHelp("claude-code-subagent-stop", "Claude Code SubagentStop observation: records usage and verification"),
 	"claude-code-session-start": hookHelp("claude-code-session-start", "Claude Code SessionStart: adds one context line that points the orchestrator at the MCP providers tool"),
+	"kiro-post-tool-use":        hookHelp("kiro-post-tool-use", "Kiro IDE post-spawn observation: records what the subagent did"),
+	"kiro-session-start":        hookHelp("kiro-session-start", "Kiro IDE SessionStart: adds context line pointing at MCP providers tool"),
+	"codex-post-tool-use":       hookHelp("codex-post-tool-use", "Codex post-spawn observation: records what the subagent did"),
+	"codex-session-start":       hookHelp("codex-session-start", "Codex SessionStart: adds context line pointing at MCP providers tool"),
 	"honor": `downshift honor — Post-spawn observation for a harness: records whether the routing was honored
 
 Usage:

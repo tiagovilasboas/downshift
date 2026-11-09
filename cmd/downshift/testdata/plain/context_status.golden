@@ -3,7 +3,7 @@ exit: 0
 Context Optimization:
   Status: Enabled
   Active Provider: native
-  Active Harnesses: claude-code, cursor, codex, kirocrew, antigravity, opencode
+  Active Harnesses: claude-code, cursor, codex, kiro, kirocrew, antigravity, opencode
   Claude Code: measures only. A Claude Code hook cannot rewrite tool output already produced, so the PostToolUse path saves no tokens;
     Compact (below) shortens output by rewriting the command before it runs. Other compression needs the Headroom proxy (`headroom wrap claude`), which Downshift does not start.
   Compact: on (allowlisted shell commands run through `downshift compact`)
