@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Desktop reads: `agent-desktop snapshot` and `agent-desktop find` are a Compactor family (`agent-desktop`). A successful envelope is re-encoded one line per element with every field kept: refs as `eN` under a legend, the common action list written once, short forms for states, bounds, native ids and DOM classes. A decoder test reads the view back to the same JSON. In every harness, a repeat read of the same window within 10 minutes is sent as the lines that changed (scoped to the hook session, or to the working directory for a direct `downshift compact` call), when the raw output is kept by CCR (`downshift retrieve` gives the full read) and the delta is under 60% of the view. Previous views live under `<state dir>/desktopview/` (0600, secret-looking lines withheld); `DOWNSHIFT_DESKTOP_DELTA=0` sends every read whole. Synthetic fixtures: first read 53.1–59.8% fewer bytes; a repeat read after one action 97.2%; three reads of one window 84.9%. Every read is logged and counted like any family (`report`, `stats`, session panel, pane). Guide: [agent-desktop](docs/guides/agent-desktop.md).
+
+### Changed
+
+- The benchmark corpus now has 110 compacted fixtures (the three agent-desktop reads are counted in TOTAL and the lossless class). The current figures are 67.1% fewer bytes with CCR on, 53.0% with it off, and 60.3% on the 62 lossless fixtures; the README, `llms.txt`, the evidence guide and the pt-BR benchmark page cite them. They were 72.0%, 51.1% and 65.2% on 107 fixtures: the change is the added fixtures, no family got worse. The summary lines of `docs/reference/bench.md` are now computed by `make bench` instead of written by hand. The baseline rows of a few other families were refreshed to the current output.
+- A compacted run whose raw output is kept by CCR no longer has its same-shape lines folded when its family is `agent-desktop`: each line carries a ref the agent acts on.
+
 ## [0.12.0] - 2026-11-08
 
 Release notes: [docs/releases/v0.12.0.md](docs/releases/v0.12.0.md).

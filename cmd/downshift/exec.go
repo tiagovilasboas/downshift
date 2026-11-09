@@ -56,7 +56,9 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	opts.Stdin, opts.Stdout, opts.Stderr = stdin, stdout, stderr
 	opts.Compact = os.Getenv(execEnvKillSwitch) != "0" && os.Getenv(execwrap.DepthEnv) == ""
 	opts.Keep, opts.KeepFailed = ccrKeep()
-	res := execwrap.Run(execwrap.SplitSingleWord(args[1:]), opts)
+	argv := execwrap.SplitSingleWord(args[1:])
+	opts.Desktop = desktopStep(session, argv)
+	res := execwrap.Run(argv, opts)
 	if len(args) > 1 {
 		if path, err := execwrap.EventsPath(); err == nil {
 			ev := execwrap.EventFrom(res, time.Now())

@@ -111,7 +111,7 @@ func compressFor(in []byte, f compressor.Format, exitCode int) compressor.Result
 	if f == compressor.FormatLs || f == compressor.FormatFind || f == compressor.FormatGrep || f == compressor.FormatGrepCounts {
 		return compressor.CompressCommandOutput(in, f, exitCode)
 	}
-	if f == compressor.FormatGlab {
+	if f == compressor.FormatGlab || f == compressor.FormatAgentDesktop {
 		return compressor.CompressCommandOutput(in, f, exitCode)
 	}
 	if f == compressor.FormatHTTPFetch {

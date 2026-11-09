@@ -252,6 +252,14 @@ All `gh` subcommands are supported:
 
 ---
 
+## Desktop automation
+
+| Command | Behavior |
+|---------|----------|
+| `agent-desktop snapshot ...`, `agent-desktop find ...` (subcommand first) | A successful envelope is re-encoded one line per element with every field kept; a repeat read of the same window is sent as the lines that changed. `--debug`, `--screenshot`, `--help`, `--version`, a global flag before the subcommand, every action (`click`, `type`, ...) and `agent-desktop mcp` stay unwrapped; an error envelope stays raw. [Guide](../guides/agent-desktop.md) |
+
+---
+
 ## Missing a Tool?
 
 Run `downshift learning suggestions` to see which uncompacted commands you use

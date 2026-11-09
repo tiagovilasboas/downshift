@@ -202,10 +202,11 @@ func renderBench(rows []benchRow) string {
 		fmt.Fprintf(&b, "| %s | %d | %d | %d | %.1f |\n", r.family, r.files, r.raw, r.reduced, r.saving())
 	}
 	b.WriteString("\n## Relationship to live token savings\n\n")
-	b.WriteString("The figures above measure raw byte reduction across a synthetic test corpus of 107 CLI command outputs.\n\n")
+	total := rows[len(rows)-1]
+	fmt.Fprintf(&b, "The figures above measure raw byte reduction across a synthetic corpus of %d compacted fixtures: command output and agent-desktop reads.\n\n", total.files)
 	b.WriteString("- In live LLM sessions, compaction cuts verbose command outputs before they enter the prompt context, directly saving input tokens and subsequent prompt cache reads.\n")
-	b.WriteString("- When evaluated with CCR enabled, overall corpus reduction reaches **72.0% fewer bytes** (and **51.1%** with CCR disabled).\n")
-	b.WriteString("- Lossless test runners achieve **65.2% reduction** while preserving 100% of failure details, exit codes, and application stack traces.\n")
+	fmt.Fprintf(&b, "- With CCR enabled, overall corpus reduction is **%.1f%% fewer bytes** (and **%.1f%%** with CCR disabled).\n", savingPct(total.raw, total.ccr), total.saving())
+	fmt.Fprintf(&b, "- Lossless families (%d fixtures) have **%.1f%% fewer bytes** while keeping every failure line, exit code and stack trace.\n", lossless.files, lossless.saving())
 	b.WriteString("- Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.\n")
 	b.WriteString("- Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).\n")
 	return b.String()
@@ -229,7 +230,7 @@ func TestBenchReport(t *testing.T) {
 // conformance suite uses; every other fixture is detected from its text.
 func benchCompress(in []byte, f compressor.Format) compressor.Result {
 	switch f {
-	case compressor.FormatFileRead, compressor.FormatGrepRows, compressor.FormatGrepCounts, compressor.FormatHTTPFetch, compressor.FormatGlab:
+	case compressor.FormatFileRead, compressor.FormatGrepRows, compressor.FormatGrepCounts, compressor.FormatHTTPFetch, compressor.FormatGlab, compressor.FormatAgentDesktop:
 		return compressFor(in, f, 0)
 	}
 	return compressor.CompressExit(in, compressor.ModeSafe, 0)

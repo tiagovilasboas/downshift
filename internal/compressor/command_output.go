@@ -97,6 +97,8 @@ func applyCommandFormat(text []byte, f Format, h CommandHint) ([]byte, bool, str
 	switch f {
 	case FormatGlab:
 		return compressGlab(text)
+	case FormatAgentDesktop:
+		return compressAgentDesktop(text)
 	case FormatHTTPFetch:
 		return compressHTTPFetch(text, h)
 	case FormatFileRead:

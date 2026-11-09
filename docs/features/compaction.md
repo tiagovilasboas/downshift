@@ -85,6 +85,16 @@ test fixtures (vitest 3.2.7, 4.1.12 and 5.0.5, `@playwright/test` 1.64.1; 10 to
 bytes are the failures themselves. The Vitest transcripts of a file that cannot
 be imported cut two lines, about 0.1%.
 
+## Desktop reads (agent-desktop)
+
+`agent-desktop snapshot` and `agent-desktop find` print an accessibility tree as
+one JSON line. The compactor re-encodes it one line per element and keeps every
+field: refs as `eN` under a legend, the common action list written once, short
+forms for states, bounds, native ids and DOM classes. A repeat read of the same
+window within 10 minutes is sent as the lines that changed, when the raw read is
+kept by CCR. Lines of this family are never folded: each carries a ref the agent
+acts on. Details and numbers: [agent-desktop](../guides/agent-desktop.md).
+
 ## Generic compaction
 
 Output of no known shape from a test runner, build tool, linter, package script

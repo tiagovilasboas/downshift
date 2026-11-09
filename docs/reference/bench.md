@@ -8,6 +8,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 
 | Family | Class | Fixtures | Raw bytes | Downshift bytes | Saving % | Raw tokens~ | Downshift tokens~ | with CCR bytes | with CCR saving % |
 |---|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| agent_desktop | lossless | 3 | 61032 | 26302 | 56.9 | 15258 | 6575 | 26440 | 56.7 |
 | bazel | lossy | 2 | 911 | 322 | 64.7 | 227 | 80 | 414 | 54.6 |
 | cargo_build | lossy | 1 | 440 | 174 | 60.5 | 110 | 43 | 220 | 50.0 |
 | cargo_test | lossless | 3 | 3660 | 257 | 93.0 | 915 | 64 | 395 | 89.2 |
@@ -21,10 +22,10 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | file_read | lossy | 1 | 11594 | 2413 | 79.2 | 2898 | 603 | 2459 | 78.8 |
 | flutter_test | lossless | 5 | 6624 | 513 | 92.3 | 1656 | 128 | 743 | 88.8 |
 | generic | lossy | 4 | 41608 | 33970 | 18.4 | 10402 | 8492 | 2865 | 93.1 |
-| gh_checks | lossless | 1 | 497 | 118 | 76.3 | 124 | 29 | 164 | 67.0 |
-| gh_pr | lossless | 2 | 1840 | 1753 | 4.7 | 460 | 438 | 1845 | -0.3 |
+| gh_checks | lossless | 1 | 515 | 118 | 77.1 | 128 | 29 | 164 | 68.2 |
+| gh_pr | lossless | 2 | 1843 | 1756 | 4.7 | 460 | 439 | 1848 | -0.3 |
 | gh_run_list | lossless | 1 | 378 | 221 | 41.5 | 94 | 55 | 267 | 29.4 |
-| gh_run_log | lossy | 2 | 2442 | 637 | 73.9 | 610 | 159 | 729 | 70.1 |
+| gh_run_log | lossy | 2 | 2451 | 637 | 74.0 | 612 | 159 | 729 | 70.3 |
 | git_diff | lossless | 2 | 541 | 533 | 1.5 | 135 | 133 | 625 | -15.5 |
 | git_log | lossy | 5 | 2265 | 610 | 73.1 | 566 | 152 | 840 | 62.9 |
 | git_show | lossless | 1 | 363 | 367 | -1.1 | 90 | 91 | 413 | -13.8 |
@@ -32,7 +33,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | git_status | lossless | 5 | 1113 | 538 | 51.7 | 278 | 134 | 768 | 31.0 |
 | glab | lossy | 2 | 1673 | 1672 | 0.1 | 418 | 418 | 1764 | -5.4 |
 | go_build | lossy | 2 | 632 | 500 | 20.9 | 158 | 125 | 592 | 6.3 |
-| go_test | lossless | 13 | 13395 | 6044 | 54.9 | 3348 | 1511 | 6642 | 50.4 |
+| go_test | lossless | 13 | 13425 | 6050 | 54.9 | 3356 | 1512 | 6648 | 50.5 |
 | golangci_lint | lossy | 2 | 569 | 397 | 30.2 | 142 | 99 | 489 | 14.1 |
 | gradle | lossy | 4 | 1875 | 818 | 56.4 | 468 | 204 | 1002 | 46.6 |
 | grep_counts | lossy | 1 | 226 | 114 | 49.6 | 56 | 28 | 160 | 29.2 |
@@ -61,7 +62,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | turbo | lossless | 1 | 494 | 101 | 79.6 | 123 | 25 | 147 | 70.2 |
 | vitest | lossless | 4 | 3624 | 931 | 74.3 | 906 | 232 | 1115 | 69.2 |
 | uncompacted (CCR only) | lossy | 3 | 6105 | 6105 | 0.0 | 1526 | 1526 | 1176 | 80.7 |
-| TOTAL | - | 107 | 130570 | 63861 | 51.1 | 32642 | 15965 | 36559 | 72.0 |
+| TOTAL | - | 110 | 191662 | 90172 | 53.0 | 47915 | 22543 | 63008 | 67.1 |
 
 ## Lossless and lossy split
 
@@ -69,15 +70,15 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 
 | Class | Fixtures | Raw bytes | Downshift bytes | Saving % |
 |---|--:|--:|--:|--:|
-| lossless | 59 | 42611 | 14820 | 65.2 |
-| lossy | 48 | 87959 | 49041 | 44.2 |
+| lossless | 62 | 103694 | 41131 | 60.3 |
+| lossy | 48 | 87968 | 49041 | 44.3 |
 
 ## Relationship to live token savings
 
-The figures above measure raw byte reduction across a synthetic test corpus of 107 CLI command outputs.
+The figures above measure raw byte reduction across a synthetic corpus of 110 compacted fixtures: command output and agent-desktop reads.
 
 - In live LLM sessions, compaction cuts verbose command outputs before they enter the prompt context, directly saving input tokens and subsequent prompt cache reads.
-- When evaluated with CCR enabled, overall corpus reduction reaches **72.0% fewer bytes** (and **51.1%** with CCR disabled).
-- Lossless test runners achieve **65.2% reduction** while preserving 100% of failure details, exit codes, and application stack traces.
+- With CCR enabled, overall corpus reduction is **67.1% fewer bytes** (and **53.0%** with CCR disabled).
+- Lossless families (62 fixtures) have **60.3% fewer bytes** while keeping every failure line, exit code and stack trace.
 - Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.
 - Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).

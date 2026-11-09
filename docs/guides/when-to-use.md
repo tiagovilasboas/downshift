@@ -16,6 +16,7 @@ Every harness with an adapter gets every feature, computed in shared layers. **C
 - You need **offline, keyless model selection** for hooks: the decider reads your declared policy and the orchestrator's tier hint, and rewrites `updatedInput` before the child starts. No classifier.
 - You care about **measurement**: `downshift report` shows tokens per completed task and rework for routed spawns, and [evidence.md](evidence.md) lists what is shown and what is not.
 - You want **local, prompt-free telemetry** (`events.jsonl`), not a hosted analytics product.
+- Your agent **drives desktop apps** with `agent-desktop` and reads the same window again after every action: Downshift compacts each read and sends repeat reads as the lines that changed ([agent-desktop](agent-desktop.md)).
 
 ## When not to use it
 

@@ -58,6 +58,10 @@ type Options struct {
 	// KeepFailed is Keep for a run that exited non-zero only, used when Keep
 	// is nil: CCR on failure, successes are not stored.
 	KeepFailed func(raw []byte) (id string, ok bool)
+	// Desktop, when set, gets the compact view of an agent-desktop read whose
+	// raw output was kept, and returns what to print instead: the delta from
+	// the previous read of the same window, or the view (desktop_delta.go).
+	Desktop func(view []byte) []byte
 	// Signals, when set, replaces signal.Notify as the source of signals to
 	// forward (tests).
 	Signals <-chan os.Signal
@@ -134,6 +138,7 @@ func Run(argv []string, o Options) (res Result) {
 
 	g := newGate(o.Stdout, o.Stderr, o.Compact && readCompactible(res.Family, argv), argv, res.Family)
 	g.skipObservation = o.SkipObservation
+	g.desktop = o.Desktop
 	// The ports run once, inside finish, on this goroutine; the id of the one
 	// that stored the output goes on the Result and the event.
 	var keptID string

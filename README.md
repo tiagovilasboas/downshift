@@ -49,6 +49,7 @@ Downshift also applies model choices and reasoning effort for delegated work wit
 | Capability | What it does |
 | --- | --- |
 | **Context & output compaction** | Prevents context degradation by cutting clean command noise while preserving failure logs. |
+| **Desktop read compaction** | Shortens `agent-desktop` accessibility-tree reads with every field kept, and sends a repeat read of the same window as the lines that changed ([guide](docs/guides/agent-desktop.md)). |
 | **Subagent model & effort routing** | Applies model tier and reasoning effort at the spawn boundary within your policy. |
 | **Local reporting & telemetry** | Measures tokens and context preserved without sending prompts or code outside your machine. |
 
@@ -80,6 +81,22 @@ downshift compact -- go test ./...
 Clean output is compacted to save context tokens, while non-zero exit codes and failure logs are preserved in full.
 
 [Compaction](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/compaction.md) · [Supported tools](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/supported-tools.md) · [CCR](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/ccr.md)
+
+### Desktop apps: computer use with fewer tokens
+
+An agent that drives desktop apps with `agent-desktop` reads the app's accessibility tree as JSON after every action. Downshift compacts those reads too:
+
+- **First read of a window:** one line per element, every field kept (a test decodes it back to the same JSON).
+- **Repeat read of the same window:** only the lines that changed, with the full read one `downshift retrieve` away.
+- **Every harness:** automatic in Claude Code; elsewhere through `downshift compact -- agent-desktop snapshot ...`.
+
+On synthetic fixtures, a first read had 53–60% fewer bytes, a repeat read after one action 97% fewer, and a read, act, verify loop of three reads 84.9% fewer. Not yet measured on a live desktop.
+
+```bash
+downshift compact -- agent-desktop snapshot --app Files -i
+```
+
+[agent-desktop guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/agent-desktop.md)
 
 ## Route subagents within your policy
 
@@ -129,8 +146,8 @@ Models available to one harness or session are not assumed to be available to an
 
 | Measurement | Result | Scope |
 | --- | --- | --- |
-| Lossless output compaction | **65.2% fewer bytes** | 59 fixtures in a synthetic corpus. |
-| Output compaction with CCR | **72.0% fewer bytes** | 107-fixture synthetic corpus; displayed repetitions may be folded and raw output is recoverable. |
+| Lossless output compaction | **60.3% fewer bytes** | 62 lossless fixtures in a synthetic corpus. |
+| Output compaction with CCR | **67.1% fewer bytes** | 110-fixture synthetic corpus (53.0% with CCR off), command output and agent-desktop reads; displayed repetitions may be folded and raw output is recoverable. |
 | Subagent routing | **24.1% fewer tokens per accepted run** | Controlled 46-run Claude Code study on mechanical tasks, conducted before decision O8. |
 
 These are separate measurements in different units and workloads. The synthetic corpus totals include only fixtures the compactor processed, excluding preserved fixtures. The routing result is historical evidence; it does not establish the effect of the implementation after O8. Savings in unconstrained everyday use have not been established. Token estimates based on bytes are not an invoice or a measurement of plan limits.

@@ -510,3 +510,12 @@ preserve  http_fetch    http_fetch_error_status.txt
 clean     glab          glab_mr_view_token.txt
 clean     glab          glab_issue_view_header.txt
 preserve  glab          glab_ci_list_plain.txt
+# agent-desktop (envelope 2.6). Synthetic: built to its output schema (one
+# line, data keys sorted, refs numbered depth-first over the elements an agent
+# can act on); not captured from a live desktop.
+# The view keeps every field (agent_desktop_roundtrip_test.go decodes it back).
+# An error envelope (ok false) stays raw.
+clean     agent_desktop agent_desktop_snapshot_files.txt
+clean     agent_desktop agent_desktop_snapshot_chat.txt
+clean     agent_desktop agent_desktop_find_buttons.txt
+preserve  agent_desktop agent_desktop_error_stale_ref.txt

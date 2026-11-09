@@ -49,6 +49,7 @@ O Downshift também aplica escolhas de modelo e nível de esforço de raciocíni
 | Capacidade | O que faz |
 | --- | --- |
 | **Compactação de contexto & saída** | Evita a degradação do contexto ao encurtar o ruído de comandos limpos, preservando logs de falha. |
+| **Compactação de leituras do desktop** | Encurta as leituras da árvore de acessibilidade do `agent-desktop` sem perder campo, e manda uma releitura da mesma janela só com as linhas que mudaram ([guia](../guides/agent-desktop.md)). |
 | **Roteamento de modelo & esforço por subagente** | Aplica o tier do modelo e o nível de esforço de raciocínio na criação do subagente conforme a política. |
 | **Relatórios locais & telemetria** | Mede tokens e contexto preservados sem enviar prompts, código ou caminhos para fora da máquina. |
 
@@ -79,6 +80,22 @@ A saída limpa é compactada enquanto falhas e códigos de saída são preservad
 O Downshift reconhece formas específicas de comandos de teste, build, lint, Git e infraestrutura. Formatos reconhecidos podem ser compactados ou repassados conforme a família e a saída. Formatos de saída desconhecidos permanecem brutos; um comando fora da lista permitida é recusado pelo encapsulador e pode ser executado diretamente. Os detalhes de falhas e o código de saída são preservados. Consulte a referência de ferramentas para conhecer as formas exatas.
 
 [Compactação](../features/compaction.md) · [Ferramentas suportadas](../reference/supported-tools.md) · [CCR](../guides/ccr.md)
+
+### Apps do desktop: computer use com menos tokens
+
+Um agente que controla apps do desktop com o `agent-desktop` lê a árvore de acessibilidade do app em JSON depois de cada ação. O Downshift compacta essas leituras também:
+
+- **Primeira leitura de uma janela:** uma linha por elemento, sem perder campo (um teste decodifica de volta para o mesmo JSON).
+- **Releitura da mesma janela:** só as linhas que mudaram, com a leitura completa a um `downshift retrieve` de distância.
+- **Todo harness:** automático no Claude Code; nos outros, por `downshift compact -- agent-desktop snapshot ...`.
+
+Em fixtures sintéticos, a primeira leitura teve de 53% a 60% menos bytes, uma releitura depois de uma ação 97% menos, e um ciclo ler, agir, conferir de três leituras 84,9% menos. Ainda não foi medido num desktop real.
+
+```bash
+downshift compact -- agent-desktop snapshot --app Files -i
+```
+
+[Guia do agent-desktop](guias/agent-desktop.md)
 
 ## Roteie subagentes dentro da sua política
 
@@ -128,8 +145,8 @@ Os modelos disponíveis para um harness ou sessão não são considerados dispon
 
 | Medição | Resultado | Escopo |
 | --- | --- | --- |
-| Compactação de saída sem perda | **65,2% menos bytes** | 59 fixtures em um corpus sintético. |
-| Compactação de saída com CCR | **72,0% menos bytes** | Corpus sintético de 107 fixtures; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
+| Compactação de saída sem perda | **60,3% menos bytes** | 62 fixtures sem perda em um corpus sintético. |
+| Compactação de saída com CCR | **67,1% menos bytes** | Corpus sintético de 110 fixtures (53,0% com CCR desligado), saída de comandos e leituras do agent-desktop; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
 | Roteamento de subagentes | **24,1% menos tokens por execução aceita** | Estudo controlado com 46 execuções no Claude Code para tarefas mecânicas, realizado antes da decisão O8. |
 
 São medições separadas, com unidades e cargas de trabalho diferentes. Os totais do corpus sintético incluem apenas fixtures processadas pelo compactor e excluem fixtures preservadas. O resultado de roteamento é evidência histórica; ele não estabelece o efeito da implementação após O8. A economia no uso cotidiano sem restrições ainda não foi estabelecida. Estimativas de tokens baseadas em bytes não são uma fatura nem uma medida dos limites do plano.
