@@ -37,9 +37,11 @@ func setupTUI(o setup.Options) int {
 		return code
 	}
 	dirs := wizardDirs(o)
+	cs := wizardComponents(o)
 	wo := setupwizard.Options{
 		Harnesses:  wizardHarnesses(o),
-		Components: wizardComponents(o),
+		Components: cs,
+		Presets:    wizardPresets(cs),
 		Preview:    func(s setupwizard.Selection) ([]diffview.File, error) { return previewSetup(o, dirs, s) },
 	}
 	if o.Workers == "" { // a --workers flag already answered the question

@@ -40,6 +40,8 @@ type Selection struct {
 	Harnesses, Components []string
 	// Choice is the answer to Options.Choice; empty when there is no question.
 	Choice string
+	// Preset is the ID of the preset picked; empty without presets.
+	Preset string
 }
 
 // Options injects the data and the dry-run port.
@@ -50,6 +52,8 @@ type Options struct {
 	Preview func(Selection) ([]diffview.File, error)
 	// Choice is an optional question after the components (nil: not asked).
 	Choice *Choice
+	// Presets is an optional step after the harnesses (nil: not asked).
+	Presets []Preset
 }
 
 type step int
@@ -60,6 +64,7 @@ const (
 	stepReview
 	stepConfirm
 	stepChoice // after the components when Options.Choice is set; shown in that place
+	stepPreset // after the harnesses when Options.Presets is set; shown in that place
 )
 
 const (
@@ -75,6 +80,8 @@ type Model struct {
 	harnesses     pick.MultiSelect
 	components    pick.MultiSelect
 	choice        pick.List
+	preset        pick.List
+	presetIdx     int    // the preset picked, -1 before the pick
 	answer        string // the confirmed Choice item
 	diff          diffview.Model
 	files         []diffview.File
@@ -98,7 +105,7 @@ type previewMsg struct {
 
 // New returns the wizard at its first step.
 func New(th theme.Theme, o Options) Model {
-	m := Model{th: th, o: o, width: defaultWidth, height: defaultHeight}
+	m := Model{th: th, o: o, width: defaultWidth, height: defaultHeight, presetIdx: -1}
 	m.harnesses = pick.NewMultiSelect(harnessItems(o.Harnesses))
 	m.components = pick.NewMultiSelect(componentItems(o.Components))
 	m.resize(m.width, m.height)
@@ -113,7 +120,11 @@ func (m Model) Cancelled() bool { return m.cancelled }
 
 // Selection returns the current choice.
 func (m Model) Selection() Selection {
-	return Selection{Harnesses: m.harnesses.Result(), Components: m.components.Result(), Choice: m.answer}
+	sel := Selection{Harnesses: m.harnesses.Result(), Components: m.components.Result(), Choice: m.answer}
+	if p := m.chosenPreset(); p != nil {
+		sel.Preset = p.ID
+	}
+	return sel
 }
 
 // Init has nothing to start.
@@ -149,6 +160,7 @@ func (m *Model) resize(w, h int) {
 	m.harnesses.SetSize(w, rows)
 	m.components.SetSize(w, rows)
 	m.choice.SetSize(w, 0)
+	m.preset.SetSize(w, 0)
 }
 
 func (m Model) key(k tea.KeyPressMsg) (Model, tea.Cmd) {
@@ -159,49 +171,18 @@ func (m Model) key(k tea.KeyPressMsg) (Model, tea.Cmd) {
 	}
 	m.msg = ""
 	back := s == "esc" || s == "backspace"
-	switch m.step {
-	case stepHarnesses:
-		switch s {
-		case "esc":
-			m.cancelled = true
-			return m, nil
-		case "enter":
-			return m.leaveHarnesses(), nil
-		}
-	case stepComponents:
-		switch {
-		case back:
-			m.step = stepHarnesses
-			return m, nil
-		case s == "enter":
-			if m.hasChoice() {
-				return m.enterChoice(), nil
-			}
-			return m.startReview()
-		}
-	case stepChoice:
-		if back {
-			m.step = stepComponents
-			return m, nil
-		}
-	case stepReview:
-		switch {
-		case back:
-			m.gen++ // drop a preview still in flight
-			m.loading = false
-			m.step = stepComponents
-			if m.hasChoice() {
-				m = m.enterChoice()
-			}
-			return m, nil
-		case s == "enter":
-			return m.leaveReview(), nil
-		}
-	case stepConfirm:
-		if back {
-			m.step = stepReview
-			return m, nil
-		}
+	switch {
+	case m.step == stepHarnesses && s == "esc":
+		m.cancelled = true
+		return m, nil
+	case m.step == stepHarnesses && s == "enter":
+		return m.leaveHarnesses(), nil
+	case m.step != stepHarnesses && back:
+		return m.back()
+	case m.step == stepComponents && s == "enter":
+		return m.afterComponents()
+	case m.step == stepReview && s == "enter":
+		return m.leaveReview(), nil
 	}
 	return m.forward(k)
 }
@@ -214,6 +195,11 @@ func (m Model) forward(msg tea.Msg) (Model, tea.Cmd) {
 		m.harnesses, cmd = m.harnesses.Update(msg)
 	case stepComponents:
 		m.components, cmd = m.components.Update(msg)
+	case stepPreset:
+		m.preset, cmd = m.preset.Update(msg)
+		if m.preset.Done() {
+			return m.applyPreset(m.preset.Result())
+		}
 	case stepChoice:
 		m.choice, cmd = m.choice.Update(msg)
 		if m.choice.Done() {

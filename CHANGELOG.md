@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `downshift setup` wizard: it draws in place below the command instead of full screen, so the choices stay in the terminal history; a new **Profile** step after the harnesses offers *Essential* (hooks, plugin, steering, project policy; the default), *Complete* (every component on by default, then the worker question) and *Custom* (the full list, as before); each component's line says what it does for you; and the run ends with a summary (a green check, harnesses, profile, components, the equivalent command and the next steps). A profile never selects a component a flag turned off or a destructive one. Flags and `--yes` are unchanged.
+
 ## [0.13.0] - 2026-11-09
 
 Release notes: [docs/releases/v0.13.0.md](docs/releases/v0.13.0.md).

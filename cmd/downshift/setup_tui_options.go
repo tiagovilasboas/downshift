@@ -27,38 +27,38 @@ type setupComponent struct {
 }
 
 var setupComponents = []setupComponent{
-	{id: "mcp", label: "MCP server", hint: "register the downshift MCP server in Claude Code, Codex and others",
+	{id: "mcp", label: "MCP server", hint: "lets your agent ask which models this session has, and delegate work",
 		defaultOn: func(o setup.Options) bool { return o.Mcp },
 		set:       func(o *setup.Options, _ *setupArgFlags, on bool) { o.Mcp = on }, offFlag: "--no-mcp"},
-	{id: "plugin", label: "Claude Code plugin", hint: "the plugin carries the hooks instead of settings.json",
+	{id: "plugin", label: "Claude Code plugin", hint: "Claude Code loads the hooks as a plugin instead of settings.json",
 		defaultOn: func(o setup.Options) bool { return !o.NoPlugin },
 		set:       func(o *setup.Options, _ *setupArgFlags, on bool) { o.NoPlugin = !on }, offFlag: "--no-plugin"},
-	{id: "mods", label: "downshift-agents mod", hint: "live band and pane for subagents; it only observes",
+	{id: "mods", label: "downshift-agents mod", hint: "live pane in Claude Code: tokens saved and every subagent; it only observes",
 		defaultOn: func(o setup.Options) bool { return !o.NoMods },
 		set:       func(o *setup.Options, _ *setupArgFlags, on bool) { o.NoMods = !on }, offFlag: "--no-mods"},
-	{id: "session-policy", label: "Session policy", hint: "Claude Code model opusplan and plan mode, only for keys not set",
+	{id: "session-policy", label: "Session policy", hint: "Claude Code plans on Opus and builds on Sonnet (opusplan), only where unset",
 		defaultOn: func(o setup.Options) bool { return !o.NoSessionPolicy },
 		set:       func(o *setup.Options, _ *setupArgFlags, on bool) { o.NoSessionPolicy = !on }, offFlag: "--no-session-policy"},
-	{id: "skills", label: "Skills", hint: "Downshift skills in the harness skills directory",
+	{id: "skills", label: "Skills", hint: "setup, audit and tuning skills your agent can call",
 		defaultOn: func(o setup.Options) bool { return !o.NoSkills },
 		set:       func(o *setup.Options, _ *setupArgFlags, on bool) { o.NoSkills = !on }, offFlag: "--no-skills"},
-	{id: "steering", label: "Steering and agent triggers", hint: "the harness instructions file",
+	{id: "steering", label: "Steering and agent triggers", hint: "tells agents in other harnesses to run downshift compact",
 		defaultOn: func(o setup.Options) bool { return !o.NoSteering },
 		set:       func(o *setup.Options, _ *setupArgFlags, on bool) { o.NoSteering = !on }, offFlag: "--no-steering"},
-	{id: "policy", label: "Project policy offer", hint: "offer .downshift/policy.json in the current directory",
+	{id: "policy", label: "Project policy offer", hint: "Explore subagents on the small model in this project (.downshift/policy.json)",
 		defaultOn: func(o setup.Options) bool { return o.ProjectDir != "" },
 		set:       func(_ *setup.Options, f *setupArgFlags, on bool) { f.noPolicy = !on }, offFlag: "--no-policy"},
-	{id: "you-should-know", label: "You should know", hint: "Claude Code mod; each check is a billed background request",
+	{id: "you-should-know", label: "You should know", hint: "Claude Code tips mod; each check is a billed background request",
 		defaultOn: func(o setup.Options) bool { return o.YouShouldKnow },
 		set:       func(o *setup.Options, _ *setupArgFlags, on bool) { o.YouShouldKnow = on }, onFlag: "--you-should-know"},
-	{id: "prune", label: "Remove other downshift binaries", hint: "older copies on PATH and in the Go and per-user bin directories",
+	{id: "prune", label: "Remove other downshift binaries", hint: "older downshift copies on PATH, so only one runs",
 		defaultOn: func(setup.Options) bool { return false },
 		set:       func(_ *setup.Options, f *setupArgFlags, on bool) { f.keepBinaries = !on }, offFlag: "--keep-binaries", destructive: true},
 }
 
 // wizardComponents lists the choices: hooks first, fixed, then the table.
 func wizardComponents(o setup.Options) []setupwizard.Component {
-	cs := []setupwizard.Component{{ID: "hooks", Label: "Hooks", Hint: "model routing and the shell compactor",
+	cs := []setupwizard.Component{{ID: "hooks", Label: "Hooks", Hint: "subagents on the right model and shorter test output, failures kept",
 		Default: true, Disabled: true, DisabledReason: "always on"}}
 	for _, c := range setupComponents {
 		cs = append(cs, setupwizard.Component{ID: c.id, Label: c.label, Hint: c.hint,

@@ -16,6 +16,10 @@ type program struct{ m Model }
 func (p program) Init() tea.Cmd { return nil }
 
 func (p program) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if ws, ok := msg.(tea.WindowSizeMsg); ok {
+		ws.Height = min(ws.Height, InlineHeight)
+		msg = ws
+	}
 	var cmd tea.Cmd
 	p.m, cmd = p.m.Update(msg)
 	if p.m.Done() || p.m.Cancelled() {
@@ -24,11 +28,12 @@ func (p program) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return p, cmd
 }
 
-func (p program) View() tea.View {
-	v := tea.NewView(p.m.View())
-	v.AltScreen = true
-	return v
-}
+// InlineHeight is the most rows the wizard takes. It draws in place, below
+// the command, not on the alternate screen, so the choices and the final
+// line stay in the terminal's scrollback, like a package installer.
+const InlineHeight = 20
+
+func (p program) View() tea.View { return tea.NewView(p.m.View()) }
 
 // Run shows the wizard until the user confirms or leaves. confirmed is true
 // only after the final yes; the selection is the choice at that point.
