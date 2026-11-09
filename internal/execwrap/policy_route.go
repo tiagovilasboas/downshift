@@ -35,5 +35,8 @@ func routeFamily(argv []string) Family {
 	if family := glabFamily(argv); family != FamilyNone {
 		return family
 	}
+	if family := desktopFamily(argv); family != FamilyNone {
+		return family
+	}
 	return FamilyNone
 }

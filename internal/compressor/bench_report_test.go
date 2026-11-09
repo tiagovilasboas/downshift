@@ -229,7 +229,7 @@ func TestBenchReport(t *testing.T) {
 // conformance suite uses; every other fixture is detected from its text.
 func benchCompress(in []byte, f compressor.Format) compressor.Result {
 	switch f {
-	case compressor.FormatFileRead, compressor.FormatGrepRows, compressor.FormatGrepCounts, compressor.FormatHTTPFetch, compressor.FormatGlab:
+	case compressor.FormatFileRead, compressor.FormatGrepRows, compressor.FormatGrepCounts, compressor.FormatHTTPFetch, compressor.FormatGlab, compressor.FormatAgentDesktop:
 		return compressFor(in, f, 0)
 	}
 	return compressor.CompressExit(in, compressor.ModeSafe, 0)

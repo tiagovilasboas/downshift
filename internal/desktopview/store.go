@@ -54,23 +54,40 @@ func (s Store) path(key string) string {
 	return filepath.Join(s.Dir, hex.EncodeToString(sum[:])[:16]+".view")
 }
 
-// Load returns the view kept for key, or ok false when there is none, it
-// expired, or it is not a regular file.
-func (s Store) Load(key string) (view []byte, ok bool) {
+// Load returns the view kept for key and how long ago it was kept, or ok
+// false when there is none, it expired, or it is not a regular file.
+func (s Store) Load(key string) (view []byte, age time.Duration, ok bool) {
 	p := s.path(key)
 	info, err := paths.RegularFile(p)
 	if err != nil {
-		return nil, false
+		return nil, 0, false
 	}
-	if s.TTL > 0 && s.now().Sub(info.ModTime()) > s.TTL {
+	age = s.now().Sub(info.ModTime())
+	if s.TTL > 0 && age > s.TTL {
 		_ = os.Remove(p)
-		return nil, false
+		return nil, 0, false
 	}
 	data, err := os.ReadFile(p)
 	if err != nil {
-		return nil, false
+		return nil, 0, false
 	}
-	return data, true
+	return data, age, true
+}
+
+// Apply is the step execwrap runs on each compact view of key: it keeps cur
+// as the next base and returns the delta from the previous base, or cur
+// itself when there is no usable base or no delta worth sending. Storage
+// errors only cost the delta.
+func (s Store) Apply(key string, cur []byte) []byte {
+	base, age, ok := s.Load(key)
+	_ = s.Save(key, cur)
+	if !ok {
+		return cur
+	}
+	if d, ok := Delta(base, cur, age); ok {
+		return d
+	}
+	return cur
 }
 
 // ErrTooLarge is returned by Save for a view over MaxBytes.

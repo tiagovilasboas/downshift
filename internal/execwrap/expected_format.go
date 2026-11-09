@@ -95,8 +95,10 @@ var expectedFormats = map[Family][]compressor.Format{
 	// curl and wget -O -: headers and body capped (compressor.HTTPFetchMinBytes).
 	// glab read: secrets redacted, nothing cut (compressor.FormatGlab).
 	FamilyGlab: {compressor.FormatGlab},
-	FamilyCurl: {compressor.FormatHTTPFetch},
-	FamilyWget: {compressor.FormatHTTPFetch},
+	// Every field kept, one line per element (compressor/agent_desktop.go).
+	FamilyAgentDesktop: {compressor.FormatAgentDesktop},
+	FamilyCurl:         {compressor.FormatHTTPFetch},
+	FamilyWget:         {compressor.FormatHTTPFetch},
 	// Logs of no shape of their own: only the generic chain applies.
 	FamilyDenoTest:  {compressor.FormatGeneric},
 	FamilyDenoCheck: {compressor.FormatGeneric},
@@ -140,10 +142,11 @@ var commandFormats = map[Family]compressor.Format{
 	FamilyRgFiles: compressor.FormatFind,
 	FamilyGitGrep: compressor.FormatGrep,
 	// Named by the command line, see commandPlan.
-	FamilyFileRead: compressor.FormatFileRead,
-	FamilyGlab:     compressor.FormatGlab,
-	FamilyCurl:     compressor.FormatHTTPFetch,
-	FamilyWget:     compressor.FormatHTTPFetch,
+	FamilyFileRead:     compressor.FormatFileRead,
+	FamilyGlab:         compressor.FormatGlab,
+	FamilyCurl:         compressor.FormatHTTPFetch,
+	FamilyWget:         compressor.FormatHTTPFetch,
+	FamilyAgentDesktop: compressor.FormatAgentDesktop,
 }
 
 // stderrIsReport lists the families whose stderr is part of what the
