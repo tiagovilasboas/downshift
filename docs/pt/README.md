@@ -9,7 +9,7 @@
 > - 🚀 **[Guia de Início Rápido](../pt-br/guias/inicio-rapido.md)** — Instalação passo a passo, `setup` e `doctor`.
 > - 📦 **[Guia de Compactação e CCR](../pt-br/guias/compactacao-e-ccr.md)** — Como funciona o compactor e recuperação com CCR.
 > - 🔀 **[Guia de Roteamento de Modelos](../pt-br/guias/roteamento-de-modelos.md)** — Delegação de subagentes, guardrails e `policy.json`.
-> - 📊 **[Referência de Benchmarks](../pt-br/referencia/benchmarks.md)** — Tabela oficial de 107 fixtures e escada de evidência.
+> - 📊 **[Referência de Benchmarks](../pt-br/referencia/benchmarks.md)** — Tabela oficial de 110 fixtures e escada de evidência.
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 

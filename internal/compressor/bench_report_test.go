@@ -91,8 +91,8 @@ func benchCorpus(t *testing.T) []benchRow {
 	total := benchRow{family: "TOTAL"}
 	for _, r := range by {
 		rows = append(rows, *r)
-		if r.family == ccrOnlyFamily || apartFamilies[r.family] {
-			continue // not counted in TOTAL: see ccrOnlyFamily and apartFamilies
+		if r.family == ccrOnlyFamily {
+			continue // not counted in TOTAL: the default columns skip these fixtures
 		}
 		total.ccr += r.ccr
 		total.files += r.files
@@ -137,9 +137,6 @@ func rowClass(family string) string {
 	if family == "TOTAL" {
 		return "-"
 	}
-	if apartFamilies[family] {
-		return "apart"
-	}
 	return familyClass(family)
 }
 
@@ -154,7 +151,7 @@ func familyClass(family string) string {
 func classTotals(rows []benchRow) (lossless, lossy benchRow) {
 	lossless.family, lossy.family = "lossless", "lossy"
 	for _, r := range rows {
-		if r.family == "TOTAL" || r.family == ccrOnlyFamily || apartFamilies[r.family] {
+		if r.family == "TOTAL" || r.family == ccrOnlyFamily {
 			continue
 		}
 		dst := &lossless
@@ -167,14 +164,6 @@ func classTotals(rows []benchRow) (lossless, lossy benchRow) {
 	}
 	return lossless, lossy
 }
-
-// apartFamilies are reported in their own row and kept out of TOTAL and the
-// class split: their output is not a command transcript but a UI tree the
-// agent reads to act on, so a byte-weighted total would mix two workloads
-// (agent-desktop JSON alone is about a third of the corpus bytes). Their
-// largest saving, the delta of a repeat read (internal/desktopview), is not
-// a per-fixture number and is not in this table.
-var apartFamilies = map[string]bool{"agent_desktop": true}
 
 // ccrOnlyFamily groups fixtures the default chain leaves raw but FoldRepeats
 // shortens; it has no default saving and is excluded from TOTAL.
@@ -199,7 +188,6 @@ func renderBench(rows []benchRow) string {
 	b.WriteString("Only fixtures Downshift compacts (exit 0, safe mode) are counted; fixtures it preserves are excluded.\n")
 	b.WriteString("Tokens are approximated as bytes/4, not a real tokenizer.\n")
 	b.WriteString("Downshift and CCR bytes include the marker line the compactor appends at runtime; a family with one fixture is one sample, not a rate (see the Fixtures column).\n")
-	b.WriteString("A family of class `apart` (agent-desktop UI trees) is shown in its own row and kept out of TOTAL and the class split: it is not command output, and its runtime keeps every line (no fold) and sends repeat reads as a delta, which no fixture measures ([agent-desktop guide](../guides/agent-desktop.md)).\n")
 	b.WriteString("`with CCR` applies `FoldRepeats` (runs of 8+ similar lines folded to 3 head, 2 tail) to the compacted output, or to the raw output for the `uncompacted (CCR only)` row, which TOTAL excludes. It is lossy and is meant to run only when the raw output is stored for retrieval.\n\n")
 	b.WriteString("| Family | Class | Fixtures | Raw bytes | Downshift bytes | Saving % | Raw tokens~ | Downshift tokens~ | with CCR bytes | with CCR saving % |\n")
 	b.WriteString("|---|---|--:|--:|--:|--:|--:|--:|--:|--:|\n")
@@ -214,10 +202,11 @@ func renderBench(rows []benchRow) string {
 		fmt.Fprintf(&b, "| %s | %d | %d | %d | %.1f |\n", r.family, r.files, r.raw, r.reduced, r.saving())
 	}
 	b.WriteString("\n## Relationship to live token savings\n\n")
-	b.WriteString("The figures above measure raw byte reduction across a synthetic test corpus of 107 CLI command outputs.\n\n")
+	total := rows[len(rows)-1]
+	fmt.Fprintf(&b, "The figures above measure raw byte reduction across a synthetic corpus of %d compacted fixtures: command output and agent-desktop reads.\n\n", total.files)
 	b.WriteString("- In live LLM sessions, compaction cuts verbose command outputs before they enter the prompt context, directly saving input tokens and subsequent prompt cache reads.\n")
-	b.WriteString("- When evaluated with CCR enabled, overall corpus reduction reaches **72.0% fewer bytes** (and **51.1%** with CCR disabled).\n")
-	b.WriteString("- Lossless test runners achieve **65.2% reduction** while preserving 100% of failure details, exit codes, and application stack traces.\n")
+	fmt.Fprintf(&b, "- With CCR enabled, overall corpus reduction is **%.1f%% fewer bytes** (and **%.1f%%** with CCR disabled).\n", savingPct(total.raw, total.ccr), total.saving())
+	fmt.Fprintf(&b, "- Lossless families (%d fixtures) have **%.1f%% fewer bytes** while keeping every failure line, exit code and stack trace.\n", lossless.files, lossless.saving())
 	b.WriteString("- Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.\n")
 	b.WriteString("- Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).\n")
 	return b.String()

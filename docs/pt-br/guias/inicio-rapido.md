@@ -181,5 +181,5 @@ Agora que seu ambiente está configurado e validado, aprofunde-se nos recursos a
 
 - 📦 [Guia de Compactação e CCR](compactacao-e-ccr.md) — Saiba como customizar regras de compactação e retenção de logs.
 - 🔀 [Guia de Roteamento de Modelos](roteamento-de-modelos.md) — Aprenda a criar regras personalizadas em `policy.json`.
-- 📊 [Referência de Benchmarks](../referencia/benchmarks.md) — Veja os dados oficiais de performance e economia em 107 fixtures.
+- 📊 [Referência de Benchmarks](../referencia/benchmarks.md) — Veja os dados oficiais de performance e economia em 110 fixtures.
 - 📖 [Hub Principal PT-BR](../README.md) — Voltar à página principal de documentação.

@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `make bench` reports the `agent_desktop` row as class `apart`, outside TOTAL and the lossless/lossy split: its fixtures are UI trees, not command output, and at about a third of the corpus bytes they would move the byte-weighted totals by composition alone (TOTAL with CCR would read 65.7% instead of 72.0%, lossless 58.1% instead of 65.2%; no family got worse). The baseline gains the row; rows of other families were refreshed to the current output.
+- The benchmark corpus now has 110 compacted fixtures (the three agent-desktop reads are counted in TOTAL and the lossless class). The current figures are 67.1% fewer bytes with CCR on, 53.0% with it off, and 60.3% on the 62 lossless fixtures; the README, `llms.txt`, the evidence guide and the pt-BR benchmark page cite them. They were 72.0%, 51.1% and 65.2% on 107 fixtures: the change is the added fixtures, no family got worse. The summary lines of `docs/reference/bench.md` are now computed by `make bench` instead of written by hand. The baseline rows of a few other families were refreshed to the current output.
 - A compacted run whose raw output is kept by CCR no longer has its same-shape lines folded when its family is `agent-desktop`: each line carries a ref the agent acts on.
 
 ## [0.12.0] - 2026-11-08
