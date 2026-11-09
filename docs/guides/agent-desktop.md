@@ -40,8 +40,8 @@ back with `downshift retrieve` are subtracted, as for every family.
 
 | Where | What to do |
 | --- | --- |
-| Claude Code with the Downshift hook | Nothing. `agent-desktop snapshot ...` and `agent-desktop find ...` are rewritten to `downshift compact` with the session, so both steps apply. |
-| Any other harness, or a script | Run `downshift compact -- agent-desktop snapshot --app Files -i`. The compact view applies; the delta needs the hook's session and does not. |
+| Claude Code with the Downshift hook | Nothing. `agent-desktop snapshot ...` and `agent-desktop find ...` are rewritten to `downshift compact` with the session. |
+| Any other harness, or a script | Run `downshift compact -- agent-desktop snapshot --app Files -i`. Both steps apply; the delta is scoped to the working directory instead of a session. |
 | `agent-desktop mcp` (MCP tools) | Not compacted: Downshift does not see MCP tool results. Use the CLI form to get the view and the delta. |
 
 Only `snapshot` and `find` are wrapped, with the subcommand first. A global flag before it
@@ -91,8 +91,8 @@ delta from snapshot s9x0lmz4 (same window, read 4s ago): 4 of 212 lines changed.
 
 A delta is sent only when all of these hold. Otherwise the whole view is printed:
 
-- The read came through the hook, so it has a session.
-- The command line is exactly the same as the previous read, in the same session, within 10 minutes.
+- The command line is exactly the same as the previous read, in the same scope, within 10 minutes. The scope
+  is the hook's session, or the working directory for a direct `downshift compact` call.
 - Both reads are complete. A read with `complete=false`, `truncated=true` or `identity_unproven=true` never
   gets a delta, because its missing nodes are not removals.
 - The legends match.
@@ -102,17 +102,17 @@ A delta is sent only when all of these hold. Otherwise the whole view is printed
 A new element early in the tree renumbers every ref after it. The delta then grows past 60%, and the full
 view is sent.
 
-The previous view is kept under `~/.downshift/desktopview/`, one private file (0600) per window and session.
+The previous view is kept under `~/.downshift/desktopview/`, one private file (0600) per window and scope.
 Lines that look like secrets are withheld, the same way CCR withholds them. The file name is a hash, not the
 app or window name. Set `DOWNSHIFT_DESKTOP_DELTA=0` to send every read whole. The compact view stays on with
 the compactor (`DOWNSHIFT_EXEC=0` turns both off).
 
 ## Limits
 
-- **Subagents.** Subagents in one Claude Code session share its session. A subagent that reads a window
-  another subagent read a moment before gets a delta against a view it never saw. The delta says so and names
-  `downshift retrieve`, but that costs a round trip. Set `DOWNSHIFT_DESKTOP_DELTA=0` if your subagents read
-  the same windows.
+- **Shared scope.** Subagents in one Claude Code session share its session, and direct calls from one
+  directory share that directory. An agent that reads a window another agent read a moment before gets a
+  delta against a view it never saw. The delta says so and names `downshift retrieve`, but that costs a round
+  trip. Set `DOWNSHIFT_DESKTOP_DELTA=0` if several agents read the same windows.
 - **Secrets.** agent-desktop prints the whole envelope on one line. If any field looks like a secret, CCR
   withholds that one line, which is the whole raw read. `retrieve` then returns no tree. The compact view and
   the delta are unaffected.

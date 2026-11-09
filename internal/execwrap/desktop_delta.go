@@ -49,9 +49,10 @@ func applyDesktop(step func(view []byte) []byte, family Family, raw, out []byte)
 	return append(next, MarkerWithID(len(raw), len(next), string(m[1]))...)
 }
 
-// DesktopScope is the key a Desktop step stores a view under: the session
-// and the exact command line, so only the same read in the same session is
-// diffed. It is "" (no delta) without a session.
+// DesktopScope is the key a Desktop step stores a view under: the scope the
+// caller names (a session, or a working directory for a direct call) and the
+// exact command line, so only the same read in the same scope is diffed. It
+// is "" (no delta) for an empty scope.
 func DesktopScope(session string, argv []string) string {
 	if session == "" {
 		return ""

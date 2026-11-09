@@ -22,8 +22,8 @@ and every hook fails open. Two pillars, in this order:
    into compact form is Claude Code only; elsewhere the agent runs
    `downshift compact -- <command>`.
    Desktop reads: `agent-desktop snapshot` and `find` (accessibility-tree JSON)
-   are re-encoded one line per element with every field kept; through the
-   hook, a repeat read of the same window is sent as the lines that changed.
+   are re-encoded one line per element with every field kept; a repeat read
+   of the same window is sent as the lines that changed (every harness).
    Synthetic fixtures: 53-60% fewer bytes on a first read, about 97% on a
    repeat read (docs/guides/agent-desktop.md).
 

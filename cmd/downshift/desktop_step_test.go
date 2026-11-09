@@ -9,11 +9,11 @@ import (
 	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
-func TestDesktopStepNeedsASessionAndTheFamily(t *testing.T) {
+func TestDesktopStepForEveryCallOfTheFamily(t *testing.T) {
 	t.Setenv(paths.EnvStateDir, t.TempDir())
 	read := []string{"agent-desktop", "snapshot", "--app", "Chat"}
-	if desktopStep("", read) != nil {
-		t.Error("a direct call without a session must get no delta")
+	if desktopStep("", read) == nil {
+		t.Error("a direct call without a session must get the step, scoped to its directory")
 	}
 	if desktopStep("abc", []string{"git", "status"}) != nil {
 		t.Error("another family must get no delta")

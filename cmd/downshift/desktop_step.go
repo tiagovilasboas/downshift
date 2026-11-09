@@ -15,13 +15,22 @@ import (
 const desktopDeltaEnv = "DOWNSHIFT_DESKTOP_DELTA"
 
 // desktopStep is the execwrap Desktop step for one run: a repeat read of the
-// same window, in the same session, is printed as the delta from the view of
-// the previous read (internal/desktopview). It is nil, and every read is the
-// whole view, without a session, for any other family, with the env switch
-// off, or when the state directory cannot be resolved.
+// same window is printed as the delta from the view of the previous read
+// (internal/desktopview). The scope is the hook's session when there is one;
+// a direct call (any harness without a shell rewrite, or a script) is scoped
+// to its working directory instead, so every harness gets the delta. It is
+// nil, and every read is the whole view, for any other family, with the env
+// switch off, or when the state directory cannot be resolved.
 func desktopStep(session string, argv []string) func([]byte) []byte {
 	if os.Getenv(desktopDeltaEnv) == "0" || execwrap.FamilyOf(argv) != execwrap.FamilyAgentDesktop {
 		return nil
+	}
+	if session == "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			return nil
+		}
+		session = "direct:" + wd
 	}
 	key := execwrap.DesktopScope(session, argv)
 	if key == "" {
