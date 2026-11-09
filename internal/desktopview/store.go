@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/tiagovilasboas/downshift-ai/internal/ccr"
 	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
@@ -93,8 +94,12 @@ func (s Store) Apply(key string, cur []byte) []byte {
 // ErrTooLarge is returned by Save for a view over MaxBytes.
 var ErrTooLarge = errors.New("desktopview: view too large to keep")
 
-// Save keeps view as the base for key, replacing any earlier one.
+// Save keeps view as the base for key, replacing any earlier one. A line
+// that looks like a secret is withheld the way CCR withholds it, so the file
+// never holds it; that line then reads as changed on the next read and is
+// sent again, never assumed.
 func (s Store) Save(key string, view []byte) error {
+	view = ccr.Redact(view)
 	if s.MaxBytes > 0 && int64(len(view)) > s.MaxBytes {
 		_ = os.Remove(s.path(key))
 		return ErrTooLarge

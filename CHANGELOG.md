@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Desktop reads: `agent-desktop snapshot` and `agent-desktop find` are a Compactor family (`agent-desktop`). A successful envelope is re-encoded one line per element with every field kept: refs as `eN` under a legend, the common action list written once, short forms for states, bounds, native ids and DOM classes. A decoder test reads the view back to the same JSON. Through the hook (with a session), a repeat read of the same window within 10 minutes is sent as the lines that changed, when the raw output is kept by CCR (`downshift retrieve` gives the full read) and the delta is under 60% of the view. Previous views live under `<state dir>/desktopview/` (0600, secret-looking lines withheld); `DOWNSHIFT_DESKTOP_DELTA=0` sends every read whole. Synthetic fixtures: first read 53.1–59.8% fewer bytes; a repeat read after one action 97.2%; three reads of one window 84.9%. Every read is logged and counted like any family (`report`, `stats`, session panel, pane). Guide: [agent-desktop](docs/guides/agent-desktop.md).
+
+### Changed
+
+- `make bench` reports the `agent_desktop` row as class `apart`, outside TOTAL and the lossless/lossy split: its fixtures are UI trees, not command output, and at about a third of the corpus bytes they would move the byte-weighted totals by composition alone (TOTAL with CCR would read 65.7% instead of 72.0%, lossless 58.1% instead of 65.2%; no family got worse). The baseline gains the row; rows of other families were refreshed to the current output.
+- A compacted run whose raw output is kept by CCR no longer has its same-shape lines folded when its family is `agent-desktop`: each line carries a ref the agent acts on.
+
 ## [0.12.0] - 2026-11-08
 
 Release notes: [docs/releases/v0.12.0.md](docs/releases/v0.12.0.md).

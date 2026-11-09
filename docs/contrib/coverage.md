@@ -60,6 +60,7 @@ file or from `AGENTS.md`.
 | `internal/discovery` | Routing | `models discover/list/check/pull` |
 | `internal/docscheck` | Quality | CI gates for markdown layout and package inventory |
 | `internal/execwrap` | Shell | Allowlist policy, family classification, compactor runner |
+| `internal/desktopview` | Shell | agent-desktop repeat reads: keeps the last compact view per window and session (0600, 10-minute TTL) and sends the line delta |
 | `internal/fuse` | Routing | Raise-only semantic boost |
 | `internal/gateway` | Routing | Gateway companion abstractions and adapter for 9router |
 | `internal/hookctx` | Adapters | Hook deadline context |

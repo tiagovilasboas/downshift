@@ -49,6 +49,7 @@ Downshift also applies model choices and reasoning effort for delegated work wit
 | Capability | What it does |
 | --- | --- |
 | **Context & output compaction** | Prevents context degradation by cutting clean command noise while preserving failure logs. |
+| **Desktop read compaction** | Shortens `agent-desktop` accessibility-tree reads with every field kept, and sends a repeat read of the same window as the lines that changed ([guide](docs/guides/agent-desktop.md)). |
 | **Subagent model & effort routing** | Applies model tier and reasoning effort at the spawn boundary within your policy. |
 | **Local reporting & telemetry** | Measures tokens and context preserved without sending prompts or code outside your machine. |
 

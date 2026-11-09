@@ -3,7 +3,7 @@
 
 package execwrap
 
-// DOMAIN: desktop automation. agent-desktop (vercel-labs/agent-desktop)
+// DOMAIN: desktop automation. The agent-desktop CLI
 // reads the accessibility tree of a desktop app and prints one JSON
 // envelope. Only its two tree reads are wrapped: snapshot and find. Both
 // write a refmap under agent-desktop's own state directory, which the

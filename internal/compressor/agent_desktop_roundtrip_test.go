@@ -254,7 +254,7 @@ func assertRoundTrip(t *testing.T, in []byte) Result {
 }
 
 func TestAgentDesktopViewKeepsEveryFieldOfTheCorpus(t *testing.T) {
-	for _, name := range []string{"agent_desktop_snapshot_finder.txt", "agent_desktop_snapshot_electron.txt", "agent_desktop_find_buttons.txt"} {
+	for _, name := range []string{"agent_desktop_snapshot_files.txt", "agent_desktop_snapshot_chat.txt", "agent_desktop_find_buttons.txt"} {
 		t.Run(name, func(t *testing.T) {
 			r := assertRoundTrip(t, []byte(readCorpus(t, name)))
 			t.Log(fmt.Sprintf("%d -> %d bytes", r.OriginalBytes, r.ReducedBytes))

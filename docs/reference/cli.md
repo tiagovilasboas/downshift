@@ -768,6 +768,7 @@ Maintainer tool: `downshift probe <event>` records a hook payload's field names 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DOWNSHIFT_EXEC` | Enable/disable compaction | `1` |
+| `DOWNSHIFT_DESKTOP_DELTA` | `0` sends every agent-desktop read as the whole compact view, never a delta from the previous read ([agent-desktop](../guides/agent-desktop.md)) | `1` |
 | `DOWNSHIFT_LEARNING` | Enable/disable learning | `1` |
 | `DOWNSHIFT_STATE_DIR` | State directory | `~/.downshift` |
 | `DOWNSHIFT_QUOTA_FILE` | Path of the quota evidence file | `<state dir>/quota.json` |

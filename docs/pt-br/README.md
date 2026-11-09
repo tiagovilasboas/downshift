@@ -49,6 +49,7 @@ O Downshift também aplica escolhas de modelo e nível de esforço de raciocíni
 | Capacidade | O que faz |
 | --- | --- |
 | **Compactação de contexto & saída** | Evita a degradação do contexto ao encurtar o ruído de comandos limpos, preservando logs de falha. |
+| **Compactação de leituras do desktop** | Encurta as leituras da árvore de acessibilidade do `agent-desktop` sem perder campo, e manda uma releitura da mesma janela só com as linhas que mudaram ([guia](../guides/agent-desktop.md)). |
 | **Roteamento de modelo & esforço por subagente** | Aplica o tier do modelo e o nível de esforço de raciocínio na criação do subagente conforme a política. |
 | **Relatórios locais & telemetria** | Mede tokens e contexto preservados sem enviar prompts, código ou caminhos para fora da máquina. |
 

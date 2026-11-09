@@ -21,6 +21,11 @@ and every hook fails open. Two pillars, in this order:
    is not the /compact command. Implemented, on by default. Automatic rewrite
    into compact form is Claude Code only; elsewhere the agent runs
    `downshift compact -- <command>`.
+   Desktop reads: `agent-desktop snapshot` and `find` (accessibility-tree JSON)
+   are re-encoded one line per element with every field kept; through the
+   hook, a repeat read of the same window is sent as the lines that changed.
+   Synthetic fixtures: 53-60% fewer bytes on a first read, about 97% on a
+   repeat read (docs/guides/agent-desktop.md).
 
 Numbers keep their qualifiers. Routing: up to about 12% cheaper on mechanical tasks
 in one controlled trial (one operator, three runs per cell, Claude Code, 2026-10-15, list price;

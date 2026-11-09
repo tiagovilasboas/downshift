@@ -76,7 +76,7 @@ func TestAgentDesktopViewKeepsAFailedRunRaw(t *testing.T) {
 }
 
 func TestAgentDesktopViewLegends(t *testing.T) {
-	in := desktopEnv("snapshot", `{"app":"Finder","complete":true,"ref_count":13,"snapshot_id":"s8f3k2p9","tree":{"role":"window","name":"Downloads","children":[{"ref_id":"@s8f3k2p9:e1","role":"button","name":"No actions"}`+rows("s8f3k2p9", 2)+`]}}`)
+	in := desktopEnv("snapshot", `{"app":"Files","complete":true,"ref_count":13,"snapshot_id":"s8f3k2p9","tree":{"role":"window","name":"Downloads","children":[{"ref_id":"@s8f3k2p9:e1","role":"button","name":"No actions"}`+rows("s8f3k2p9", 2)+`]}}`)
 	r := assertRoundTrip(t, in)
 	out := string(r.Output)
 	for _, want := range []string{

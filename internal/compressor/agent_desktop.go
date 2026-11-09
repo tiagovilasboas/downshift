@@ -11,13 +11,13 @@ import (
 	"strings"
 )
 
-// DOMAIN: agent-desktop (vercel-labs/agent-desktop) prints one JSON envelope
+// DOMAIN: agent-desktop, a desktop automation CLI, prints one JSON envelope
 // per command: {"version","ok","command","data"|"error"}. A snapshot's data
 // holds an accessibility tree whose nodes repeat their key names, quote
 // marks and the snapshot id inside every ref ("@s8f3k2p9:e12"). The view
 // below re-encodes the same facts as one line per node, indented by depth:
 //
-//	agent-desktop snapshot (envelope 2.6) app="Finder" complete=true ref_count=59 snapshot_id="s8f3k2p9"
+//	agent-desktop snapshot (envelope 2.6) app="Files" complete=true ref_count=59 snapshot_id="s8f3k2p9"
 //	refs: eN means @s8f3k2p9:eN
 //	window "Downloads"
 //	  e8 treeitem "Documents" actions=Click

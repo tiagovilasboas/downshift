@@ -23,7 +23,13 @@ func MarkerWithID(raw, summary int, id string) string {
 // stores them, swaps the trailing marker of out for MarkerWithID. Keep never
 // fails the run: a panic, a false return or an out without a marker leaves out
 // unchanged.
-func keepRaw(keep func(raw []byte) (string, bool), raw, out []byte) (res []byte) {
+func keepRaw(keep func(raw []byte) (string, bool), raw, out []byte) []byte {
+	return keepRawFor(FamilyNone, keep, raw, out)
+}
+
+// keepRawFor is keepRaw for a run of family. A family in noFoldStored keeps
+// its summary whole: its lines are not a log's repeats.
+func keepRawFor(family Family, keep func(raw []byte) (string, bool), raw, out []byte) (res []byte) {
 	res = out
 	defer func() {
 		if recover() != nil {
@@ -37,7 +43,10 @@ func keepRaw(keep func(raw []byte) (string, bool), raw, out []byte) (res []byte)
 	if i < 0 {
 		return out
 	}
-	summary := foldStored(out[:i])
+	summary := out[:i]
+	if !noFoldStored[family] {
+		summary = foldStored(summary)
+	}
 	if len(raw) > len(out) && len(summary)+len(MarkerWithID(len(raw), len(summary), "000000000000")) >= len(raw) {
 		return out
 	}
@@ -76,7 +85,7 @@ func keepUncompacted(keep func(raw []byte) (string, bool), raw []byte, exitCode 
 			res, ok = nil, false
 		}
 	}()
-	if keep == nil || exitCode != 0 || wroteStderr || !compactibleFamily(family) || family == FamilyFileRead {
+	if keep == nil || exitCode != 0 || wroteStderr || !compactibleFamily(family) || family == FamilyFileRead || noFoldStored[family] {
 		return nil, false
 	}
 	if (family == FamilyFind || family == FamilyLs) && bytes.Count(raw, []byte("\n")) <= 100 {

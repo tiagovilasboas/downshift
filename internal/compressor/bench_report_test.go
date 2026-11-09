@@ -91,8 +91,8 @@ func benchCorpus(t *testing.T) []benchRow {
 	total := benchRow{family: "TOTAL"}
 	for _, r := range by {
 		rows = append(rows, *r)
-		if r.family == ccrOnlyFamily {
-			continue // not counted in TOTAL: the default columns skip these fixtures
+		if r.family == ccrOnlyFamily || apartFamilies[r.family] {
+			continue // not counted in TOTAL: see ccrOnlyFamily and apartFamilies
 		}
 		total.ccr += r.ccr
 		total.files += r.files
@@ -137,6 +137,9 @@ func rowClass(family string) string {
 	if family == "TOTAL" {
 		return "-"
 	}
+	if apartFamilies[family] {
+		return "apart"
+	}
 	return familyClass(family)
 }
 
@@ -151,7 +154,7 @@ func familyClass(family string) string {
 func classTotals(rows []benchRow) (lossless, lossy benchRow) {
 	lossless.family, lossy.family = "lossless", "lossy"
 	for _, r := range rows {
-		if r.family == "TOTAL" || r.family == ccrOnlyFamily {
+		if r.family == "TOTAL" || r.family == ccrOnlyFamily || apartFamilies[r.family] {
 			continue
 		}
 		dst := &lossless
@@ -164,6 +167,14 @@ func classTotals(rows []benchRow) (lossless, lossy benchRow) {
 	}
 	return lossless, lossy
 }
+
+// apartFamilies are reported in their own row and kept out of TOTAL and the
+// class split: their output is not a command transcript but a UI tree the
+// agent reads to act on, so a byte-weighted total would mix two workloads
+// (agent-desktop JSON alone is about a third of the corpus bytes). Their
+// largest saving, the delta of a repeat read (internal/desktopview), is not
+// a per-fixture number and is not in this table.
+var apartFamilies = map[string]bool{"agent_desktop": true}
 
 // ccrOnlyFamily groups fixtures the default chain leaves raw but FoldRepeats
 // shortens; it has no default saving and is excluded from TOTAL.
@@ -188,6 +199,7 @@ func renderBench(rows []benchRow) string {
 	b.WriteString("Only fixtures Downshift compacts (exit 0, safe mode) are counted; fixtures it preserves are excluded.\n")
 	b.WriteString("Tokens are approximated as bytes/4, not a real tokenizer.\n")
 	b.WriteString("Downshift and CCR bytes include the marker line the compactor appends at runtime; a family with one fixture is one sample, not a rate (see the Fixtures column).\n")
+	b.WriteString("A family of class `apart` (agent-desktop UI trees) is shown in its own row and kept out of TOTAL and the class split: it is not command output, and its runtime keeps every line (no fold) and sends repeat reads as a delta, which no fixture measures ([agent-desktop guide](../guides/agent-desktop.md)).\n")
 	b.WriteString("`with CCR` applies `FoldRepeats` (runs of 8+ similar lines folded to 3 head, 2 tail) to the compacted output, or to the raw output for the `uncompacted (CCR only)` row, which TOTAL excludes. It is lossy and is meant to run only when the raw output is stored for retrieval.\n\n")
 	b.WriteString("| Family | Class | Fixtures | Raw bytes | Downshift bytes | Saving % | Raw tokens~ | Downshift tokens~ | with CCR bytes | with CCR saving % |\n")
 	b.WriteString("|---|---|--:|--:|--:|--:|--:|--:|--:|--:|\n")
