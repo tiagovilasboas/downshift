@@ -35,6 +35,8 @@ func TestHookE2E_SessionFirstNewIDsAcrossHarnesses(t *testing.T) {
 				switch h.Harness {
 				case "codex":
 					payload["tool_name"] = "spawn_agent"
+				case "kiro":
+					payload["tool_name"] = "invoke_sub_agent"
 				case "kirocrew":
 					payload["tool_name"] = "spawn_run"
 				case "cursor":

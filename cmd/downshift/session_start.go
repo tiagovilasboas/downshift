@@ -9,10 +9,9 @@ import (
 	"io"
 )
 
-// sessionStartContext is the line Claude Code puts into the session's context at
-// start. It is a short, factual pointer to the orchestrator's own choice, the
-// only channel that reaches the model before it decides how to delegate
-// (docs/internal/plans/mcp-spike-2026-10-28.md).
+// sessionStartContext is the line put into the session's context at start. It is
+// a short, factual pointer to the orchestrator's own choice, the only channel
+// that reaches the model before it decides how to delegate.
 const sessionStartContext = "Downshift is installed. Every time you are about to spawn a subagent with the Agent or Task tool, " +
 	"call the downshift MCP tool providers first: it is the one step that shows the models this harness offers right now, so make it a habit before the spawn, not an afterthought. " +
 	"Then call apply to preview your choice of model and effort. " +
@@ -37,4 +36,11 @@ func runClaudeCodeSessionStart(out io.Writer) int {
 	}
 	_, _ = fmt.Fprintln(out, string(b))
 	return 0
+}
+
+// runSessionStart answers the SessionStart hook for harnesses with an
+// additionalContext wire (Kiro, Codex). Falls back to empty output if unknown.
+func runSessionStart(out io.Writer, harness string) int {
+	// Kiro and Codex use the same wire format as Claude Code.
+	return runClaudeCodeSessionStart(out)
 }

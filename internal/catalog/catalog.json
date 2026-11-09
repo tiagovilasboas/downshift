@@ -407,6 +407,39 @@
       "effort_map": { "low": "low", "medium": "medium", "high": "high" }
     },
 
+    { "_section": "kiro — Kiro IDE native Anthropic models (invoke_sub_agent tool). Same families as Claude Code; model field accepts exact id or family alias." },
+
+    {
+      "id": "claude-haiku-5-5",
+      "aliases": ["claude-haiku-5.5", "haiku"],
+      "family": "claude-haiku",
+      "provider": "anthropic",
+      "harness": "kiro",
+      "tier": "small",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "5000", "high": "10000" }
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "aliases": ["claude-sonnet-5.5", "sonnet"],
+      "family": "claude-sonnet",
+      "provider": "anthropic",
+      "harness": "kiro",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
+    },
+    {
+      "id": "claude-opus-5-5",
+      "aliases": ["claude-opus-5.5", "opus"],
+      "family": "claude-opus",
+      "provider": "anthropic",
+      "harness": "kiro",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+
     { "_section": "kirocrew — spawn_run models (Anthropic families; Crew accepts canonical key or provider id). Exact rows for every Anthropic id kiro-cli chat --list-models --format json listed on 2026-10-23, so an older version is not priced as its family's 5.5 row. Prices from the OpenRouter model list, 2026-10-24." },
 
     {

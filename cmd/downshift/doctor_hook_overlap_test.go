@@ -232,6 +232,8 @@ func TestRewritesTagsInTargetTable(t *testing.T) {
 		"cursor|preToolUse|Shell":                   setup.RewritesShell,
 		"codex|PreToolUse|(^Agent$|.*spawn_agent$)": setup.RewritesModel,
 		"codex|PreToolUse|^Bash$":                   setup.RewritesShell,
+		"kiro|PreToolUse|invoke_sub_agent":          setup.RewritesModel,
+		"kiro|PreToolUse|execute_bash":              setup.RewritesShell,
 		"antigravity|PreToolUse|invoke_subagent":    setup.RewritesModel,
 		"antigravity|PreToolUse|run_command":        setup.RewritesShell,
 	}

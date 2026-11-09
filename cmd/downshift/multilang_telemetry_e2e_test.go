@@ -20,6 +20,7 @@ import (
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/kiro"
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift-ai/internal/core"
@@ -59,6 +60,8 @@ func TestHookE2E_MultilangGuardAcrossHarnesses(t *testing.T) {
 				switch h.Harness {
 				case "codex":
 					payload["tool_name"] = "spawn_agent"
+				case "kiro":
+					payload["tool_name"] = "invoke_sub_agent"
 				case "kirocrew":
 					payload["tool_name"] = "spawn_run"
 				case "cursor":
@@ -140,6 +143,8 @@ func runQAAdapterFixture(raw []byte, harness string) {
 		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) }, func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) }, printCursorAllow)
 	case "codex":
 		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) }, func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) }, printAllow)
+	case "kiro":
+		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (kiro.Event, error) { var e kiro.Event; return e, json.Unmarshal(b, &e) }, func(e kiro.Event) (any, string, core.Decision) { return kiro.Handle(e, cmdCat) }, printAllow)
 	case "kirocrew":
 		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (kirocrew.Event, error) { var e kirocrew.Event; return e, json.Unmarshal(b, &e) }, func(e kirocrew.Event) (any, string, core.Decision) { return kirocrew.Handle(e, cmdCat) }, policyWire{})
 	case "antigravity":
