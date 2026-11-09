@@ -13,6 +13,7 @@ import (
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift-ai/internal/adapters/kiro"
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/downshift-ai/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift-ai/internal/core"
@@ -111,6 +112,20 @@ var harnessRegistry = map[string]harnessEntry{
 		},
 		Port: portPtr(codex.Port()),
 		Caps: core.CodexCaps,
+	},
+	"kiro": {
+		Hook: func(in io.Reader, catalog core.Resolver) int {
+			return runHookAdapter(
+				"kiro",
+				in,
+				func(b []byte) (kiro.Event, error) { var e kiro.Event; return e, json.Unmarshal(b, &e) },
+				func(e kiro.Event) (any, string, core.Decision) { return kiro.Handle(e, catalog) },
+				printAllow,
+				func(e kiro.Event) string { return e.TaskText() },
+			)
+		},
+		Port: portPtr(kiro.Port()),
+		Caps: core.KiroCaps,
 	},
 	// kirocrew has no rewrite channel (exit 0 allows, exit 2 blocks with
 	// stderr relayed to the LLM), so it runs the shared runner in policy mode:

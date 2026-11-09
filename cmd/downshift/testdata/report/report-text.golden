@@ -1,7 +1,7 @@
 COMPACTION SAVINGS PER HARNESS (all time; tokens kept out of the context, per harness, never summed)
    harness        tokens avoided (Compactor)
    claude-code    1.0k
-   no events: antigravity, cursor, kirocrew, opencode
+   no events: antigravity, cursor, kiro, kirocrew, opencode
 Current harness: claude-code
 
 Routed spawns, all time
@@ -27,6 +27,7 @@ Completion measurable, by harness
   claude-code  measurable: 1 end record from SubagentStop, usage from transcript
   cursor       not yet measurable: no end record seen from subagentStop (usage from none)
   codex        not yet measurable: no end record seen from PostToolUse (usage from none)
+  kiro         not yet measurable: no end record seen from PostToolUse (usage from none)
   kirocrew     not yet measurable: no end record seen from postToolUse (usage from none)
   antigravity  no end event known; completion is not measurable
   opencode     not yet measurable: no end record seen from child_done (usage from payload)
@@ -70,12 +71,13 @@ WHY SPAWNS CHANGED (all time)
    codex: 2 spawns
       by verdict: held_unknown 1 · kept 1
       top reasons: held_unknown:no_candidate 1 · kept 1
-   no events: antigravity, cursor, kirocrew, opencode
+   no events: antigravity, cursor, kiro, kirocrew, opencode
 
 MAIN SESSION MECHANICAL WORK (all time; read/search/shell calls a small-tier subagent could take, per harness, never added)
    claude-code    main session: 0 read/search/shell calls, 0 on a frontier model
    cursor         unobserved
    codex          unobserved
+   kiro           unobserved
    kirocrew       unobserved
    antigravity    unobserved
    opencode       unobserved
@@ -84,6 +86,6 @@ QUOTA USED PER HARNESS (all time)
    harness        quota used (5h · week)
    claude-code    unknown
    codex          unknown
-   no events: antigravity, cursor, kirocrew, opencode
+   no events: antigravity, cursor, kiro, kirocrew, opencode
 
 Planner and workers: no calls yet

@@ -742,7 +742,7 @@ A harness calls these with one JSON event on standard input; `downshift setup` w
 not run them by hand. They fail open: on any error the subagent runs unchanged. `downshift doctor` checks that
 they are wired.
 
-### `downshift claude-code`, `downshift cursor`, `downshift codex`, `downshift antigravity`, `downshift opencode`
+### `downshift claude-code`, `downshift cursor`, `downshift codex`, `downshift kiro`, `downshift antigravity`, `downshift opencode`
 
 The route hook of each harness: it rewrites a subagent's `model` (and `reasoning_effort`) as the routing policy
 allows. See the [harness matrix](harness-matrix.md).

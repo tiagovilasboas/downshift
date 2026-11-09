@@ -8,6 +8,7 @@ var plumbingCommands = []Command{
 	{Name: "claude-code", Summary: "Claude Code PreToolUse hook: rewrites a subagent's model"},
 	{Name: "cursor", Summary: "Cursor preToolUse hook: rewrites a subagent's model"},
 	{Name: "codex", Summary: "Codex PreToolUse hook: rewrites a subagent's model"},
+	{Name: "kiro", Summary: "Kiro IDE PreToolUse hook: rewrites a subagent's model"},
 	{Name: "antigravity", Summary: "Antigravity PreToolUse hook: rewrites a subagent's model"},
 	{Name: "kirocrew", Summary: "KiroCrew preToolUse hook: policy mode, exit 0 allow or 2 block"},
 	{Name: "opencode", Summary: "OpenCode subagent_spawn_intent route hook (wire v1)"},
@@ -19,4 +20,8 @@ var plumbingCommands = []Command{
 	{Name: "claude-code-post-tool-use", Summary: "Claude Code post-spawn observation", Hidden: true, Legacy: true},
 	{Name: "claude-code-subagent-stop", Summary: "Claude Code subagent-stop observation", Hidden: true, Legacy: true},
 	{Name: "claude-code-session-start", Summary: "Claude Code session-start hook", Hidden: true, Legacy: true},
+	{Name: "kiro-post-tool-use", Summary: "Kiro IDE post-spawn observation", Hidden: true},
+	{Name: "kiro-session-start", Summary: "Kiro IDE session-start hook", Hidden: true},
+	{Name: "codex-post-tool-use", Summary: "Codex post-spawn observation", Hidden: true},
+	{Name: "codex-session-start", Summary: "Codex session-start hook", Hidden: true},
 }

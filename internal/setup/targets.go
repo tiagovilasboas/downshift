@@ -161,6 +161,43 @@ var Targets = []Target{
 		Mcp:      &Mcp{Kind: McpTOMLBlock, File: ".codex/config.toml"},
 	},
 	{
+		// Kiro IDE (VS Code extension). Distinct from KiroCrew (the daemon):
+		// Kiro stores hooks in ~/.kiro/hooks/ (multiple JSON files, v1 schema),
+		// uses ~/.kiro/skills/ for skills, and reads steering from .kiro/steering/.
+		// KiroCrew is configured separately through .kiro/crew/config.json.
+		Name:      "kiro",
+		ConfigDir: ".kiro",
+		SkillsDir: ".kiro/skills",
+		File:      ".kiro/hooks/downshift.json",
+		HooksPath: []string{"hooks"},
+		Nested:    true,
+		Hooks: []Hook{
+			// Model routing for subagent spawns.
+			{Event: "PreToolUse", Matcher: "invoke_sub_agent", Args: "kiro", Rewrites: RewritesModel},
+			// Shell rewrite: allowlisted Bash commands become `downshift compact -- ...` (shellrewrite.go).
+			{Event: "PreToolUse", Matcher: "execute_bash", Args: "kiro", Rewrites: RewritesShell},
+			// Child end (N5). Matcher tracks subagent completion.
+			{Event: "PostToolUse", Matcher: "invoke_sub_agent", Args: "end kiro"},
+			// Bash output reaches the context sensor (observe only: bytes and
+			// the compressor's potential, never the text).
+			{Event: "PostToolUse", Matcher: "execute_bash", Args: "kiro-post-tool-use"},
+			// Read, Grep and Glob feed only the main-session work count (mainwork).
+			{Event: "PostToolUse", Matcher: "read_file|grep_search|file_search", Args: "kiro-post-tool-use"},
+			{Event: "SessionStart", Args: "kiro-session-start"},
+		},
+		Notes: []string{
+			"Kiro reads hooks from ~/.kiro/hooks/ automatically. Restart the Kiro IDE to pick up new hooks.",
+		},
+		// Global instructions. Kiro reads steering files from .kiro/steering/ with
+		// frontmatter-based inclusion rules.
+		Steering: &Steering{
+			Path:        ".kiro/steering/downshift-compact.md",
+			Frontmatter: "---\ninclusion: always\n---\n\n",
+			Content:     HarnessSteering,
+		},
+		Mcp: &Mcp{Kind: McpJSONMap, File: ".kiro/settings/mcp.json"},
+	},
+	{
 		Name:      "antigravity",
 		ConfigDir: ".gemini",
 		File:      ".gemini/config/hooks.json",
@@ -174,6 +211,7 @@ var Targets = []Target{
 	{
 		Name:      "kirocrew",
 		ConfigDir: ".kiro",
+		SkillsDir: ".kiro/skills",
 		// The hook goes in agent.kiro_hooks, not in the generated agent spec
 		// (~/.kiro/agents/kirocrew.json is rewritten on every restart).
 		// KiroCrew takes one executable and no arguments, hence the wrapper.

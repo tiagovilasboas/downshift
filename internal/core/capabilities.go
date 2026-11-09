@@ -183,6 +183,14 @@ var (
 	// in codex-rs/protocol/src/shell_environment.rs; checked 2026-11-03).
 	CodexCaps = HarnessCapabilities{ShellEnv: "CODEX_THREAD_ID", CanRewriteModel: true, CanApplyEffort: true, RewritePreservesInput: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanRewriteShellCommand: true, ShellDialect: ShellPOSIX, RewriteImpliesApproval: true, UnknownUserRules: true, WorkerAgent: "codex"}
 
+	// KiroCaps — Kiro IDE (VS Code extension) hook protocol supports updatedInput
+	// rewrite like Codex. Distinct from KiroCrew (the daemon) which is policy-only.
+	// The hook rewrites invoke_sub_agent tool_input.model before the spawn.
+	// Child end (N5): PostToolUse carries the spawn result.
+	// Shell rewrite: execute_bash commands can be compacted via updatedInput.
+	// SessionEnv is not set to avoid collision with KiroCrew (both use KIRO_SESSION_ID).
+	KiroCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanRewriteShellCommand: true, ShellDialect: ShellPOSIX, UnknownUserRules: true}
+
 	// KiroCrewCaps — KiroCrew's preToolUse hook is policy-only: its contract is
 	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input
 	// rewrite path. So the model cannot be replaced in place; the adapter blocks
@@ -230,6 +238,7 @@ func AllHarnessCaps() []NamedCaps {
 		{"claude-code", ClaudeCodeCaps},
 		{"cursor", CursorCaps},
 		{"codex", CodexCaps},
+		{"kiro", KiroCaps},
 		{"kirocrew", KiroCrewCaps},
 		{"antigravity", AntigravityCaps},
 		{"opencode", OpenCodeCaps},

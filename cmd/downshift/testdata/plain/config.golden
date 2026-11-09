@@ -5,11 +5,12 @@ downshift config (value, then where it comes from)
   session_models.claude-code  none: rewrites held  [default]
   session_models.cursor       none: rewrites held  [default]
   session_models.codex        none: rewrites held  [default]
+  session_models.kiro         none: rewrites held  [default]
   session_models.kirocrew     none: rewrites held  [default]
   session_models.antigravity  none: rewrites held  [default]
   session_models.opencode     none: rewrites held  [default]
   quota_mode                  default  [default]  no snapshot: rewrites allowed; an expired snapshot holds for 1 h, then is ignored
   quiet                       off  [default]
-  catalog                     embedded  [default]  63 entries
+  catalog                     embedded  [default]  67 entries
   semantic_boost              on (hash embedder)  [default]
 --- stderr ---

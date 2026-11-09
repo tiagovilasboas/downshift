@@ -93,7 +93,7 @@ func TestReport_WhySpawnsChangedPerHarness(t *testing.T) {
 		"rule:fast-lane 1", "profile:cheap-reader 1", "refused_config:unknown_profile 1",
 		"1 without a routing note",
 		"codex: 2 spawns", "held_unknown:no_candidate 1",
-		"no events: antigravity, cursor, kirocrew, opencode",
+		"no events: antigravity, cursor, kiro, kirocrew, opencode",
 	} {
 		if !strings.Contains(why, want) {
 			t.Errorf("why section lacks %q:\n%s", want, why)
@@ -142,7 +142,7 @@ func TestReport_TokensPerHarnessKeepsColumnsApart(t *testing.T) {
 	if n := strings.Count(outside, telemetry.ShortTokens(1000)); n != 1 {
 		t.Errorf("the Compactor tokens of claude-code (%s) must be printed once, found %d:\n%s", telemetry.ShortTokens(1000), n, text)
 	}
-	if !strings.Contains(tab, "no events: antigravity, cursor, kirocrew, opencode") {
+	if !strings.Contains(tab, "no events: antigravity, cursor, kiro, kirocrew, opencode") {
 		t.Errorf("harnesses without events are not listed:\n%s", tab)
 	}
 }

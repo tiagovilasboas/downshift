@@ -95,6 +95,14 @@ func main() {
 		os.Exit(runUsage(os.Stdin, portFor("claude-code"), catalog))
 	case "claude-code-session-start":
 		os.Exit(runClaudeCodeSessionStart(os.Stdout))
+	case "kiro-post-tool-use":
+		os.Exit(runHonor(os.Stdin, portFor("kiro"), catalog))
+	case "kiro-session-start":
+		os.Exit(runSessionStart(os.Stdout, "kiro"))
+	case "codex-post-tool-use":
+		os.Exit(runHonor(os.Stdin, portFor("codex"), catalog))
+	case "codex-session-start":
+		os.Exit(runSessionStart(os.Stdout, "codex"))
 	case "models":
 		os.Exit(runModels(catalog, args[1:]))
 	case "quota":

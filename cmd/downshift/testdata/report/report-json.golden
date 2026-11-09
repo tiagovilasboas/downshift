@@ -101,6 +101,13 @@
       "measurable": false
     },
     {
+      "harness": "kiro",
+      "end_event": "PostToolUse",
+      "usage_source": "none",
+      "end_records": 0,
+      "measurable": false
+    },
+    {
       "harness": "kirocrew",
       "end_event": "postToolUse",
       "usage_source": "none",
@@ -318,6 +325,13 @@
             "measurable": false
           },
           {
+            "harness": "kiro",
+            "end_event": "PostToolUse",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
             "harness": "kirocrew",
             "end_event": "postToolUse",
             "usage_source": "none",
@@ -432,6 +446,13 @@
           },
           {
             "harness": "codex",
+            "end_event": "PostToolUse",
+            "usage_source": "none",
+            "end_records": 0,
+            "measurable": false
+          },
+          {
+            "harness": "kiro",
             "end_event": "PostToolUse",
             "usage_source": "none",
             "end_records": 0,
@@ -640,6 +661,12 @@
     },
     {
       "harness": "codex",
+      "observed": false,
+      "mechanical_calls": 0,
+      "mechanical_on_frontier": 0
+    },
+    {
+      "harness": "kiro",
       "observed": false,
       "mechanical_calls": 0,
       "mechanical_on_frontier": 0
