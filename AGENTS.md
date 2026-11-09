@@ -67,7 +67,7 @@ change this repository), read **[docs/guides/install.md](docs/guides/install.md)
 `downshift compact -- <command>` cuts the output of an allowlisted test/build/
 status command (go test, git status, pytest, vitest, jest, tsc, cypress run,
 playwright test, next build, phpunit, cargo test, flutter test, dart test,
-gradle, maven; the exact forms are in docs/reference/harness-matrix.md) to its PASS/FAIL summary and keeps the real
+gradle, maven, agent-desktop snapshot/find; the exact forms are in docs/reference/harness-matrix.md) to its PASS/FAIL summary and keeps the real
 exit code. It is a plain shell command, so it needs NO hook and NO adapter: it
 runs the same on every OS and in every harness, including one Downshift has no
 integration for. When a harness lacks a model-routing hook (KiroCrew has only a

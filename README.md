@@ -82,6 +82,22 @@ Clean output is compacted to save context tokens, while non-zero exit codes and 
 
 [Compaction](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/compaction.md) · [Supported tools](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/supported-tools.md) · [CCR](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/ccr.md)
 
+### Desktop apps: computer use with fewer tokens
+
+An agent that drives desktop apps with `agent-desktop` reads the app's accessibility tree as JSON after every action. Downshift compacts those reads too:
+
+- **First read of a window:** one line per element, every field kept (a test decodes it back to the same JSON).
+- **Repeat read of the same window:** only the lines that changed, with the full read one `downshift retrieve` away.
+- **Every harness:** automatic in Claude Code; elsewhere through `downshift compact -- agent-desktop snapshot ...`.
+
+On synthetic fixtures, a first read had 53–60% fewer bytes, a repeat read after one action 97% fewer, and a read, act, verify loop of three reads 84.9% fewer. Not yet measured on a live desktop.
+
+```bash
+downshift compact -- agent-desktop snapshot --app Files -i
+```
+
+[agent-desktop guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/agent-desktop.md)
+
 ## Route subagents within your policy
 
 [![The orchestrator delegates work; Downshift checks the policy, known session models and harness capabilities before applying a model choice or keeping the requested model](docs/brand/readme-media/routing.svg)](docs/brand/readme-media/routing.png)

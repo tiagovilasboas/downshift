@@ -81,6 +81,22 @@ O Downshift reconhece formas específicas de comandos de teste, build, lint, Git
 
 [Compactação](../features/compaction.md) · [Ferramentas suportadas](../reference/supported-tools.md) · [CCR](../guides/ccr.md)
 
+### Apps do desktop: computer use com menos tokens
+
+Um agente que controla apps do desktop com o `agent-desktop` lê a árvore de acessibilidade do app em JSON depois de cada ação. O Downshift compacta essas leituras também:
+
+- **Primeira leitura de uma janela:** uma linha por elemento, sem perder campo (um teste decodifica de volta para o mesmo JSON).
+- **Releitura da mesma janela:** só as linhas que mudaram, com a leitura completa a um `downshift retrieve` de distância.
+- **Todo harness:** automático no Claude Code; nos outros, por `downshift compact -- agent-desktop snapshot ...`.
+
+Em fixtures sintéticos, a primeira leitura teve de 53% a 60% menos bytes, uma releitura depois de uma ação 97% menos, e um ciclo ler, agir, conferir de três leituras 84,9% menos. Ainda não foi medido num desktop real.
+
+```bash
+downshift compact -- agent-desktop snapshot --app Files -i
+```
+
+[Guia do agent-desktop](guias/agent-desktop.md)
+
 ## Roteie subagentes dentro da sua política
 
 [![O orquestrador delega o trabalho; o Downshift verifica a política, os modelos conhecidos da sessão e as capacidades do harness antes de aplicar uma escolha ou manter o modelo solicitado](../brand/readme-media/routing.svg)](../brand/readme-media/routing.png)
