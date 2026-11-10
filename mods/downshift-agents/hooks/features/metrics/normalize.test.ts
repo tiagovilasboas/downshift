@@ -7,6 +7,8 @@ import type { Agent, RoutingSpawn } from '../../../types'
 import { bandSegments } from '../band/band'
 import { treeRows } from '../dashboard/agents-section'
 import { emptyBoard, progressOf } from '../tasks/board'
+import { WARN } from '../../shared/ui/format'
+import { uncutNote } from './cut'
 import { agentCounts, modelClaim, reductionPercent } from './normalize'
 
 const agent = (id: string, extra: Partial<Agent> = {}): Agent => ({
@@ -67,6 +69,43 @@ test('the band drops segments as the width narrows, the brand last', () => {
   expect(keys(70)).toEqual(['brand', 'tasks', 'agents'])
   expect(keys(50)).toEqual(['brand', 'tasks'])
   expect(keys(20)).toEqual(['brand'])
+})
+
+test('the band draws an honest zero muted, never as a WARN figure', () => {
+  type Extra = Partial<typeof input> & { runs?: { commands: number; compacted: number } }
+  const cases: [string, Extra, string, boolean][] = [
+    ['saving > 0', { compact: 14400, runs: { commands: 45, compacted: 3 } }, 'Compact ~14.4k*', true],
+    ['runs but none cut', { compact: 0, runs: { commands: 45, compacted: 0 } }, 'Compact 0/45', false],
+    ['no runs', { compact: 0, runs: { commands: 0, compacted: 0 } }, 'Compact —', false],
+    ['no run counts', { compact: 0 }, 'Compact —', false],
+    ['unavailable', { isDownshiftOk: false, compact: undefined }, 'Downshift n/a', false],
+  ]
+  for (const [name, extra, text, isWarn] of cases) {
+    const seg = bandSegments({ ...input, ...extra }, 120).find(s => s.key === 'compact')
+    expect(seg?.text, name).toBe(text)
+    expect(seg?.parts.some(p => p.color === WARN), name).toBe(isWarn)
+  }
+})
+
+test('the pane says plainly that nothing was cut, only when runs happened and none were cut', () => {
+  const figures = (commands: number, compacted: number) => ({
+    scope: 'this session',
+    commands,
+    compacted,
+    rawBytes: 133643,
+    savedBytes: compacted === 0 ? 0 : 5000,
+    estimatedTokens: compacted === 0 ? 0 : 1250,
+    method: '',
+    families: [],
+  })
+  const cases: [string, ReturnType<typeof figures>, string | undefined][] = [
+    ['saving > 0', figures(45, 3), undefined],
+    ['runs, none cut', figures(45, 0), '45 runs, none cut: outputs were small, compound, or outside the allowlist'],
+    ['no runs', figures(0, 0), undefined],
+  ]
+  for (const [name, c, want] of cases) {
+    expect(uncutNote(c), name).toBe(want)
+  }
 })
 
 test('the band shows no task count it does not have, and marks the token estimate', () => {

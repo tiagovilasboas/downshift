@@ -6,6 +6,7 @@
 // that ran below the session model are workload, not tokens saved.
 
 import type { CompactorFigures, DownshiftSnapshot } from '../../../types'
+import { uncutNote } from '../metrics/cut'
 import { directLine, routingLines, routingSummary } from '../metrics/normalize'
 import { ACCENT, MUTED, WARN, bytes, tokens } from '../../shared/ui/format'
 import { card, kv } from './card'
@@ -33,7 +34,13 @@ export function compactorSection(ui: Ui, snapshot: DownshiftSnapshot, pct: numbe
     </Text>,
     kv(ui, 'Runs', `${c.commands} · ${c.compacted} compacted`),
     kv(ui, 'Raw (measured)', bytes(c.rawBytes)),
-    kv(ui, 'Output cut', pct === undefined ? bytes(c.savedBytes) : `${bytes(c.savedBytes)} (${pct}%)`, WARN),
+    uncutNote(c) === undefined ? (
+      kv(ui, 'Output cut', pct === undefined ? bytes(c.savedBytes) : `${bytes(c.savedBytes)} (${pct}%)`, WARN)
+    ) : (
+      <Text color={MUTED} wrap="wrap">
+        {uncutNote(c)}
+      </Text>
+    ),
     kv(ui, 'Tokens saved', `~${tokens(c.estimatedTokens)}*`, WARN),
     ...familiesBlock(ui, c.families, columns),
     ...directBlock(ui, c),
