@@ -8,7 +8,7 @@
 
 ### Cut the token waste in Claude Code, Codex and other coding agents.
 
-AI coding agents spend much of their context on test logs, build output and status dumps, and every subagent runs on your main model unless something sets another. That burns tokens and fills the context window. Downshift is an open-source CLI that compacts supported command output before the agent reads it, with failures and exit codes kept: 67.1% fewer bytes on a 110-fixture benchmark. It also applies the model and effort chosen for each subagent, within the policy you declare. Single Go binary.
+AI coding agents spend much of their context on test logs, build output and status dumps, and every subagent runs on your main model unless something sets another. That burns tokens and fills the context window. Downshift is an open-source CLI that compacts supported command output before the agent reads it, with failures and exit codes kept: 67.0% fewer bytes on a 113-fixture benchmark. It also applies the model and effort chosen for each subagent, within the policy you declare. Single Go binary.
 
 Works with coding harnesses including Claude Code and Codex CLI; integration capabilities and available models vary by harness and session.
 
