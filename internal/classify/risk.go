@@ -17,7 +17,8 @@ type riskSignal struct {
 	literals []string // nil: no prefilter, always run re
 }
 
-var riskSignals = func() []riskSignal {
+// Compiled on first use, not at package init (see signals).
+var riskSignals = sync.OnceValue(func() []riskSignal {
 	out := make([]riskSignal, 0, len(RawRiskSignals))
 	for _, r := range RawRiskSignals {
 		out = append(out, riskSignal{
@@ -27,7 +28,7 @@ var riskSignals = func() []riskSignal {
 		})
 	}
 	return out
-}()
+})
 
 // mayMatch reports whether folded contains a literal the regex needs. Without
 // the prefilter it reports true, so the regex decides.
@@ -90,7 +91,7 @@ func scanRiskCategories(prompt string) []string {
 	text := splitIdentifiers(prompt)
 	folded := foldRiskText(text)
 	var cand []riskSignal
-	for _, s := range riskSignals {
+	for _, s := range riskSignals() {
 		if s.mayMatch(folded) {
 			cand = append(cand, s)
 		}
