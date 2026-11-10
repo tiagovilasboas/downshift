@@ -282,7 +282,7 @@ func TestRiskLiteralsCoverEveryCategory(t *testing.T) {
 			t.Errorf("category %q has no prefilter literals", cat)
 		}
 	}
-	for _, s := range riskSignals {
+	for _, s := range riskSignals() {
 		if s.literals == nil {
 			t.Errorf("category %q runs without prefilter", s.category)
 		}

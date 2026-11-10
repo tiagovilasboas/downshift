@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestBalanceLogKeepsHeadTailAndFailures(t *testing.T) {
@@ -69,7 +70,7 @@ func TestBalanceMatchesCapsPerFileAndCounts(t *testing.T) {
 		t.Fatal("500 matches were not cut")
 	}
 	s := string(out)
-	if strings.Count(s, "a.go:") != balanceMatchPerFile+1 || !strings.Contains(s, "480 more matches in 1 files") || !strings.Contains(s, "more chars") {
+	if strings.Count(s, "a.go:") != balanceMatchPerFile+1 || !strings.Contains(s, "480 more matches in 1 files") || !strings.Contains(s, "more bytes") {
 		t.Errorf("matches not capped per file, counted or line-cut:\n%s", s[len(s)-300:])
 	}
 }
@@ -78,5 +79,20 @@ func TestBalanceSmallGainKeepsText(t *testing.T) {
 	text := []byte(strings.Repeat("plain line\n", 150))
 	if out, ok := Balance(BalanceLog, text); ok || string(out) != string(text) {
 		t.Error("a log just over head+tail was cut for a small gain")
+	}
+}
+
+// A long line is cut on a character boundary: the agent never reads a
+// multi-byte character split in two.
+func TestBalanceCutKeepsValidUTF8(t *testing.T) {
+	for _, line := range []string{
+		"a" + strings.Repeat("é", 400),
+		"ab" + strings.Repeat("日本語", 200),
+		"abc" + strings.Repeat("🙂", 200),
+	} {
+		out := balanceCut(line)
+		if !utf8.ValidString(out) || !strings.HasPrefix(line, out[:strings.Index(out, " … (")]) {
+			t.Errorf("cut of %q... is not a valid prefix: %q", line[:8], out[len(out)-40:])
+		}
 	}
 }

@@ -16,7 +16,7 @@ func TestEmbeddedBilingualLexiconCoverage(t *testing.T) {
 	if len(lex.actions) != 9 || len(lex.terms) != 96 {
 		t.Fatalf("lexicon: got %d actions and %d rules, want 9 and 96", len(lex.actions), len(lex.terms))
 	}
-	for _, table := range [][]DomainSignalDef{RawDomainSignals, RawExtendedDomainSignals} {
+	for _, table := range [][]DomainSignalDef{RawDomainSignals(), RawExtendedDomainSignals()} {
 		for _, r := range table {
 			if _, ok := lex.terms[r.ID]; !ok {
 				t.Errorf("missing bilingual lexicon for %s", r.ID)

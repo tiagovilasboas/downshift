@@ -76,9 +76,9 @@ func TestRawSignals_AllClassesRepresented(t *testing.T) {
 // signals slice (used by Classify) has the same length as RawSignals. If they
 // diverge, compileSignals is not sourcing from RawSignals correctly.
 func TestRawSignals_ConsistentWithCompiledSignals(t *testing.T) {
-	if len(signals) != len(RawSignals) {
+	if len(signals()) != len(RawSignals) {
 		t.Errorf("compiled signals length %d != RawSignals length %d",
-			len(signals), len(RawSignals))
+			len(signals()), len(RawSignals))
 	}
 }
 
