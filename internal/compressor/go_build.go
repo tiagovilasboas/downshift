@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // go build output. A clean build prints nothing; a failing build prints
@@ -25,21 +26,21 @@ import (
 // grammar makes the whole transcript pass through unchanged.
 var (
 	// "internal/core/parse.go:12:5: message" — column may be absent.
-	reGoBuildError = regexp.MustCompile(`^(\S+\.go):(\d+):(?:(\d+):)?\s+(.*)$`)
+	reGoBuildError = lazyre.New(`^(\S+\.go):(\d+):(?:(\d+):)?\s+(.*)$`)
 	// Multiline guard: at least one "file.go:line: message" compiler error
 	// anywhere in the input. The per-line reGoBuildError stays single-line for
 	// the compressor's line loop; this scans the whole transcript for detection.
-	reGoBuildErrorM = regexp.MustCompile(`(?m)^\S+\.go:\d+:(?:\d+:)?\s+\S`)
+	reGoBuildErrorM = lazyre.New(`(?m)^\S+\.go:\d+:(?:\d+:)?\s+\S`)
 	// go vet marks its target with a bracketed "# [package]" header that go
 	// build never prints; its diagnostics otherwise share the ".go:line:col:"
 	// grammar, so this marker keeps a vet transcript out of the build compressor.
-	reGoVetMarker = regexp.MustCompile(`(?m)^# \[`)
+	reGoVetMarker = lazyre.New(`(?m)^# \[`)
 	// golangci-lint stamps every violation with a trailing "(linter)" suffix.
-	reGolangciSuffix = regexp.MustCompile(`(?m)^\S+:\d+:\d+:.*\([a-z0-9_-]+\)\s*$`)
+	reGolangciSuffix = lazyre.New(`(?m)^\S+:\d+:\d+:.*\([a-z0-9_-]+\)\s*$`)
 	// "go: downloading github.com/foo/bar v1.2.3" and sibling module status.
-	reGoBuildDownloading = regexp.MustCompile(`^go: (?:downloading|extracting|finding|found|added|upgraded|downgraded)\b`)
+	reGoBuildDownloading = lazyre.New(`^go: (?:downloading|extracting|finding|found|added|upgraded|downgraded)\b`)
 	// "# example.com/app/internal/core" package marker.
-	reGoBuildPackage = regexp.MustCompile(`^# \S`)
+	reGoBuildPackage = lazyre.New(`^# \S`)
 )
 
 // isGoBuild returns true when the output carries at least one

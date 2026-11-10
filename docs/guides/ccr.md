@@ -35,11 +35,46 @@ what is acted on first, and the marker names the id to read the rest back:
 | `git diff`, `git show` | every file and hunk header, the first 30 lines of each hunk, at most 250 in all |
 | `grep`, `rg`, `git grep` | the first 20 matches of each file, at most 250, then a count per file of the rest |
 
-A line longer than 300 characters is cut. File reads and agent-desktop reads are never
-cut this way. The cut is made only when it saves at least a quarter of the text, and
+A line longer than 300 bytes is cut; a line the log cut keeps for a failure word keeps
+its first 300 and its last 200 bytes, since an assertion often ends the line. File
+reads and agent-desktop reads are never cut this way. The cut is made only when it saves at least a quarter of the text, and
 never without stored raw output: with CCR off, outputs stay lossless.
 `DOWNSHIFT_BALANCED=0` or `"balanced": false` in `context-optimization.json` turns it
-off; `downshift doctor` shows the mode as `compactor mode`.
+off; `downshift doctor` shows the mode, the threshold and the line caps in effect as
+`compactor mode`.
+
+The threshold and the line caps can be set in `context-optimization.json` (state dir);
+an absent or zero key keeps its default:
+
+| Key | Default | What it sets |
+|-----|---------|--------------|
+| `balanced_threshold_kb` | 16 | size above which an output is cut (at most 2048) |
+| `balanced_log_head` / `balanced_log_tail` | 60 / 80 | first and last lines of a log |
+| `balanced_hunk_lines` / `balanced_diff_lines` | 30 / 250 | diff lines per hunk / in all |
+| `balanced_matches_per_file` / `balanced_match_lines` | 20 / 250 | search matches per file / in all |
+
+### Output over the hold limit
+
+The Compactor holds at most 2 MB of a run's output in memory. Before 2026-11-10 a
+larger output was released and printed whole (a 13 MB `git grep` printed 13 MB). Now,
+when CCR keeps every run and balanced is on, stdout past 2 MB is written to a private
+temporary file instead, and memory keeps only its first 24 KB and its last 8 KB. At
+exit the file is read back once and stored, and the run prints the head, a line
+`… N bytes cut (downshift retrieve <id>)`, the tail and the marker. Measured on this
+repository: `git grep -n "[est] "` 13,647,888 bytes printed 32,876 bytes, and
+`downshift retrieve` returned every line (171 secret-looking lines withheld by the
+redaction below). Stderr is printed as it comes while stdout is spooled. With CCR or
+balanced off, with an output over 32 MiB, or when the store refuses it, the run prints
+everything raw as before and `report` lists it as `too_large`.
+
+### Stderr is held, not a reason to stream
+
+A run that wrote on stderr used to stream its whole output raw, unless its family
+reads stderr with its report. Now both streams are held in write order: stdout is
+compacted (or cut, as above) and the stderr lines follow it whole, on stderr. Output
+that stays raw is replayed in the order it was written. When a terminal is on stdin,
+the first stderr byte still releases the output, so a prompt is never hidden
+(`report`: `stderr_output`).
 
 Same limits, redaction and secret-path refusals for both modes (below); a file read of
 a secret path is never held, so never stored.
@@ -90,7 +125,8 @@ The MCP tool `retrieve` takes `{id, grep, head, tail, lines}` and returns the sa
 
 - Files are mode 0600 in a 0700 directory.
 - Entries are kept for 24 hours.
-- One entry is at most 8 MiB; the total is pruned to 64 MiB.
+- One entry is at most 32 MiB (8 MiB before 2026-11-10, raised so a spooled output
+  fits); the total is pruned to 128 MiB.
 - Lines that look like secrets are replaced with
   `[downshift ccr: line withheld, it looked like a secret]`, and structured credentials
   (AWS STS session credentials, SSM parameter values, and AWS environment variables)

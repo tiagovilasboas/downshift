@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Fold shape: a run is at least foldMinRun consecutive non-empty lines with the
@@ -31,7 +32,7 @@ const (
 	foldPathKeepTail = 10
 )
 
-var reDigitRun = regexp.MustCompile(`[0-9]+`)
+var reDigitRun = lazyre.New(`[0-9]+`)
 
 // foldNoRun is the reason when no run of similar lines was found or kept.
 const foldNoRun = "no_repeat_run"

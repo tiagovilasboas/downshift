@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"path"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Lockfile line grammars. A diff of a lockfile is read as a stream of package
@@ -20,14 +21,14 @@ var lockfileNames = map[string]bool{
 }
 
 var (
-	reNpmLockKey     = regexp.MustCompile(`^\s*"([^"]*)": \{$`)
-	reNpmLockVersion = regexp.MustCompile(`^\s*"version": "([^"]+)",?$`)
-	reYarnLockKey    = regexp.MustCompile(`^[^\s#][^\n]*:$`)
-	reYarnLockVer    = regexp.MustCompile(`^  version:? "?([^"\s]+)"?$`)
-	rePnpmLockKey    = regexp.MustCompile(`^  '?/?((?:@[^/@\s']+/)?[^@/\s']+)@([^:'\s(]+)[^:']*'?:$`)
-	rePnpmLockKeyOld = regexp.MustCompile(`^  /((?:@[^/\s]+/)?[^/\s]+)/([0-9][^:/(_\s]*)[^:]*:$`)
-	reCargoLockName  = regexp.MustCompile(`^name = "([^"]+)"$`)
-	reCargoLockVer   = regexp.MustCompile(`^version = "([^"]+)"$`)
+	reNpmLockKey     = lazyre.New(`^\s*"([^"]*)": \{$`)
+	reNpmLockVersion = lazyre.New(`^\s*"version": "([^"]+)",?$`)
+	reYarnLockKey    = lazyre.New(`^[^\s#][^\n]*:$`)
+	reYarnLockVer    = lazyre.New(`^  version:? "?([^"\s]+)"?$`)
+	rePnpmLockKey    = lazyre.New(`^  '?/?((?:@[^/@\s']+/)?[^@/\s']+)@([^:'\s(]+)[^:']*'?:$`)
+	rePnpmLockKeyOld = lazyre.New(`^  /((?:@[^/\s]+/)?[^/\s]+)/([0-9][^:/(_\s]*)[^:]*:$`)
+	reCargoLockName  = lazyre.New(`^name = "([^"]+)"$`)
+	reCargoLockVer   = lazyre.New(`^version = "([^"]+)"$`)
 )
 
 // npmLockStructural are JSON keys of package-lock.json that open an object but

@@ -5,11 +5,12 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
-var reRipgrepMatch = regexp.MustCompile(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
+var reRipgrepMatch = lazyre.New(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
 
 // compressSearchResults does not drop matches. A prefix would hide hits.
 func compressSearchResults(input []byte) ([]byte, bool, string) {

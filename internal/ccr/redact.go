@@ -5,7 +5,8 @@ package ccr
 
 import (
 	"bytes"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // RedactedMark is the placeholder used when redacting secret values in place.
@@ -16,39 +17,39 @@ const redactedLine = "[downshift ccr: line withheld, it looked like a secret]"
 // reSecret flags a line that looks like it carries a credential: auth
 // headers, cookies, credentials in a URL, JWTs, well-known key prefixes and
 // assignments to secret/token/pass/auth/key names.
-var reSecret = regexp.MustCompile(`(?i)(\bsecrets?\s*[=:]|_secret\s*[=:]|\btokens?\s*[=:]|_token\s*[=:]|password\s*[=:]|passwd\s*[=:]|\bapi[_-]?keys?\s*[=:]|\bprivate[_-]?keys?\s*[=:]|\baccess[_-]?keys?\s*[=:]|\baccess[_-]?key_?id\s*[=:]|aws_secret\w*\s*[=:]|bearer |\bauthorization\s*:|cookie\s*[=:]|PRIVATE KEY|://[^/\s:@]+:[^@\s]+@|\beyJ[\w-]{10,}\.|\bgh[pousr]_[A-Za-z0-9]|\bsk-[A-Za-z0-9]|\b(?:AKIA|ASIA)[0-9A-Z]{16}|[_.-]pass(wd|word)?\s*[=:]|\bpass(wd|word)?\s*=|_auth\s*[=:])`)
+var reSecret = lazyre.New(`(?i)(\bsecrets?\s*[=:]|_secret\s*[=:]|\btokens?\s*[=:]|_token\s*[=:]|password\s*[=:]|passwd\s*[=:]|\bapi[_-]?keys?\s*[=:]|\bprivate[_-]?keys?\s*[=:]|\baccess[_-]?keys?\s*[=:]|\baccess[_-]?key_?id\s*[=:]|aws_secret\w*\s*[=:]|bearer |\bauthorization\s*:|cookie\s*[=:]|PRIVATE KEY|://[^/\s:@]+:[^@\s]+@|\beyJ[\w-]{10,}\.|\bgh[pousr]_[A-Za-z0-9]|\bsk-[A-Za-z0-9]|\b(?:AKIA|ASIA)[0-9A-Z]{16}|[_.-]pass(wd|word)?\s*[=:]|\bpass(wd|word)?\s*=|_auth\s*[=:])`)
 
 // rePEMBegin and rePEMEnd bound a PEM block; every line between them, the
 // base64 body included, is withheld.
 var (
-	rePEMBegin = regexp.MustCompile(`-----BEGIN [A-Z0-9 ]+-----`)
-	rePEMEnd   = regexp.MustCompile(`-----END [A-Z0-9 ]+-----`)
+	rePEMBegin = lazyre.New(`-----BEGIN [A-Z0-9 ]+-----`)
+	rePEMEnd   = lazyre.New(`-----END [A-Z0-9 ]+-----`)
 )
 
 // AWS STS regexes.
 var (
-	reSTSJSON            = regexp.MustCompile(`(?i)("(?:AccessKeyId|SecretAccessKey|SessionToken)"\s*:\s*)"(?:[^"\\]|\\.)*"`)
-	reSTSCLIKeyValue     = regexp.MustCompile(`(?i)\b((?:AccessKeyId|SecretAccessKey|SessionToken)\s*[:=]\s*)(?:"[^"\r\n]*"|'[^'\r\n]*'|[^\s\r\n]+)`)
-	reSTSTable           = regexp.MustCompile(`(?i)(\|\s*(?:AccessKeyId|SecretAccessKey|SessionToken)\s*\|\s*)[^|\r\n]+?(\s*\|)`)
-	reSTSCredentialsText = regexp.MustCompile(`(?i)^(CREDENTIALS\s+)(\S+)(\s+\S+\s+)(\S+)(\s+)(\S+)(.*)$`)
-	reASIAKey            = regexp.MustCompile(`\bASIA[0-9A-Z]{16}\b`)
+	reSTSJSON            = lazyre.New(`(?i)("(?:AccessKeyId|SecretAccessKey|SessionToken)"\s*:\s*)"(?:[^"\\]|\\.)*"`)
+	reSTSCLIKeyValue     = lazyre.New(`(?i)\b((?:AccessKeyId|SecretAccessKey|SessionToken)\s*[:=]\s*)(?:"[^"\r\n]*"|'[^'\r\n]*'|[^\s\r\n]+)`)
+	reSTSTable           = lazyre.New(`(?i)(\|\s*(?:AccessKeyId|SecretAccessKey|SessionToken)\s*\|\s*)[^|\r\n]+?(\s*\|)`)
+	reSTSCredentialsText = lazyre.New(`(?i)^(CREDENTIALS\s+)(\S+)(\s+\S+\s+)(\S+)(\s+)(\S+)(.*)$`)
+	reASIAKey            = lazyre.New(`\bASIA[0-9A-Z]{16}\b`)
 )
 
 // AWS SSM parameter regexes.
 var (
-	reSSMBlockBegin     = regexp.MustCompile(`(?i)"Parameters?"\s*:\s*[{\[]`)
-	reSSMJSONValue      = regexp.MustCompile(`(?i)("Value"\s*:\s*)"(?:[^"\\]|\\.)*"`)
-	reSSMTableValue     = regexp.MustCompile(`(?i)(\|\s*Value\s*\|\s*)[^|\r\n]+?(\s*\|)`)
-	reSSMTableSecure    = regexp.MustCompile(`(?i)(\|\s*Secure(?:String)?\s*\|\s*)[^|\r\n]+?(\s*\|)`)
-	reSSMTextParameters = regexp.MustCompile(`(?i)^(PARAMETERS\s+.*?)(SecureString|String|StringList)(\s+\S+\s+)(\S+.*)$`)
-	reSSMTextSingle     = regexp.MustCompile(`(?i)^(arn:aws:ssm:.*?)(SecureString|String|StringList)(\s+\S+\s+)(\S+.*)$`)
+	reSSMBlockBegin     = lazyre.New(`(?i)"Parameters?"\s*:\s*[{\[]`)
+	reSSMJSONValue      = lazyre.New(`(?i)("Value"\s*:\s*)"(?:[^"\\]|\\.)*"`)
+	reSSMTableValue     = lazyre.New(`(?i)(\|\s*Value\s*\|\s*)[^|\r\n]+?(\s*\|)`)
+	reSSMTableSecure    = lazyre.New(`(?i)(\|\s*Secure(?:String)?\s*\|\s*)[^|\r\n]+?(\s*\|)`)
+	reSSMTextParameters = lazyre.New(`(?i)^(PARAMETERS\s+.*?)(SecureString|String|StringList)(\s+\S+\s+)(\S+.*)$`)
+	reSSMTextSingle     = lazyre.New(`(?i)^(arn:aws:ssm:.*?)(SecureString|String|StringList)(\s+\S+\s+)(\S+.*)$`)
 )
 
 // AWS environment-like output regexes.
 var (
-	reAWSEnvQuotedDouble = regexp.MustCompile(`(?i)\b(export\s+)?(AWS_SESSION_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_SECURITY_TOKEN|AWS_ACCESS_KEY_ID)\s*=\s*"[^"\r\n]*"`)
-	reAWSEnvQuotedSingle = regexp.MustCompile(`(?i)\b(export\s+)?(AWS_SESSION_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_SECURITY_TOKEN|AWS_ACCESS_KEY_ID)\s*=\s*'[^'\r\n]*'`)
-	reAWSEnvUnquoted     = regexp.MustCompile(`(?i)\b(export\s+)?(AWS_SESSION_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_SECURITY_TOKEN|AWS_ACCESS_KEY_ID)\s*=\s*[^\s\r\n]+`)
+	reAWSEnvQuotedDouble = lazyre.New(`(?i)\b(export\s+)?(AWS_SESSION_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_SECURITY_TOKEN|AWS_ACCESS_KEY_ID)\s*=\s*"[^"\r\n]*"`)
+	reAWSEnvQuotedSingle = lazyre.New(`(?i)\b(export\s+)?(AWS_SESSION_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_SECURITY_TOKEN|AWS_ACCESS_KEY_ID)\s*=\s*'[^'\r\n]*'`)
+	reAWSEnvUnquoted     = lazyre.New(`(?i)\b(export\s+)?(AWS_SESSION_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_SECURITY_TOKEN|AWS_ACCESS_KEY_ID)\s*=\s*[^\s\r\n]+`)
 )
 
 // Redact withholds whole lines that look like credentials or PEM blocks,

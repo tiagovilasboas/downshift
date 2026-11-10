@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // gh run view --log compressor.
@@ -20,22 +21,22 @@ import (
 
 var (
 	// Matches the job/step/message format of gh run view --log
-	reGhRunLogLine = regexp.MustCompile(`^([^\t]+)\t([^\t]+)\t(.*)$`)
+	reGhRunLogLine = lazyre.New(`^([^\t]+)\t([^\t]+)\t(.*)$`)
 
 	// GitHub Actions annotations that indicate problems
-	reGhAnnotation = regexp.MustCompile(`##\[(error|warning|notice)\](.*)`)
+	reGhAnnotation = lazyre.New(`##\[(error|warning|notice)\](.*)`)
 
 	// Test failure patterns (Go, Jest, pytest): anchored so "PASS" and test
 	// names containing "fail" do not match.
-	reTestFailure = regexp.MustCompile(`(?m)^(?:FAIL\s|--- FAIL:|panic:|=== FAIL)`)
+	reTestFailure = lazyre.New(`(?m)^(?:FAIL\s|--- FAIL:|panic:|=== FAIL)`)
 
 	// Build failure patterns, specific to avoid false positives.
-	reBuildError = regexp.MustCompile(`(?i)^(?:error\[|error:|fatal:|cannot find module|undefined reference|compilation failed|build failed)`)
+	reBuildError = lazyre.New(`(?i)^(?:error\[|error:|fatal:|cannot find module|undefined reference|compilation failed|build failed)`)
 
 	// A GitHub Actions step that exits non-zero prints this line. It is the
 	// canonical failure signal for a step whose tool emits no ##[error]
 	// annotation. Exit code 0 is a success line and must not mark a failure.
-	reStepExitCode = regexp.MustCompile(`^Process completed with exit code (\d+)\.?$`)
+	reStepExitCode = lazyre.New(`^Process completed with exit code (\d+)\.?$`)
 
 	// Skip these noisy setup steps
 	ghRunLogSkipSteps = map[string]bool{

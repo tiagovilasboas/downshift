@@ -5,20 +5,21 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reCypressStat     = regexp.MustCompile(`^\s*(Tests|Passing|Failing|Pending|Skipped):\s+(\d+)\s*$`)
-	reCypressError    = regexp.MustCompile(`(?i)(?:AssertionError|Error:|uncaught (?:exception|error)|failed|timed out|warning)`)
-	reCypressVersion  = regexp.MustCompile(`^Cypress: \d+\.\d+\.\d+(?:-.*)?$`)
-	reCypressBrowser  = regexp.MustCompile(`^Browser: .+ \d+(?:\.\d+)*$`)
-	reCypressCount    = regexp.MustCompile(`^Screenshots:\s+\d+$`)
-	reCypressVideo    = regexp.MustCompile(`^Video:\s+(?:true|false)$`)
-	reCypressDuration = regexp.MustCompile(`^Duration:\s+\d+(?:\.\d+)? (?:ms|seconds?|minutes?)$`)
-	reCypressSpec     = regexp.MustCompile(`^Spec Ran:\s+\S.*$`)
+	reCypressStat     = lazyre.New(`^\s*(Tests|Passing|Failing|Pending|Skipped):\s+(\d+)\s*$`)
+	reCypressError    = lazyre.New(`(?i)(?:AssertionError|Error:|uncaught (?:exception|error)|failed|timed out|warning)`)
+	reCypressVersion  = lazyre.New(`^Cypress: \d+\.\d+\.\d+(?:-.*)?$`)
+	reCypressBrowser  = lazyre.New(`^Browser: .+ \d+(?:\.\d+)*$`)
+	reCypressCount    = lazyre.New(`^Screenshots:\s+\d+$`)
+	reCypressVideo    = lazyre.New(`^Video:\s+(?:true|false)$`)
+	reCypressDuration = lazyre.New(`^Duration:\s+\d+(?:\.\d+)? (?:ms|seconds?|minutes?)$`)
+	reCypressSpec     = lazyre.New(`^Spec Ran:\s+\S.*$`)
 )
 
 type cypressSummary struct {

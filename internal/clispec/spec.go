@@ -27,6 +27,11 @@ type Command struct {
 	Hidden  bool   // callable, but not offered in help, typo suggestions or docs
 	AliasOf string // the canonical command when Name is a legacy or alias name
 	Legacy  bool   // kept for old hook or shell rc files; not suggested for a typo
+	// Experimental marks a command that may change or go (pre-O8 tooling, a
+	// feature in development) or that only a maintainer runs. The default
+	// help leaves it out; help --all lists it under Experimental or
+	// Maintainer. It stays callable and suggestable.
+	Experimental bool
 }
 
 // Commands returns a copy of the table, sorted by name.
@@ -57,6 +62,18 @@ func LegacyNames() map[string]string {
 		}
 	}
 	return m
+}
+
+// ExperimentalNames lists the commands marked Experimental, sorted.
+func ExperimentalNames() []string {
+	var names []string
+	for _, c := range table {
+		if c.Experimental {
+			names = append(names, c.Name)
+		}
+	}
+	sort.Strings(names)
+	return names
 }
 
 // Suggestable lists the top-level commands a typo can be corrected to, sorted.

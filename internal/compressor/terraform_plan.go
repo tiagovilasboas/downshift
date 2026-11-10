@@ -5,17 +5,18 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Terraform plan output patterns
 var (
-	reTerraformPlan      = regexp.MustCompile(`(?m)^Terraform (will perform|used the selected)`)
-	reTerraformNoChanges = regexp.MustCompile(`(?m)^No changes\. (Your infrastructure matches|Infrastructure is up-to-date)`)
-	reTerraformResource  = regexp.MustCompile(`(?m)^  # (\S+) (will be|must be|has been) (created|destroyed|updated|replaced|read)`)
-	reTerraformPlanLine  = regexp.MustCompile(`(?m)^Plan: (\d+) to add, (\d+) to change, (\d+) to destroy`)
-	reTerraformSensitive = regexp.MustCompile(`(?i)(password|secret|key|token|credential)`)
+	reTerraformPlan      = lazyre.New(`(?m)^Terraform (will perform|used the selected)`)
+	reTerraformNoChanges = lazyre.New(`(?m)^No changes\. (Your infrastructure matches|Infrastructure is up-to-date)`)
+	reTerraformResource  = lazyre.New(`(?m)^  # (\S+) (will be|must be|has been) (created|destroyed|updated|replaced|read)`)
+	reTerraformPlanLine  = lazyre.New(`(?m)^Plan: (\d+) to add, (\d+) to change, (\d+) to destroy`)
+	reTerraformSensitive = lazyre.New(`(?i)(password|secret|key|token|credential)`)
 )
 
 func isTerraformPlan(input []byte) bool {

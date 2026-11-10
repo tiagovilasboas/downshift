@@ -25,6 +25,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/routing/contract"
 )
@@ -42,7 +43,7 @@ const (
 const agentTypeMaxLen = 64
 
 // spacesAroundEquals joins `kind = code` into `kind=code`.
-var spacesAroundEquals = regexp.MustCompile(`\s*=\s*`)
+var spacesAroundEquals = sync.OnceValue(func() *regexp.Regexp { return regexp.MustCompile(`\s*=\s*`) })
 
 // Parse returns the hint that the description's prefix declares. requested is
 // the tier of the model the spawn asked for; a tier hint is kept only when it
@@ -97,7 +98,7 @@ func prefixValues(description string) map[string][]string {
 		return nil
 	}
 	values := make(map[string][]string)
-	normalized := spacesAroundEquals.ReplaceAllString(strings.ToLower(body), "=")
+	normalized := spacesAroundEquals().ReplaceAllString(strings.ToLower(body), "=")
 	for _, field := range strings.Fields(normalized) {
 		if key, value, ok := strings.Cut(field, "="); ok {
 			values[key] = append(values[key], value)

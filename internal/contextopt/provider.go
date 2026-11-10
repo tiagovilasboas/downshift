@@ -100,8 +100,11 @@ type Config struct {
 	} `json:"observability"`
 	// ExitCodeContract is the persisted measurement rule. The native hook
 	// records CompressExit in observe mode and preserves a non-zero exit.
-	// It cannot replace the tool result the model sees, and it does not
-	// compress prompts.
+	// It does not replace the tool result the model sees, and it does not
+	// compress prompts. Claude Code PostToolUse can replace a built-in tool's
+	// result (updatedToolOutput); Codex PostToolUse cannot. The persisted
+	// token "hook_cannot_replace_tool_output" is kept for existing configs and
+	// means the native hook does not replace it.
 	ExitCodeContract string `json:"exit_code_contract,omitempty"`
 	// Exec is the one file switch for the compact wrapper. Absent or true means
 	// on; an explicit false turns it off. There is no CLI command for it, and
@@ -120,6 +123,17 @@ type Config struct {
 	// absent or true; an explicit false keeps every output lossless.
 	// DOWNSHIFT_BALANCED overrides the file.
 	Balanced *bool `json:"balanced,omitempty"`
+	// BalancedThresholdKB is the size, in KB, above which balanced compaction
+	// cuts an output; absent or zero keeps the default (16). The line caps
+	// below change the cut itself; absent or zero keeps each default. All are
+	// read once by cmd (balanced_config.go) and passed to the Compactor.
+	BalancedThresholdKB    int `json:"balanced_threshold_kb,omitempty"`
+	BalancedHunkLines      int `json:"balanced_hunk_lines,omitempty"`
+	BalancedDiffLines      int `json:"balanced_diff_lines,omitempty"`
+	BalancedMatchesPerFile int `json:"balanced_matches_per_file,omitempty"`
+	BalancedMatchLines     int `json:"balanced_match_lines,omitempty"`
+	BalancedLogHead        int `json:"balanced_log_head,omitempty"`
+	BalancedLogTail        int `json:"balanced_log_tail,omitempty"`
 }
 
 // ExecOn reports whether the compact wrapper is on: absent or true.

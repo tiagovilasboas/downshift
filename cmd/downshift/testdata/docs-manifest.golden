@@ -112,11 +112,13 @@
     },
     {
       "name": "context",
-      "summary": "Context optimisation status, providers and compression (experimental)"
+      "summary": "Context optimisation status, providers and compression (experimental)",
+      "experimental": true
     },
     {
       "name": "context compress",
       "summary": "Compress tool output read from stdin (experimental)",
+      "experimental": true,
       "flags": [
         {
           "name": "--exit"
@@ -135,6 +137,7 @@
     {
       "name": "context enable",
       "summary": "Enable the native compactor, or record a companion provider",
+      "experimental": true,
       "flags": [
         {
           "name": "--exec"
@@ -215,6 +218,7 @@
     {
       "name": "eval-outcome",
       "summary": "Outcome eval: executable checks, small vs frontier pass rate",
+      "experimental": true,
       "flags": [
         {
           "name": "--verify"
@@ -309,11 +313,13 @@
     },
     {
       "name": "learning",
-      "summary": "Compressor learning status"
+      "summary": "Compressor learning status",
+      "experimental": true
     },
     {
       "name": "loop",
       "summary": "Run an engineering loop with sensor verification and cascade auto-upgrade",
+      "experimental": true,
       "flags": [
         {
           "name": "--task"
@@ -429,7 +435,8 @@
     },
     {
       "name": "probe",
-      "summary": "Record a payload's field names (never prompts or paths) in probe.jsonl"
+      "summary": "Record a payload's field names (never prompts or paths) in probe.jsonl",
+      "experimental": true
     },
     {
       "name": "quota",

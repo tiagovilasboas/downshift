@@ -9,10 +9,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 	"github.com/tiagovilasboas/downshift-ai/internal/routing/policy"
 	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
@@ -24,7 +24,7 @@ const newAgentMode os.FileMode = 0o644
 // profileNameRegex is the last check before a profile name becomes a file name.
 // The policy loader has already validated the name; this keeps the file system
 // boundary safe on its own.
-var profileNameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$`)
+var profileNameRegex = lazyre.New(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$`)
 
 // agentPlan is one agent file, fully decided and checked, not yet written.
 type agentPlan struct {

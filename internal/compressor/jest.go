@@ -5,19 +5,20 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reJestSuites    = regexp.MustCompile(`(?m)^Test Suites:\s+(?:(\d+) skipped,\s*)?(\d+) passed,\s+(\d+) total\s*$`)
-	reJestTests     = regexp.MustCompile(`(?m)^Tests:\s+(?:(\d+) skipped,\s*)?(?:(\d+) todo,\s*)?(\d+) passed,\s+(\d+) total\s*$`)
-	reJestHeader    = regexp.MustCompile(`(?m)^\s*(?:PASS|Test Suites:)\s+`)
-	reJestFail      = regexp.MustCompile(`(?m)^\s*(?:FAIL|Test Suites:.*\bfailed\b|Tests:.*\bfailed\b|Snapshots:.*\bfailed\b)`)
-	reJestError     = regexp.MustCompile(`(?m)(?:^\s*Error:|^\s*●|\bSnapshot\s+Summary\b|\bTest suite failed to run\b)`)
-	reJestPass      = regexp.MustCompile(`^PASS\s+\S.*$`)
-	reJestSnapshots = regexp.MustCompile(`^Snapshots:\s+(?:(?:\d+ (?:failed|passed|obsolete),\s*)*\d+ total|\d+ total)$`)
-	reJestTime      = regexp.MustCompile(`^Time:\s+\d+(?:\.\d+)? s(?:, estimated \d+(?:\.\d+)? s)?$`)
+	reJestSuites    = lazyre.New(`(?m)^Test Suites:\s+(?:(\d+) skipped,\s*)?(\d+) passed,\s+(\d+) total\s*$`)
+	reJestTests     = lazyre.New(`(?m)^Tests:\s+(?:(\d+) skipped,\s*)?(?:(\d+) todo,\s*)?(\d+) passed,\s+(\d+) total\s*$`)
+	reJestHeader    = lazyre.New(`(?m)^\s*(?:PASS|Test Suites:)\s+`)
+	reJestFail      = lazyre.New(`(?m)^\s*(?:FAIL|Test Suites:.*\bfailed\b|Tests:.*\bfailed\b|Snapshots:.*\bfailed\b)`)
+	reJestError     = lazyre.New(`(?m)(?:^\s*Error:|^\s*●|\bSnapshot\s+Summary\b|\bTest suite failed to run\b)`)
+	reJestPass      = lazyre.New(`^PASS\s+\S.*$`)
+	reJestSnapshots = lazyre.New(`^Snapshots:\s+(?:(?:\d+ (?:failed|passed|obsolete),\s*)*\d+ total|\d+ total)$`)
+	reJestTime      = lazyre.New(`^Time:\s+\d+(?:\.\d+)? s(?:, estimated \d+(?:\.\d+)? s)?$`)
 )
 
 func isJest(input []byte) bool {

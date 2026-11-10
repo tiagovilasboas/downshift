@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatBazel is a clean `bazel build` or `bazel test` transcript.
@@ -19,9 +20,9 @@ const FormatBazel Format = "bazel"
 // test summary survive. A WARNING, an ERROR, a DEBUG line, a FAILED row, a
 // progress line or any other line keeps the run raw.
 var (
-	reBazelDone = regexp.MustCompile(`(?m)^INFO: Build completed successfully, (\d+) total actions?$`)
+	reBazelDone = lazyre.New(`(?m)^INFO: Build completed successfully, (\d+) total actions?$`)
 
-	reBazelNoise = regexp.MustCompile(`^(?:` +
+	reBazelNoise = lazyre.New(`^(?:` +
 		`Starting local Bazel server(?: \(\S+\))? and connecting to it\.\.\.|` +
 		`INFO: Analy[sz]ed (?:target \S+|\d+ targets?) \(\d+ packages? loaded(?:, \d+ targets? configured)?\)\.|` +
 		`INFO: Found .*targets?\.\.\.|` +
@@ -29,10 +30,10 @@ var (
 		`INFO: Build completed successfully, \d+ total actions?|` +
 		`(//\S+)\s+(?:\(cached\) )?PASSED in [\d.]+s` +
 		`)$`)
-	reBazelElapsed = regexp.MustCompile(`^INFO: Elapsed time: ([\d.]+s)(?:, Critical Path: [\d.]+s)?$`)
+	reBazelElapsed = lazyre.New(`^INFO: Elapsed time: ([\d.]+s)(?:, Critical Path: [\d.]+s)?$`)
 	// reBazelKept lines survive verbatim: the targets built and where their
 	// outputs are, and the test summary.
-	reBazelKept = regexp.MustCompile(`^(?:Target \S+ up-to-date(?: \(nothing to build\)|:)|  \S+|Executed \d+ out of \d+ tests?: .*)$`)
+	reBazelKept = lazyre.New(`^(?:Target \S+ up-to-date(?: \(nothing to build\)|:)|  \S+|Executed \d+ out of \d+ tests?: .*)$`)
 )
 
 func isBazel(input []byte) bool { return reBazelDone.Match(input) }

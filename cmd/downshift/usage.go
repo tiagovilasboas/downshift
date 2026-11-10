@@ -63,6 +63,8 @@ Experimental (kept, not part of the routing pitch; may change or move)
   downshift context metrics      Show token reduction metrics from active provider
   downshift context compress     Compress tool output from stdin (observe/safe)
   downshift context benchmark    Compare 4 optimization scenarios (routing vs compression)
+  downshift learning stats|suggestions|export|clear   Compressor learning store: unrecognised outputs, candidate compressors (in development)
+  downshift loop --task=T --sensor=CMD   Sensor retry loop: runs a check and records the outcome per task (no automatic upgrade since O8)
   go build -o dsmon ./cmd/dsmon  Live terminal widget (separate binary; downshift watch is the supported live view)
   ./cmd/dsmon/launch.sh          Open dsmon in a floating terminal window
 

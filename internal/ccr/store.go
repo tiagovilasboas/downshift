@@ -12,11 +12,11 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
@@ -27,7 +27,7 @@ var (
 	ErrInvalidID = errors.New("ccr: invalid id")
 )
 
-var reID = regexp.MustCompile(`^[0-9a-f]{12}$`)
+var reID = lazyre.New(`^[0-9a-f]{12}$`)
 
 // ValidID reports whether id has the shape Put produces.
 func ValidID(id string) bool { return reID.MatchString(id) }
@@ -40,13 +40,21 @@ type Store struct {
 	Now                          func() time.Time
 }
 
+// Default limits of the store under the state directory. One entry may hold
+// the whole stdout a run spools past the Compactor's hold limit
+// (execwrap.SpoolLimit, the same value).
+const (
+	DefaultMaxEntryBytes int64 = 32 << 20
+	DefaultMaxTotalBytes int64 = 128 << 20
+)
+
 // Default returns a Store under the Downshift state directory.
 func Default() (Store, error) {
 	dir, err := paths.Join("ccr")
 	if err != nil {
 		return Store{}, err
 	}
-	return Store{Dir: dir, TTL: 24 * time.Hour, MaxEntryBytes: 8 << 20, MaxTotalBytes: 64 << 20, Now: time.Now}, nil
+	return Store{Dir: dir, TTL: 24 * time.Hour, MaxEntryBytes: DefaultMaxEntryBytes, MaxTotalBytes: DefaultMaxTotalBytes, Now: time.Now}, nil
 }
 
 func (s Store) now() time.Time {

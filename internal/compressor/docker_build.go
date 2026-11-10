@@ -5,24 +5,25 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Docker build output patterns
 var (
-	reDockerBuildStep    = regexp.MustCompile(`(?m)^(Step \d+/\d+|#\d+) `)
-	reDockerBuildCached  = regexp.MustCompile(`(?i)(CACHED|\-\-\-> Using cache)`)
-	reDockerBuildSuccess = regexp.MustCompile(`(?m)^Successfully (built|tagged)`)
-	reDockerBuildError   = regexp.MustCompile(`(?mi)^(error|failed|ERROR|FAILED)`)
-	reDockerBuildPush    = regexp.MustCompile(`(?m)^(Pushing|The push refers)`)
-	reDockerBuildLayer   = regexp.MustCompile(`(?m)^[a-f0-9]{12}: (Pushed|Waiting|Preparing|Layer already exists)`)
+	reDockerBuildStep    = lazyre.New(`(?m)^(Step \d+/\d+|#\d+) `)
+	reDockerBuildCached  = lazyre.New(`(?i)(CACHED|\-\-\-> Using cache)`)
+	reDockerBuildSuccess = lazyre.New(`(?m)^Successfully (built|tagged)`)
+	reDockerBuildError   = lazyre.New(`(?mi)^(error|failed|ERROR|FAILED)`)
+	reDockerBuildPush    = lazyre.New(`(?m)^(Pushing|The push refers)`)
+	reDockerBuildLayer   = lazyre.New(`(?m)^[a-f0-9]{12}: (Pushed|Waiting|Preparing|Layer already exists)`)
 
 	// Buildx / BuildKit patterns
 	// Any line that reports a problem, wherever it sits in the transcript.
-	reDockerBuildDanger = regexp.MustCompile(`(?i)error|fail|warn|panic|denied|deprecated`)
+	reDockerBuildDanger = lazyre.New(`(?i)error|fail|warn|panic|denied|deprecated`)
 
-	reBuildKit = regexp.MustCompile(`(?m)^\[[\w/\s]+\]`)
+	reBuildKit = lazyre.New(`(?m)^\[[\w/\s]+\]`)
 )
 
 func isDockerBuild(input []byte) bool {

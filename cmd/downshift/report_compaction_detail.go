@@ -20,6 +20,9 @@ var notCompactedLabel = map[string]string{
 	"small_output":        "output already short",
 	"nonzero_exit":        "command failed, output kept whole",
 	"refused":             "not allowlisted, did not run",
+	"too_large":           "over the hold limit, raw output not kept",
+	"stderr_output":       "stderr with a terminal on stdin, streamed",
+	"hold_timeout":        "held past the hold bound, streamed",
 	"not_recorded":        "reason not recorded",
 }
 

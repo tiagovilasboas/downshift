@@ -5,8 +5,9 @@ package execwrap
 
 import (
 	"bytes"
-	"regexp"
 	"strconv"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // noFoldStored lists the families whose compact output is never folded by
@@ -16,7 +17,7 @@ import (
 var noFoldStored = map[Family]bool{FamilyAgentDesktop: true}
 
 // reKeptMarker reads the CCR id from MarkerWithID.
-var reKeptMarker = regexp.MustCompile(`; full output: downshift retrieve ([0-9a-f]{12})\]\n$`)
+var reKeptMarker = lazyre.New(`; full output: downshift retrieve ([0-9a-f]{12})\]\n$`)
 
 // applyDesktop runs the Desktop step on an agent-desktop view whose raw
 // output was kept: the delta it returns replaces the view, and the marker is

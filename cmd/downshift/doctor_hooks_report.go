@@ -114,7 +114,7 @@ func reportWiring(add func(id, status, detail, fix string), h string, w doctorWi
 // checkEvidence runs the checks that show the wired hooks work: the hook
 // binary, the session list, a held quota snapshot, and the last event,
 // completion and honored rewrites from the shared event log.
-func checkEvidence(add func(id, status, detail, fix string), env doctorEnv, nc core.NamedCaps, file string, found []wiredHook, pathBin string, events []telemetry.Event) {
+func checkEvidence(add func(id, status, detail, fix string), env doctorEnv, nc core.NamedCaps, file string, found []wiredHook, pathBin string, events []telemetry.Event, activate string) {
 	h := nc.Harness
 	checkHookBinary(add, env, file, found, pathBin)
 	checkSessionList(add, env, nc)
@@ -128,7 +128,7 @@ func checkEvidence(add func(id, status, detail, fix string), env doctorEnv, nc c
 			mine = append(mine, ev)
 		}
 	}
-	checkLastEvent(add, env, h, mine)
+	checkLastEvent(add, env, h, mine, activate)
 	checkCompletion(add, h, events)
 	if nc.Caps.CanRewriteModel && len(mine) > 0 {
 		checkHonored(add, mine)

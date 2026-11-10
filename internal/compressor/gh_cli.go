@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // GitHub CLI (gh) output compressors.
@@ -23,9 +24,9 @@ import (
 // gh pr view (non-TTY) prints a block of "key:\tvalue" header lines, then a
 // "--" separator, then the body. These are the fields worth keeping.
 var (
-	reGhPrField = regexp.MustCompile(`^([a-z-]+):\t(.*)$`)
+	reGhPrField = lazyre.New(`^([a-z-]+):\t(.*)$`)
 	// Box-drawing / underline decoration from TTY rendering.
-	reGhBoxChars = regexp.MustCompile("[\u2500-\u257F\u2580-\u259F]")
+	reGhBoxChars = lazyre.New("[\u2500-\u257F\u2580-\u259F]")
 )
 
 // ghPrKeepFields lists the header keys the compactor preserves, in output
@@ -103,7 +104,7 @@ func compressGhPrView(input []byte) ([]byte, bool, string) {
 //
 // A trailing summary line may read "N/M checks passing" or similar.
 var (
-	reGhCheckRow = regexp.MustCompile(`^([^\t]+)\t(pass|fail|pending|skipping|cancel|successful|failing)\t`)
+	reGhCheckRow = lazyre.New(`^([^\t]+)\t(pass|fail|pending|skipping|cancel|successful|failing)\t`)
 	// Terminal states that mean an agent must look.
 	ghCheckFailureStates = map[string]bool{"fail": true, "failing": true, "cancel": true}
 )
@@ -183,7 +184,7 @@ func compressGhPrChecks(input []byte) ([]byte, bool, string) {
 //
 // status is e.g. completed/in_progress/queued; conclusion is
 // success/failure/cancelled/skipped (empty while running).
-var reGhRunRow = regexp.MustCompile(`^(completed|in_progress|queued|requested|waiting|pending)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t(\d+)\t`)
+var reGhRunRow = lazyre.New(`^(completed|in_progress|queued|requested|waiting|pending)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t(\d+)\t`)
 
 // isGhRunList detects `gh run list` output: at least one tab-separated run row.
 func isGhRunList(input []byte) bool {

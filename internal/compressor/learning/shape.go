@@ -7,9 +7,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"regexp"
 	"strings"
 	"unicode"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // MaxShapeBytes bounds how much of an output is scanned for its shape.
@@ -64,9 +65,9 @@ type ByteClasses struct {
 }
 
 var (
-	urlRe    = regexp.MustCompile(`[A-Za-z][A-Za-z0-9+.-]*://`)
-	pathRe   = regexp.MustCompile(`[\w.~-]*[/\\][\w.-]+`)
-	statusRe = regexp.MustCompile(`(?i)\b(ok|pass|passed|fail|failed|failure|error|warn|warning|success|done)\b`)
+	urlRe    = lazyre.New(`[A-Za-z][A-Za-z0-9+.-]*://`)
+	pathRe   = lazyre.New(`[\w.~-]*[/\\][\w.-]+`)
+	statusRe = lazyre.New(`(?i)\b(ok|pass|passed|fail|failed|failure|error|warn|warning|success|done)\b`)
 )
 
 // ShapeOf computes the privacy-safe Shape of an output.

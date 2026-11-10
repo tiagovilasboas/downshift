@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
 
@@ -24,14 +24,14 @@ const (
 
 var (
 	// mcpTableOutside matches a [mcp_servers.downshift] table (or a sub-table).
-	mcpTableOutside = regexp.MustCompile(`^[ \t]*\[[ \t]*mcp_servers[ \t]*\.[ \t]*["']?` + McpServerName + `["']?[ \t]*(\.[^\]]*)?\]`)
+	mcpTableOutside = lazyre.New(`^[ \t]*\[[ \t]*mcp_servers[ \t]*\.[ \t]*["']?` + McpServerName + `["']?[ \t]*(\.[^\]]*)?\]`)
 	// mcpDottedOutside matches a root-level dotted key or inline table:
 	// mcp_servers.downshift.command = ..., mcp_servers.downshift = {...},
 	// mcp_servers = { downshift = ... }.
-	mcpDottedOutside = regexp.MustCompile(`^[ \t]*mcp_servers[ \t]*(\.[ \t]*["']?` + McpServerName + `["']?[ \t]*[.=]|=.*["']?\b` + McpServerName + `\b["']?[ \t]*=)`)
+	mcpDottedOutside = lazyre.New(`^[ \t]*mcp_servers[ \t]*(\.[ \t]*["']?` + McpServerName + `["']?[ \t]*[.=]|=.*["']?\b` + McpServerName + `\b["']?[ \t]*=)`)
 	// mcpKeyInTable matches the key `downshift` inside a [mcp_servers] table.
-	mcpKeyInTable  = regexp.MustCompile(`^[ \t]*["']?` + McpServerName + `["']?[ \t]*[.=]`)
-	mcpTableHeader = regexp.MustCompile(`^[ \t]*\[+[ \t]*([^\]]*?)[ \t]*\]+`)
+	mcpKeyInTable  = lazyre.New(`^[ \t]*["']?` + McpServerName + `["']?[ \t]*[.=]`)
+	mcpTableHeader = lazyre.New(`^[ \t]*\[+[ \t]*([^\]]*?)[ \t]*\]+`)
 )
 
 // mcpDefinedOutside reports whether text (the file without our block) already

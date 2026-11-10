@@ -38,7 +38,7 @@ func postRunAnswer(port hookport.Port, raw []byte, prev any) (out any) {
 	keep, _ := ccrKeep() // a successful call: only full CCR stores it
 	res := postrun.Compact(caps, in, postrun.Options{
 		Keep:       keep,
-		Balanced:   balancedOn(),
+		Balanced:   loadBalanced().on,
 		PreWrapped: func(command string) bool { return shellwrap.WouldRewrite(port.ID, command) },
 	})
 	if res.Considered {

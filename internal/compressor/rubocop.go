@@ -5,10 +5,11 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // RuboCop default ("clang") formatter output:
@@ -24,16 +25,16 @@ import (
 //
 //	2 files inspected, 1 offense detected, 1 offense autocorrectable
 var (
-	reRubocopInspecting = regexp.MustCompile(`^Inspecting \d+ files?$`)
-	reRubocopProgress   = regexp.MustCompile(`^[.CWEFA]+$`)
-	reRubocopCaret      = regexp.MustCompile(`^\s*\^~*$`)
+	reRubocopInspecting = lazyre.New(`^Inspecting \d+ files?$`)
+	reRubocopProgress   = lazyre.New(`^[.CWEFA]+$`)
+	reRubocopCaret      = lazyre.New(`^\s*\^~*$`)
 	// file:line:col: S: [Correctable] Department/Cop: message
-	reRubocopOffense = regexp.MustCompile(`^(\S+?):(\d+):(\d+): ([CWEF]): (?:\[\w+\] )?([A-Z][A-Za-z]*(?:/[A-Za-z0-9]+)+): .*$`)
-	reRubocopSummary = regexp.MustCompile(`^(\d+) files? inspected, (?:no offenses|(\d+) offenses?) detected(?:, \d+ offenses? autocorrectable)?$`)
+	reRubocopOffense = lazyre.New(`^(\S+?):(\d+):(\d+): ([CWEF]): (?:\[\w+\] )?([A-Z][A-Za-z]*(?:/[A-Za-z0-9]+)+): .*$`)
+	reRubocopSummary = lazyre.New(`^(\d+) files? inspected, (?:no offenses|(\d+) offenses?) detected(?:, \d+ offenses? autocorrectable)?$`)
 
 	// Whole-input fingerprints for detection.
-	reRubocopSummaryAny    = regexp.MustCompile(`(?m)^\d+ files? inspected, (?:no offenses|\d+ offenses?) detected`)
-	reRubocopInspectingAny = regexp.MustCompile(`(?m)^Inspecting \d+ files?$`)
+	reRubocopSummaryAny    = lazyre.New(`(?m)^\d+ files? inspected, (?:no offenses|\d+ offenses?) detected`)
+	reRubocopInspectingAny = lazyre.New(`(?m)^Inspecting \d+ files?$`)
 )
 
 func isRubocop(input []byte) bool {

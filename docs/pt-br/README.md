@@ -8,7 +8,7 @@
 
 ### Corte o desperdício de tokens no Claude Code, no Codex e em outros agentes de programação.
 
-Agentes de programação com IA gastam boa parte do contexto com logs de teste, saída de build e status, e cada subagente roda no seu modelo principal, a menos que algo defina outro. Isso queima tokens e enche a janela de contexto. Downshift é uma CLI open source que compacta a saída dos comandos suportados antes que o agente a leia, mantendo falhas e códigos de saída: 67,1% menos bytes num benchmark de 110 fixtures. Também aplica o modelo e o esforço escolhidos para cada subagente, dentro da política que você declara. Um único binário Go.
+Agentes de programação com IA gastam boa parte do contexto com logs de teste, saída de build e status, e cada subagente roda no seu modelo principal, a menos que algo defina outro. Isso queima tokens e enche a janela de contexto. Downshift é uma CLI open source que compacta a saída dos comandos suportados antes que o agente a leia, mantendo falhas e códigos de saída: 67,0% menos bytes num benchmark de 113 fixtures. Também aplica o modelo e o esforço escolhidos para cada subagente, dentro da política que você declara. Um único binário Go.
 
 Funciona com harnesses de programação, incluindo Claude Code e Codex CLI; as capacidades de integração e os modelos disponíveis variam por harness e sessão.
 
@@ -128,16 +128,17 @@ No chat do seu harness de programação, descreva sua tarefa e digite:
 
 ## Funciona com seu harness de programação
 
-O Downshift foi criado com Claude Code e oferece suporte a outros harnesses em diferentes estágios de verificação.
+O Downshift foi criado com Claude Code e oferece suporte a outros harnesses em diferentes estágios de verificação. **Suportado** significa que o `doctor` verificou o hook em uma sessão real; **Beta** significa que o hook rodou em uma sessão real e está documentado, mas o `doctor` ainda não o verificou; **Experimental** significa que o efeito não foi confirmado ou foi visto uma vez. Critérios e evidências: [níveis de suporte](../reference/harness-matrix.md#support-tiers).
 
-| Harness | Status | Evidência de roteamento |
+| Harness | Nível | Evidência de roteamento |
 | --- | --- | --- |
-| Claude Code | Concluído | Reescrita observada em um subagente real. |
-| Codex | Funcional | Reescrita emitida; aplicação inferida, sem observação direta. |
-| OpenCode | Beta | Roteamento e uso do subagente observados no OpenCode 2.2.5. |
+| Claude Code | Suportado | Reescrita observada em um subagente real; o `doctor` a lê de sessões reais. |
+| Codex | Beta | Reescrita emitida; aplicação inferida, sem observação direta. Precisa da flag de hooks e da confiança via `/hooks`; o `doctor` lê a flag e indica a correção. |
+| OpenCode | Beta | Roteamento e uso do subagente observados no OpenCode 2.2.5 pelo plugin ponte. |
+| KiroCrew | Beta | Bloqueio por política e nova tentativa observados; sem reescrita de modelo no lugar. |
+| Kiro IDE | Beta | Payload do hook capturado ao vivo; só observação, sem reescrita. |
 | Cursor | Experimental | Reescrita emitida; aplicação pelo executor não confirmada. |
 | Antigravity | Experimental | Um subagente observado em uma versão. |
-| KiroCrew | Experimental | Modo de política, sem reescrita de modelo no lugar. |
 
 Os modelos disponíveis para um harness ou sessão não são considerados disponíveis automaticamente em outro. Consulte a [matriz completa de harnesses](../reference/harness-matrix.md) para detalhes de integração, evidências e limites.
 

@@ -18,7 +18,9 @@ const lastEventStale = 7 * 24 * time.Hour
 
 // checkLastEvent reports when the hook last logged and what it decided, so a
 // wired hook that never fires is told apart from one that fired and held.
-func checkLastEvent(add func(id, status, detail, fix string), env doctorEnv, h string, mine []telemetry.Event) {
+// activate, when set, is the fix for a harness that never recorded an event:
+// the flag and activation steps it declares (activationFix).
+func checkLastEvent(add func(id, status, detail, fix string), env doctorEnv, h string, mine []telemetry.Event, activate string) {
 	fix := fmt.Sprintf("restart %s (hooks load at session start), spawn one subagent, then run: downshift stats --days=1", h)
 	var last time.Time
 	var lastDecision telemetry.Event
@@ -36,7 +38,12 @@ func checkLastEvent(add func(id, status, detail, fix string), env doctorEnv, h s
 		}
 	}
 	if last.IsZero() {
-		add("last hook event", doctorWarn, "none in the event log yet; current host session not verified", fix)
+		detail := "none in the event log yet; current host session not verified"
+		if activate != "" {
+			detail = "none in the event log yet: the hooks are wired but " + h + " has never run one"
+			fix = activate
+		}
+		add("last hook event", doctorWarn, detail, fix)
 		return
 	}
 	age := env.Now().Sub(last)

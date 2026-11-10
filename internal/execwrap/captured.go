@@ -20,7 +20,7 @@ type held struct {
 // the family's compressor, the CCR fold of a clean run it kept raw, then the
 // balanced cut. keep is the storage port for this run (nil: nothing stored, so
 // nothing is cut with loss). When compacted is false, out is data.
-func compactHeld(argv []string, data []byte, family Family, exitCode int, wroteStderr bool, keep func([]byte) (string, bool), desktop func([]byte) []byte, balanced bool) held {
+func compactHeld(argv []string, data []byte, family Family, exitCode int, wroteStderr bool, keep func([]byte) (string, bool), desktop func([]byte) []byte, balanced bool, bal balanceConfig) held {
 	var h held
 	h.out, h.passthrough, h.detail = compactOutputFor(argv, exitCode, data, family, wroteStderr)
 	h.compacted = h.passthrough == ""
@@ -35,7 +35,7 @@ func compactHeld(argv []string, data []byte, family Family, exitCode int, wroteS
 		if h.compacted {
 			shown = h.out
 		}
-		if cut, ok := balance(keep, family, data, shown); ok {
+		if cut, ok := balance(keep, family, data, shown, bal); ok {
 			h = held{out: cut, compacted: true, folded: true}
 		}
 	}
@@ -80,7 +80,7 @@ func CompactCaptured(argv []string, family Family, data []byte, exitCode int, ke
 		keep = nil
 	}
 	var kept string
-	h := compactHeld(argv, data, family, exitCode, false, captureKept(keep, &kept), nil, balanced)
+	h := compactHeld(argv, data, family, exitCode, false, captureKept(keep, &kept), nil, balanced, balanceConfig{})
 	res = Captured{Output: h.out, Compacted: h.compacted, Folded: h.folded, Passthrough: h.passthrough, Detail: h.detail}
 	if h.compacted {
 		res.KeptID = kept

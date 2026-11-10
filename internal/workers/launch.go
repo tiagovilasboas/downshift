@@ -7,7 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // The read-only launches. The recipe follows the public behaviour of other
@@ -18,8 +19,8 @@ import (
 // open until a write is seen refused under plan mode (docs/internal/plans/mcp-delegation-spec.md).
 
 var (
-	modelPattern  = regexp.MustCompile(`^[A-Za-z0-9._:/][A-Za-z0-9._:/-]{0,127}$`)
-	effortPattern = regexp.MustCompile(`^[a-z]{1,16}$`)
+	modelPattern  = lazyre.New(`^[A-Za-z0-9._:/][A-Za-z0-9._:/-]{0,127}$`)
+	effortPattern = lazyre.New(`^[a-z]{1,16}$`)
 )
 
 // argv is what a launch runs: the program, its arguments, how to read the

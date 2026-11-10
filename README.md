@@ -8,7 +8,7 @@
 
 ### Cut the token waste in Claude Code, Codex and other coding agents.
 
-AI coding agents spend much of their context on test logs, build output and status dumps, and every subagent runs on your main model unless something sets another. That burns tokens and fills the context window. Downshift is an open-source CLI that compacts supported command output before the agent reads it, with failures and exit codes kept: 67.1% fewer bytes on a 110-fixture benchmark. It also applies the model and effort chosen for each subagent, within the policy you declare. Single Go binary.
+AI coding agents spend much of their context on test logs, build output and status dumps, and every subagent runs on your main model unless something sets another. That burns tokens and fills the context window. Downshift is an open-source CLI that compacts supported command output before the agent reads it, with failures and exit codes kept: 67.0% fewer bytes on a 113-fixture benchmark. It also applies the model and effort chosen for each subagent, within the policy you declare. Single Go binary.
 
 Works with coding harnesses including Claude Code and Codex CLI; integration capabilities and available models vary by harness and session.
 
@@ -129,15 +129,15 @@ In your coding harness chat, describe your task and type:
 
 ## Works with your coding harness
 
-Downshift was built with Claude Code and supports other harnesses at different stages of verification.
+Downshift was built with Claude Code and supports other harnesses at different stages of verification. **Supported** means `doctor` verified the hook in a real session; **Beta** means the hook ran in a real session and is written up, but `doctor` has not verified it; **Experimental** means the effect is unconfirmed or seen once. Criteria and evidence: [support tiers](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/harness-matrix.md#support-tiers).
 
-| Harness | Status | Routing evidence |
+| Harness | Tier | Routing evidence |
 | --- | --- | --- |
-| Claude Code | Completed | Rewrite observed on a real child. |
-| Codex | Functional | Rewrite emitted; honor inferred, not directly observed. |
-| Kiro IDE | Functional | MCP advisory mode; models mirrored from KiroCrew. |
-| KiroCrew | Functional | MCP advisory mode; hooks wired for policy enforcement. |
-| OpenCode | Beta | Routing and child usage observed on OpenCode 2.2.5. |
+| Claude Code | Supported | Rewrite observed on a real child; `doctor` reads it from real sessions. |
+| Codex | Beta | Rewrite emitted; honor inferred, not directly observed. Needs the hooks feature flag and `/hooks` trust; `doctor` reads the flag and names the fix. |
+| OpenCode | Beta | Routing and child usage observed on OpenCode 2.2.5 through the bridge plugin. |
+| KiroCrew | Beta | Policy block and retry observed; no in-place rewrite. |
+| Kiro IDE | Beta | Hook payload captured live; observation-only, no rewrite. |
 | Cursor | Experimental | Rewrite emitted; executor honor unconfirmed. |
 | Antigravity | Experimental | One child observed on one build. |
 

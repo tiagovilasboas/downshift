@@ -12,8 +12,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // maxOutput bounds what a source reads from a CLI or file.
@@ -144,7 +145,7 @@ func (g GrokCLI) Discover(ctx context.Context) ([]Model, error) {
 	return parseGrokList(out)
 }
 
-var grokLine = regexp.MustCompile(`^\s*[*-]\s+(\S+)`)
+var grokLine = lazyre.New(`^\s*[*-]\s+(\S+)`)
 
 // parseGrokList reads the "Available models:" block: lines like
 // "  * grok-4.6 (default)" and "  - grok-4.5".

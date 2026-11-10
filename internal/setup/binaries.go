@@ -8,10 +8,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // binaryCopy is another downshift executable a shell may resolve. built is the
@@ -27,7 +28,7 @@ var binaryProbeTimeout = 3 * time.Second
 
 // buildLine matches the version line main prints: "downshift <version> (commit
 // <c>, built <stamp>)". The stamp is group 1.
-var buildLine = regexp.MustCompile(`^downshift \S.*\(commit \S+, built ([^)]*)\)`)
+var buildLine = lazyre.New(`^downshift \S.*\(commit \S+, built ([^)]*)\)`)
 
 // DefaultBinDirs lists the directories a shell may resolve downshift from: the
 // PATH entries, the Go install directories, and the per-user bin directory a

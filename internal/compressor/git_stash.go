@@ -5,13 +5,14 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // "stash@{0}: WIP on main: 1a2b3c4 commit subject" or
 // "stash@{1}: On main: message".
-var reGitStashEntry = regexp.MustCompile(`^stash@\{(\d+)\}: (.+)$`)
+var reGitStashEntry = lazyre.New(`^stash@\{(\d+)\}: (.+)$`)
 
 // isGitStashList reports whether every non-empty line is a stash entry.
 func isGitStashList(input []byte) bool {
