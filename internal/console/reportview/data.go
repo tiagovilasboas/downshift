@@ -44,6 +44,27 @@ type Row struct {
 	Reworked  int
 	Ended     int
 	ReworkPct float64
+
+	// Compactor: measured bytes and counts of the window. TokensSaved is
+	// SavedBytes / 4, net of what retrieve read back.
+	RawBytes, SavedBytes, RetrievedBytes int64
+	CutPct                               float64
+	Commands, Compacted                  int64
+	HookRuns, DirectRuns                 int64
+	// Families is the Compactor by command family, most tokens first.
+	Families []Family
+
+	// Spawns is the routed spawns; the verdict counts split those with a session.
+	Spawns, ModelSwitched, EffortChanged, Held, HeldGuardrail int
+	// Quota is the ready quota text ("5h 42% · week 17%"), "" when unknown.
+	Quota string
+}
+
+// Family is one command family of the Compactor.
+type Family struct {
+	Name          string
+	AvoidedTokens int64
+	CutPct        float64
 }
 
 // Tab is one detail section (Savings, Routing, Efficiency, Quota), already
