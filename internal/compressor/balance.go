@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Balanced compaction: a lossy cut of a large output whose raw text is
@@ -188,7 +189,7 @@ func balanceMatches(lines []string, lim BalanceLimits) []string {
 // reBalanceScaffold is a test-runner progress line whose test name may hold a
 // failure word ("=== RUN TestX/error"): it is not a failure, so the log cut
 // does not keep it for that word.
-var reBalanceScaffold = regexp.MustCompile(`^\s*(=== (RUN|PAUSE|CONT|NAME)|--- (PASS|SKIP)|PASS$|ok\s)`)
+var reBalanceScaffold = lazyre.New(`^\s*(=== (RUN|PAUSE|CONT|NAME)|--- (PASS|SKIP)|PASS$|ok\s)`)
 
 // balanceLog keeps the head, the tail and every failure line between them.
 func balanceLog(lines []string, lim BalanceLimits) []string {

@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // mypy default text output:
@@ -20,14 +21,14 @@ import (
 // Error codes appear in trailing brackets when `--show-error-codes` is on.
 var (
 	// "path/file.py:10: error: message  [code]"  (column optional: ":10:5:")
-	reMypyViolation = regexp.MustCompile(`^(\S+?):(\d+):(?:(\d+):)?\s+(error|warning):\s+.*?(?:\[([a-z-]+)\])?\s*$`)
+	reMypyViolation = lazyre.New(`^(\S+?):(\d+):(?:(\d+):)?\s+(error|warning):\s+.*?(?:\[([a-z-]+)\])?\s*$`)
 	// Multiline detector for the whole-input scan (the per-line regex above is
 	// anchored for the compressor loop).
-	reMypyViolationDetect = regexp.MustCompile(`(?m)^(\S+?):(\d+):(?:(\d+):)?\s+(?:error|warning):\s+.*$`)
+	reMypyViolationDetect = lazyre.New(`(?m)^(\S+?):(\d+):(?:(\d+):)?\s+(?:error|warning):\s+.*$`)
 	// "path/file.py:10: note: ..." — context, ignored but allowed.
-	reMypyNote = regexp.MustCompile(`^(\S+?):(\d+):(?:(\d+):)?\s+note:\s+.*$`)
+	reMypyNote = lazyre.New(`^(\S+?):(\d+):(?:(\d+):)?\s+note:\s+.*$`)
 	// "Found 2 errors in 1 file (checked 5 source files)"
-	reMypySummary = regexp.MustCompile(`(?m)^Found\s+(\d+)\s+errors?\s+in\s+\d+\s+files?\b`)
+	reMypySummary = lazyre.New(`(?m)^Found\s+(\d+)\s+errors?\s+in\s+\d+\s+files?\b`)
 )
 
 func isMypy(input []byte) bool {

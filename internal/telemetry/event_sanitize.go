@@ -8,19 +8,20 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"regexp"
 	"time"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
-var correlationIDPattern = regexp.MustCompile(`^[a-f0-9]{16,64}$`)
-var modelIDPattern = regexp.MustCompile(`^[A-Za-z0-9._:/-]{1,128}$`)
-var rawModelPattern = regexp.MustCompile(`^[A-Za-z0-9._:/-]{1,64}$`)
-var effortPattern = regexp.MustCompile(`^(none|minimal|low|medium|high|xhigh|max|ultra)$`)
+var correlationIDPattern = lazyre.New(`^[a-f0-9]{16,64}$`)
+var modelIDPattern = lazyre.New(`^[A-Za-z0-9._:/-]{1,128}$`)
+var rawModelPattern = lazyre.New(`^[A-Za-z0-9._:/-]{1,64}$`)
+var effortPattern = lazyre.New(`^(none|minimal|low|medium|high|xhigh|max|ultra)$`)
 
 // Session IDs are untrusted hook input. Validate a deliberately small opaque
 // identifier vocabulary before hashing so arbitrary user-controlled payloads
 // never enter even a derived local record.
-var sessionIDPattern = regexp.MustCompile(`^[A-Za-z0-9._:-]{1,128}$`)
+var sessionIDPattern = lazyre.New(`^[A-Za-z0-9._:-]{1,128}$`)
 
 // NewCorrelationID returns an opaque, prompt-free ID that joins one hook
 // invocation to its event-log record.
@@ -62,7 +63,7 @@ func RawModelOrInvalid(candidate string) string {
 // clientPattern bounds the harness client label: a short, lower-case token.
 // CLAUDE_CODE_ENTRYPOINT is untrusted, so anything with other characters or
 // over the length cap is dropped rather than stored.
-var clientPattern = regexp.MustCompile(`^[a-z0-9._-]{1,32}$`)
+var clientPattern = lazyre.New(`^[a-z0-9._-]{1,32}$`)
 
 // ClientOrDrop returns candidate when it is a short lower-case token
 // (at most 32 chars, [a-z0-9._-]), and "" otherwise so the field is dropped.
@@ -74,7 +75,7 @@ func ClientOrDrop(candidate string) string {
 	return ""
 }
 
-var parentSourcePattern = regexp.MustCompile(`^[a-z0-9_-]{1,32}$`)
+var parentSourcePattern = lazyre.New(`^[a-z0-9_-]{1,32}$`)
 
 // ParentModelLabel bounds the parent model and its source before logging. An
 // unusable model drops both, so a source never appears without its model.

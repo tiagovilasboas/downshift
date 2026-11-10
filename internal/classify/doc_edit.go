@@ -3,7 +3,7 @@
 
 package classify
 
-import "regexp"
+import "github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 
 var (
 	// A documentation edit: the prompt opens with an edit verb and its target
@@ -11,14 +11,14 @@ var (
 	// migrations README", "rename cron to scheduler in the docs", "add a graph
 	// of weekly usage to the README", and the PT-BR equivalents. Architectural
 	// words in such a prompt name the topic of the text, not the work.
-	docEditVerbRE = regexp.MustCompile(`(?i)^\W*` + docEditVerb + `\b`)
+	docEditVerbRE = lazyre.New(`(?i)^\W*` + docEditVerb + `\b`)
 	// The prose is the target either after a preposition ("in the docs", "ao
 	// README") or as the verb's direct object ("update the comment on ...").
-	docTargetRE = regexp.MustCompile(`(?i)\b(in|to|into|on|from|inside|within|em|no|na|nos|nas|ao|aos)\s+(the\s+|our\s+|this\s+|o\s+|a\s+)?([\w.-]+\s+){0,2}?` + docNoun + `\b`)
-	docObjectRE = regexp.MustCompile(`(?i)^\W*` + docEditVerb + `\s+(the\s+|a\s+|an\s+|our\s+|o\s+|os\s+|as\s+|um\s+|uma\s+)?([\w.-]+\s+)?` + docNoun + `\b`)
+	docTargetRE = lazyre.New(`(?i)\b(in|to|into|on|from|inside|within|em|no|na|nos|nas|ao|aos)\s+(the\s+|our\s+|this\s+|o\s+|a\s+)?([\w.-]+\s+){0,2}?` + docNoun + `\b`)
+	docObjectRE = lazyre.New(`(?i)^\W*` + docEditVerb + `\s+(the\s+|a\s+|an\s+|our\s+|o\s+|os\s+|as\s+|um\s+|uma\s+)?([\w.-]+\s+)?` + docNoun + `\b`)
 	// A second clause may carry real work ("... in the docs and migrate the
 	// scheduler"), so only a single short clause is treated as prose-only.
-	multiClauseRE = regexp.MustCompile(`(?i)\b(and|then|also|plus|e|depois|tamb\S*m)\b|[;\n]`)
+	multiClauseRE = lazyre.New(`(?i)\b(and|then|also|plus|e|depois|tamb\S*m)\b|[;\n]`)
 )
 
 const (

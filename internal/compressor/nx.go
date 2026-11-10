@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatNx is a clean `nx` run transcript.
@@ -19,9 +20,9 @@ const FormatNx Format = "nx"
 // known shape here, so it keeps the run raw, as do a warning, an error and a
 // failed task.
 var (
-	reNxDone = regexp.MustCompile(`(?m)^ NX   Successfully ran target (\S+) for (project \S+|\d+ projects)(?: and \d+ tasks? they depend on)? \((\S+)\)\s*$`)
+	reNxDone = lazyre.New(`(?m)^ NX   Successfully ran target (\S+) for (project \S+|\d+ projects)(?: and \d+ tasks? they depend on)? \((\S+)\)\s*$`)
 
-	reNxNoise = regexp.MustCompile(`^(?:` +
+	reNxNoise = lazyre.New(`^(?:` +
 		`> .*|[—-]{10,}|` +
 		` NX   (?:Running target \S+ for .*|Successfully ran target .*)|` +
 		`Nx read the output from the cache instead of running the command for \d+ out of \d+ tasks\.` +

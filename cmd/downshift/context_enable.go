@@ -72,7 +72,7 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	fmt.Fprintf(w, "Context optimization enabled. Provider %s is active.\n", p.Name())
 	fmt.Fprintln(w, "Exit-code contract: observe_only; nonzero_exit_preserved; hook_cannot_replace_tool_output.")
 	fmt.Fprintln(w, "Claude Code PostToolUse records CompressExit in observe mode when this flag is on, using the tool exit code.")
-	fmt.Fprintln(w, "The hook cannot replace tool output. The model still sees the original result. Prompts are not compressed.")
+	fmt.Fprintln(w, "The native hook does not replace tool output (Claude Code allows it with PostToolUse updatedToolOutput; Codex does not), so the model still sees the original result. Prompts are not compressed.")
 	printExecEnabled(w, compactOn(cfg))
 	// A detected companion is recorded by default. Recording changes no hook
 	// and runs no third-party command; it only tells doctor and the docs

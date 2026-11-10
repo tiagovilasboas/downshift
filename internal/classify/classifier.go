@@ -6,9 +6,10 @@
 package classify
 
 import (
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // maxClassifyBytes caps the text the regex table, the risk floor and the
@@ -65,8 +66,8 @@ var (
 	// addStubRE matches one helper added by name. "write" and "implement"
 	// stay with the lexicon: implement is already Medium, and a write-spec
 	// with no other signal keeps the Medium default.
-	addStubRE      = regexp.MustCompile(`(?i)^\s*add\s+[A-Z]\w*\(`)
-	exportedCallRE = regexp.MustCompile(`\b[A-Z]\w*\([^)]*\)`)
+	addStubRE      = lazyre.New(`(?i)^\s*add\s+[A-Z]\w*\(`)
+	exportedCallRE = lazyre.New(`\b[A-Z]\w*\([^)]*\)`)
 )
 
 // Classification is the result of scoring a task prompt.

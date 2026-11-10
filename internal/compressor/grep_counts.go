@@ -5,14 +5,15 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // reGrepCount reads one `grep -c` / `rg -c` row: the file and its match count.
 // A lone number (one file operand prints no path) does not match.
-var reGrepCount = regexp.MustCompile(`^(.+):([0-9]+)$`)
+var reGrepCount = lazyre.New(`^(.+):([0-9]+)$`)
 
 // compressGrepCounts keeps the rows that have matches, in order, and folds the
 // files with a count of 0 (grep -c lists every file it read; rg -c lists only

@@ -4,8 +4,9 @@
 package execwrap
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -55,7 +56,7 @@ func refusedShape(f Family, argv []string) bool {
 }
 
 // reScpAddress is an scp-style git address ("git@gitlab.com:org/repo").
-var reScpAddress = regexp.MustCompile(`^[\w.-]+@[\w.-]+:`)
+var reScpAddress = lazyre.New(`^[\w.-]+@[\w.-]+:`)
 
 // remoteHostPrefixes are bare hosts the daemon treats as a git context.
 var remoteHostPrefixes = []string{"github.com/", "gitlab.com/", "bitbucket.org/"}

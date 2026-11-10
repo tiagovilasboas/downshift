@@ -6,9 +6,10 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatGoTestRuns is the output of another program (make, a git hook run by
@@ -20,13 +21,13 @@ const minGoTestRun = 3
 
 // reGoTestRunLine is one clean go test package line: "ok  <pkg>  0.31s" or
 // "(cached)", with an optional coverage figure, or "?  <pkg>  [no test files]".
-var reGoTestRunLine = regexp.MustCompile(`^(?:ok\s+\S+\s+(?:\d+(?:\.\d+)?s|\(cached\))(?:\s+coverage:\s+.+)?` +
+var reGoTestRunLine = lazyre.New(`^(?:ok\s+\S+\s+(?:\d+(?:\.\d+)?s|\(cached\))(?:\s+coverage:\s+.+)?` +
 	`|\?\s+\S+\s+\[no test files\]\s*)$`)
 
 // reGoTestFailure marks go test failure output: a failed test or subtest, a
 // failed package, a panic or a race report. Anchored so that words like
 // "failed_count" do not match.
-var reGoTestFailure = regexp.MustCompile(`(?m)^\s*--- FAIL|^FAIL(?:\s|$)|^panic:|WARNING: DATA RACE`)
+var reGoTestFailure = lazyre.New(`(?m)^\s*--- FAIL|^FAIL(?:\s|$)|^panic:|WARNING: DATA RACE`)
 
 // FoldGoTestRuns compacts the clean go test runs inside another program's
 // output. Each run of minGoTestRun or more consecutive package lines folds

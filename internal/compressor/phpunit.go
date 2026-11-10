@@ -5,24 +5,25 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	rePHPUnitBanner   = regexp.MustCompile(`^PHPUnit\s+\d+(?:\.\d+){1,2}\s+by\s+.+$`)
-	rePHPUnitRuntime  = regexp.MustCompile(`^Runtime:\s+.+$`)
-	rePHPUnitConfig   = regexp.MustCompile(`^Configuration:\s+.+$`)
-	rePHPUnitProgress = regexp.MustCompile(`^(\.+)\s+(\d+)\s*/\s*(\d+)\s+\(100%\)$`)
-	rePHPUnitTime     = regexp.MustCompile(`^Time:\s+([^,]+)(?:,\s*Memory:\s+(.+))?$`)
-	rePHPUnitSummary  = regexp.MustCompile(`^OK \((\d+) tests?, (\d+) assertions?\)$`)
+	rePHPUnitBanner   = lazyre.New(`^PHPUnit\s+\d+(?:\.\d+){1,2}\s+by\s+.+$`)
+	rePHPUnitRuntime  = lazyre.New(`^Runtime:\s+.+$`)
+	rePHPUnitConfig   = lazyre.New(`^Configuration:\s+.+$`)
+	rePHPUnitProgress = lazyre.New(`^(\.+)\s+(\d+)\s*/\s*(\d+)\s+\(100%\)$`)
+	rePHPUnitTime     = lazyre.New(`^Time:\s+([^,]+)(?:,\s*Memory:\s+(.+))?$`)
+	rePHPUnitSummary  = lazyre.New(`^OK \((\d+) tests?, (\d+) assertions?\)$`)
 )
 
 func isPHPUnit(input []byte) bool {
 	return rePHPUnitBanner.MatchString(strings.SplitN(string(input), "\n", 2)[0])
 }
 
-var rePHPUnitFailure = regexp.MustCompile(`(?m)^(?:FAILURES!|ERRORS!|INCOMPLETE|RISKY|There were errors)`)
+var rePHPUnitFailure = lazyre.New(`(?m)^(?:FAILURES!|ERRORS!|INCOMPLETE|RISKY|There were errors)`)
 
 // compressPHPUnit compacts only PHPUnit's complete, default dot-progress
 // success transcript. Test output, diagnostics, alternate printers, failed or

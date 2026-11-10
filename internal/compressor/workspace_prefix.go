@@ -4,8 +4,9 @@
 package compressor
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // A recursive package-manager run prefixes every line with the workspace and
@@ -13,11 +14,11 @@ import (
 // pnpm -r). The runner's own grammar sits behind the prefix, so
 // the compressors read nothing until it is stripped.
 var (
-	reWorkspaceLine = regexp.MustCompile(`^(\S+ test(?:[:.-][\w:.-]+)?)(?:: ?|\$ ?)(.*)$`)
+	reWorkspaceLine = lazyre.New(`^(\S+ test(?:[:.-][\w:.-]+)?)(?:: ?|\$ ?)(.*)$`)
 	// reWorkspaceScript is the "name script$ command" line pnpm prints when a
 	// workspace script starts; it plays the part of the "> command" banner.
-	reWorkspaceScript = regexp.MustCompile(`^\S+ test(?:[:.-][\w:.-]+)?\$ (\S.*)$`)
-	reWorkspaceScope  = regexp.MustCompile(`^Scope: .+$`)
+	reWorkspaceScript = lazyre.New(`^\S+ test(?:[:.-][\w:.-]+)?\$ (\S.*)$`)
+	reWorkspaceScope  = lazyre.New(`^Scope: .+$`)
 )
 
 // minWorkspaceLines is the fewest prefixed lines worth reading as a workspace run.

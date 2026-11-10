@@ -6,8 +6,9 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Git log compressor.
@@ -27,7 +28,7 @@ import (
 
 // reGitLogCommitLine matches "commit <40|64 hex>" plus optional decorations
 // such as " (HEAD -> main, tag: v1)".
-var reGitLogCommitLine = regexp.MustCompile(`^commit ([0-9a-f]{40}|[0-9a-f]{64})(?: (\(.*\)))?$`)
+var reGitLogCommitLine = lazyre.New(`^commit ([0-9a-f]{40}|[0-9a-f]{64})(?: (\(.*\)))?$`)
 
 const gitLogShortHash = 7
 

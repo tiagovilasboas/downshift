@@ -1,14 +1,15 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package discover
+package missedsavings
 
 import (
 	"bytes"
 	"encoding/json"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // codexLine is the slice of a Codex session line this package reads: calls
@@ -37,7 +38,7 @@ var codexItem = []byte(`"response_item"`)
 // jsCmdRe finds the cmd string literal of a tools.exec_command({...}) call in
 // the JavaScript the current Codex "exec" tool runs. A cmd given by a variable
 // cannot be resolved and is not counted.
-var jsCmdRe = regexp.MustCompile("exec_command\\(\\{\\s*[\"']?cmd[\"']?\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|`[^`$]*`)")
+var jsCmdRe = lazyre.New("exec_command\\(\\{\\s*[\"']?cmd[\"']?\\s*:\\s*(\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|`[^`$]*`)")
 
 // parseCodex reads shell calls from a Codex session: the "exec" tool's
 // JavaScript (one or more exec_command calls) and plain shell function calls.

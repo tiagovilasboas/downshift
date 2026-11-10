@@ -6,14 +6,15 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reCargoTestSummary = regexp.MustCompile(`(?m)^\s*test result: ok\.\s+(\d+)\s+passed;\s+0\s+failed;.*?finished in\s+([^\n\r]+?)\s*$`)
-	reCargoTestHeader  = regexp.MustCompile(`(?m)^running\s+\d+\s+tests`)
-	reCargoTestError   = regexp.MustCompile(`(?m)(?:FAILED|error\[E[^\]]*\]:|warning:|panicked at)`)
+	reCargoTestSummary = lazyre.New(`(?m)^\s*test result: ok\.\s+(\d+)\s+passed;\s+0\s+failed;.*?finished in\s+([^\n\r]+?)\s*$`)
+	reCargoTestHeader  = lazyre.New(`(?m)^running\s+\d+\s+tests`)
+	reCargoTestError   = lazyre.New(`(?m)(?:FAILED|error\[E[^\]]*\]:|warning:|panicked at)`)
 )
 
 func isCargoTest(input []byte) bool {
@@ -27,14 +28,14 @@ func isCargoTest(input []byte) bool {
 // Recognition is the rule: a line that matches none of them (a compiler
 // diagnostic, a panic, a failure marker, an injected warning) keeps the whole
 // transcript raw, whatever its words are.
-var cargoTestLinePatterns = []*regexp.Regexp{
-	regexp.MustCompile(`^\s*Compiling \S+ v\S+ \(.*\)$`),
-	regexp.MustCompile(`^\s*Finished .+ profile \[[^\]]+\] target\(s\) in \S+$`),
-	regexp.MustCompile(`^\s*Running (?:unittests )?\S+ \(.*\)$`),
-	regexp.MustCompile(`^\s*Doc-tests \S+$`),
-	regexp.MustCompile(`^running \d+ tests?$`),
-	regexp.MustCompile(`^test \S.* \.\.\. ok$`),
-	regexp.MustCompile(`^test result: ok\. \d+ passed; 0 failed; \d+ ignored; \d+ measured; \d+ filtered out; finished in \S+$`),
+var cargoTestLinePatterns = []*lazyre.Regexp{
+	lazyre.New(`^\s*Compiling \S+ v\S+ \(.*\)$`),
+	lazyre.New(`^\s*Finished .+ profile \[[^\]]+\] target\(s\) in \S+$`),
+	lazyre.New(`^\s*Running (?:unittests )?\S+ \(.*\)$`),
+	lazyre.New(`^\s*Doc-tests \S+$`),
+	lazyre.New(`^running \d+ tests?$`),
+	lazyre.New(`^test \S.* \.\.\. ok$`),
+	lazyre.New(`^test result: ok\. \d+ passed; 0 failed; \d+ ignored; \d+ measured; \d+ filtered out; finished in \S+$`),
 }
 
 // cargoTestLinesRecognised reports whether every non-empty line of input is a

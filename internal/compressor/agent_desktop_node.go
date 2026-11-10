@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"encoding/json"
-	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // The node line grammar. One node per line, two spaces of indent per depth:
@@ -36,10 +37,10 @@ import (
 // its own JSON name, so nothing is ever dropped.
 
 var (
-	reDesktopToken = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
-	reDesktopWord  = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_-]*$`)
-	reDesktopID    = regexp.MustCompile(`^[A-Za-z0-9_-]{3,64}$`)
-	reDesktopRefN  = regexp.MustCompile(`^[1-9][0-9]{0,9}$`)
+	reDesktopToken = lazyre.New(`^[a-z][a-z0-9_-]*$`)
+	reDesktopWord  = lazyre.New(`^[A-Za-z][A-Za-z0-9_-]*$`)
+	reDesktopID    = lazyre.New(`^[A-Za-z0-9_-]{3,64}$`)
+	reDesktopRefN  = lazyre.New(`^[1-9][0-9]{0,9}$`)
 )
 
 func isDesktopToken(s string) bool { return reDesktopToken.MatchString(s) }
@@ -158,7 +159,7 @@ func desktopRef(ref any, sid string) string {
 }
 
 // joinDesktopWords joins a list of plain words with commas, or reports false.
-func joinDesktopWords(v any, word *regexp.Regexp) (string, bool) {
+func joinDesktopWords(v any, word *lazyre.Regexp) (string, bool) {
 	list, ok := v.([]any)
 	if !ok || len(list) == 0 {
 		return "", false

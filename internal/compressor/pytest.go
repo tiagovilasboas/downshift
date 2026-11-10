@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 const (
@@ -18,15 +19,15 @@ const (
 )
 
 var (
-	rePytestSummary     = regexp.MustCompile(`(?m)^(?:=+\s*)?(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d+(?:\.\d+)?s)(?: =+)?$`)
-	rePytestHeader      = regexp.MustCompile(`(?m)^=+\s*test session starts\s*=+`)
-	rePytestFailSummary = regexp.MustCompile(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
+	rePytestSummary     = lazyre.New(`(?m)^(?:=+\s*)?(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d+(?:\.\d+)?s)(?: =+)?$`)
+	rePytestHeader      = lazyre.New(`(?m)^=+\s*test session starts\s*=+`)
+	rePytestFailSummary = lazyre.New(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
 	// rePytestPlainLine lists every line shape a clean pytest run emits. A
 	// transcript is compacted only when each line matches one of these shapes
 	// (or is the single passing summary); any other line keeps the output raw.
 	// Path values use one closed character set and no spaces; a value outside
 	// it keeps the whole transcript raw.
-	rePytestPlainLine = regexp.MustCompile(`^(?:` +
+	rePytestPlainLine = lazyre.New(`^(?:` +
 		`|=+ test session starts =+` +
 		`|platform [A-Za-z0-9_.-]+ -- Python [0-9][0-9A-Za-z.+-]*(?:, (?:pytest|pluggy)-[0-9][0-9A-Za-z.+-]*)*(?: -- /` + pytestPathChars + `)?` +
 		`|rootdir: /` + pytestPathChars +

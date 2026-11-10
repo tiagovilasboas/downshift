@@ -6,8 +6,9 @@ package catalog
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // AllowlistProvider is the gateway the user allowlist file belongs to. Its rows
@@ -109,7 +110,7 @@ func allowlistRouting(route string) (string, bool) {
 // for a variant suffix such as ":free". Nothing else passes: no whitespace,
 // control characters, quotes, '~' or shell metacharacters. The id is written
 // into the harness wire and later into logs, so it stays inside this set.
-var slugPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+/[A-Za-z0-9._:-]+$`)
+var slugPattern = lazyre.New(`^[A-Za-z0-9._-]+/[A-Za-z0-9._:-]+$`)
 
 // isFullSlug reports a "vendor/model" id drawn only from slugPattern.
 func isFullSlug(id string) bool {

@@ -4,9 +4,10 @@
 package classify
 
 import (
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // A long delegation brief carries context (what the project is, what was
@@ -21,18 +22,18 @@ var (
 	// "**Tarefa:**", at the start of a line or of a sentence ("... in scope
 	// here. Task: rename ..."). The section runs to the next label line or
 	// heading.
-	taskMarkerRE = regexp.MustCompile(`(?m)(?:^|[.!?][ \t]+)[ \t>*#-]*(?:\*\*)?(?:your\s+|the\s+|sua\s+|a\s+)?(?:task|tarefa)(?:\*\*)?[ \t]*:(?:\*\*)?`)
+	taskMarkerRE = lazyre.New(`(?m)(?:^|[.!?][ \t]+)[ \t>*#-]*(?:\*\*)?(?:your\s+|the\s+|sua\s+|a\s+)?(?:task|tarefa)(?:\*\*)?[ \t]*:(?:\*\*)?`)
 	// contextLabelRE opens a section that is context, not work: background,
 	// notes, history, or how to reply. Requirements, constraints and "done
 	// means" sections shape the work and stay in the task.
-	contextLabelRE = regexp.MustCompile(`(?m)^[ \t>*-]*(?:#{1,6}[ \t]+)?(?:\*\*)?(?:background|context|contexto|notes?|notas?|history|hist[oó]rico|about|sobre|reply|resposta|responda)\b[^\n:]{0,30}(?:\*\*)?[ \t]*(?::|$)`)
+	contextLabelRE = lazyre.New(`(?m)^[ \t>*-]*(?:#{1,6}[ \t]+)?(?:\*\*)?(?:background|context|contexto|notes?|notas?|history|hist[oó]rico|about|sobre|reply|resposta|responda)\b[^\n:]{0,30}(?:\*\*)?[ \t]*(?::|$)`)
 	// imperativeRE matches a sentence that opens with a work verb. Reading,
 	// running checks, replying and git side steps are not the work, and a
 	// negated sentence ("Do not ...") does not open with a verb, so neither
 	// is taken as the task.
-	imperativeRE = regexp.MustCompile(`^(?:(?:please|now|then|also|finally|first|next|por\s+favor|agora|depois|ent[aã]o|primeiro|em\s+seguida),?\s+)?(?:` + workVerbs + `)\b`)
+	imperativeRE = lazyre.New(`^(?:(?:please|now|then|also|finally|first|next|por\s+favor|agora|depois|ent[aã]o|primeiro|em\s+seguida),?\s+)?(?:` + workVerbs + `)\b`)
 	// sentenceLeadRE strips list bullets, numbering and emphasis before a sentence.
-	sentenceLeadRE = regexp.MustCompile(`^[\s>*#•\-–—]*(?:\d{1,2}[.)]\s+)?(?:\*\*)?\s*`)
+	sentenceLeadRE = lazyre.New(`^[\s>*#•\-–—]*(?:\d{1,2}[.)]\s+)?(?:\*\*)?\s*`)
 )
 
 const workVerbs = `rename|fix|add|update|move|delete|remove|replace|change|implement|refactor|rewrite|write|create|migrate|redesign|design|build|debug|investigate|find|locate|search|list|review|audit|translate|format|bump|convert|extract|document|explain|generate|port|upgrade|simplify|clean|sort|count|summari[sz]e|analy[sz]e|optimi[sz]e|diagnose|trace|compare|draft|` +
@@ -120,7 +121,7 @@ func inSpans(spans []span, loc []int) bool {
 // architecture, a redesign, a rewrite, a migration, the entire codebase. A
 // phenomenon (a race condition, a deadlock, a leak) is never negated:
 // "make sure it does not deadlock" still asks for hard work.
-var scopeWordRE = regexp.MustCompile(`^(?:(?:re-?)?architect|re-?arquitet|arquitet|re-?design|re-?desenh|re-?write|re-?escrev|migr|entire\s|(?:toda|todo)\s)`)
+var scopeWordRE = lazyre.New(`^(?:(?:re-?)?architect|re-?arquitet|arquitet|re-?design|re-?desenh|re-?write|re-?escrev|migr|entire\s|(?:toda|todo)\s)`)
 
 var (
 	// negationWords end a negation that may take a scope word out of the work.

@@ -4,8 +4,9 @@
 package execwrap
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // DOMAIN: Mobile and native build tools.
@@ -62,7 +63,7 @@ func mobileNativeFamily(argv []string) Family {
 
 // npxVersion is the only version suffix npx may carry: a plain version or
 // dist-tag. A URL, git, file or path spec (':' or '/') would fetch other code.
-var npxVersion = regexp.MustCompile(`^[0-9A-Za-z.\-]+$`)
+var npxVersion = lazyre.New(`^[0-9A-Za-z.\-]+$`)
 
 // npxTools are the only packages npx may run here. xcodebuild, pod and adb are
 // native tools: `npx xcodebuild` would fetch an npm package of that name.

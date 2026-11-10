@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Ruff "full"/default text output:
@@ -19,12 +20,12 @@ import (
 // Each violation line carries file:line:col, a rule code, and a message.
 var (
 	// "path/file.py:10:1: F401 message..." — rule code is a letter run + digits.
-	reRuffViolation = regexp.MustCompile(`^(\S+?):(\d+):(\d+):\s+([A-Z]+\d+)\s+.*$`)
+	reRuffViolation = lazyre.New(`^(\S+?):(\d+):(\d+):\s+([A-Z]+\d+)\s+.*$`)
 	// Multiline detector for the whole-input scan (the per-line regex above is
 	// anchored for the compressor loop).
-	reRuffViolationDetect = regexp.MustCompile(`(?m)^(\S+?):(\d+):(\d+):\s+([A-Z]+\d+)\s+.*$`)
+	reRuffViolationDetect = lazyre.New(`(?m)^(\S+?):(\d+):(\d+):\s+([A-Z]+\d+)\s+.*$`)
 	// "Found 3 errors." / "Found 1 error." / "Found 3 errors (2 fixable...)."
-	reRuffSummary = regexp.MustCompile(`(?m)^Found\s+(\d+)\s+errors?\b`)
+	reRuffSummary = lazyre.New(`(?m)^Found\s+(\d+)\s+errors?\b`)
 )
 
 func isRuff(input []byte) bool {

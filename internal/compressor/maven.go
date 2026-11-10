@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // mavenPath is one path token: it must start with "/", "./" or a drive letter,
@@ -21,17 +22,17 @@ const mavenJavacOptions = `(?:debug|release|source|target|parameters|nowarn|depr
 const mavenScanLine = "[INFO] Scanning for projects..."
 
 var (
-	reMavenBlank     = regexp.MustCompile(`^\[INFO\] ?$`)
-	reMavenRule      = regexp.MustCompile(`^\[INFO\] -{20,}$`)
-	reMavenProject   = regexp.MustCompile(`^\[INFO\] -+< [A-Za-z0-9_.\-]+:[A-Za-z0-9_.\-]+ >-+$`)
-	reMavenBuilding  = regexp.MustCompile(`^\[INFO\] Building ([a-z][a-z0-9.\-]*) (\d+(?:\.[0-9A-Za-z]+)+(?:-[0-9A-Za-z.]+)?)$`)
-	reMavenFrom      = regexp.MustCompile(`^\[INFO\]   from [A-Za-z0-9_.\-/]+$`)
-	reMavenPackaging = regexp.MustCompile(`^\[INFO\] -+\[ (jar|pom|war|ear|maven-plugin|bundle) \]-+$`)
-	reMavenGoal      = regexp.MustCompile(`^\[INFO\] --- ([a-z][a-z0-9.\-]*):(\d+(?:\.[0-9A-Za-z]+)*(?:-[0-9A-Za-z.]+)?):([a-z][A-Za-z0-9]*) \([a-z][A-Za-z0-9\-]*\) @ [A-Za-z0-9_.\-]+ ---$`)
+	reMavenBlank     = lazyre.New(`^\[INFO\] ?$`)
+	reMavenRule      = lazyre.New(`^\[INFO\] -{20,}$`)
+	reMavenProject   = lazyre.New(`^\[INFO\] -+< [A-Za-z0-9_.\-]+:[A-Za-z0-9_.\-]+ >-+$`)
+	reMavenBuilding  = lazyre.New(`^\[INFO\] Building ([a-z][a-z0-9.\-]*) (\d+(?:\.[0-9A-Za-z]+)+(?:-[0-9A-Za-z.]+)?)$`)
+	reMavenFrom      = lazyre.New(`^\[INFO\]   from [A-Za-z0-9_.\-/]+$`)
+	reMavenPackaging = lazyre.New(`^\[INFO\] -+\[ (jar|pom|war|ear|maven-plugin|bundle) \]-+$`)
+	reMavenGoal      = lazyre.New(`^\[INFO\] --- ([a-z][a-z0-9.\-]*):(\d+(?:\.[0-9A-Za-z]+)*(?:-[0-9A-Za-z.]+)?):([a-z][A-Za-z0-9]*) \([a-z][A-Za-z0-9\-]*\) @ [A-Za-z0-9_.\-]+ ---$`)
 	// reMavenChatter lists the goal chatter that may precede the Surefire
 	// header. Only the javac option tokens of a real compile line are accepted,
 	// and every path or copy target is one path token.
-	reMavenChatter = regexp.MustCompile(`^\[INFO\] (?:Nothing to compile - all classes are up to date\.?` +
+	reMavenChatter = lazyre.New(`^\[INFO\] (?:Nothing to compile - all classes are up to date\.?` +
 		`|Changes detected - recompiling the module!(?: :(?:source|resources))?` +
 		`|Compiling \d+ source files? with javac \[` + mavenJavacOptions + `\] to ` + mavenPath +
 		`|Copying \d+ resources?(?: from ` + mavenPath + ` to ` + mavenPath + `)?` +
@@ -40,21 +41,21 @@ var (
 		`|Using auto detected provider org\.apache\.maven\.surefire\.[A-Za-z0-9.]+)$`)
 	// reMavenPostTests lists the only chatter allowed between the Surefire
 	// totals and BUILD SUCCESS: a packaged jar or an install step.
-	reMavenPostTests = regexp.MustCompile(`^\[INFO\] (?:Building jar: ` + mavenPath +
+	reMavenPostTests = lazyre.New(`^\[INFO\] (?:Building jar: ` + mavenPath +
 		`|Installing ` + mavenPath + ` to ` + mavenPath + `)$`)
-	reMavenTestsHeader = regexp.MustCompile(`^\[INFO\]  T E S T S$`)
-	reMavenRunning     = regexp.MustCompile(`^\[INFO\] Running (\S+)$`)
-	reMavenClassTests  = regexp.MustCompile(`^\[INFO\] Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [0-9.,]+ (?:s|sec) -- in (\S+)$`)
-	reMavenResults     = regexp.MustCompile(`^\[INFO\] Results:$`)
-	reMavenTotalTests  = regexp.MustCompile(`^\[INFO\] Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)$`)
-	reMavenSuccess     = regexp.MustCompile(`^\[INFO\] BUILD SUCCESS$`)
-	reMavenTotalTime   = regexp.MustCompile(`^\[INFO\] Total time: +(?:\d+(?:\.\d+)? s|\d+:\d\d min)$`)
-	reMavenFinished    = regexp.MustCompile(`^\[INFO\] Finished at: \d{4}-\d\d-\d\dT[0-9:.]+(?:Z|[+-]\d\d:\d\d)$`)
-	reMavenReactor     = regexp.MustCompile(`Reactor (?:Build Order|Summary)`)
+	reMavenTestsHeader = lazyre.New(`^\[INFO\]  T E S T S$`)
+	reMavenRunning     = lazyre.New(`^\[INFO\] Running (\S+)$`)
+	reMavenClassTests  = lazyre.New(`^\[INFO\] Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [0-9.,]+ (?:s|sec) -- in (\S+)$`)
+	reMavenResults     = lazyre.New(`^\[INFO\] Results:$`)
+	reMavenTotalTests  = lazyre.New(`^\[INFO\] Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)$`)
+	reMavenSuccess     = lazyre.New(`^\[INFO\] BUILD SUCCESS$`)
+	reMavenTotalTime   = lazyre.New(`^\[INFO\] Total time: +(?:\d+(?:\.\d+)? s|\d+:\d\d min)$`)
+	reMavenFinished    = lazyre.New(`^\[INFO\] Finished at: \d{4}-\d\d-\d\dT[0-9:.]+(?:Z|[+-]\d\d:\d\d)$`)
+	reMavenReactor     = lazyre.New(`Reactor (?:Build Order|Summary)`)
 
 	// reMavenFailure marks output that must never be summarised: any warning
 	// or error line, a failed build, or a Surefire line with failures/errors.
-	reMavenFailure = regexp.MustCompile(`(?m)^\[(?:WARNING|ERROR)\]|BUILD FAILURE|Failures: [1-9]|Errors: [1-9]|\bFAIL`)
+	reMavenFailure = lazyre.New(`(?m)^\[(?:WARNING|ERROR)\]|BUILD FAILURE|Failures: [1-9]|Errors: [1-9]|\bFAIL`)
 )
 
 // isMaven recognises Maven's own first console line. Nothing else prints it.

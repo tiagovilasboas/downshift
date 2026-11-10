@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Git diff / show / stash list compressors.
@@ -21,17 +22,17 @@ import (
 
 var (
 	// A unified diff starts with "diff --git a/<path> b/<path>".
-	reGitDiffHeader = regexp.MustCompile(`(?m)^diff --git a/.+ b/.+$`)
+	reGitDiffHeader = lazyre.New(`(?m)^diff --git a/.+ b/.+$`)
 	// "index 1a2b3c4..5d6e7f8 100644" — pure provenance, safe to drop.
-	reGitDiffIndex = regexp.MustCompile(`^index [0-9a-f]+\.\.[0-9a-f]+(?: \d+)?$`)
+	reGitDiffIndex = lazyre.New(`^index [0-9a-f]+\.\.[0-9a-f]+(?: \d+)?$`)
 	// Hunk header: "@@ -12,7 +12,6 @@ optional context".
-	reGitDiffHunk = regexp.MustCompile(`(?m)^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@`)
+	reGitDiffHunk = lazyre.New(`(?m)^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@`)
 	// A git show transcript opens with a 40-hex commit line.
-	reGitShowCommit = regexp.MustCompile(`^commit [0-9a-f]{7,40}\b`)
+	reGitShowCommit = lazyre.New(`^commit [0-9a-f]{7,40}\b`)
 	// Lines that carry a secret and must never be summarised away even when
 	// they sit in a stretch of unchanged context: a diff can show a key being
 	// moved or printed. If one appears anywhere, the whole input is preserved.
-	reGitDiffSecret = regexp.MustCompile(`(?i)(secret|token|password|passwd|api[_-]?key|private[_-]?key|access[_-]?key|BEGIN [A-Z ]*PRIVATE KEY|aws_secret|bearer )`)
+	reGitDiffSecret = lazyre.New(`(?i)(secret|token|password|passwd|api[_-]?key|private[_-]?key|access[_-]?key|BEGIN [A-Z ]*PRIVATE KEY|aws_secret|bearer )`)
 )
 
 // isGitDiff reports whether input is a bare unified diff: it opens with a
@@ -127,11 +128,11 @@ func gitDiffUnsafe(input []byte) (string, bool) {
 
 // reGitDiffHunkCounts reads the old and new line counts of a hunk header; an
 // omitted count means 1.
-var reGitDiffHunkCounts = regexp.MustCompile(`^@@ -\d+(?:,(\d+))? \+\d+(?:,(\d+))? @@`)
+var reGitDiffHunkCounts = lazyre.New(`^@@ -\d+(?:,(\d+))? \+\d+(?:,(\d+))? @@`)
 
 // reGitDiffFileMeta is a file-level line between "diff --git" and the first
 // hunk: ---/+++ paths, modes, renames, copies, similarity, binary notes.
-var reGitDiffFileMeta = regexp.MustCompile(`^(--- |\+\+\+ |old mode |new mode |deleted file mode |new file mode |similarity index |dissimilarity index |rename from |rename to |copy from |copy to |Binary files )`)
+var reGitDiffFileMeta = lazyre.New(`^(--- |\+\+\+ |old mode |new mode |deleted file mode |new file mode |similarity index |dissimilarity index |rename from |rename to |copy from |copy to |Binary files )`)
 
 // diffLines walks a diff and calls visit for every line with its role:
 // "preamble" (before the first file header), "grammar" (headers, hunk
@@ -180,7 +181,7 @@ func diffStrayDanger(input []byte) bool {
 // only names the idea: a secret-named key given a value (`token = x`,
 // `"api_key": "x"`), a private key block, an AWS secret or a bearer token.
 // Prose and identifiers such as "tokens saved" or TokenCount do not match.
-var reGitDiffSecretValue = regexp.MustCompile(`(?i)((secret|token|password|passwd|api[_-]?key|private[_-]?key|access[_-]?key)["']?\s*(:=|=|:)|BEGIN [A-Z ]*PRIVATE KEY|aws_secret|bearer [A-Za-z0-9._~+/-]{8,})`)
+var reGitDiffSecretValue = lazyre.New(`(?i)((secret|token|password|passwd|api[_-]?key|private[_-]?key|access[_-]?key)["']?\s*(:=|=|:)|BEGIN [A-Z ]*PRIVATE KEY|aws_secret|bearer [A-Za-z0-9._~+/-]{8,})`)
 
 // diffDroppableSecret reports whether a secret sits on a line the compressor
 // may drop: an unchanged context line.

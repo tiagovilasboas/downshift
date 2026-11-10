@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // cargo clippy output (rustc diagnostic format):
@@ -29,11 +30,11 @@ import (
 // locates it. We group by that file and preserve the non-zero signal.
 var (
 	// "error: ..." / "warning: ..." / "error[E0308]: ..." header line.
-	reClippyHeader = regexp.MustCompile(`^(error|warning)(?:\[[A-Za-z0-9]+\])?:\s+(.*)$`)
+	reClippyHeader = lazyre.New(`^(error|warning)(?:\[[A-Za-z0-9]+\])?:\s+(.*)$`)
 	// "  --> src/main.rs:4:9"
-	reClippyLocation = regexp.MustCompile(`^\s*-->\s+(\S+?):(\d+):(\d+)\s*$`)
+	reClippyLocation = lazyre.New(`^\s*-->\s+(\S+?):(\d+):(\d+)\s*$`)
 	// "warning: `crate` (bin "crate") generated 2 warnings" / "could not compile"
-	reClippyGenerated = regexp.MustCompile(`(?m)^(?:error|warning):\s+.*\bgenerated\s+\d+\s+(?:warnings?|errors?)\b|^error: could not compile\b`)
+	reClippyGenerated = lazyre.New(`(?m)^(?:error|warning):\s+.*\bgenerated\s+\d+\s+(?:warnings?|errors?)\b|^error: could not compile\b`)
 )
 
 func isCargoClippy(input []byte) bool {

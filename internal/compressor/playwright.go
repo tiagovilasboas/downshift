@@ -6,14 +6,15 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	rePlaywrightHeader  = regexp.MustCompile(`(?m)^\s*Running\s+(\d+)\s+tests\s+using\s+(\d+)\s+workers?`)
-	rePlaywrightSummary = regexp.MustCompile(`(?m)^\s*(\d+)\s+passed\s+\(([^)]+)\)`)
-	rePlaywrightError   = regexp.MustCompile(`(?i)(?:failed|flaky|timed out|Error:|AssertionError|trace(?: file| attached)?|retry(?:ing| #))`)
+	rePlaywrightHeader  = lazyre.New(`(?m)^\s*Running\s+(\d+)\s+tests\s+using\s+(\d+)\s+workers?`)
+	rePlaywrightSummary = lazyre.New(`(?m)^\s*(\d+)\s+passed\s+\(([^)]+)\)`)
+	rePlaywrightError   = lazyre.New(`(?i)(?:failed|flaky|timed out|Error:|AssertionError|trace(?: file| attached)?|retry(?:ing| #))`)
 )
 
 func isPlaywright(input []byte) bool {
@@ -26,10 +27,10 @@ func isPlaywright(input []byte) bool {
 // and nothing may follow the closing duration. Any other line, including an
 // injected error, warning or FAIL, keeps the whole transcript raw.
 var (
-	rePlaywrightBlankLine   = regexp.MustCompile(`^\s*$`)
-	rePlaywrightRunHeader   = regexp.MustCompile(`^Running \d+ tests? using \d+ workers?$`)
-	rePlaywrightPassedTest  = regexp.MustCompile(`^\s*✓\s+\d+\s+(?:\[[^\]\s]+\]\s+›\s+)?\S+(?:\s+›\s+.+?)?\s+\(\d+(?:\.\d+)?(?:ms|s|m)\)$`)
-	rePlaywrightSummaryLine = regexp.MustCompile(`^\s*\d+\s+passed\s+\(\d+(?:\.\d+)?(?:ms|s|m)\)$`)
+	rePlaywrightBlankLine   = lazyre.New(`^\s*$`)
+	rePlaywrightRunHeader   = lazyre.New(`^Running \d+ tests? using \d+ workers?$`)
+	rePlaywrightPassedTest  = lazyre.New(`^\s*✓\s+\d+\s+(?:\[[^\]\s]+\]\s+›\s+)?\S+(?:\s+›\s+.+?)?\s+\(\d+(?:\.\d+)?(?:ms|s|m)\)$`)
+	rePlaywrightSummaryLine = lazyre.New(`^\s*\d+\s+passed\s+\(\d+(?:\.\d+)?(?:ms|s|m)\)$`)
 )
 
 // playwrightLinesRecognised reports whether every line of input is part of the

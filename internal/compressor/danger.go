@@ -5,20 +5,21 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // reDangerWord matches the words that make a line unsafe to compact, wherever
 // they appear: in a status line, a test title or a directory name.
-var reDangerWord = regexp.MustCompile(`(?i)error|fail|panic|warning|exception|fatal`)
+var reDangerWord = lazyre.New(`(?i)error|fail|panic|warning|exception|fatal`)
 
 // reKeepLine is reDangerWord plus "warn": a line of console output a folded
 // clean run may drop stays when it matches (a warn line is information).
-var reKeepLine = regexp.MustCompile(`(?i)warn|did not exit|force exiting|open handle|obsolete|×|✕|✗|❯|` + reDangerWord.String())
+var reKeepLine = lazyre.New(`(?i)warn|did not exit|force exiting|open handle|obsolete|×|✕|✗|❯|` + reDangerWord.String())
 
 // linesHaveDangerWord reports whether any line of input carries a danger word.
 // Lines matching allowed are skipped; use it only for a known, safe summary.
-func linesHaveDangerWord(input []byte, allowed *regexp.Regexp) bool {
+func linesHaveDangerWord(input []byte, allowed *lazyre.Regexp) bool {
 	for _, line := range bytes.Split(input, []byte("\n")) {
 		if allowed != nil && allowed.Match(line) {
 			continue

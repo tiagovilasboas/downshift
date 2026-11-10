@@ -12,8 +12,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // CursorCLI uses Cursor's read-only `models` command. It relies on the CLI's
@@ -53,9 +54,9 @@ func (c CursorCLI) Discover(ctx context.Context) ([]Model, error) {
 	return parseCursorList(out)
 }
 
-var cursorANSI = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
-var cursorID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/+\[\],=-]*$`)
-var cursorSelection = regexp.MustCompile(` \((?:current|default)(?:, (?:current|default))*\)$`)
+var cursorANSI = lazyre.New(`\x1b\[[0-?]*[ -/]*[@-~]`)
+var cursorID = lazyre.New(`^[A-Za-z0-9][A-Za-z0-9._:/+\[\],=-]*$`)
+var cursorSelection = lazyre.New(` \((?:current|default)(?:, (?:current|default))*\)$`)
 
 // parseCursorList accepts the complete text listing emitted by Cursor CLI.
 // The header, footer and every row must match: truncated or changed formats

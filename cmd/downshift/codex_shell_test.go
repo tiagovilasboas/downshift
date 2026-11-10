@@ -58,7 +58,9 @@ func TestCodexShellRewrite_ThroughSharedRunner(t *testing.T) {
 		t.Fatalf("stdout %q: %v", out, err)
 	}
 	h := resp.HookSpecificOutput
-	if string(h["hookEventName"]) != `"PreToolUse"` || string(h["permissionDecision"]) != `"allow"` {
+	// Codex rejects unknown fields and applies updatedInput only with
+	// permissionDecision "allow" (internal/adapters/codex/wire_conformance_test.go).
+	if string(h["hookEventName"]) != `"PreToolUse"` || string(h["permissionDecision"]) != `"allow"` || len(h) != 3 {
 		t.Fatalf("wrong envelope: %s", out)
 	}
 	var ti map[string]any

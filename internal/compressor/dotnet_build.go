@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // dotnet build (MSBuild) output. A build prints a restore banner, per-project
@@ -31,16 +32,16 @@ import (
 var (
 	// "/path/Program.cs(12,5): error CS0103: message [/path/App.csproj]"
 	// The optional trailing " [project]" is excluded from the message.
-	reDotnetBuildDiag = regexp.MustCompile(`^(?:\s*)(\S.*?)\((\d+),(\d+)\):\s+(error|warning)\s+([A-Za-z]+\d+):\s+(.*?)(?:\s+\[[^\]]+\])?\s*$`)
+	reDotnetBuildDiag = lazyre.New(`^(?:\s*)(\S.*?)\((\d+),(\d+)\):\s+(error|warning)\s+([A-Za-z]+\d+):\s+(.*?)(?:\s+\[[^\]]+\])?\s*$`)
 	// Multiline guard: at least one MSBuild diagnostic anywhere in the input.
-	reDotnetBuildDiagM = regexp.MustCompile(`(?m)^\s*\S.*?\(\d+,\d+\):\s+(?:error|warning)\s+[A-Za-z]+\d+:\s+`)
+	reDotnetBuildDiagM = lazyre.New(`(?m)^\s*\S.*?\(\d+,\d+\):\s+(?:error|warning)\s+[A-Za-z]+\d+:\s+`)
 	// Restore / status noise.
-	reDotnetBuildStatus = regexp.MustCompile(`^\s*(?:Determining projects to restore\.\.\.|Restored\b|Restore\b|MSBuild version\b|Microsoft \(R\) Build Engine\b|Copyright\b)`)
+	reDotnetBuildStatus = lazyre.New(`^\s*(?:Determining projects to restore\.\.\.|Restored\b|Restore\b|MSBuild version\b|Microsoft \(R\) Build Engine\b|Copyright\b)`)
 	// "  App -> /path/bin/Debug/net8.0/App.dll" output artifact line.
-	reDotnetBuildOutput = regexp.MustCompile(`^\s+\S.*\s->\s+\S`)
+	reDotnetBuildOutput = lazyre.New(`^\s+\S.*\s->\s+\S`)
 	// "Build succeeded.", "Build FAILED.", "    2 Warning(s)", "    1 Error(s)",
 	// "Time Elapsed 00:00:01.23".
-	reDotnetBuildSummary = regexp.MustCompile(`^\s*(?:Build succeeded\.|Build FAILED\.|\d+\s+Warning\(s\)|\d+\s+Error\(s\)|Time Elapsed\b)`)
+	reDotnetBuildSummary = lazyre.New(`^\s*(?:Build succeeded\.|Build FAILED\.|\d+\s+Warning\(s\)|\d+\s+Error\(s\)|Time Elapsed\b)`)
 )
 
 // isDotnetBuild returns true when the output carries at least one MSBuild

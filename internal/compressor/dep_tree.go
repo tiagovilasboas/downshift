@@ -5,26 +5,27 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Dependency tree patterns
 var (
 	// npm ls / pnpm ls / yarn list
-	reNpmLsHeader     = regexp.MustCompile(`(?m)^[a-z@][\w./-]*@[\d.]+`)
-	reNpmLsTree       = regexp.MustCompile(`(?m)^[├└│ ]+[a-z@][\w./-]*@`)
-	reNpmLsDeduped    = regexp.MustCompile(`deduped`)
-	reNpmLsExtraneous = regexp.MustCompile(`extraneous`)
-	reNpmLsMissing    = regexp.MustCompile(`(?i)(MISSING|UNMET|INVALID|peer dep missing)`)
+	reNpmLsHeader     = lazyre.New(`(?m)^[a-z@][\w./-]*@[\d.]+`)
+	reNpmLsTree       = lazyre.New(`(?m)^[├└│ ]+[a-z@][\w./-]*@`)
+	reNpmLsDeduped    = lazyre.New(`deduped`)
+	reNpmLsExtraneous = lazyre.New(`extraneous`)
+	reNpmLsMissing    = lazyre.New(`(?i)(MISSING|UNMET|INVALID|peer dep missing)`)
 
 	// cargo tree
-	reCargoTree    = regexp.MustCompile(`(?m)^[a-z_][\w-]* v[\d.]+`)
-	reCargoTreeDep = regexp.MustCompile(`(?m)^[│├└ ]+[a-z_][\w-]* v[\d.]+`)
-	reCargoTreeDup = regexp.MustCompile(`\(\*\)`)
+	reCargoTree    = lazyre.New(`(?m)^[a-z_][\w-]* v[\d.]+`)
+	reCargoTreeDep = lazyre.New(`(?m)^[│├└ ]+[a-z_][\w-]* v[\d.]+`)
+	reCargoTreeDup = lazyre.New(`\(\*\)`)
 
 	// go mod graph
-	reGoModGraph = regexp.MustCompile(`(?m)^[\w./]+@v[\d.]+ [\w./]+@v[\d.]+`)
+	reGoModGraph = lazyre.New(`(?m)^[\w./]+@v[\d.]+ [\w./]+@v[\d.]+`)
 )
 
 func isNpmLs(input []byte) bool {

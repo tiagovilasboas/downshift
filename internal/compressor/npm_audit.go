@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatNpmAudit marks the human report of `npm audit`. npm exits non-zero
@@ -16,12 +17,12 @@ import (
 const FormatNpmAudit Format = "npm_audit"
 
 var (
-	reNpmAuditHeader   = regexp.MustCompile(`(?m)^# npm audit report$`)
-	reNpmAuditPackage  = regexp.MustCompile(`^\S.*  \S.*$`)
-	reNpmAuditSeverity = regexp.MustCompile(`^Severity: (low|moderate|high|critical)$`)
-	reNpmAuditBody     = regexp.MustCompile("^(?:.+ - https://github\\.com/advisories/GHSA-[\\w-]+|" +
+	reNpmAuditHeader   = lazyre.New(`(?m)^# npm audit report$`)
+	reNpmAuditPackage  = lazyre.New(`^\S.*  \S.*$`)
+	reNpmAuditSeverity = lazyre.New(`^Severity: (low|moderate|high|critical)$`)
+	reNpmAuditBody     = lazyre.New("^(?:.+ - https://github\\.com/advisories/GHSA-[\\w-]+|" +
 		"Depends on vulnerable versions of \\S+|fix available via .+|No fix available|Will install .+|\\s*node_modules/\\S+)$")
-	reNpmAuditTail = regexp.MustCompile("^(?:\\d+ vulnerabilit(?:y|ies) \\(.*\\)|found \\d+ vulnerabilities|" +
+	reNpmAuditTail = lazyre.New("^(?:\\d+ vulnerabilit(?:y|ies) \\(.*\\)|found \\d+ vulnerabilities|" +
 		"To address .*:|  npm audit fix(?: --force)?|Some issues need review.*|)$")
 )
 

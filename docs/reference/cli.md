@@ -728,7 +728,10 @@ working; it prints a one-line notice (silent for `dci hook <harness>`) and exits
 
 ### `downshift help`
 
-Show the common commands, or every command with `--all` (`-a`).
+Show the common commands, or every command with `--all` (`-a`). The default list holds the daily commands
+only. Commands marked experimental in `internal/clispec` (`context`, `learning`, `loop`) and the maintainer
+tools (`eval-outcome`, `probe`) appear only under `--all`; they stay callable and `docs-manifest` flags them
+`"experimental": true`.
 
 ```bash
 downshift help [--all]
