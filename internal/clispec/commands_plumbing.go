@@ -15,7 +15,7 @@ var plumbingCommands = []Command{
 	{Name: "honor", Summary: "Post-spawn observation: records whether the routing was honored"},
 	{Name: "usage", Summary: "Post-spawn usage observation: records tokens"},
 	{Name: "end", Summary: "Child-end observation: marks a subagent as finished"},
-	{Name: "probe", Summary: "Record a payload's field names (never prompts or paths) in probe.jsonl"},
+	{Name: "probe", Summary: "Record a payload's field names (never prompts or paths) in probe.jsonl", Experimental: true},
 	{Name: "cursor-touch", Summary: "Cursor session hooks: remembers the composer model", Hidden: true},
 	{Name: "claude-code-post-tool-use", Summary: "Claude Code post-spawn observation", Hidden: true, Legacy: true},
 	{Name: "claude-code-subagent-stop", Summary: "Claude Code subagent-stop observation", Hidden: true, Legacy: true},

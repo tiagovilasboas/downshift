@@ -65,7 +65,7 @@ file or from `AGENTS.md`.
 | `internal/hookctx` | Adapters | Hook deadline context |
 | `internal/hookport` | Telemetry | Honor and usage ports |
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |
-| `internal/clispec` | CLI | Command registry as data (names, summaries, flags, hidden, deprecated) and the `DOWNSHIFT_*` variables the code reads; read by help, `docs-manifest` and the docs guards |
+| `internal/clispec` | CLI | Command registry as data (names, summaries, flags, hidden, deprecated, experimental) and the `DOWNSHIFT_*` variables the code reads; read by help, `docs-manifest` and the docs guards |
 | `internal/installer` | Setup | Tests for the root `install.sh` (offline, with fake curl and gh); no production code |
 | `internal/lazyre` | — | Regular expression compiled on first use, so package init stays cheap on every start; `CompileAll` for tests (startup guard: `internal/archtest/startup_test.go`) |
 | `internal/limits` | Adapters | Centralized harness limitations registry |
