@@ -145,7 +145,7 @@ func checkContext(rep *doctorReport, env doctorEnv) {
 	if optCfg.Enabled {
 		detail := "enabled (provider: " + optCfg.Provider + ")"
 		if optCfg.Provider == "native" {
-			detail += "; on Claude Code it only measures bytes, a hook cannot rewrite tool output"
+			detail += "; observe-only: its hook measures bytes and leaves tool output as is (Claude Code PostToolUse could replace output with updatedToolOutput; Codex PostToolUse cannot)"
 		}
 		rep.add(doctorCheck{ID: "context optim.", Status: doctorOK, Detail: detail})
 	} else {

@@ -159,6 +159,17 @@ var Targets = []Target{
 		// exists it wins and the managed block is not read.
 		Steering: &Steering{Path: ".codex/AGENTS.md", Content: HarnessSteering, Managed: true},
 		Mcp:      &Mcp{Kind: McpTOMLBlock, File: ".codex/config.toml"},
+		// Codex feature registry (codex-rs/features): "hooks" (legacy alias
+		// "codex_hooks") is on by default in current releases and was off in
+		// earlier ones; "multi_agent_v2" is off by default.
+		FeatureFlags: []FeatureFlag{
+			{File: ".codex/config.toml", Table: "features", Key: "hooks", Aliases: []string{"codex_hooks"},
+				Default: true, DefaultNote: "earlier Codex releases default it off", AllHooks: true,
+				Purpose: "Codex runs no hook"},
+			{File: ".codex/config.toml", Table: "features", Key: "multi_agent_v2",
+				Purpose: "subagent spawn routing needs it"},
+		},
+		Activate: "run /hooks in Codex and trust the Downshift hooks, then open a new Codex session",
 	},
 	{
 		// Kiro IDE (VS Code extension). Distinct from KiroCrew (the daemon):

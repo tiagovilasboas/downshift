@@ -21,7 +21,7 @@ func TestDoctor_HistoricalSessionCannotProveCurrentHost(t *testing.T) {
 		if age != 0 {
 			events = []telemetry.Event{{Timestamp: f.started.Add(-age).Format(time.RFC3339Nano), SessionID: "recorded-session", Verdict: "OK", Outcome: "allow"}}
 		}
-		checkLastEvent(func(_, _, d, _ string) { detail = d }, f.env, "codex", events)
+		checkLastEvent(func(_, _, d, _ string) { detail = d }, f.env, "codex", events, "")
 		if !strings.Contains(detail, "session not verified") {
 			t.Fatalf("age %s: historical event claimed current host proof: %q", age, detail)
 		}

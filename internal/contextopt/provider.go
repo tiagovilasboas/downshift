@@ -100,8 +100,11 @@ type Config struct {
 	} `json:"observability"`
 	// ExitCodeContract is the persisted measurement rule. The native hook
 	// records CompressExit in observe mode and preserves a non-zero exit.
-	// It cannot replace the tool result the model sees, and it does not
-	// compress prompts.
+	// It does not replace the tool result the model sees, and it does not
+	// compress prompts. Claude Code PostToolUse can replace a built-in tool's
+	// result (updatedToolOutput); Codex PostToolUse cannot. The persisted
+	// token "hook_cannot_replace_tool_output" is kept for existing configs and
+	// means the native hook does not replace it.
 	ExitCodeContract string `json:"exit_code_contract,omitempty"`
 	// Exec is the one file switch for the compact wrapper. Absent or true means
 	// on; an explicit false turns it off. There is no CLI command for it, and
