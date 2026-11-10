@@ -691,6 +691,7 @@
     }
   ],
   "env_vars": [
+    "DOWNSHIFT_BALANCED",
     "DOWNSHIFT_BUDGET_TOKENS",
     "DOWNSHIFT_CCR",
     "DOWNSHIFT_CCR_FAILURES",

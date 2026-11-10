@@ -151,6 +151,7 @@ func checkContext(rep *doctorReport, env doctorEnv) {
 	} else {
 		rep.add(doctorCheck{ID: "context optim.", Status: doctorOK, Detail: "disabled (enable with `downshift context enable`)"})
 	}
+	checkCompactorMode(rep)
 	checkCompanion(rep, env, optCfg)
 	if env.Verbose {
 		if semantic.Enabled() {

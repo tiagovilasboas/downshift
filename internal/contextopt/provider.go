@@ -115,6 +115,11 @@ type Config struct {
 	// CCRFailures keeps the raw output of a compacted failed command. On by
 	// default; an explicit false turns it off. DOWNSHIFT_CCR_FAILURES overrides.
 	CCRFailures *bool `json:"ccr_failures,omitempty"`
+	// Balanced lets the Compactor cut a large output with loss when its raw
+	// output is kept in CCR, so the cut part stays retrievable. On by default:
+	// absent or true; an explicit false keeps every output lossless.
+	// DOWNSHIFT_BALANCED overrides the file.
+	Balanced *bool `json:"balanced,omitempty"`
 }
 
 // ExecOn reports whether the compact wrapper is on: absent or true.

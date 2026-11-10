@@ -40,6 +40,7 @@ type gate struct {
 	detail          string                          // passthrough detail set by finish
 	skipObservation bool
 	desktop         func(view []byte) []byte // Options.Desktop
+	balanced        bool                     // Options.Balanced
 }
 
 func newGate(out, err io.Writer, hold bool, argv []string, family Family) *gate {
@@ -165,6 +166,15 @@ func (g *gate) finish(exitCode int, family Family) (raw, emitted int64, compacte
 		out = applyDesktop(g.desktop, family, data, out)
 	} else if foldedOut, ok := keepUncompacted(g.keeper(exitCode, family), data, exitCode, family, g.nErr > 0); ok {
 		out, compacted, folded, passthrough, g.detail = foldedOut, true, true, "", ""
+	}
+	if g.balanced {
+		shown := data
+		if compacted {
+			shown = out
+		}
+		if cut, ok := balance(g.keeper(exitCode, family), family, data, shown); ok {
+			out, compacted, folded, passthrough, g.detail = cut, true, true, "", ""
+		}
 	}
 	if compacted {
 		_, _ = g.out.Write(out)
