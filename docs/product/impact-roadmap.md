@@ -70,8 +70,8 @@ Every Bash call pays the process start twice: the hook, then the wrapper.
 | ID | Task | Pts | Done when |
 |---|---|---|---|
 | H1 | Build the classifier's regexes on first use, not at package init. **Done in #68.** | 2 | `inittrace` shows `internal/classify` at 1 ms; classifier tests unchanged |
-| H2 | Same for the compressor's regexes that only one family uses. | 3 | `internal/compressor` init under 2 ms |
-| H3 | Startup guard: a test fails when a package's init compiles more than a set number of regexes. | 2 | The guard fails on a new package-level `MustCompile` in `classify` |
+| H2 | Same for the compressor's regexes that only one family uses. **Done in #70:** every package-level regexp (about 390, compressor included) compiles on first use through `internal/lazyre`; package init 14.7 ms to 1.3 ms, compressor 8.9 ms to under 0.1 ms. | 3 | `internal/compressor` init under 2 ms |
+| H3 | Startup guard: a test fails when a package's init compiles more than a set number of regexes. **Done in #70:** `internal/archtest/startup_test.go` fails on any regexp compiled at package init (allowlist empty). | 2 | The guard fails on a new package-level `MustCompile` in `classify` |
 
 ### I. Proof in real use
 
@@ -79,7 +79,7 @@ Every Bash call pays the process start twice: the hook, then the wrapper.
 |---|---|---|---|
 | I1 | After one week on a binary with balanced on, publish the real-use cut next to the bench in the README, with the window and run count. | 1 | README states a real-use figure and how to reproduce it with `downshift report` |
 | I2 | Run the routing study again on the implementation after decision O8, same protocol as the 46-run study. | 5 | A dated evidence document; the README routing row cites it or says the effect is not established |
-| I3 | One source for cited figures: a test compares the numbers in README (EN/PT), `llms.txt`, true north and the evidence guide with `bench.md`. | 3 | Changing `bench.md` without the citations fails `make check` |
+| I3 | One source for cited figures: a test compares the numbers in README (EN/PT), `llms.txt`, true north and the evidence guide with `bench.md`. **Done in #70:** `TestCitedBenchFiguresMatchBenchMd` in `internal/docscheck`. | 3 | Changing `bench.md` without the citations fails `make check` |
 
 ### J. Harness depth before breadth
 
@@ -98,9 +98,9 @@ Seven harnesses are wired; one works end to end on the maintainer's machine.
 |---|---|---|---|
 | K1 | Inventory the packages that predate decision O8 (`classify`, `semantic`, `fuse`, `sensor`, `cascade`, `loop`, `gateway`, `benchmark`): for each, who calls it and what breaks without it. The owner decides keep, mark experimental or remove. | 3 | A table in this file with a decision per package |
 | K2 | Act on K1: remove what was decided, and keep the rest off the hook and wrapper path. | 5 | No hook or `compact` invocation imports a removed or experimental package |
-| K3 | Hide experimental commands from the default help; list them under `downshift help --all`. | 2 | Default help shows the daily commands only |
+| K3 | Hide experimental commands from the default help; list them under `downshift help --all`. **Done in #70:** `clispec.Command.Experimental`; marked `context`, `learning`, `loop`, `eval-outcome`, `probe`, pending K1's decisions. | 2 | Default help shows the daily commands only |
 | K4 | Move report building and doctor checks out of `package main` into `internal` packages. | 8 | `cmd/downshift` only parses flags and prints |
-| K5 | Rename `internal/discover` (it reads like `internal/discovery`, which does a different job). | 1 | `go list ./...` shows one of the two names |
+| K5 | Rename `internal/discover` (it reads like `internal/discovery`, which does a different job). **Done in #70:** now `internal/missedsavings`. | 1 | `go list ./...` shows one of the two names |
 
 ### L. Release
 
@@ -138,7 +138,7 @@ At most three PRs open at once.
 |---|---|---|
 | Bytes cut in real use, 7-day window | 4.6% | 40% or more |
 | Runs with no recorded reason | 213 in 30 days | 0 on the new binary |
-| Process start | 44 ms | 20 ms or less |
+| Process start | 44 ms (about 5 ms after H1 to H3: `version` 4.6 ms, Bash hook 5.5 ms, median of 30 on one machine) | 20 ms or less |
 | Harnesses with a `doctor`-verified hook | 1 | 2 |
 
 Goals are checked with `downshift report` on the maintainer's log, not on the
