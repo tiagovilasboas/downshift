@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 	"github.com/tiagovilasboas/downshift-ai/internal/quota"
 	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
@@ -80,6 +81,16 @@ func describeDecision(ev telemetry.Event, age time.Duration) string {
 // stale: only an interactive terminal session runs the statusline bridge.
 const claudeStatuslineFix = "Claude Code runs the statusline only in an interactive terminal session, so the Claude Desktop Code tab and `claude -p` never refresh it; open an interactive `claude` session to refresh the reading"
 
+// staleQuotaEffect says what the quota gate does with a stale reading. It asks
+// core.StaleQuotaHold, the gate's own rule, so doctor never claims routing
+// uses a reading the gate already treats as absent.
+func staleQuotaEffect(env doctorEnv, h string) string {
+	if _, held := core.StaleQuotaHold(h, env.Now()); held {
+		return "so the quota gate holds model rewrites until a new reading arrives"
+	}
+	return "so the quota gate ignores it and routes as if there were no quota reading"
+}
+
 // checkQuotaSource says whether a quota snapshot exists for the harness and
 // which source wrote it, e.g. the Claude Code statusline bridge. It is
 // information: a missing source never fails, it only means the quota gate has
@@ -99,7 +110,7 @@ func checkQuotaSource(add func(id, status, detail, fix string), env doctorEnv, h
 				fix = claudeStatuslineFix
 			}
 			add("quota source", doctorWarn,
-				fmt.Sprintf("%s, observed %s ago; older than the %s freshness limit, so quota routing runs on a stale reading", src, age, humanAge(quota.MaxTTL)),
+				fmt.Sprintf("%s, observed %s ago; older than the %s freshness limit, %s", src, age, humanAge(quota.MaxTTL), staleQuotaEffect(env, h)),
 				fix)
 			break
 		}
