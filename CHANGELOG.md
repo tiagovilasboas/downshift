@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `downshift compact --harness=<name>` names the harness a run belongs to. The shell-rewrite hook of every harness and the steering `downshift setup` writes add it, so runs from a harness whose shell exports no session variable (Antigravity, Kiro, Cursor) are no longer counted as `unknown` in `report`. Run `downshift setup` again to refresh the steering.
 - **Balanced compaction, on by default in every harness.** An output over 16 KB whose raw output CCR stored is cut to what the agent acts on first: a log keeps its head, tail and failure lines; a diff keeps every file and hunk header and the first lines of each hunk; a search keeps the first matches of each file and counts the rest. The marker names the `downshift retrieve` id for everything cut. Measured on this repository: `go test -v` 591 KB → 33 KB, `git grep` 1.35 MB → 20 KB, a 216 KB `git diff` → 63 KB. `DOWNSHIFT_BALANCED=0` or `"balanced": false` keeps outputs lossless; `downshift doctor` shows the mode. The compact steering setup writes for harnesses without a rewrite hook explains the cut and `retrieve`.
+- `downshift doctor` reads the feature flags a harness needs from its own config, declared as data on the setup target (`setup.Target.FeatureFlags`): for Codex, `[features] hooks` (or the older `codex_hooks`) and `multi_agent_v2` in `~/.codex/config.toml`, reported as `feature hooks` and `feature multi_agent_v2`. When the hooks are wired but no event from that harness was ever recorded, `last hook event` names the exact fix from the target's data: set the flag, run `/hooks` in Codex to trust the hooks, open a new session.
+- Support tiers in the harness matrix: **Supported** (`doctor` verified the hook in a real session), **Beta**, **Experimental**, each harness with its evidence and what moves it up. The README tables (English and Portuguese) follow them: Claude Code Supported; Codex, OpenCode, KiroCrew and Kiro IDE Beta; Cursor and Antigravity Experimental.
+- A Codex wire conformance test checks every PreToolUse answer the Codex adapter emits (shell rewrite, spawn rewrite, neutral) against the rules of the Codex hooks engine: `updatedInput` only with `permissionDecision: "allow"`, no bare `allow`, no `ask`, no unknown field. The adapter already met them; the test keeps it so.
 
 ### Changed
 
@@ -31,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The README intro (EN and PT) cited 67.1% on 110 fixtures, `llms.txt` 62 lossless fixtures and the PT benchmark page 110 fixtures and an old lossy row; they now match `bench.md` (67.0% on 113, 64 lossless).
 - `downshift report --daily` and `--history` no longer count bytes read back with `retrieve` as saved; they now match `report`, `stats` and the pane.
+- Text no longer says a hook cannot replace tool output on Claude Code: Claude Code's PostToolUse accepts `updatedToolOutput` for built-in tools, Codex's accepts no replacement. `doctor`, `context status`, `context enable`, the native provider notes, the context-optimization and architecture docs and the harness matrix (new "Tool output replacement" section) say which harness allows it and that Downshift's native hook does not use it. The persisted contract token `hook_cannot_replace_tool_output` is unchanged for existing configs.
 
 ## [0.13.0] - 2026-11-09
 

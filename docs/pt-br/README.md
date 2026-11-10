@@ -128,16 +128,17 @@ No chat do seu harness de programação, descreva sua tarefa e digite:
 
 ## Funciona com seu harness de programação
 
-O Downshift foi criado com Claude Code e oferece suporte a outros harnesses em diferentes estágios de verificação.
+O Downshift foi criado com Claude Code e oferece suporte a outros harnesses em diferentes estágios de verificação. **Suportado** significa que o `doctor` verificou o hook em uma sessão real; **Beta** significa que o hook rodou em uma sessão real e está documentado, mas o `doctor` ainda não o verificou; **Experimental** significa que o efeito não foi confirmado ou foi visto uma vez. Critérios e evidências: [níveis de suporte](../reference/harness-matrix.md#support-tiers).
 
-| Harness | Status | Evidência de roteamento |
+| Harness | Nível | Evidência de roteamento |
 | --- | --- | --- |
-| Claude Code | Concluído | Reescrita observada em um subagente real. |
-| Codex | Funcional | Reescrita emitida; aplicação inferida, sem observação direta. |
-| OpenCode | Beta | Roteamento e uso do subagente observados no OpenCode 2.2.5. |
+| Claude Code | Suportado | Reescrita observada em um subagente real; o `doctor` a lê de sessões reais. |
+| Codex | Beta | Reescrita emitida; aplicação inferida, sem observação direta. Precisa da flag de hooks e da confiança via `/hooks`; o `doctor` lê a flag e indica a correção. |
+| OpenCode | Beta | Roteamento e uso do subagente observados no OpenCode 2.2.5 pelo plugin ponte. |
+| KiroCrew | Beta | Bloqueio por política e nova tentativa observados; sem reescrita de modelo no lugar. |
+| Kiro IDE | Beta | Payload do hook capturado ao vivo; só observação, sem reescrita. |
 | Cursor | Experimental | Reescrita emitida; aplicação pelo executor não confirmada. |
 | Antigravity | Experimental | Um subagente observado em uma versão. |
-| KiroCrew | Experimental | Modo de política, sem reescrita de modelo no lugar. |
 
 Os modelos disponíveis para um harness ou sessão não são considerados disponíveis automaticamente em outro. Consulte a [matriz completa de harnesses](../reference/harness-matrix.md) para detalhes de integração, evidências e limites.
 

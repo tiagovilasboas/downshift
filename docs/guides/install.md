@@ -344,6 +344,13 @@ hooks = true
 enabled = true
 ```
 
+Current Codex releases turn `hooks` on by default and earlier ones did not, so
+set it anyway. Codex also skips a new or changed hook until you trust it: run
+`/hooks` in Codex, trust the Downshift hooks, then open a new session.
+`downshift doctor` reads `~/.codex/config.toml` and reports `feature hooks`
+and `feature multi_agent_v2`; when the hooks are wired but no Codex event was
+ever recorded, its `last hook event` check names these steps as the fix.
+
 Register the hook in `.codex/hooks.json` (project) or `~/.codex/hooks.json`
 (global). The matcher covers both the `Agent` and namespaced `spawn_agent`
 tool names:
