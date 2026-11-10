@@ -183,13 +183,15 @@ var (
 	// in codex-rs/protocol/src/shell_environment.rs; checked 2026-11-03).
 	CodexCaps = HarnessCapabilities{ShellEnv: "CODEX_THREAD_ID", CanRewriteModel: true, CanApplyEffort: true, RewritePreservesInput: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanRewriteShellCommand: true, ShellDialect: ShellPOSIX, RewriteImpliesApproval: true, UnknownUserRules: true, WorkerAgent: "codex"}
 
-	// KiroCaps — Kiro IDE (VS Code extension) hook protocol supports updatedInput
-	// rewrite like Codex. Distinct from KiroCrew (the daemon) which is policy-only.
-	// The hook rewrites invoke_sub_agent tool_input.model before the spawn.
-	// Child end (N5): PostToolUse carries the spawn result.
-	// Shell rewrite: execute_bash commands can be compacted via updatedInput.
+	// KiroCaps — Kiro IDE (VS Code extension) is observation-only, like KiroCrew.
+	// REA 2026-11-10 (kiro.dev docs, GitHub issues #6637, #4180, #7500) confirms:
+	// (1) updatedInput is NOT supported in Kiro IDE hooks (Claude Code only),
+	// (2) invoke_sub_agent payload has no model field (decided internally),
+	// (3) custom agent model: field is ignored in IDE (issue #6637).
+	// The adapter records decisions but cannot rewrite models in place. Child end
+	// (N5): PostToolUse carries spawn result. Shell rewrite: not supported.
 	// SessionEnv is not set to avoid collision with KiroCrew (both use KIRO_SESSION_ID).
-	KiroCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanRewriteShellCommand: true, ShellDialect: ShellPOSIX, UnknownUserRules: true}
+	KiroCaps = HarnessCapabilities{CanRewriteModel: false, CanApplyEffort: false, RewritePreservesInput: false, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanRewriteShellCommand: false, ShellDialect: ShellPOSIX, UnknownUserRules: true}
 
 	// KiroCrewCaps — KiroCrew's preToolUse hook is policy-only: its contract is
 	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input

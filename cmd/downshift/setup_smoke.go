@@ -31,6 +31,7 @@ var smokeSpawns = map[string]string{
 	"cursor":      `{"tool_name":"Task","tool_input":{"task":"ping"}}`,
 	"codex":       `{"hook_event_name":"PreToolUse","session_id":"smoke","tool_name":"spawn_agent","tool_input":{"message":"ping","task_name":"ping"}}`,
 	"antigravity": `{"toolCall":{"name":"invoke_subagent","args":{"Subagents":[{"Prompt":"ping"}]}}}`,
+	"kiro":        `{"tool_name":"invoke_sub_agent","tool_input":{"name":"context-gatherer","prompt":"ping"}}`,
 	"kirocrew":    `{"hook_event_name":"PreToolUse","tool_name":"spawn_run","tool_input":{"model":"claude-sonnet-5-5","task":"ping"}}`,
 	"opencode":    `{"v":1,"kind":"route","harness":{"id":"opencode","version":"2.0.32"},"event":"subagent_spawn_intent","correlation":{"child":"0123456789abcdef0123","parent":"fedcba9876543210"},"agent":"smoke","model":{"providerID":"opencode","id":"claude-sonnet-5-5","variant":""},"taskText":"ping","tsUtc":"2026-10-30T00:00:00Z"}`,
 }
