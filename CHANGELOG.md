@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `downshift version` typed in a terminal prints its line and exits; it no longer opens the console. The console still lists it (new `Plain` flag on a console command).
 - The README intro (EN and PT) cited 67.1% on 110 fixtures, `llms.txt` 62 lossless fixtures and the PT benchmark page 110 fixtures and an old lossy row; they now match `bench.md` (67.0% on 113, 64 lossless).
 - `downshift report --daily` and `--history` no longer count bytes read back with `retrieve` as saved; they now match `report`, `stats` and the pane.
 - Text no longer says a hook cannot replace tool output on Claude Code: Claude Code's PostToolUse accepts `updatedToolOutput` for built-in tools, Codex's accepts no replacement. `doctor`, `context status`, `context enable`, the native provider notes, the context-optimization and architecture docs and the harness matrix (new "Tool output replacement" section) say which harness allows it and that Downshift's native hook does not use it. The persisted contract token `hook_cannot_replace_tool_output` is unchanged for existing configs.
