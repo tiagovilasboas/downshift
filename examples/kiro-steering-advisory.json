@@ -1,0 +1,26 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "downshift-observe",
+      "description": "Records subagent spawns for telemetry (observation-only, no rewrite)",
+      "trigger": "PreToolUse",
+      "matcher": "invoke_sub_agent",
+      "action": {
+        "type": "command",
+        "command": "downshift hook kiro"
+      },
+      "timeout": 5
+    },
+    {
+      "name": "downshift-advisory",
+      "description": "Advises the model on agent selection (non-enforcing guidance)",
+      "trigger": "PreToolUse",
+      "matcher": "invoke_sub_agent",
+      "action": {
+        "type": "agent",
+        "prompt": "Before spawning this subagent, consider the task complexity:\n\n- **Simple tasks** (searches, lookups, file reads): Use a cost-optimized agent or context-gatherer\n- **Standard tasks** (refactoring, code review, writing): Use the general-purpose agent\n- **Complex tasks** (architecture, security, debugging): Consider using a specialized agent\n\nCheck .kiro/agents/ for available specialized agents with appropriate model assignments."
+      }
+    }
+  ]
+}
