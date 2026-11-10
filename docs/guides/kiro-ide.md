@@ -78,9 +78,46 @@ If `downshift` is not in PATH, use the full path:
 }
 ```
 
-### 3.3. Configure model list
+### 3.3. Discover models (automatic)
 
-Add the models your Kiro account can use to `~/.downshift/session-models.json`:
+Kiro IDE shares the same AWS/Kiro account as KiroCrew, so the models are identical.
+Run discovery to populate both harnesses automatically:
+
+```bash
+# Discover KiroCrew first (uses kiro-cli)
+downshift models discover --harness kirocrew
+
+# Kiro IDE mirrors from KiroCrew (same account)
+downshift models discover --harness kiro
+```
+
+Verify with:
+
+```bash
+downshift models available --harness kiro
+```
+
+Output:
+```
+kiro: discovery cache written 2026-11-10T12:20:02Z
+  claude-haiku-4.5                 small     discovery
+  claude-sonnet-4.6                mid       discovery
+  claude-opus-4.5                  frontier  discovery
+```
+
+**When you upgrade to Kiro Pro+ with new models**, run discovery again:
+
+```bash
+downshift models discover --harness kirocrew
+downshift models discover --harness kiro
+```
+
+The discovery reads from KiroCrew's cache (7-day TTL). If KiroCrew's cache is stale,
+run `--harness kirocrew` first.
+
+### 3.4. Alternative: Manual model list
+
+If you don't have KiroCrew installed, add models manually to `~/.downshift/session-models.json`:
 
 ```json
 {
@@ -99,7 +136,7 @@ Verify with:
 downshift models available --harness kiro
 ```
 
-### 3.4. Create steering file
+### 3.5. Create steering file
 
 Create `.kiro/steering/downshift-routing.md` to instruct Kiro to use the MCP tools:
 

@@ -178,8 +178,11 @@ func parseGrokList(data []byte) ([]Model, error) {
 // public list is added only when DOWNSHIFT_DISCOVERY_OPENROUTER=1, so the
 // default run makes no new network call. Failed sources preserve their cache;
 // discovery does not imply included credit.
+//
+// KiroFromKiroCrew comes after KiroCLI so KiroCrew is discovered first, then
+// Kiro IDE mirrors it (same AWS/Kiro account, same models).
 func Defaults() []Source {
-	sources := []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}, KiroCLI{}, OpenCodeCLI{}}
+	sources := []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}, KiroCLI{}, KiroFromKiroCrew{}, OpenCodeCLI{}}
 	if openRouterEnabled() {
 		sources = append(sources, OpenRouterAPI{})
 	}
