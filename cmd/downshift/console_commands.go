@@ -20,7 +20,7 @@ var consoleCommands = []command.Spec{
 	{Args: []string{"doctor", "--verbose"}, Group: "health", Summary: "Checklist with every detail"},
 	{Args: []string{"config"}, Group: "health", Summary: "Every effective setting with its value and source"},
 	{Args: []string{"enable"}, Group: "health", Summary: "Print shell aliases for transparent compaction"},
-	{Args: []string{"version"}, Group: "health", Summary: "Print the binary version"},
+	{Args: []string{"version"}, Group: "health", Summary: "Print the binary version", Plain: true},
 
 	// See the effect
 	{Args: []string{"session"}, Group: "session", Summary: "This session's subagents as a tree"},
