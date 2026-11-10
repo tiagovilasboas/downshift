@@ -3,14 +3,23 @@
 
 // Package kiro adapts core routing decisions to Kiro IDE's PreToolUse hook.
 //
-// Kiro IDE (VS Code extension) spawns subagents through invoke_sub_agent. Its
-// hook protocol supports JSON rewrite via hookSpecificOutput.updatedInput,
-// like Codex. This is distinct from KiroCrew (daemon), which is policy-only.
+// Kiro IDE (VS Code extension) spawns subagents through invoke_sub_agent. Unlike
+// Claude Code, the Kiro IDE hook protocol does NOT support updatedInput for model
+// rewrite (REA 2026-11-10: kiro.dev docs, GitHub issues #6637, #4180, #7500).
+//
+// This adapter is observation-only: it records decisions for telemetry and can
+// advise the model via stderr (exit 2), but cannot rewrite the model in place.
+// This is similar to KiroCrew's policy mode.
+//
+// Known limitations (Kiro IDE 1.x):
+//   - invoke_sub_agent payload has no model field (model is decided internally)
+//   - custom agent model: field in .kiro/agents/*.md is ignored (issue #6637)
+//   - updatedInput is not processed by the IDE (only Claude Code supports it)
+//   - no mechanism to define model for hooks/subagents (issue #4180)
 package kiro
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/core"
 	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
@@ -36,6 +45,7 @@ func (ev Event) SessionIdentifier() string     { return ev.SessionID }
 func (ev Event) CorrelationIdentifier() string { return "" }
 
 // RequestedModel returns the spawn's model or the session model.
+// Note: Kiro IDE invoke_sub_agent payload has no model field (REA 2026-11-10).
 func (ev Event) RequestedModel() string {
 	var ti map[string]any
 	if json.Unmarshal(ev.ToolInput, &ti) != nil {
@@ -57,18 +67,31 @@ func (ev Event) TaskText() string {
 }
 
 // Output is the JSON printed to stdout.
+// Note: Kiro IDE does NOT process hookSpecificOutput.updatedInput (REA 2026-11-10).
+// This struct is kept for API compatibility but rewrite fields are not used.
 type Output struct {
 	HookSpecificOutput *HookSpecificOutput `json:"hookSpecificOutput,omitempty"`
 }
 
-// HookSpecificOutput carries the rewrite decision.
+// HookSpecificOutput carries the permission decision.
+// Note: updatedInput is NOT supported by Kiro IDE (only permissionDecision works).
 type HookSpecificOutput struct {
-	PermissionDecision       string          `json:"permissionDecision"`
-	PermissionDecisionReason string          `json:"permissionDecisionReason,omitempty"`
-	UpdatedInput             json.RawMessage `json:"updatedInput,omitempty"`
+	PermissionDecision       string `json:"permissionDecision"`
+	PermissionDecisionReason string `json:"permissionDecisionReason,omitempty"`
+	// UpdatedInput is NOT processed by Kiro IDE. Kept for API compatibility.
+	// To rewrite models, Kiro would need to support this field (see issue #6637).
+	// UpdatedInput json.RawMessage `json:"updatedInput,omitempty"` // REMOVED
 }
 
 // Handle routes a PreToolUse event. Only invoke_sub_agent with a prompt is routed.
+//
+// Kiro IDE is observation-only: the adapter computes the routing decision and
+// records it for telemetry, but cannot rewrite the model in place. The spawn
+// runs with whatever model Kiro decided internally.
+//
+// The adapter returns empty output (no JSON) — Kiro IDE does not process
+// hookSpecificOutput.updatedInput, and emitting permissionDecision without
+// a rewrite would fail harness conformance tests.
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if ev.ToolName != "invoke_sub_agent" {
 		return allow(), "", core.Decision{}
@@ -82,6 +105,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", core.Decision{}
 	}
 
+	// Read the requested model (usually empty in Kiro IDE).
 	currentModel := hookutil.StringField(ti, "model")
 	if currentModel == "" {
 		currentModel = ev.Model
@@ -95,6 +119,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	res = core.ResolveSessionModels(harnessID, session, res)
 
+	// Compute the routing decision (for telemetry only — Kiro cannot apply it).
 	decision := core.RouteSpawn(core.Request{
 		Prompt:         taskText,
 		Harness:        harnessID,
@@ -104,27 +129,24 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}, res)
 	decision.Baseline.RequestedID = currentModel
 
+	// Plan the session but do NOT attempt rewrite (Kiro cannot apply it).
 	plan := decision.PlanSession(core.KiroCaps, res, session, currentModel)
-	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel {
-		return allow(), "", decision
-	}
-	if !core.CanWriteSessionID(harnessID, plan.Model.ID, plan.Session, res) {
-		return allow(), "", decision
+
+	// Record the routing note for telemetry.
+	// Note: we do not return a note to the shared runner because that would
+	// mark the outcome as "rewrite_emitted". Observation-only adapters must
+	// return an empty note so the runner records "allow".
+	decision.Note = core.RoutingNote{
+		Verdict: decision.Verdict.String(),
+		Reason:  "observation-only",
+		TierTo:  plan.Model.Tier.String(),
 	}
 
-	decision.Model = plan.Model
-	ti["model"] = plan.WriteName
-	note := decision.Summary()
-
-	updated, err := json.Marshal(ti)
-	if err != nil {
-		return allow(), "", decision
-	}
-	return Output{HookSpecificOutput: &HookSpecificOutput{
-		PermissionDecision:       "allow",
-		PermissionDecisionReason: fmt.Sprintf("downshift: %s", note),
-		UpdatedInput:             updated,
-	}}, note, decision
+	// Return empty output and no note: Kiro IDE is observation-only, so we only
+	// record telemetry. The shared runner will record OutcomeAllow because note
+	// is empty. No permissionDecision is emitted (harness conformance requires
+	// that unchanged spawns emit no permissionDecision).
+	return allow(), "", decision
 }
 
 func allow() Output { return Output{} }

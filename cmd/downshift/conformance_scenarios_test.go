@@ -29,6 +29,12 @@ var conformanceScenarios = []conformanceScenario{
 	{
 		name:    "trivial task on the frontier moves to the small tier",
 		decider: decidertest.Tier(core.TierSmall),
+		skip: func(caps core.HarnessCapabilities) string {
+			if !caps.CanRewriteModel && !caps.CanAdviseShellWrap {
+				return "harness is observation-only (cannot rewrite or advise)"
+			}
+			return ""
+		},
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceTrivialTask, model: h.frontier.ID})
@@ -55,6 +61,12 @@ var conformanceScenarios = []conformanceScenario{
 	{
 		name:    "complex task on the small tier moves to the frontier",
 		decider: decidertest.Tier(core.TierFrontier),
+		skip: func(caps core.HarnessCapabilities) string {
+			if !caps.CanRewriteModel && !caps.CanAdviseShellWrap {
+				return "harness is observation-only (cannot rewrite or advise)"
+			}
+			return ""
+		},
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceComplexTask, model: h.small.ID})
@@ -129,6 +141,14 @@ var conformanceScenarios = []conformanceScenario{
 	{
 		name:    "missing session list never rewrites (unless SessionFromCatalog)",
 		decider: decidertest.Tier(core.TierSmall),
+		skip: func(caps core.HarnessCapabilities) string {
+			// Observation-only harnesses never rewrite, so this scenario only
+			// makes sense for harnesses that can rewrite or advise.
+			if !caps.CanRewriteModel && !caps.CanAdviseShellWrap && !caps.SessionFromCatalog {
+				return "harness is observation-only (cannot rewrite or advise)"
+			}
+			return ""
+		},
 		run: func(t *testing.T, h conformanceHarness) {
 			// No allowlist anywhere: the session file is absent (see
 			// conformanceEnv). Nothing but a listing or the payload supplies
@@ -150,6 +170,12 @@ var conformanceScenarios = []conformanceScenario{
 	{
 		name:    "project floor raises the tier",
 		decider: routingDecider{now: time.Now},
+		skip: func(caps core.HarnessCapabilities) string {
+			if !caps.CanRewriteModel && !caps.CanAdviseShellWrap {
+				return "harness is observation-only (cannot rewrite or advise)"
+			}
+			return ""
+		},
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			project := t.TempDir()
@@ -175,6 +201,12 @@ var conformanceScenarios = []conformanceScenario{
 	{
 		name:    "session without the small tier uses the next session model",
 		decider: decidertest.Tier(core.TierSmall),
+		skip: func(caps core.HarnessCapabilities) string {
+			if !caps.CanRewriteModel && !caps.CanAdviseShellWrap {
+				return "harness is observation-only (cannot rewrite or advise)"
+			}
+			return ""
+		},
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceTrivialTask, model: h.frontier.ID})
@@ -186,6 +218,12 @@ var conformanceScenarios = []conformanceScenario{
 	{
 		name:    "session's own small model wins over the catalog default",
 		decider: decidertest.Tier(core.TierSmall),
+		skip: func(caps core.HarnessCapabilities) string {
+			if !caps.CanRewriteModel && !caps.CanAdviseShellWrap {
+				return "harness is observation-only (cannot rewrite or advise)"
+			}
+			return ""
+		},
 		run: func(t *testing.T, h conformanceHarness) {
 			alt := h.alternateSmall()
 			if alt.ID == "" {
