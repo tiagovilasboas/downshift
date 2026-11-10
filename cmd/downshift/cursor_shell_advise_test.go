@@ -53,7 +53,7 @@ func TestCursorShellAdvise_CompressingFamilyAllowsWithAdvice(t *testing.T) {
 		t.Fatalf("want only agent_message and no permission, got %s", out)
 	}
 	msg := resp["agent_message"]
-	if !strings.Contains(msg, " compact -- go test ./...") || !strings.Contains(msg, "Run it again exactly as:") {
+	if !strings.Contains(msg, " compact --harness=cursor -- go test ./...") || !strings.Contains(msg, "Run it again exactly as:") {
 		t.Errorf("agent_message = %q", msg)
 	}
 }
