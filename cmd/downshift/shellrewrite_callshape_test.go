@@ -42,7 +42,7 @@ func bashCallPayload(t *testing.T, command, cwd, mode string, background bool) s
 // until the command exits.
 func TestShellRewrite_PermissionModeAndBackground(t *testing.T) {
 	wrapped := func(cmd string) string {
-		return "'" + testExe + "' compact --session=" + testSession + " -- " + cmd
+		return "'" + testExe + "' compact --harness=claude-code --session=" + testSession + " -- " + cmd
 	}
 	cases := []struct {
 		name       string

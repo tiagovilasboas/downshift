@@ -46,7 +46,7 @@ func runCodexHook(t *testing.T, payload string) (int, string) {
 }
 
 func TestCodexShellRewrite_ThroughSharedRunner(t *testing.T) {
-	want := "'" + testExe + "' compact --session=" + testSession + " -- git status --short"
+	want := "'" + testExe + "' compact --harness=codex --session=" + testSession + " -- git status --short"
 	rc, out := runCodexHook(t, codexBashPayload(t, "Bash", "git status --short"))
 	if rc != 0 {
 		t.Fatalf("rc = %d", rc)

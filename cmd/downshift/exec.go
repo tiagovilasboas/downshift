@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/tiagovilasboas/downshift-ai/internal/core"
 	"io"
 	"os"
 	"strings"
@@ -34,16 +35,27 @@ const allowlistedFlag = "--allowlisted"
 // agent or a script, a compound command the hook did not rewrite) there is no
 // session fallback to a harness env var: a direct call carries no session
 // unless --session is given. This avoids attributing direct calls to a harness
-// they did not originate from (audit A22).
+// they did not originate from (audit A22). --harness=<name> names the harness
+// when its shell exports no session variable: the hook rewrite and the
+// steering setup writes both add it; an unknown name is ignored.
 func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	session := ""
-	entry := "direct"
-	if len(args) > 0 && strings.HasPrefix(args[0], "--session=") {
-		if h := strings.TrimPrefix(args[0], "--session="); telemetry.ValidSessionHash(h) {
-			session = h
-			entry = "hook"
+	session, harness, entry := "", "", "direct"
+	for len(args) > 0 {
+		if h, ok := strings.CutPrefix(args[0], "--session="); ok {
+			if telemetry.ValidSessionHash(h) {
+				session, entry = h, "hook"
+			}
+		} else if h, ok := strings.CutPrefix(args[0], "--harness="); ok {
+			if _, known := core.CapsFor(h); known {
+				harness = h
+			}
+		} else {
+			break
 		}
 		args = args[1:]
+	}
+	if harness == "" {
+		harness = envHarness()
 	}
 	if len(args) > 0 && args[0] == allowlistedFlag {
 		return runAllowlistedQuery(args[1:], stderr)
@@ -64,20 +76,20 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		if path, err := execwrap.EventsPath(); err == nil {
 			ev := execwrap.EventFrom(res, time.Now())
 			ev.Session = session
-			ev.Harness = envHarness()
+			ev.Harness = harness
 			ev.Model = envModel(ev.Harness)
 			ev.Entry = entry
 			ev.Client = envClient()
 			_ = execwrap.Append(path, ev)
 		}
 		if res.ExitCode != 0 {
-			cascade.RecordFailure(session, strings.Join(args[1:], " "), envModel(envHarness()), fmt.Sprintf("command exited with code %d", res.ExitCode))
+			cascade.RecordFailure(session, strings.Join(args[1:], " "), envModel(harness), fmt.Sprintf("command exited with code %d", res.ExitCode))
 		}
 	}
 	return execwrap.ShellExit(opts, res.ExitCode)
 }
 
-const execUsage = "usage: downshift compact [--session=<hash>] [--allowlisted] [--discard-stderr] [--exit-zero] -- <program> [args...]"
+const execUsage = "usage: downshift compact [--session=<hash>] [--harness=<name>] [--allowlisted] [--discard-stderr] [--exit-zero] -- <program> [args...]"
 
 // runAllowlistedQuery answers the --allowlisted query: 0 when argv has an
 // allowlisted family, 1 when it has none (an empty argv included), 2 when the

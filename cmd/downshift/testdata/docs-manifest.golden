@@ -82,6 +82,9 @@
           "name": "--session"
         },
         {
+          "name": "--harness"
+        },
+        {
           "name": "--allowlisted"
         },
         {

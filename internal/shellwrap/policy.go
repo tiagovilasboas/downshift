@@ -106,18 +106,18 @@ func Handle(harness string, ev any, sessionTag string) Result {
 
 	// Rewrite path: in-place command replacement (CanRewriteShellCommand).
 	if rw, ok := ev.(RewriteAdapter); ok {
-		return handleRewrite(caps, rw, sessionTag)
+		return handleRewrite(caps, rw, sessionTag, harness)
 	}
 
 	// Advise path: exit-2 stderr suggestion (CanAdviseShellWrap).
 	if ad, ok := ev.(AdviseAdapter); ok {
-		return handleAdvise(caps, ad, sessionTag)
+		return handleAdvise(caps, ad, sessionTag, harness)
 	}
 
 	return Result{}
 }
 
-func handleRewrite(caps core.HarnessCapabilities, rw RewriteAdapter, sessionTag string) Result {
+func handleRewrite(caps core.HarnessCapabilities, rw RewriteAdapter, sessionTag, harness string) Result {
 	command, isShell := rw.ShellCommand()
 	if !isShell {
 		return Result{}
@@ -133,6 +133,7 @@ func handleRewrite(caps core.HarnessCapabilities, rw RewriteAdapter, sessionTag 
 	if sessionTag != "" {
 		wrapped = execwrap.WithSession(wrapped, sessionTag)
 	}
+	wrapped = execwrap.WithHarness(wrapped, harness)
 	out, err := rw.ShellRewrite(wrapped)
 	if err != nil {
 		return Result{IsShell: true, Decision: d}
@@ -140,7 +141,7 @@ func handleRewrite(caps core.HarnessCapabilities, rw RewriteAdapter, sessionTag 
 	return Result{IsShell: true, Rewrite: out, Decision: d}
 }
 
-func handleAdvise(caps core.HarnessCapabilities, ad AdviseAdapter, sessionTag string) Result {
+func handleAdvise(caps core.HarnessCapabilities, ad AdviseAdapter, sessionTag, harness string) Result {
 	command, isShell := ad.ShellCommand()
 	if !isShell {
 		return Result{}
@@ -158,6 +159,7 @@ func handleAdvise(caps core.HarnessCapabilities, ad AdviseAdapter, sessionTag st
 	if sessionTag != "" {
 		wrapped = execwrap.WithSession(wrapped, sessionTag)
 	}
+	wrapped = execwrap.WithHarness(wrapped, harness)
 	return Result{IsShell: true, Advise: ad.AdviseMessage(wrapped), Decision: d}
 }
 
