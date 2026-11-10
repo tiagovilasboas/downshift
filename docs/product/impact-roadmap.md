@@ -25,6 +25,8 @@ use is small, and the review found where it leaks.
 | An output over 2 MB | passes whole: a 13.2 MB `git grep` printed 13.2 MB | built binary, 2026-11-10 |
 | One stderr line outside 12 families | turns compaction off: a 122 KB `make` run printed 122 KB | same |
 | Process start, paid by every hook call and every wrapped command | 44 ms; 20 ms is the classifier's regexes, 6.6 ms the compressor's | `GODEBUG=inittrace=1` |
+| Claude Code `PostToolUse` accepts `updatedToolOutput`, which replaces the output of built-in tools (Bash, Read, Grep, Glob) | Downshift only measures there, and its docs and `doctor` say a hook cannot rewrite tool output | hooks reference, read 2026-11-10 |
+| Commands the hook leaves unwrapped (pipes, redirects, long commands) | never compacted: 7,769 skips in five days in the value roadmap's log | [value roadmap](value-roadmap.md) |
 | Published figures | 67.0% on a synthetic corpus; routing 24.1% from a study that predates decision O8 | README |
 | Size | 89k lines of Go, 88 packages, about 38 commands, 248 documentation files | repository |
 
@@ -105,10 +107,25 @@ Seven harnesses are wired; one works end to end on the maintainer's machine.
 |---|---|---|---|
 | L1 | Release the work above in the version the Author names, per the [release policy](../contrib/release-policy.md). | 1 | Published release, verified on three operating systems |
 
+### M. Replace tool output after the run
+
+Where the harness lets a hook replace a tool's output, compaction no longer
+depends on wrapping the command first. That removes the allowlist, the
+metacharacter skips and the stderr problem for that harness, and it reaches
+the agent's own Read, Grep and Glob, where most file content enters the context.
+
+| ID | Task | Pts | Done when |
+|---|---|---|---|
+| M1 | Spike on Claude Code: answer `PostToolUse` for Bash with `updatedToolOutput` (compacted stdout, stderr kept, raw stored in CCR). Measure against the wrapper on the same commands. | 5 | A command with a pipe and a redirect is compacted and counted in `report`; a written result says whether this replaces the wrapper on Claude Code |
+| M2 | Grep and Glob results: cap per file and in total, with a count of the rest, raw in CCR. | 3 | A 2,000-match Grep reaches the model under 16 KB |
+| M3 | Read of a large file: never rewrite a line (Edit needs the exact text). Cut only whole ranges, with line numbers kept and a marker that names the range and the retrieve id. | 5 | An Edit after a cut Read still matches; a lockfile or generated file over 64 KB is cut |
+| M4 | Correct the claim that a hook cannot rewrite tool output: `doctor`, `context status`, the context-optimization docs and the harness matrix say which harnesses allow it. | 1 | No text says it is impossible on Claude Code |
+| M5 | `replaces tool output` as a capability in `HarnessCapabilities`, so other harnesses with the same channel get it from the shared layer. | 3 | The capability is data; no adapter holds the logic |
+
 ## Order
 
-1. **Wave 1**: H1, G3, then G1 and G2 (same file, one after the other). Release L1 can follow this wave.
-2. **Wave 2**: J1, J2, I3, G4, G5.
+1. **Wave 1**: H1, G3, M4, then the M1 spike. G1 and G2 follow M1's result: where output can be replaced after the run they may not be needed. Release L1 can follow this wave.
+2. **Wave 2**: M2, M3, M5, J1, J2, I3, G4, G5.
 3. **Wave 3**: K1 (needs the owner's decisions), then K2, K3, H2, H3.
 4. **Later**: I1 (needs a week of data), I2, J3, J4, K4, K5.
 
