@@ -881,8 +881,10 @@ What Downshift rewrites where the capability is declared (on by default;
 | read | never | An edit needs the file's exact text (roadmap task M3) |
 
 Each considered call adds one row to `exec-events.jsonl` with entry
-`post_tool_use`, so `report` counts it like a wrapped run. A payload over the
-1 MiB hook cap is not read, and its result stays whole.
+`post_tool_use`, so `report` counts it like a wrapped run. The post-run hook
+reads a payload up to 16 MiB where the capability is declared (every other
+hook keeps the 1 MiB cap); a larger payload is not read, and its result stays
+whole.
 
 The persisted contract token `hook_cannot_replace_tool_output` in the context config
 is kept for existing configs; it describes the native context provider, which

@@ -140,7 +140,7 @@ Key invariants (`go test ./internal/archtest` enforces the import, layer and fil
 - Doubt stays allow: `core.Route` asks the decider `cmd` installs (`internal/routing/decide`), and `internal/routing/guard` holds an unconfident or unknown-tier move (R7) and any target above the requested tier (R8). Only the project floor and opt-in `raise_complex` move up.
 - `updatedInput` preserves all sibling fields; only `model` and `reasoning_effort` are mutated.
 - Task text stays in memory only; never persisted.
-- Hooks fail open: 1 MiB cap, 2 s read, panic → unchanged spawn. The harness's own hook timeout is the deadline.
+- Hooks fail open: 1 MiB cap (16 MiB for the post-run hook where a harness can replace tool output), 2 s read, panic → unchanged spawn. The harness's own hook timeout is the deadline.
 
 **Compactor exception** (`internal/execwrap`, never an adapter): `downshift compact -- <argv>` rewrites
 allowlisted commands with no metacharacters; `"exec": false`/`DOWNSHIFT_EXEC=0` turns it off; a deny or ask
