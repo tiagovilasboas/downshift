@@ -48,8 +48,13 @@ func rewriteQuoted(assigns []shellWord, quotedExe string, tail shellTail, argv [
 // the reopening half of an escaped quote) is never a match, so text inside a word is not
 // changed. Outside quotes a backslash escapes the next byte.
 func tagSessions(command, tag string) string {
-	// The tail flags follow the binary as ` compact --discard-stderr`, which
-	// also starts with mark, so the tag lands before them.
+	return insertAfterQuotedCompact(command, " compact --session="+tag+" --")
+}
+
+// insertAfterQuotedCompact replaces the " compact --" that follows each quoted
+// binary with with. The tail flags follow the binary as ` compact
+// --discard-stderr`, which also starts with the mark, so with lands before them.
+func insertAfterQuotedCompact(command, with string) string {
 	const mark = " compact --"
 	var b strings.Builder
 	in := false
@@ -63,10 +68,27 @@ func tagSessions(command, tag string) string {
 		case c == '\'':
 			in = !in
 			if !in && strings.HasPrefix(command[i+1:], mark) {
-				b.WriteString(" compact --session=" + tag + " --")
+				b.WriteString(with)
 				i += len(mark)
 			}
 		}
 	}
 	return b.String()
+}
+
+// WithHarness names the harness on a wrapped command so the runner can log it
+// even when the harness exports no session variable to the shell:
+// `<exe> compact -- x` becomes `<exe> compact --harness=<name> -- x`, once per
+// wrapped segment. A name that is not lowercase letters, digits or dashes, or
+// a command already named, is returned unchanged.
+func WithHarness(command, harness string) string {
+	if harness == "" || strings.Contains(command, " compact --harness=") {
+		return command
+	}
+	for _, c := range harness {
+		if !(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-') {
+			return command
+		}
+	}
+	return insertAfterQuotedCompact(command, " compact --harness="+harness+" --")
 }

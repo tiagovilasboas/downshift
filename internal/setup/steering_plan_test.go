@@ -147,3 +147,17 @@ func TestSteeringFamilyListMatchesFamilyOf(t *testing.T) {
 		}
 	}
 }
+
+// The steering of each harness names it on the compactor command, so a run
+// the agent starts itself is counted for that harness.
+func TestSteeringNamesTheHarnessOnTheCompactor(t *testing.T) {
+	for _, tg := range Targets {
+		if tg.Steering == nil || !strings.Contains(tg.Steering.Content, compactCommand) {
+			continue
+		}
+		got := steeringFor(tg)
+		if !strings.Contains(got, "downshift compactor --harness="+tg.Name+" -- ") || strings.Contains(got, compactCommand) {
+			t.Errorf("%s steering does not name the harness on the compactor:\n%s", tg.Name, got)
+		}
+	}
+}

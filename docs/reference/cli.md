@@ -345,6 +345,10 @@ downshift compactor -- <command> [args...]
 
 **Aliases:** `compact`, `exec`
 
+`--harness=<name>` before the `--` names the harness the run belongs to in the report, for a harness whose
+shell exports no session variable. The hook rewrite and the steering `downshift setup` writes add it; an
+unknown name is ignored and the harness is read from the environment.
+
 **Examples:**
 ```bash
 downshift compactor -- go test ./...

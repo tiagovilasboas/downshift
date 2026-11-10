@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/setup/configfile"
 )
@@ -30,7 +31,7 @@ func planSteering(o Options, t Target) (p Plan, ok bool) {
 	}
 	if t.Steering.Managed {
 		begin, end := t.Steering.Markers()
-		p.After = MergeMarkedBlock(p.Before, begin, end, t.Steering.Content)
+		p.After = MergeMarkedBlock(p.Before, begin, end, steeringFor(t))
 		return p, true
 	}
 	// A dedicated file is setup's own. Unmarked content is a file a person wrote,
@@ -38,11 +39,12 @@ func planSteering(o Options, t Target) (p Plan, ok bool) {
 	// The compact-only text is the legacy shape from before the agent triggers.
 	legacy := []byte(t.Steering.Frontmatter + t.Steering.Content)
 	legacyCompact := []byte(t.Steering.Frontmatter + CompactSteering)
-	if p.Existed && !configfile.Owns(p.Before) && !bytes.Equal(p.Before, legacy) && !bytes.Equal(p.Before, legacyCompact) {
+	named := []byte(t.Steering.Frontmatter + steeringFor(t))
+	if p.Existed && !configfile.Owns(p.Before) && !bytes.Equal(p.Before, legacy) && !bytes.Equal(p.Before, legacyCompact) && !bytes.Equal(p.Before, named) {
 		p.Err = fmt.Errorf("%s was not written by downshift setup; move it aside and run setup again", path)
 		return p, true
 	}
-	p.After = []byte(t.Steering.Frontmatter + configfile.OwnedNote + t.Steering.Content)
+	p.After = []byte(t.Steering.Frontmatter + configfile.OwnedNote + steeringFor(t))
 	return p, true
 }
 
@@ -52,4 +54,15 @@ func planSteering(o Options, t Target) (p Plan, ok bool) {
 // outside the markers is never touched.
 func mergeSteeringBlock(before []byte, body string) []byte {
 	return MergeMarkedBlock(before, SteeringBlockBegin, SteeringBlockEnd, body)
+}
+
+// compactCommand is how the steering tells an agent to run the compactor.
+const compactCommand = "downshift compactor -- "
+
+// steeringFor is the target's steering with the compactor command naming the
+// harness (`downshift compactor --harness=<name> -- `), so a run the agent
+// starts itself is counted for its harness even when the harness exports no
+// session variable to the shell.
+func steeringFor(t Target) string {
+	return strings.ReplaceAll(t.Steering.Content, compactCommand, "downshift compactor --harness="+t.Name+" -- ")
 }
