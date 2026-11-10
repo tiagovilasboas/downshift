@@ -18,9 +18,9 @@ gh_checks	1	515	118
 gh_pr	2	1843	1756
 gh_run_list	1	378	221
 gh_run_log	2	2451	637
-git_diff	2	541	533
+git_diff	3	810	822
 git_log	5	2265	610
-git_show	1	363	367
+git_show	2	786	810
 git_stash	1	192	175
 git_status	5	1113	538
 glab	2	1673	1672
@@ -33,7 +33,7 @@ grep_rows	1	1920	1298
 http_fetch	1	4980	1841
 jest	2	459	208
 kubectl_pods	1	229	182
-lockfile_diff	1	2479	219
+lockfile_diff	2	4998	657
 markdown	2	1063	921
 maven	3	6676	880
 mypy	2	710	373
@@ -53,6 +53,6 @@ ruff	2	492	339
 tsc	3	946	204
 turbo	1	494	101
 vitest	4	3624	931
-@lossless	62	103694	41131
-@lossy	48	87968	49041
-@total	110	191662	90172
+@lossless	64	104386	41863
+@lossy	49	90487	49479
+@total	113	194873	91342
