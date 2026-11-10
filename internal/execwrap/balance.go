@@ -9,9 +9,17 @@ import (
 	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
-// BalanceThreshold is the size above which balanced compaction cuts what the
-// agent would read. Smaller outputs keep the lossless result.
+// BalanceThreshold is the default size above which balanced compaction cuts
+// what the agent would read (Options.BalanceThreshold overrides it). Smaller
+// outputs keep the lossless result.
 const BalanceThreshold = 16 << 10
+
+// balanceConfig is the balanced cut a run applies: Options.BalanceThreshold
+// and Options.BalanceLimits, read from the config file by the caller.
+type balanceConfig struct {
+	threshold int // bytes; 0 means BalanceThreshold
+	limits    compressor.BalanceLimits
+}
 
 // BalancedEnv turns balanced compaction off when "0" and on when "1",
 // over the "balanced" key of the config file.
@@ -35,26 +43,30 @@ func balanceKindOf(family Family) compressor.BalanceKind {
 	return compressor.BalanceLog
 }
 
-// balance cuts shown, what the run would print, when it is larger than
-// BalanceThreshold and keep stores the raw output, so every cut line can be
+// balance cuts shown, what the run would print, when it is larger than the
+// threshold of cfg (BalanceThreshold by default) and keep stores the raw output, so every cut line can be
 // retrieved. shown may end in a marker line, which is replaced. It reports
 // false, and the caller prints shown, when balancing is off for the family,
 // the output is small, the cut saves too little or the raw output could not
 // be stored. A panic counts as false.
-func balance(keep func(raw []byte) (string, bool), family Family, raw, shown []byte) (res []byte, ok bool) {
+func balance(keep func(raw []byte) (string, bool), family Family, raw, shown []byte, cfg balanceConfig) (res []byte, ok bool) {
 	defer func() {
 		if recover() != nil {
 			res, ok = nil, false
 		}
 	}()
-	if keep == nil || balanceRefused[family] || len(shown) <= BalanceThreshold {
+	threshold := cfg.threshold
+	if threshold <= 0 {
+		threshold = BalanceThreshold
+	}
+	if keep == nil || balanceRefused[family] || len(shown) <= threshold {
 		return nil, false
 	}
 	body := shown
 	if i := bytes.LastIndex(body, []byte(markerPrefix)); i >= 0 && bytes.IndexByte(body[i:], '\n') == len(body)-i-1 {
 		body = body[:i]
 	}
-	cut, applied := compressor.Balance(balanceKindOf(family), body)
+	cut, applied := compressor.BalanceWith(balanceKindOf(family), body, cfg.limits)
 	if !applied {
 		return nil, false
 	}

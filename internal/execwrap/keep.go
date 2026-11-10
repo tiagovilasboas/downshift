@@ -101,3 +101,16 @@ func keepUncompacted(keep func(raw []byte) (string, bool), raw []byte, exitCode 
 	}
 	return append(append([]byte{}, summary...), MarkerWithID(len(raw), len(summary), id)...), true
 }
+
+// keeper picks the storage port for a finished run: Keep for every run, else
+// KeepFailed for a run that exited non-zero. A family in rawStoreRefused (an
+// HTTP response may carry Set-Cookie) gets no storage port at all.
+func (g *gate) keeper(exitCode int, family Family) func(raw []byte) (string, bool) {
+	if rawStoreRefused[family] {
+		return nil
+	}
+	if g.keep != nil || exitCode == 0 {
+		return g.keep
+	}
+	return g.keepFailed
+}

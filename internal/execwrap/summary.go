@@ -56,7 +56,9 @@ type Summary struct {
 }
 
 // PassthroughNotRecorded is the PassthroughByReason key of a not-compacted row
-// that carries no reason (the output streamed before the gate decided).
+// that carries no reason: a row written before the gate recorded why it
+// streamed (too_large, stderr_output, hold_timeout), or a run with compaction
+// off.
 const PassthroughNotRecorded = "not_recorded"
 
 // addPassthrough counts a run that was not compacted: its reason and its raw

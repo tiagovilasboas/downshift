@@ -93,16 +93,20 @@ func TestRun_MakeFoldsTheTestRun(t *testing.T) {
 	}
 }
 
-// make's stderr is not held: a target can run for as long as a server does, so
-// the first stderr byte still releases the output, raw.
-func TestRun_MakeStderrStillReleases(t *testing.T) {
+// make's stderr is held with its stdout, in write order: a clean run folds
+// its go test lines and prints the stderr lines whole, on stderr, after it.
+// A terminal on stdin keeps the old rule (gate_stdin.go).
+func TestRun_MakeStderrIsHeldAndKept(t *testing.T) {
 	src := filepath.Join(t.TempDir(), "out.txt")
 	if err := os.WriteFile(src, []byte(passingSuite), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	fakeBin(t, "make", "echo 'listening on :8080' >&2; cat "+src)
 	r, out, errOut := run(t, []string{"make", "dev"}, true)
-	if r.Compacted || out != passingSuite || errOut != "listening on :8080\n" {
+	if !r.Compacted || !strings.Contains(out, "10 packages ok") || errOut != "listening on :8080\n" {
 		t.Fatalf("compacted=%v stdout=%q stderr=%q", r.Compacted, out, errOut)
+	}
+	if r.EmittedBytes != int64(len(out)+len(errOut)) {
+		t.Fatalf("emitted=%d, want %d", r.EmittedBytes, len(out)+len(errOut))
 	}
 }

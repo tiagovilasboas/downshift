@@ -40,7 +40,7 @@ func TestGateFinish_FoldedFlag(t *testing.T) {
 			var out, errb bytes.Buffer
 			g := newGate(&out, &errb, true, []string{"go", "test"}, FamilyGoTest)
 			g.keep = tc.keep
-			g.buf.Write(tc.raw)
+			g.hold(tc.raw, false)
 			g.nOut = int64(len(tc.raw))
 			_, _, compacted, folded, _ := g.finish(0, FamilyGoTest)
 			if compacted != tc.wantCompacted || folded != tc.wantFolded {

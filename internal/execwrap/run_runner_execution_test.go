@@ -52,10 +52,10 @@ func TestRun_PytestVitestExecution(t *testing.T) {
 			wantCode: 1, wantClass: ExitClassNonZero, wantOut: pytestFail, wantFamily: Family("pytest"),
 		},
 		{
-			name: "clean pytest with stderr stays raw", bin: "pytest",
+			name: "clean pytest with stderr compacts stdout and keeps stderr whole", bin: "pytest",
 			script: "printf '" + strings.ReplaceAll(pytestClean, "\n", "\\n") + "'; echo 'pytest warning' >&2",
 			argv:   []string{"pytest"}, compact: true,
-			wantCode: 0, wantClass: ExitClassZero, wantOut: pytestClean, wantErr: "pytest warning\n", wantFamily: Family("pytest"),
+			wantCode: 0, wantClass: ExitClassZero, wantOut: compactedWant(pytestClean), compacted: true, wantErr: "pytest warning\n", wantFamily: Family("pytest"),
 		},
 		{
 			name: "passing vitest compacts", bin: "vitest",
@@ -166,10 +166,10 @@ func TestRun_PlaywrightCargoTscExecution(t *testing.T) {
 			wantCode: 1, wantClass: ExitClassNonZero, wantOut: playwrightFail, wantFamily: Family("playwright"),
 		},
 		{
-			name: "clean playwright with stderr stays raw", bin: "playwright",
+			name: "clean playwright with stderr compacts stdout and keeps stderr whole", bin: "playwright",
 			script: catScript(playwrightClean, 0, "playwright warning"),
 			argv:   []string{"playwright", "test"}, compact: true,
-			wantCode: 0, wantClass: ExitClassZero, wantOut: playwrightClean, wantErr: "playwright warning\n", wantFamily: Family("playwright"),
+			wantCode: 0, wantClass: ExitClassZero, wantOut: compactedWant(playwrightClean), compacted: true, wantErr: "playwright warning\n", wantFamily: Family("playwright"),
 		},
 		{
 			name: "passing cargo test compacts", bin: "cargo",
@@ -214,10 +214,10 @@ func TestRun_PlaywrightCargoTscExecution(t *testing.T) {
 			wantCode: 1, wantClass: ExitClassNonZero, wantOut: tscFail, wantFamily: Family("tsc"),
 		},
 		{
-			name: "clean tsc with stderr stays raw", bin: "tsc",
+			name: "clean tsc with stderr compacts stdout and keeps stderr whole", bin: "tsc",
 			script: catScript(tscClean, 0, "tsc warning"),
 			argv:   []string{"tsc"}, compact: true,
-			wantCode: 0, wantClass: ExitClassZero, wantOut: tscClean, wantErr: "tsc warning\n", wantFamily: Family("tsc"),
+			wantCode: 0, wantClass: ExitClassZero, wantOut: compactedWant(tscClean), compacted: true, wantErr: "tsc warning\n", wantFamily: Family("tsc"),
 		},
 	}
 
