@@ -69,8 +69,9 @@ supports; the Downshift side of that table is in
 proxy that compresses what the agent reads (tool results, logs, files, search
 hits, history) before it reaches the model API, keeps the originals for
 retrieval, and wraps supported CLIs with one command. It addresses the lever
-Downshift's own native compressor only observes: on Claude Code a PostToolUse
-hook cannot replace a tool result, a proxy can.
+Downshift's own native compressor only observes: its PostToolUse hook does not
+replace a tool result (Claude Code would accept one; Codex would not), and a
+proxy does.
 
 **How the two fit.** Headroom sits between the harness and the API, so the
 Downshift hook still sees the original tool output and the original task

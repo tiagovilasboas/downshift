@@ -373,7 +373,7 @@ tests, a security review or a production signal.
 |---|---|---|---|
 | Harness session policy | `setup` offers `model: opusplan`, `permissions.defaultMode: plan`, for Claude Code, each written only when the key is unset (`--no-session-policy` skips them); `enabledPlugins["cc-plugin-you-should-know@builtin"]: true` is opt-in (`--you-should-know`) because it is billed. On Claude Code `setup` also, outside `--dry-run`/`--undo`, runs model discovery (`discovery.Run`, 5 s) so session lists do not stay on handwritten values. The main agent's model is otherwise untouched. | D writes once, H enforces | `cmd/downshift/setup*.go`, `internal/discovery` |
 | Subagent routing | The flow above: one decision per spawn, rewrite or allow, fail open. | D decides, H applies | `internal/core`, adapters, `runHookAdapter` |
-| Context optimization | Native provider is **observe-only**: PostToolUse records tool output bytes and the reduction `safe` mode would reach; the hook never replaces the tool result the model sees. `downshift context compress` compacts piped output in `safe` mode as an explicit CLI step. Headroom is a companion: detected on PATH, recorded with `context enable headroom`, never installed, launched or wrapped. | D observes; X compresses | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` |
+| Context optimization | Native provider is **observe-only**: PostToolUse records tool output bytes and the reduction `safe` mode would reach; the hook never replaces the tool result the model sees (Claude Code would accept `updatedToolOutput`; Codex has no such channel). `downshift context compress` compacts piped output in `safe` mode as an explicit CLI step. Headroom is a companion: detected on PATH, recorded with `context enable headroom`, never installed, launched or wrapped. | D observes; X compresses | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` |
 | Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `probe` (maintainer). Reports expose token counts and no dollar amounts; the product uses no price. | D | `internal/telemetry`, `internal/childend` |
 | Diagnosis and recommendations | `doctor` (binary, state dir, catalog, hooks per harness, model override, quota, policy, context optimization, companion, semantic boost) with a `fix` per failed check; skills `downshift-setup`, `downshift-audit`, `downshift-tune` write nothing without a yes. | D | `cmd/downshift/doctor*.go`, `skills/` |
 | Benchmark and economic evaluation | Outcome evals and the routed-spawn report (tokens per completed task, rework per verdict). Public `benchmark/` holds the published report; datasets stay in downshift-labs. | D | `internal/outcome` |
@@ -498,8 +498,10 @@ These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
 5. **Savings are token shares, not invoices.** `stats` and `report` print no dollar.
    Tokens are observed only where the harness reports them (Claude Code most completely). The
    one tracked field trial is -12% on mechanical pieces, not a general rate.
-6. **Compaction is measure-only on Claude Code.** Hooks cannot rewrite tool
-   output, so the sensor reports a hypothetical reduction.
+6. **The native PostToolUse path is measure-only.** Claude Code accepts a
+   replacement (`updatedToolOutput`) but Downshift's hook does not send one, and
+   Codex accepts none, so the sensor reports a hypothetical reduction. The
+   Compactor cuts output by rewriting the command before it runs.
 7. **Hook latency** after removing the per-spawn fsync: p50 8.5 ms, p95 9.7 ms
    for a Claude Code Task payload (n = 200, Apple M3 Pro, macOS 26.6, Go
    1.27.1; `downshift version` p50 7.7 ms; process floor 2.2 ms). Not measured on

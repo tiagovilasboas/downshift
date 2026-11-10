@@ -23,7 +23,8 @@ the command the agent runs, for example:
 go test ./... 2>&1 | downshift context compress safe --exit ${PIPESTATUS[0]}
 ```
 
-On Claude Code the PostToolUse hook cannot replace a tool result, so the native provider only
-observes there (`downshift context metrics`, bytes not tokens). Where a harness has no
-output-rewriting hook, the pipe is the only native path; say so instead of promising a
-token reduction.
+Claude Code's PostToolUse can replace a built-in tool's result (`updatedToolOutput`), but
+Downshift's native hook does not send a replacement, so the native provider only observes
+there (`downshift context metrics`, bytes not tokens). Codex's PostToolUse cannot replace
+output. Where no hook replaces output, the pipe is the only native path; say so instead of
+promising a token reduction.
