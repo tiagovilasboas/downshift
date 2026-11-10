@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `downshift report` opens with what the agents pane shows, per harness: tokens saved, share of raw output cut, runs and compacted, hook against direct calls, bytes read back with `retrieve`, spawns by model change, effort change and held, and the share of subagent tokens on a cheaper model (`summary_by_harness` in `--json`). The family table gains a `cut` column.
+- `downshift report --daily` and `--history` add `runs` and `compacted` per harness, so a day with runs and nothing compacted reads apart from a day with no runs.
+
+### Fixed
+
+- `downshift report --daily` and `--history` no longer count bytes read back with `retrieve` as saved; they now match `report`, `stats` and the pane.
+
 ## [0.13.0] - 2026-11-09
 
 Release notes: [docs/releases/v0.13.0.md](docs/releases/v0.13.0.md).

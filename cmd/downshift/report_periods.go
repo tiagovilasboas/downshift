@@ -121,7 +121,7 @@ func printPeriodsTable(w io.Writer, out periodsOut) {
 	}
 	header := []string{out.Per}
 	for _, h := range out.Harnesses {
-		header = append(header, h+" saved", h+" below")
+		header = append(header, h+" runs", h+" compacted", h+" saved", h+" below")
 	}
 	table := [][]string{header}
 	for _, r := range out.Rows {
@@ -132,7 +132,7 @@ func printPeriodsTable(w io.Writer, out periodsOut) {
 		line := []string{r.Period}
 		for _, name := range out.Harnesses {
 			c := cells[name]
-			line = append(line, fmt.Sprint(c.CompactionTokens), fmt.Sprint(c.RoutingBelowTokens))
+			line = append(line, fmt.Sprint(c.Commands), fmt.Sprint(c.Compacted), fmt.Sprint(c.CompactionTokens), fmt.Sprint(c.RoutingBelowTokens))
 		}
 		table = append(table, line)
 	}
@@ -155,5 +155,5 @@ func printPeriodsTable(w io.Writer, out periodsOut) {
 		}
 		fmt.Fprintln(w, b.String())
 	}
-	fmt.Fprintln(w, "saved = tokens the Compactor kept out of the context; below = billable tokens that ran below the session model. Never added.")
+	fmt.Fprintln(w, "runs and compacted = Compactor runs; saved = tokens the Compactor kept out of the context; below = billable tokens that ran below the session model. Never added.")
 }
