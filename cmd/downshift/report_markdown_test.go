@@ -26,6 +26,7 @@ func TestReport_Markdown(t *testing.T) {
 		"## Routing: tokens on a lighter model, per harness",
 		"| harness | subagent tokens | on a lighter model | share | moved by Downshift |",
 		"| claude-code | 2.2k | 1.7k (1 of 2 agents) | 77% |",
+		"(0 guardrail) | 77% |", // the summary's cheaper-model share matches the routing section
 		"| codex | unobserved | - | - | - |",
 		"- **codex**: 1 agent unobserved (no model could be ranked)",
 		"## Why spawns changed",

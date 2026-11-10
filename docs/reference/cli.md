@@ -224,7 +224,7 @@ downshift report clear [--dry-run] [--yes]
 
 **Flags:**
 - `--days=N` — Window in days (default: 30, the same window as the Agents panel)
-- `--daily` — One row per calendar day of the window (local time zone, today included), with per harness the tokens the Compactor kept out of the context (`saved`) and the billable tokens that ran below the session model (`below`). Tokens only, never summed across columns or harnesses
+- `--daily` — One row per calendar day of the window (local time zone, today included), with per harness the Compactor runs (`runs`, `compacted`), the tokens it kept out of the context (`saved`, net of what `retrieve` read back) and the billable tokens that ran below the session model (`below`). Tokens only, never summed across columns or harnesses
 - `--history` — The whole retained history instead of a window, by week (Monday start, the default) or by day with `--by=day`. Cannot be combined with `--days` or `--daily`
 - `--json` — Output JSON instead of text
 - `--text` — Plain text columns
@@ -252,8 +252,12 @@ the `held_after_failure` row. `--json` carries the rows as `rework_by_verdict`, 
 `reworked_correlation_ids`: the `correlation_id` of every decision of that verdict that was followed by
 rework, so the misrouted spawns can be found in the event log.
 
-The report opens with **COMPACTION SAVINGS PER HARNESS**, in tokens only, per harness and never
-summed, before the routed table. Then it ends with more sections. They carry no money and no `$`. There is no cross-harness total line.
+The report opens with **COMPACTION SAVINGS PER HARNESS**, per harness and never summed, before the
+routed table. Each harness carries what the agents pane shows for a session, here for the whole window:
+tokens saved, the share of raw output cut (bytes), runs and compacted, hook runs against direct calls,
+bytes read back with `retrieve` (already subtracted), the spawns whose model or effort changed or that
+were held, and the share of subagent billable tokens that ran below the session model. `--json` carries
+these rows as `summary_by_harness`. Then it ends with more sections. They carry no money and no `$`. There is no cross-harness total line.
 
 - **Why spawns changed**, per harness: the spawns in the window counted by routing verdict
   (`kept`, `profile`, `rule`, `hint_down`, `class`, `class_up`, `default`, `agent_default`, `guard_floor`, `held_unknown`, `refused_config`)
