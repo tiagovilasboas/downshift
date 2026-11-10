@@ -43,6 +43,7 @@ These came out of the same analysis and are on `main`.
 | #64 | Report screen redesigned as one block per harness |
 | #65 | Balanced benchmark on four large real outputs: 76.3% fewer bytes |
 | #66 | Balanced line cut never splits a multi-byte character |
+| #68 | Task H1: the classifier's tables are built on first use; the Bash hook went from 36 ms to 20 ms |
 
 ## Phases
 
@@ -68,7 +69,7 @@ Every Bash call pays the process start twice: the hook, then the wrapper.
 
 | ID | Task | Pts | Done when |
 |---|---|---|---|
-| H1 | Build the classifier's regexes on first use, not at package init. | 2 | `inittrace` shows `internal/classify` under 1 ms; classifier tests unchanged |
+| H1 | Build the classifier's regexes on first use, not at package init. **Done in #68.** | 2 | `inittrace` shows `internal/classify` at 1 ms; classifier tests unchanged |
 | H2 | Same for the compressor's regexes that only one family uses. | 3 | `internal/compressor` init under 2 ms |
 | H3 | Startup guard: a test fails when a package's init compiles more than a set number of regexes. | 2 | The guard fails on a new package-level `MustCompile` in `classify` |
 
@@ -124,7 +125,7 @@ the agent's own Read, Grep and Glob, where most file content enters the context.
 
 ## Order
 
-1. **Wave 1**: H1, G3, M4, then the M1 spike. G1 and G2 follow M1's result: where output can be replaced after the run they may not be needed. Release L1 can follow this wave.
+1. **Wave 1**: H1 (done), G3, M4, then the M1 spike. G1 and G2 follow M1's result: where output can be replaced after the run they may not be needed. Release L1 can follow this wave.
 2. **Wave 2**: M2, M3, M5, J1, J2, I3, G4, G5.
 3. **Wave 3**: K1 (needs the owner's decisions), then K2, K3, H2, H3.
 4. **Later**: I1 (needs a week of data), I2, J3, J4, K4, K5.
