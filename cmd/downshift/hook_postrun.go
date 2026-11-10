@@ -80,3 +80,24 @@ func recordPostRun(harness, session string, res postrun.Result) {
 	ev.Harness, ev.Entry, ev.Client = harness, postrun.Entry, envClient()
 	_ = execwrap.Append(path, ev)
 }
+
+// Payload caps of the honor runner. Every hook reads at most 1 MiB, so a
+// malformed or hostile stdin cannot exhaust memory. The post-run hook of a
+// harness that can replace a tool's result reads up to 16 MiB instead: the
+// result it compacts is in the payload, and the outputs worth cutting are the
+// large ones (a 1.2 MB `git log -p` passed through whole under the 1 MiB cap).
+// The read keeps its deadline, and any failure still leaves the result as is.
+const (
+	hookPayloadCap    int64 = 1 << 20
+	postRunPayloadCap int64 = 16 << 20
+)
+
+// honorPayloadLimit is the most the honor runner reads for harness: the
+// post-run cap where the harness declares it can replace tool output and
+// post-run compaction is on, else the hook cap.
+func honorPayloadLimit(harness string) int64 {
+	if caps, ok := core.CapsFor(harness); ok && len(caps.ReplacesToolOutput) > 0 && postRunOn() {
+		return postRunPayloadCap
+	}
+	return hookPayloadCap
+}

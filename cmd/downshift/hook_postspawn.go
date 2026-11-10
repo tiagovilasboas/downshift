@@ -55,9 +55,9 @@ func runHonor(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 			rc = neutral()
 		}
 	}()
-	const maxHookPayloadBytes = 1 << 20
-	data, err := readHookPayload(in, maxHookPayloadBytes+1)
-	if err != nil || len(data) > maxHookPayloadBytes {
+	limit := honorPayloadLimit(port.ID)
+	data, err := readHookPayload(in, limit+1)
+	if err != nil || int64(len(data)) > limit {
 		return neutral()
 	}
 	if owner := foreignPayloadOwner(port.ID, data); owner != "" {

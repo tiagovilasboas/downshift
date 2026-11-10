@@ -56,7 +56,8 @@ Rules:
   `DOWNSHIFT_POST_COMPACT=0` turns it off; `DOWNSHIFT_EXEC=0` and
   `"exec": false` turn it off with the rest of the Compactor. Without CCR
   nothing is cut with loss.
-- **Fail open.** A payload over the 1 MiB hook cap, a parse error, a store
+- **Fail open.** A payload over the post-run cap (16 MiB; every other hook
+  keeps 1 MiB), a parse error, a store
   error or a panic leaves the hook's usual answer (`{}`).
 
 ## Measurements
@@ -84,7 +85,8 @@ whole answer JSON. Commands ran on this repository.
 
 The `| head -n 5000` pipe is a shape the pre-run rewrite already wraps, so the
 post-run path leaves it to the wrapper and logs nothing. The 4 MB `git log` is
-over both the wrapper's 2 MB hold limit and the hook's 1 MiB payload cap.
+over the wrapper's 2 MB hold limit; the post-run hook now reads it (cap 16 MiB,
+owner decision 2026-11-10; it was 1 MiB when these figures were taken).
 
 Synthetic payloads in the shapes the hooks reference documents (Bash) or that
 the result carries (Grep, Glob):
@@ -119,7 +121,8 @@ redirected forms of the same `go test` run reach the model at 12 KB instead of
 - the wrapper sees output before the harness caps it, and its family
   compressors are lossless without CCR; the post-run path cuts with loss and
   only with CCR on;
-- a payload over 1 MiB is not read, while the wrapper holds up to 2 MB;
+- the post-run hook reads up to 16 MiB, while the wrapper holds up to 2 MB and
+  spools the rest;
 - whether Claude Code puts the whole output in `tool_response` for a result it
   would itself persist to a file is not verified here.
 
