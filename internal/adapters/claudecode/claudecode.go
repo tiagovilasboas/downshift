@@ -30,6 +30,10 @@ type HookSpecificOutput struct {
 	PermissionDecision string          `json:"permissionDecision,omitempty"`
 	UpdatedInput       json.RawMessage `json:"updatedInput,omitempty"`
 	AdditionalContext  string          `json:"additionalContext,omitempty"`
+	// UpdatedToolOutput replaces a finished tool's result (PostToolUse only).
+	// It must keep the tool's own output shape: Claude Code ignores a value
+	// that does not match a built-in tool's schema.
+	UpdatedToolOutput json.RawMessage `json:"updatedToolOutput,omitempty"`
 }
 
 // Handle processes a PreToolUse event using the catalog.Resolver injected by

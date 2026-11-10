@@ -158,24 +158,9 @@ func (g *gate) finish(exitCode int, family Family) (raw, emitted int64, compacte
 	data := g.buf.Bytes()
 	g.streaming = true // a timer that fires after finish finds nothing to flush
 	g.buf = bytes.Buffer{}
-	var out []byte
-	out, passthrough, g.detail = compactOutputFor(g.argv, exitCode, data, family, g.nErr > 0)
-	compacted = passthrough == ""
-	if compacted {
-		out = keepRawFor(family, g.keeper(exitCode, family), data, out)
-		out = applyDesktop(g.desktop, family, data, out)
-	} else if foldedOut, ok := keepUncompacted(g.keeper(exitCode, family), data, exitCode, family, g.nErr > 0); ok {
-		out, compacted, folded, passthrough, g.detail = foldedOut, true, true, "", ""
-	}
-	if g.balanced {
-		shown := data
-		if compacted {
-			shown = out
-		}
-		if cut, ok := balance(g.keeper(exitCode, family), family, data, shown); ok {
-			out, compacted, folded, passthrough, g.detail = cut, true, true, "", ""
-		}
-	}
+	h := compactHeld(g.argv, data, family, exitCode, g.nErr > 0, g.keeper(exitCode, family), g.desktop, g.balanced)
+	out := h.out
+	compacted, folded, passthrough, g.detail = h.compacted, h.folded, h.passthrough, h.detail
 	if compacted {
 		_, _ = g.out.Write(out)
 	} else {

@@ -124,6 +124,7 @@ so flip the code and this table together. `NativeUsageSource` and
 | `WorkerAgent` | yes | no | yes | no | no | no | no | A worker agent CLI runs on this harness. |
 | `WorkerReadOnlyVerified` | yes | no | no | no | no | no | no | A read-only worker was verified unable to write. |
 | `SessionWideTranscript` | yes (nested spawn, 2026-11-06, Claude Code 2.1.319: transcript_path verified, nested spawn payload unverified) | no | no | no | no | no | no | A hook fired inside a subagent still gets the main session's `transcript_path`, so a nested spawn (a subagent spawning a subagent) cannot read its parent's model from it. With `agent_id` set the baseline is unknown and the spawn is held; no parent model is recorded. Other harnesses: nesting not assessed. See the note below. |
+| `ReplacesToolOutput` | yes (shell, search and read; Downshift rewrites shell and search only) | no | no | no | no | no | no | A hook answer can replace a tool's result after the tool ran, before the model reads it. The shared post-run compaction (`internal/postrun`) runs only where this is declared. See [Replace tool output after the run](#replace-tool-output-after-the-run-2026-11-10). |
 
 **Nested spawns (Claude Code 2.1.319, 2026-11-06).** Verified live: a `PreToolUse` hook fired inside a subagent (a Bash call) carries `agent_id` and `agent_type`, and its `session_id` and `transcript_path` equal the main session's; the subagent's own transcript appears only as `agent_transcript_path` on `SubagentStop`. Verified live: a subagent has no `Agent` tool, even when its definition lists one (two runs), so a nested `Agent` spawn could not be captured and its `PreToolUse` payload is **unverified**; routes that do nest (teammates, workflow agents) are not captured here either (workflow agents never reach `PreToolUse`, see the evidence note of 2026-10-11). The rule follows the documented hook input: a spawn with `agent_id` set and no model named by the call, the agent definition or the environment is held with an unknown baseline, and the main model is not recorded as its `parent_model`; a model the call names, or a parent model the mod reports, still routes as usual. Test: `TestHookE2E_ClaudeCodeNestedSpawn`. Telemetry keys decisions by the main session's hash, so a nested spawn counts under the main session, once. Detailed write-up and reconciliation: `docs/evidence/claude-code-nested-spawn-2026-11-07.md` and `docs/evidence/claude-execution-workflow-reconciliation-2026-11-07.md`.
 
@@ -816,6 +817,40 @@ Threat note: [compactor-default-on-adr.md](../design/compactor-default-on-adr.md
 4. Run `downshift context metrics`: `exec_metrics.commands` must have grown. With `DOWNSHIFT_EXEC=0` in the environment the command must run as typed.
 
 If the command runs as typed with the hook on, Claude Code ignores the rewrite without a decision: nothing breaks and nothing is saved, and this feature should stay documented as not working there.
+
+## Replace tool output after the run (2026-11-10)
+
+Where a harness lets a hook replace a tool's result after the tool ran, the
+Compactor no longer depends on wrapping the command first: pipes, redirects,
+long commands and stderr reach it too, and so do the agent's own search tools.
+The capability is data (`HarnessCapabilities.ReplacesToolOutput`, the tool
+categories the harness allows); the policy is shared (`internal/postrun`,
+reached from the honor runner); the adapter only reads its payload into
+`hookport.ToolOutput` and writes the answer. Design and measurements:
+[post-run compaction](../design/post-run-compaction.md).
+
+| Harness | Replaces tool output | Evidence |
+|---|---|---|
+| claude-code | yes: `PostToolUse` `hookSpecificOutput.updatedToolOutput`, for built-in tools (Bash, Read, Grep, Glob). A value that does not match the tool's output shape is ignored and the original is used | hooks reference, "PostToolUse decision control", read 2026-11-10. Bash's shape is documented (`stdout`, `stderr`, `interrupted`, `isImage`); Grep's and Glob's are not, so only the fields a result carries (`content`, `filenames`) are rewritten and every other field, counts included, is sent back as received. Not yet verified live from a session on this machine |
+| cursor | no | no post-run event is wired; none documented that replaces a result |
+| codex | no | `PostToolUse` is wired for spawns only; no replace field known |
+| kiro | no | observation only |
+| kirocrew | no | `postToolUse` exit 0 / exit 2 only |
+| antigravity | no | no post-run event wired |
+| opencode | no | the bridge forwards spawn intent, shell commands and `child_done`; no result replacement known |
+
+What Downshift rewrites where the capability is declared (on by default;
+`DOWNSHIFT_POST_COMPACT=0`, `DOWNSHIFT_EXEC=0` or `"exec": false` turn it off):
+
+| Tool category | Rewritten | Rule |
+|---|---|---|
+| shell | `stdout`; `stderr` only when it alone is over 16 KB | A command the pre-run rewrite wrapped (or would wrap) is left alone, and so is an output that already ends with the wrapper's marker. One plain allowlisted command gets its family's compressor, as in the wrapper. Any other command (pipe, redirect, chain, unknown program) gets only the balanced log cut: over 16 KB, raw output stored by CCR, a gain of at least a quarter. An interrupted run or an image is never changed |
+| search | `content` (matches) and `filenames` | Only over 16 KB and only once CCR stored the raw text: the first 20 matches of each file, a count per file of the rest, held to 12 KB; a file list keeps its head within 12 KB. The last line or entry names the `downshift retrieve` id |
+| read | never | An edit needs the file's exact text (roadmap task M3) |
+
+Each considered call adds one row to `exec-events.jsonl` with entry
+`post_tool_use`, so `report` counts it like a wrapped run. A payload over the
+1 MiB hook cap is not read, and its result stays whole.
 
 ## Several hooks rewriting one call (2026-11-06)
 

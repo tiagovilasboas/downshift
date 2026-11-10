@@ -80,6 +80,7 @@ file or from `AGENTS.md`.
 | `internal/playbook` | Delegation | Named working rules a delegated worker receives (General plus an area set): shipped markdown, the person's files under the state dir, name folding, `Block` for the MCP server. No routing, no enforcement; imports only `paths` |
 | `internal/plan` | Delegation | `downshift plan`: validates the parts the lead LLM wrote (agent, points, dependencies), fills tier, playbook, wave and route, renders markdown or JSON. No LLM call, no state read (the command passes the gateway switch in); imports `agenttier` and `playbook` |
 | `internal/policyfile` | Routing | Project tier floor; registers via hook |
+| `internal/postrun` | Shell | Post-run compaction: a finished tool's result (shell output, search matches and file lists) compacted where the harness can replace it (`ReplacesToolOutput`); reuses `execwrap.CompactCaptured` and the balanced cut. Harness-free; adapters parse and answer through `hookport.ToolOutput` |
 | `internal/quota` | Routing | File I/O for quota; registers hooks |
 | `internal/quotamodel` | Routing | Pure quota types, no I/O |
 | `internal/routing` | Routing | Routing v2 domain (`docs/design/routing-v2.md` section 7); imports only `core`, `paths`, `routing/*` (archtest) |

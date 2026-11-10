@@ -142,6 +142,14 @@ type HarnessCapabilities struct {
 	// by a subagent (a nested spawn) cannot then read its parent's model from it:
 	// see TranscriptNamesSpawner.
 	SessionWideTranscript bool
+	// ReplacesToolOutput lists the tool categories whose result a hook answer
+	// can replace after the tool ran, before the model reads it (Claude Code:
+	// PostToolUse updatedToolOutput, documented for built-in tools and checked
+	// 2026-11-10). Empty means no such channel is known, and every tool
+	// result stays as the tool returned it. Which categories the shared policy actually rewrites
+	// is its own choice (internal/postrun): a category here is only what the
+	// harness allows.
+	ReplacesToolOutput []ToolCategory
 }
 
 // ShellPOSIX is the HarnessCapabilities.ShellDialect of a POSIX shell.
@@ -162,6 +170,9 @@ var (
 	// The same hook can return updatedInput.command for the Bash tool
 	// (CanRewriteShellCommand, opt-in exec wrapper).
 	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", ModelForceEnv: "CLAUDE_CODE_SUBAGENT_MODEL_FORCE", SessionFromCatalog: true, CanShowChildLine: true, CanReturnNote: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, ShellDialect: ShellPOSIX, SquadAgentPrefix: "downshift:", WorkerAgent: "claude", WorkerReadOnlyVerified: true, MainToolEvent: "PostToolUse", MainToolCategories: claudeCodeToolCategories, SessionWideTranscript: true,
+		// PostToolUse updatedToolOutput replaces a built-in tool's result when
+		// the value keeps the tool's output shape (hooks reference, 2026-11-10).
+		ReplacesToolOutput: []ToolCategory{CategoryShell, CategorySearch, CategoryRead},
 		// Explore is read-only search, Plan is design work (built-in types).
 		AgentTypeHints: map[string]Tier{"Explore": TierSmall, "Plan": TierMid}}
 
