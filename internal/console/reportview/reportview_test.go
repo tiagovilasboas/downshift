@@ -28,7 +28,7 @@ func sample() Data {
 		Harnesses: []Row{
 			{Harness: "claude-code", TokensSaved: 82000, RoutingObserved: true, RoutedSharePct: 69, Billable: 9100000,
 				PremiumObserved: true, NonFrontier: 101, TierKnown: 107, PremiumPct: 94, Reworked: 0, Ended: 107},
-			{Harness: "codex", TokensSaved: 12500},
+			{Harness: "codex", TokensSaved: 12500, RawBytes: 60000, SavedBytes: 50000, CutPct: 83, Commands: 40, Compacted: 30, DirectRuns: 40},
 		},
 		Tabs: []Tab{
 			{Title: "Savings", Lines: []string{"saved a", "saved b"}},
@@ -131,19 +131,19 @@ func TestEmptyData(t *testing.T) {
 }
 
 func TestUnobservedNeverShowsZeroOrBar(t *testing.T) {
-	v := newModel(t, 80, 24).View()
-	idx := strings.Index(v, "codex")
+	v := newModel(t, 80, 40).View()
+	idx := strings.Index(v, "codex ")
 	if idx < 0 {
 		t.Fatal("codex missing")
 	}
-	line := strings.SplitN(v[idx:], "\n", 2)[0]
-	// A harness with savings but no routing evidence takes one line: its
-	// tokens saved, then "unobserved", never a routing share or a 0%.
-	if !strings.Contains(line, "12k") || !strings.Contains(line, "unobserved") || strings.Contains(line, "%") {
-		t.Errorf("compact unobserved row: %q", line)
+	block := v[idx:]
+	// A harness with Compactor runs but no subagent evidence says so in one
+	// line: never a routing share, a 0% or a bar for what was not measured.
+	if !strings.Contains(block, "no subagent spawns measured") || strings.Contains(block, "On a cheaper model") {
+		t.Errorf("unobserved routing drew figures:\n%s", block)
 	}
-	if strings.Contains(v, "Ran below session model  unobserved") {
-		t.Errorf("unobserved harness drew a full block:\n%s", v)
+	if !strings.Contains(block, "~12k*") || !strings.Contains(block, "40 · 30 compacted") {
+		t.Errorf("codex Compactor figures missing:\n%s", block)
 	}
 }
 
