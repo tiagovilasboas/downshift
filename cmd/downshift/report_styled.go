@@ -5,7 +5,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"strings"
 
@@ -27,6 +26,7 @@ func styledReportData(d reportOut, events []telemetry.Event, days int, scope acc
 			PremiumObserved: h.PremiumObserved, NonFrontier: h.NonFrontier, TierKnown: h.TierKnown, PremiumPct: h.PremiumPct,
 			Reworked: h.Reworked, Ended: h.Ended, ReworkPct: h.ReworkPct,
 		})
+		fillCompactor(&rows[len(rows)-1], d)
 	}
 	return reportview.Data{
 		Header: reportview.Header{
@@ -37,8 +37,6 @@ func styledReportData(d reportOut, events []telemetry.Event, days int, scope acc
 		Tabs: []reportview.Tab{
 			tabOf("Savings", func(w io.Writer) {
 				printSummaryText(w, d.Summary, scope.Label())
-				fmt.Fprintf(w, "\n📦 COMPACTOR (%s)\n", d.Numbers.Scope.Label())
-				fmt.Fprintf(w, "   %s\n", d.Numbers.Display.Compactor)
 				printCompactionDetailText(w, d.CompactionDetail)
 			}),
 			tabOf("Routing", func(w io.Writer) {
