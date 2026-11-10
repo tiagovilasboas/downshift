@@ -39,8 +39,8 @@ const (
 
 // Limits of the balanced cut, in lines.
 const (
-	balanceHunkLines    = 40  // body lines shown per diff hunk
-	balanceDiffLines    = 600 // body lines shown across a diff
+	balanceHunkLines    = 30  // body lines shown per diff hunk
+	balanceDiffLines    = 250 // body lines shown across a diff
 	balanceMatchPerFile = 20  // matches shown per file
 	balanceMatchLines   = 250 // matches shown in total
 	balanceLineCells    = 300 // a longer line is cut

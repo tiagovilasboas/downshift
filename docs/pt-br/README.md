@@ -145,8 +145,9 @@ Os modelos disponíveis para um harness ou sessão não são considerados dispon
 
 | Medição | Resultado | Escopo |
 | --- | --- | --- |
-| Compactação de saída sem perda | **60,3% menos bytes** | 62 fixtures sem perda em um corpus sintético. |
-| Compactação de saída com CCR | **67,1% menos bytes** | Corpus sintético de 110 fixtures (53,0% com CCR desligado), saída de comandos e leituras do agent-desktop; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
+| Compactação de saída sem perda | **59,9% menos bytes** | 64 fixtures sem perda em um corpus sintético. |
+| Compactação de saída com CCR | **67,0% menos bytes** | Corpus sintético de 113 fixtures (53,1% com CCR desligado), saída de comandos e leituras do agent-desktop; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
+| Compactação balanced, saídas grandes | **76,3% menos bytes** | 4 saídas reais deste repositório acima de 16 KB (`go test -v`, `git show`, `git log -p`, `grep -rn`); 35,0% só com o compressor sem perda. As linhas cortadas voltam com `downshift retrieve`. |
 | Roteamento de subagentes | **24,1% menos tokens por execução aceita** | Estudo controlado com 46 execuções no Claude Code para tarefas mecânicas, realizado antes da decisão O8. |
 
 São medições separadas, com unidades e cargas de trabalho diferentes. Os totais do corpus sintético incluem apenas fixtures processadas pelo compactor e excluem fixtures preservadas. O resultado de roteamento é evidência histórica; ele não estabelece o efeito da implementação após O8. A economia no uso cotidiano sem restrições ainda não foi estabelecida. Estimativas de tokens baseadas em bytes não são uma fatura nem uma medida dos limites do plano.
