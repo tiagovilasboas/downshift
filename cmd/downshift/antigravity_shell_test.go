@@ -51,7 +51,7 @@ func TestAntigravityShellRewrite_ReadOnlyCommand(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &resp); err != nil {
 		t.Fatalf("stdout %q: %v", out, err)
 	}
-	want := "'" + testExe + "' compact -- git status"
+	want := "'" + testExe + "' compact --harness=antigravity -- git status"
 	if resp.Decision != "allow" || resp.Overwrite["CommandLine"] != want || len(resp.Overwrite) != 1 {
 		t.Fatalf("answer = %s, want allow + overwrite.CommandLine %q only", out, want)
 	}
