@@ -21,7 +21,7 @@ var harnessNames = []string{"cursor", "codex", "opencode", "claude-code", "claud
 // facts must be data in HarnessCapabilities, never a branch.
 var harnessSharedTrees = []string{
 	"internal/core/", "internal/routing/", "internal/telemetry/", "internal/policyfile/",
-	"internal/quota/", "internal/execwrap/", "internal/shellwrap/",
+	"internal/quota/", "internal/execwrap/", "internal/shellwrap/", "internal/postrun/",
 }
 
 // harnessBranchBaseline freezes the harness-name branches that shared packages

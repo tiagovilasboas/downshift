@@ -79,6 +79,20 @@ the first stderr byte still releases the output, so a prompt is never hidden
 Same limits, redaction and secret-path refusals for both modes (below); a file read of
 a secret path is never held, so never stored.
 
+## After the run: tool results the hook replaces
+
+On a harness whose hook can replace a tool's result after it ran (Claude Code,
+see the [harness matrix](../reference/harness-matrix.md#replace-tool-output-after-the-run-2026-11-10)),
+the same store backs a second path. A shell command the pre-run rewrite did not
+wrap (a pipe, a redirect, a long command) and a large Grep or Glob result are
+cut after the run, and only when CCR stored the raw text first: a log to its
+head, tail and failure lines, a search to the first matches of each file and a
+count of the rest, a file list to its head. The last line names the
+`downshift retrieve` id, as for a wrapped run. Read results are never changed.
+With CCR off nothing is cut this way; `DOWNSHIFT_POST_COMPACT=0` turns the path
+off on its own. Design and measurements:
+[post-run compaction](../design/post-run-compaction.md).
+
 ## What happens
 
 With CCR on, when `downshift compact -- <cmd>` compacts output:

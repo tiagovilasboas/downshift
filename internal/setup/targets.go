@@ -87,10 +87,12 @@ var Targets = []Target{
 			// The opt-in exec wrapper rewrites an allowlisted Bash command (shellrewrite.go).
 			{Event: "PreToolUse", Matcher: "Bash", Args: "claude-code", Rewrites: RewritesShell},
 			{Event: "PostToolUse", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
-			// Bash output reaches the context sensor (observe only: bytes and
-			// the compressor's potential, never the text).
+			// Bash output reaches the context sensor (bytes and the
+			// compressor's potential, never the text) and the shared post-run
+			// compaction (internal/postrun), which may answer updatedToolOutput.
 			{Event: "PostToolUse", Matcher: "Bash", Args: "claude-code-post-tool-use"},
-			// Read, Grep and Glob feed only the main-session work count (mainwork).
+			// Read, Grep and Glob feed the main-session work count (mainwork);
+			// a large Grep or Glob result is also compacted after the run.
 			{Event: "PostToolUse", Matcher: "Read|Grep|Glob", Args: "claude-code-post-tool-use"},
 			{Event: "PostToolUseFailure", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
 			{Event: "SessionStart", Args: "claude-code-session-start"},

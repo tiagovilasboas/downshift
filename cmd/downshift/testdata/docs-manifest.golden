@@ -726,6 +726,7 @@
     "DOWNSHIFT_MAX_PARALLEL",
     "DOWNSHIFT_MINILM",
     "DOWNSHIFT_PLAIN",
+    "DOWNSHIFT_POST_COMPACT",
     "DOWNSHIFT_QUIET",
     "DOWNSHIFT_QUOTA_FILE",
     "DOWNSHIFT_QUOTA_MODE",
@@ -792,7 +793,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "claude-code": {
       "CanRewriteModel": true,
@@ -843,7 +845,12 @@
       "MaxParallel": 0,
       "WorkerAgent": "claude",
       "WorkerReadOnlyVerified": true,
-      "SessionWideTranscript": true
+      "SessionWideTranscript": true,
+      "ReplacesToolOutput": [
+        "shell",
+        "search",
+        "read"
+      ]
     },
     "codex": {
       "CanRewriteModel": true,
@@ -878,7 +885,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "codex",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "cursor": {
       "CanRewriteModel": true,
@@ -918,7 +926,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "kiro": {
       "CanRewriteModel": false,
@@ -953,7 +962,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "kirocrew": {
       "CanRewriteModel": false,
@@ -988,7 +998,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "opencode": {
       "CanRewriteModel": true,
@@ -1025,7 +1036,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     }
   }
 }
