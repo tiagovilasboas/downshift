@@ -776,7 +776,7 @@ Maintainer tool: `downshift probe <event>` records a hook payload's field names 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DOWNSHIFT_EXEC` | Enable/disable compaction | `1` |
-| `DOWNSHIFT_BALANCED` | `0` keeps every compacted output lossless. On (the default), an output over 16 KB whose raw output CCR stored is cut to its head, tail and failure lines (a diff to its headers and first hunk lines, a search to its first matches per file); the marker names the `downshift retrieve` id. Overrides `"balanced"` in the config file | `1` |
+| `DOWNSHIFT_BALANCED` | `0` keeps every compacted output lossless. On (the default), an output over 16 KB whose raw output CCR stored is cut to its head, tail and failure lines (a diff to its headers and first hunk lines, a search to its first matches per file); the marker names the `downshift retrieve` id. Output over the 2 MB hold limit is spooled to a temporary file and printed as its head, tail and retrieve id. Overrides `"balanced"` in the config file; the threshold and line caps are the config keys `balanced_threshold_kb`, `balanced_log_head`, `balanced_log_tail`, `balanced_hunk_lines`, `balanced_diff_lines`, `balanced_matches_per_file`, `balanced_match_lines` ([ccr.md](../guides/ccr.md)) | `1` |
 | `DOWNSHIFT_DESKTOP_DELTA` | `0` sends every agent-desktop read as the whole compact view, never a delta from the previous read ([agent-desktop](../guides/agent-desktop.md)) | `1` |
 | `DOWNSHIFT_LEARNING` | Enable/disable learning | `1` |
 | `DOWNSHIFT_STATE_DIR` | State directory | `~/.downshift` |

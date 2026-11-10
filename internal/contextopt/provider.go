@@ -120,6 +120,17 @@ type Config struct {
 	// absent or true; an explicit false keeps every output lossless.
 	// DOWNSHIFT_BALANCED overrides the file.
 	Balanced *bool `json:"balanced,omitempty"`
+	// BalancedThresholdKB is the size, in KB, above which balanced compaction
+	// cuts an output; absent or zero keeps the default (16). The line caps
+	// below change the cut itself; absent or zero keeps each default. All are
+	// read once by cmd (balanced_config.go) and passed to the Compactor.
+	BalancedThresholdKB    int `json:"balanced_threshold_kb,omitempty"`
+	BalancedHunkLines      int `json:"balanced_hunk_lines,omitempty"`
+	BalancedDiffLines      int `json:"balanced_diff_lines,omitempty"`
+	BalancedMatchesPerFile int `json:"balanced_matches_per_file,omitempty"`
+	BalancedMatchLines     int `json:"balanced_match_lines,omitempty"`
+	BalancedLogHead        int `json:"balanced_log_head,omitempty"`
+	BalancedLogTail        int `json:"balanced_log_tail,omitempty"`
 }
 
 // ExecOn reports whether the compact wrapper is on: absent or true.
