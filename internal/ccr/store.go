@@ -40,13 +40,21 @@ type Store struct {
 	Now                          func() time.Time
 }
 
+// Default limits of the store under the state directory. One entry may hold
+// the whole stdout a run spools past the Compactor's hold limit
+// (execwrap.SpoolLimit, the same value).
+const (
+	DefaultMaxEntryBytes int64 = 32 << 20
+	DefaultMaxTotalBytes int64 = 128 << 20
+)
+
 // Default returns a Store under the Downshift state directory.
 func Default() (Store, error) {
 	dir, err := paths.Join("ccr")
 	if err != nil {
 		return Store{}, err
 	}
-	return Store{Dir: dir, TTL: 24 * time.Hour, MaxEntryBytes: 8 << 20, MaxTotalBytes: 64 << 20, Now: time.Now}, nil
+	return Store{Dir: dir, TTL: 24 * time.Hour, MaxEntryBytes: DefaultMaxEntryBytes, MaxTotalBytes: DefaultMaxTotalBytes, Now: time.Now}, nil
 }
 
 func (s Store) now() time.Time {

@@ -16,7 +16,7 @@ downshift compactor -- go test ./...
 Downshift:
 
 1. **Runs the command** with no shell, capturing stdout/stderr
-2. **Checks the exit code and stderr** — compacts a clean run (exit 0) and a failed `go test`, `vitest`, `playwright test`, `jest`, `pytest` or `cargo test` run, which keep every failure line (see [Failing runs](#failing-runs)). Any stderr byte keeps the run raw, except for the families whose report or notes are on stderr (Jest, Vitest, go test, git commit, git push): their stderr is read with the report, and a line the compressor does not know still keeps the run raw. A failed run that wrote to stderr is raw, except a failed Vitest run, whose failure report is on stderr
+2. **Checks the exit code and stderr** — compacts a clean run (exit 0) and a failed `go test`, `vitest`, `playwright test`, `jest`, `pytest` or `cargo test` run, which keep every failure line (see [Failing runs](#failing-runs)). Stderr is held with stdout, in write order. For the families whose report or notes are on stderr (Jest, Vitest, go test, git commit, git push) it is read with the report, and a line the compressor does not know still keeps the run raw; for every other family the compressor reads stdout only and the stderr lines follow the compacted stdout whole, on stderr (with a terminal on stdin, the first stderr byte releases the output raw). A failed run that wrote to stderr is raw, except a failed Vitest run, whose failure report is on stderr
 3. **Identifies the format** — matches output against known compressor patterns
 4. **Compacts if recognized** — reduces to PASS/FAIL summary
 5. **Preserves if not** — unknown formats pass through unchanged
@@ -70,11 +70,11 @@ The run stays raw, with the program's own exit code, when:
 - the failure section is not whole: no failure heading or block, no summary, a Vitest section without its last `[N/N]` footer, Playwright blocks out of order, or a Playwright summary whose failed and flaky counts differ from the number of blocks;
 - the transcript holds more than one run header;
 - the output has a NUL byte, invalid UTF-8, CRLF, no final newline, or an escape sequence other than colour (colour is removed before parsing, so the compacted text is plain);
-- the output is another reporter's (`--reporter=verbose`, `dot`, `json`) or exceeds 2 MB;
+- the output is another reporter's (`--reporter=verbose`, `dot`, `json`) or exceeds 2 MB (with CCR keeping every run and balanced on, a larger output is cut to its head and tail instead; see [ccr.md](../guides/ccr.md));
 - there is nothing to cut, or the result would not be shorter.
 
-A failed Playwright run that wrote to stderr is raw, since any stderr byte
-releases the held output. The compacted text goes to stdout and ends with the
+A failed Playwright run that wrote to stderr is raw: its failure report is not
+read from stderr. The compacted text goes to stdout and ends with the
 `[downshift compact: ...]` marker, as for a clean run.
 
 The Jest, pytest and cargo grammars follow the same contract: a line the grammar does not know keeps the run raw. `tsc` is not compacted when it fails, since a failing `tsc` prints only errors.
@@ -423,6 +423,6 @@ downshift report --period=7d
 
 - **No shell execution** — commands run directly via `exec`, not through a shell
 - **Exit code preservation** — the original exit code is always returned
-- **Stderr passthrough** — raw output keeps stderr byte for byte on its own stream; only a compacted run of a family that reads stderr with its report (Jest, Vitest, go test, git commit, git push) prints its kept stderr lines inside the summary, and a failed Vitest run prints its failure report, read from stderr, on stdout
+- **Stderr passthrough** — raw output keeps stderr byte for byte on its own stream, replayed in write order; a compacted run of any other family prints its held stderr whole after the summary, on stderr; only a compacted run of a family that reads stderr with its report (Jest, Vitest, go test, git commit, git push) prints its kept stderr lines inside the summary, and a failed Vitest run prints its failure report, read from stderr, on stdout
 - **Format detection** — each compressor has a regex pattern for its format
 - **Fail-open** — unrecognized formats pass through unchanged

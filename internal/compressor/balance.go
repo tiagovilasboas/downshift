@@ -39,31 +39,40 @@ const (
 	BalanceMatches
 )
 
-// Limits of the balanced cut, in lines.
+// Default limits of the balanced cut, in lines (BalanceLimits overrides the
+// first six), and the fixed line and failure caps.
 const (
 	balanceHunkLines    = 30  // body lines shown per diff hunk
 	balanceDiffLines    = 250 // body lines shown across a diff
 	balanceMatchPerFile = 20  // matches shown per file
 	balanceMatchLines   = 250 // matches shown in total
 	balanceLineCells    = 300 // a longer line is cut
+	balanceLineTail     = 200 // bytes a cut failure line keeps from its end
 	balanceLogHead      = 60  // first lines of a log
 	balanceLogTail      = 80  // last lines of a log
 	balanceLogKeep      = 300 // failure lines kept between head and tail
 	balanceLogAfter     = 3   // lines kept after each failure line
 )
 
-// Balance cuts text of kind. It reports false when the cut would not save
-// at least a quarter of the text, and the caller keeps what it had.
+// Balance cuts text of kind with the default limits. It reports false when
+// the cut would not save at least a quarter of the text, and the caller keeps
+// what it had.
 func Balance(kind BalanceKind, text []byte) ([]byte, bool) {
+	return BalanceWith(kind, text, BalanceLimits{})
+}
+
+// BalanceWith is Balance with lim; a zero field of lim keeps its default.
+func BalanceWith(kind BalanceKind, text []byte, lim BalanceLimits) ([]byte, bool) {
+	lim = lim.WithDefaults()
 	lines := strings.Split(strings.TrimSuffix(string(text), "\n"), "\n")
 	var out []string
 	switch kind {
 	case BalanceDiff:
-		out = balanceDiff(lines)
+		out = balanceDiff(lines, lim)
 	case BalanceMatches:
-		out = balanceMatches(lines)
+		out = balanceMatches(lines, lim)
 	default:
-		out = balanceLog(lines)
+		out = balanceLog(lines, lim)
 	}
 	res := []byte(strings.Join(out, "\n") + "\n")
 	if len(res)*4 > len(text)*3 {
@@ -72,7 +81,9 @@ func Balance(kind BalanceKind, text []byte) ([]byte, bool) {
 	return res, true
 }
 
-// balanceCut shortens a line longer than balanceLineCells.
+// balanceCut shortens a line longer than balanceLineCells. A failure line
+// (one the log cut keeps for its words) keeps its last balanceLineTail bytes
+// too: an assertion often ends the line.
 func balanceCut(l string) string {
 	if len(l) <= balanceLineCells {
 		return l
@@ -81,11 +92,18 @@ func balanceCut(l string) string {
 	for n > 0 && !utf8.RuneStart(l[n]) {
 		n-- // never split a multi-byte character
 	}
+	if len(l) > balanceLineCells+balanceLineTail && reKeepLine.MatchString(l) {
+		m := len(l) - balanceLineTail
+		for m < len(l) && !utf8.RuneStart(l[m]) {
+			m++
+		}
+		return l[:n] + fmt.Sprintf(" … (%d bytes cut) … ", m-n) + l[m:]
+	}
 	return l[:n] + fmt.Sprintf(" … (%d more bytes)", len(l)-n)
 }
 
 // balanceDiff keeps headers and the first lines of each hunk.
-func balanceDiff(lines []string) []string {
+func balanceDiff(lines []string, lim BalanceLimits) []string {
 	var out []string
 	shown, inHunk, hunkShown, hunkCut, total := 0, false, 0, 0, 0
 	flush := func() {
@@ -106,7 +124,7 @@ func balanceDiff(lines []string) []string {
 			out = append(out, l)
 		case !inHunk:
 			out = append(out, balanceCut(l))
-		case hunkShown < balanceHunkLines && shown < balanceDiffLines:
+		case hunkShown < lim.HunkLines && shown < lim.DiffLines:
 			hunkShown++
 			shown++
 			out = append(out, balanceCut(l))
@@ -131,7 +149,7 @@ func matchFile(l string) string {
 }
 
 // balanceMatches keeps the first matches of each file and counts the rest.
-func balanceMatches(lines []string) []string {
+func balanceMatches(lines []string, lim BalanceLimits) []string {
 	var out []string
 	perFile := map[string]int{}
 	cutFiles := map[string]int{}
@@ -139,7 +157,7 @@ func balanceMatches(lines []string) []string {
 	shown := 0
 	for _, l := range lines {
 		f := matchFile(l)
-		if perFile[f] < balanceMatchPerFile && shown < balanceMatchLines {
+		if perFile[f] < lim.MatchesPerFile && shown < lim.MatchLines {
 			perFile[f]++
 			shown++
 			out = append(out, balanceCut(l))
@@ -174,8 +192,8 @@ func balanceMatches(lines []string) []string {
 var reBalanceScaffold = lazyre.New(`^\s*(=== (RUN|PAUSE|CONT|NAME)|--- (PASS|SKIP)|PASS$|ok\s)`)
 
 // balanceLog keeps the head, the tail and every failure line between them.
-func balanceLog(lines []string) []string {
-	if len(lines) <= balanceLogHead+balanceLogTail {
+func balanceLog(lines []string, lim BalanceLimits) []string {
+	if len(lines) <= lim.LogHead+lim.LogTail {
 		out := make([]string, len(lines))
 		for i, l := range lines {
 			out[i] = balanceCut(l)
@@ -183,10 +201,10 @@ func balanceLog(lines []string) []string {
 		return out
 	}
 	var out []string
-	for _, l := range lines[:balanceLogHead] {
+	for _, l := range lines[:lim.LogHead] {
 		out = append(out, balanceCut(l))
 	}
-	mid := lines[balanceLogHead : len(lines)-balanceLogTail]
+	mid := lines[lim.LogHead : len(lines)-lim.LogTail]
 	kept, gap, after := 0, 0, 0
 	for _, l := range mid {
 		failure := reKeepLine.MatchString(l) && !reBalanceScaffold.MatchString(l)
@@ -210,7 +228,7 @@ func balanceLog(lines []string) []string {
 	if gap > 0 {
 		out = append(out, fmt.Sprintf("… %d lines cut (downshift retrieve)", gap))
 	}
-	for _, l := range lines[len(lines)-balanceLogTail:] {
+	for _, l := range lines[len(lines)-lim.LogTail:] {
 		out = append(out, balanceCut(l))
 	}
 	return out
