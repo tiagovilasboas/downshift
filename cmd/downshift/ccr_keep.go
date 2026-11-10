@@ -4,6 +4,7 @@
 package main
 
 import (
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 	"os"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/ccr"
@@ -36,4 +37,11 @@ func ccrKeep() (all, failed func(raw []byte) (string, bool)) {
 		return put, nil
 	}
 	return nil, put
+}
+
+// balancedOn reports whether balanced compaction is on: the "balanced" key of
+// the config file, overridden by DOWNSHIFT_BALANCED. On by default.
+func balancedOn() bool {
+	cfg, err := contextopt.LoadConfig()
+	return contextopt.BalancedEnabled(cfg, err, os.Getenv(execwrap.BalancedEnv))
 }

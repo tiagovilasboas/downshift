@@ -62,6 +62,9 @@ type Options struct {
 	// raw output was kept, and returns what to print instead: the delta from
 	// the previous read of the same window, or the view (desktop_delta.go).
 	Desktop func(view []byte) []byte
+	// Balanced lets an output larger than BalanceThreshold be cut with loss
+	// once its raw output is stored by Keep or KeepFailed (balance.go).
+	Balanced bool
 	// Signals, when set, replaces signal.Notify as the source of signals to
 	// forward (tests).
 	Signals <-chan os.Signal
@@ -139,6 +142,7 @@ func Run(argv []string, o Options) (res Result) {
 	g := newGate(o.Stdout, o.Stderr, o.Compact && readCompactible(res.Family, argv), argv, res.Family)
 	g.skipObservation = o.SkipObservation
 	g.desktop = o.Desktop
+	g.balanced = o.Balanced
 	// The ports run once, inside finish, on this goroutine; the id of the one
 	// that stored the output goes on the Result and the event.
 	var keptID string

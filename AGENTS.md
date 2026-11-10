@@ -144,7 +144,7 @@ Key invariants (`go test ./internal/archtest` enforces the import, layer and fil
 
 **Compactor exception** (`internal/execwrap`, never an adapter): `downshift compact -- <argv>` rewrites
 allowlisted commands with no metacharacters; `"exec": false`/`DOWNSHIFT_EXEC=0` turns it off; a deny or ask
-rule stops it. CCR (`internal/ccr`, on by default since 2026-11-06; `DOWNSHIFT_CCR=0` turns it off; `"ccr": false` keeps only failed runs) is the one store of command output: [ccr.md](docs/guides/ccr.md).
+rule stops it. CCR (`internal/ccr`, on by default since 2026-11-06; `DOWNSHIFT_CCR=0` turns it off; `"ccr": false` keeps only failed runs) is the one store of command output: [ccr.md](docs/guides/ccr.md). Balanced compaction (on; `DOWNSHIFT_BALANCED=0` off) cuts an output over 16 KB only once CCR stored it.
 
 ### Reference (read on demand)
 

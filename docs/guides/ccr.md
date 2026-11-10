@@ -23,6 +23,24 @@ was opt-in and only the output of failed runs was kept; both settings below stil
 The environment wins over the file. A `context-optimization.json` that cannot be read
 never turns on keeping every run: it falls back to failures only. See [config.md](config.md).
 
+## Balanced: large outputs are cut, never lost
+
+On by default (owner decision, 2026-11-10). When CCR stored the raw output of a run
+and what the agent would read is still larger than 16 KB, the Compactor cuts it to
+what is acted on first, and the marker names the id to read the rest back:
+
+| Output | What the agent reads |
+|--------|----------------------|
+| test runs, builds, pushes, any log | the first 60 and last 80 lines, and every failure line in between (up to 300) with the 3 lines after it |
+| `git diff`, `git show` | every file and hunk header, the first 40 lines of each hunk, at most 600 in all |
+| `grep`, `rg`, `git grep` | the first 20 matches of each file, at most 250, then a count per file of the rest |
+
+A line longer than 300 characters is cut. File reads and agent-desktop reads are never
+cut this way. The cut is made only when it saves at least a quarter of the text, and
+never without stored raw output: with CCR off, outputs stay lossless.
+`DOWNSHIFT_BALANCED=0` or `"balanced": false` in `context-optimization.json` turns it
+off; `downshift doctor` shows the mode as `compactor mode`.
+
 Same limits, redaction and secret-path refusals for both modes (below); a file read of
 a secret path is never held, so never stored.
 

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Balanced compaction, on by default in every harness.** An output over 16 KB whose raw output CCR stored is cut to what the agent acts on first: a log keeps its head, tail and failure lines; a diff keeps every file and hunk header and the first lines of each hunk; a search keeps the first matches of each file and counts the rest. The marker names the `downshift retrieve` id for everything cut. Measured on this repository: `go test -v` 591 KB → 33 KB, `git grep` 1.35 MB → 20 KB, a 216 KB `git diff` → 63 KB. `DOWNSHIFT_BALANCED=0` or `"balanced": false` keeps outputs lossless; `downshift doctor` shows the mode. The compact steering setup writes for harnesses without a rewrite hook explains the cut and `retrieve`.
+
 ### Changed
 
 - `downshift setup` wizard: it draws in place below the command instead of full screen, so the choices stay in the terminal history; a new **Profile** step after the harnesses offers *Essential* (hooks, plugin, steering, project policy; the default), *Complete* (every component on by default, then the worker question) and *Custom* (the full list, as before); each component's line says what it does for you; and the run ends with a summary (a green check, harnesses, profile, components, the equivalent command and the next steps). A profile never selects a component a flag turned off or a destructive one. Flags and `--yes` are unchanged.
