@@ -7,7 +7,35 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/clispec"
 )
+
+// K3: the default help shows daily commands only; every command clispec marks
+// Experimental is left to help --all, which lists it under Maintainer or
+// Experimental.
+func TestHelpHidesExperimentalUntilAll(t *testing.T) {
+	var short, full bytes.Buffer
+	usageShort(&short)
+	usage(&full)
+	names := clispec.ExperimentalNames()
+	if len(names) == 0 {
+		t.Fatal("clispec marks no command experimental")
+	}
+	out := full.String()
+	i := strings.Index(out, "\nMaintainer")
+	if i < 0 {
+		t.Fatal("help --all has no Maintainer section")
+	}
+	for _, name := range names {
+		if strings.Contains(short.String(), "downshift "+name) {
+			t.Errorf("default help lists experimental command %q; leave it to help --all", name)
+		}
+		if !strings.Contains(out[i:], "  downshift "+name) {
+			t.Errorf("help --all must list experimental command %q under Maintainer or Experimental", name)
+		}
+	}
+}
 
 func TestUsageShortIsShortAndPointsToAll(t *testing.T) {
 	var short, full bytes.Buffer

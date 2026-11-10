@@ -4,8 +4,9 @@
 package execwrap
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -220,7 +221,7 @@ func isGradleProgram(p string) bool {
 }
 
 // gradleTaskName is the exact allowlist of task names.
-var gradleTaskName = regexp.MustCompile(`^(?:build|check|clean|test|assemble|lint|connectedAndroidTest|testDebugUnitTest|testReleaseUnitTest|assembleDebug|assembleRelease|lintDebug|lintRelease)$`)
+var gradleTaskName = lazyre.New(`^(?:build|check|clean|test|assemble|lint|connectedAndroidTest|testDebugUnitTest|testReleaseUnitTest|assembleDebug|assembleRelease|lintDebug|lintRelease)$`)
 
 // gradleTask reports whether there is at least one positional task and every
 // positional task is allowlisted.

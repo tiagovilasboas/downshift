@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Pytest failed runs, read from the default dot progress and from -v. A run is
@@ -21,27 +22,27 @@ import (
 
 var (
 	// rePytestSplitHeading opens the first section kept.
-	rePytestSplitHeading = regexp.MustCompile(`^=+ (?:FAILURES|ERRORS|warnings summary|short test summary info) =+$`)
+	rePytestSplitHeading = lazyre.New(`^=+ (?:FAILURES|ERRORS|warnings summary|short test summary info) =+$`)
 	// rePytestSectionHeading is any "=== title ===" line.
-	rePytestSectionHeading = regexp.MustCompile(`^=+ (.+?) =+$`)
+	rePytestSectionHeading = lazyre.New(`^=+ (.+?) =+$`)
 	// rePytestFinalLine is the closing summary: "=== 1 failed, 24 passed in 0.48s ===" or "-q" form "1 failed, 24 passed in 0.48s".
-	rePytestFinalLine = regexp.MustCompile(`^(?:=+ )?.*\b(?:failed|errors?)\b.* in .+`)
+	rePytestFinalLine = lazyre.New(`^(?:=+ )?.*\b(?:failed|errors?)\b.* in .+`)
 	// rePytestProgressLine: the outcome letters of a progress line, with its path and percentage.
-	rePytestProgressLine = regexp.MustCompile(`^(?:` + pytestPathChars + `\.py )?([.sFExX]+)(?: +\[ *\d+%\])?$`)
+	rePytestProgressLine = lazyre.New(`^(?:` + pytestPathChars + `\.py )?([.sFExX]+)(?: +\[ *\d+%\])?$`)
 	// rePytestVerboseLine is a -v line: nodeid, outcome, percentage.
-	rePytestVerboseLine = regexp.MustCompile(`^\S+::\S.* (PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)(?: +\[ *\d+%\])?$`)
+	rePytestVerboseLine = lazyre.New(`^\S+::\S.* (PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)(?: +\[ *\d+%\])?$`)
 	// rePytestSummaryPassed is a PASSED line of the short test summary (-rA or -rP).
-	rePytestSummaryPassed = regexp.MustCompile(`^PASSED \S.*$`)
+	rePytestSummaryPassed = lazyre.New(`^PASSED \S.*$`)
 	// rePytestSummaryFailed matches a FAILED line in short test summary info.
-	rePytestSummaryFailed = regexp.MustCompile(`^FAILED\s+(\S+?)(?:\s+-\s+.*)?$`)
+	rePytestSummaryFailed = lazyre.New(`^FAILED\s+(\S+?)(?:\s+-\s+.*)?$`)
 	// rePytestTestHeader matches the test header inside FAILURES: "___ test_name ___".
-	rePytestTestHeader = regexp.MustCompile(`^_{3,}\s*(.*?)\s*_{3,}$`)
+	rePytestTestHeader = lazyre.New(`^_{3,}\s*(.*?)\s*_{3,}$`)
 	// rePytestErrorLine matches an error or assertion line inside a failure block.
-	rePytestErrorLine = regexp.MustCompile(`^E(?:\s.*)?$`)
+	rePytestErrorLine = lazyre.New(`^E(?:\s.*)?$`)
 	// rePytestFileLine matches a file:line: message inside a failure block.
-	rePytestFileLine = regexp.MustCompile(`^\S+:\d+: .*$`)
+	rePytestFileLine = lazyre.New(`^\S+:\d+: .*$`)
 	// rePytestCapturedHeader matches standard pytest captured output section delimiters.
-	rePytestCapturedHeader = regexp.MustCompile(`^--+\s+Captured\s+(?:stdout|stderr|log)\s+.*?--+$`)
+	rePytestCapturedHeader = lazyre.New(`^--+\s+Captured\s+(?:stdout|stderr|log)\s+.*?--+$`)
 )
 
 // compactFailedPytest cuts passing tests and noise from a failed pytest run and prepends

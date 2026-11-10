@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Azure DevOps CLI (az pipelines) output compressor.
@@ -15,14 +16,14 @@ import (
 
 var (
 	// az pipelines patterns - JSON array output
-	reAzPipelinesJSON    = regexp.MustCompile(`^\s*\[\s*\{`)
-	reAzPipelinesBuildID = regexp.MustCompile(`"buildNumber":\s*"([^"]+)"`)
-	reAzPipelinesStatus  = regexp.MustCompile(`"status":\s*"([^"]+)"`)
-	reAzPipelinesResult  = regexp.MustCompile(`"result":\s*"([^"]+)"`)
-	reAzPipelinesBranch  = regexp.MustCompile(`"sourceBranch":\s*"refs/heads/([^"]+)"`)
+	reAzPipelinesJSON    = lazyre.New(`^\s*\[\s*\{`)
+	reAzPipelinesBuildID = lazyre.New(`"buildNumber":\s*"([^"]+)"`)
+	reAzPipelinesStatus  = lazyre.New(`"status":\s*"([^"]+)"`)
+	reAzPipelinesResult  = lazyre.New(`"result":\s*"([^"]+)"`)
+	reAzPipelinesBranch  = lazyre.New(`"sourceBranch":\s*"refs/heads/([^"]+)"`)
 
 	// az pipelines table output (--output table)
-	reAzPipelinesTableHeader = regexp.MustCompile(`(?m)^(?:ID|Build Number|Run ID)\s+`)
+	reAzPipelinesTableHeader = lazyre.New(`(?m)^(?:ID|Build Number|Run ID)\s+`)
 )
 
 // isAzPipelines detects az pipelines output.

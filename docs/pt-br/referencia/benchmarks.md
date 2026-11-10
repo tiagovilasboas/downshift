@@ -4,7 +4,7 @@
 > Repositório oficial: https://github.com/tiagovilasboas/downshift-ai  
 > Licença: Apache 2.0
 
-Este documento apresenta a análise técnica detalhada e os resultados oficiais do benchmark de compactação de saídas de comando do **Downshift**, gerados diretamente a partir do corpus sintético de 110 fixtures compactadas (`internal/compressor/testdata/corpus`) através do comando `make bench`.
+Este documento apresenta a análise técnica detalhada e os resultados oficiais do benchmark de compactação de saídas de comando do **Downshift**, gerados diretamente a partir do corpus sintético de 113 fixtures compactadas (`internal/compressor/testdata/corpus`) através do comando `make bench`.
 
 ---
 
@@ -35,7 +35,7 @@ O Downshift divide formalmente suas gramáticas em duas categorias de segurança
 | Categoria | Fixtures | Bytes Brutos (Raw) | Bytes Downshift | Economia (%) |
 |---|--:|--:|--:|--:|
 | **Lossless (Sem Perda)** | **64** | **104.386** | **41.863** | **59.9%** |
-| **Lossy (Sumarizada)** | **48** | **87.968** | **49.041** | **44.3%** |
+| **Lossy (Sumarizada)** | **49** | **90.487** | **49.479** | **45.3%** |
 
 > **Destaque:** Nas famílias *lossless*, o Downshift obtém **59.9% de economia média de bytes** sem sacrificar absolutamente nenhuma linha de diagnóstico ou stack trace relevante.
 

@@ -5,21 +5,22 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reGradleTask    = regexp.MustCompile(`^> Task (:[A-Za-z0-9_.:\-]*)(?: (UP-TO-DATE|NO-SOURCE|FROM-CACHE|SKIPPED))?$`)
-	reGradleBuild   = regexp.MustCompile(`^BUILD SUCCESSFUL in [0-9][0-9a-z ]*$`)
-	reGradleAnyEnd  = regexp.MustCompile(`(?m)^BUILD (?:SUCCESSFUL|FAILED) in `)
-	reGradleAnyTask = regexp.MustCompile(`(?m)^> Task :`)
-	reGradleActions = regexp.MustCompile(`^\d+ actionable tasks?: \d+ (?:executed|up-to-date|from cache)(?:, \d+ (?:executed|up-to-date|from cache))*$`)
-	reGradleDaemon  = regexp.MustCompile(`^Starting a Gradle Daemon.*$`)
+	reGradleTask    = lazyre.New(`^> Task (:[A-Za-z0-9_.:\-]*)(?: (UP-TO-DATE|NO-SOURCE|FROM-CACHE|SKIPPED))?$`)
+	reGradleBuild   = lazyre.New(`^BUILD SUCCESSFUL in [0-9][0-9a-z ]*$`)
+	reGradleAnyEnd  = lazyre.New(`(?m)^BUILD (?:SUCCESSFUL|FAILED) in `)
+	reGradleAnyTask = lazyre.New(`(?m)^> Task :`)
+	reGradleActions = lazyre.New(`^\d+ actionable tasks?: \d+ (?:executed|up-to-date|from cache)(?:, \d+ (?:executed|up-to-date|from cache))*$`)
+	reGradleDaemon  = lazyre.New(`^Starting a Gradle Daemon.*$`)
 
 	// reGradleFailure marks transcripts that are never compacted: failed
 	// builds and failed tasks.
-	reGradleFailure = regexp.MustCompile(`(?m)^BUILD FAILED|^FAILURE:|\bFAILED\b`)
+	reGradleFailure = lazyre.New(`(?m)^BUILD FAILED|^FAILURE:|\bFAILED\b`)
 )
 
 // isGradle needs both a Gradle task line and a Gradle build result line, so

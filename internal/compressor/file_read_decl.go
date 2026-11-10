@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Declaration heuristics for the folded view of a source file. They read the
@@ -16,10 +17,10 @@ import (
 var (
 	// reStrongDecl: a keyword that always opens a named declaration. Allowed up
 	// to declIndentMax columns deep, so methods inside a class or impl count.
-	reStrongDecl = regexp.MustCompile(`^(?:(?:export|pub(?:\([a-z]+\))?|public|private|protected|internal|static|async|abstract|final|default|open|override|unsafe|extern|declare|data|sealed|suspend|inline)\s+)*(?:func|fn|def|class|struct|enum|trait|interface|impl|type|function|fun|module|namespace|object|package|protocol|extension|mod|record)\b`)
+	reStrongDecl = lazyre.New(`^(?:(?:export|pub(?:\([a-z]+\))?|public|private|protected|internal|static|async|abstract|final|default|open|override|unsafe|extern|declare|data|sealed|suspend|inline)\s+)*(?:func|fn|def|class|struct|enum|trait|interface|impl|type|function|fun|module|namespace|object|package|protocol|extension|mod|record)\b`)
 	// reWeakDecl: a keyword that also opens local variables, so only at column 0.
-	reWeakDecl = regexp.MustCompile(`^(?:(?:export|pub|public|private|static|final|default|declare)\s+)*(?:const|let|var|val|static)\b`)
-	reHeading  = regexp.MustCompile(`^#{1,6}\s+\S`)
+	reWeakDecl = lazyre.New(`^(?:(?:export|pub|public|private|static|final|default|declare)\s+)*(?:const|let|var|val|static)\b`)
+	reHeading  = lazyre.New(`^#{1,6}\s+\S`)
 )
 
 // declIndentMax is the deepest indent, in columns (a tab counts 4), at which a

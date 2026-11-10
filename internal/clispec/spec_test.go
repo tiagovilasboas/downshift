@@ -73,3 +73,20 @@ func TestEnvVarsMatchSource(t *testing.T) {
 		}
 	}
 }
+
+// The experimental set is a product decision (roadmap K3): pre-O8 tooling, a
+// feature in development and maintainer tools. A daily command must never be
+// marked, or the default help would drop it.
+func TestExperimentalSetIsDeliberate(t *testing.T) {
+	want := []string{"context", "context compress", "context enable", "eval-outcome", "learning", "loop", "probe"}
+	if got := ExperimentalNames(); !slices.Equal(got, want) {
+		t.Errorf("ExperimentalNames() = %v, want %v; change this list only with the owner's decision", got, want)
+	}
+	daily := []string{"setup", "doctor", "report", "stats", "session", "compact", "retrieve", "policy", "quota",
+		"models", "uninstall", "mcp", "version", "help", "config", "plan", "discover", "export"}
+	for _, name := range daily {
+		if c, ok := Lookup(name); !ok || c.Experimental || c.Hidden {
+			t.Errorf("daily command %q must exist and be neither experimental nor hidden", name)
+		}
+	}
+}

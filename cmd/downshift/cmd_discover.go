@@ -11,25 +11,25 @@ import (
 	"os"
 	"sort"
 
-	"github.com/tiagovilasboas/downshift-ai/internal/discover"
+	"github.com/tiagovilasboas/downshift-ai/internal/missedsavings"
 )
 
 // runDiscover scans harness transcripts for commands the compactor would have
 // changed but that ran bare. It only parses flags and renders; the scan lives
-// in internal/discover and never writes what it reads. The home directory is
+// in internal/missedsavings and never writes what it reads. The home directory is
 // resolved here and passed in.
 func runDiscover(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("discover", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	since := fs.String("since", "7d", "")
-	harness := fs.String("harness", discover.HarnessAll, "")
+	harness := fs.String("harness", missedsavings.HarnessAll, "")
 	top := fs.Int("top", 10, "")
 	asJSON := fs.Bool("json", false, "")
 	if err := fs.Parse(args); err != nil || fs.NArg() > 0 || *top < 0 {
 		fmt.Fprintln(stderr, "usage: downshift discover [--since 7d] [--harness claude-code|codex|all] [--top N] [--json]")
 		return 2
 	}
-	window, err := discover.ParseSince(*since)
+	window, err := missedsavings.ParseSince(*since)
 	if err != nil {
 		fmt.Fprintf(stderr, "discover: %v\n", err)
 		return 2
@@ -39,7 +39,7 @@ func runDiscover(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "discover: cannot resolve the home directory: %v\n", err)
 		return 1
 	}
-	rep, err := discover.Scan(discover.Options{Home: home, Harness: *harness, Since: window, Label: *since, Top: *top})
+	rep, err := missedsavings.Scan(missedsavings.Options{Home: home, Harness: *harness, Since: window, Label: *since, Top: *top})
 	if err != nil {
 		fmt.Fprintf(stderr, "discover: %v\n", err)
 		return 2
@@ -57,7 +57,7 @@ func runDiscover(args []string, stdout, stderr io.Writer) int {
 }
 
 // renderDiscover prints the report as plain text.
-func renderDiscover(w io.Writer, r discover.Report) {
+func renderDiscover(w io.Writer, r missedsavings.Report) {
 	fmt.Fprintf(w, "Downshift discover: last %s, %d transcript files\n\n", r.Since, r.Files)
 	for _, h := range r.Harnesses {
 		fmt.Fprintf(w, "%-12s %d commands: %d compacted, %d compactible but bare (%s), %d skipped\n",

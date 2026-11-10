@@ -6,11 +6,11 @@ package main
 import (
 	"bytes"
 	"errors"
-	"regexp"
 	"strings"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/console/setupwizard"
 	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/diffview"
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 	"github.com/tiagovilasboas/downshift-ai/internal/setup"
 )
 
@@ -32,7 +32,7 @@ func previewSetup(base setup.Options, d setupDirs, sel setupwizard.Selection) ([
 }
 
 // changeHeader matches "<harness>: <path> would change", the line that opens a diff.
-var changeHeader = regexp.MustCompile(`^\S+: (.+) would change$`)
+var changeHeader = lazyre.New(`^\S+: (.+) would change$`)
 
 // parseSetupPreview turns the dry-run text into one File per changed file.
 // Every other line (notes, MCP steps, binaries) goes to a trailing "notes" File.

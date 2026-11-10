@@ -4,8 +4,9 @@
 package compressor
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // The install compressor cuts only lines it can name. Every line of an npm,
@@ -14,7 +15,7 @@ import (
 // unknown. One unknown line, a warning and a deprecation notice among them,
 // keeps the whole run raw.
 var (
-	reInstallNoise = regexp.MustCompile(`^(?:` +
+	reInstallNoise = lazyre.New(`^(?:` +
 		// npm
 		`added \d+ packages?(?:, and audited \d+ packages?)? in [\d.]+m?s|` +
 		`up to date(?:, audited \d+ packages?)?(?: in [\d.]+m?s)?|` +
@@ -34,7 +35,7 @@ var (
 
 	// reInstallFinding lines are kept verbatim after the summary: they report
 	// the vulnerabilities the install found and how to act on them.
-	reInstallFinding = regexp.MustCompile(`^(?:\d+ (?:low|moderate|high|critical) severity vulnerabilit.*|` +
+	reInstallFinding = lazyre.New(`^(?:\d+ (?:low|moderate|high|critical) severity vulnerabilit.*|` +
 		`\d+ vulnerabilit(?:y|ies) \(.*\)|To address .*|  npm audit fix(?: --force)?|` +
 		`Some issues need review.*|Run .npm audit. for details\.)$`)
 )

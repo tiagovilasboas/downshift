@@ -8,8 +8,9 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Agent definitions. A subagent type that is not one of the built-ins that
@@ -41,7 +42,7 @@ const (
 // agentTypeRE accepts a plain agent name or a plugin-scoped one
 // (`plugin:agent`). It has no path separator and no leading dot, so a type can
 // never name a file outside an agents directory.
-var agentTypeRE = regexp.MustCompile(`^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,63}:)?[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
+var agentTypeRE = lazyre.New(`^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,63}:)?[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
 
 // agentDefinition is what a definition says about the child's model.
 type agentDefinition struct {

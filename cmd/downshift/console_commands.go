@@ -58,13 +58,13 @@ var consoleCommands = []command.Spec{
 	{Args: []string{"playbook", "edit"}, Group: "rules", Summary: "Edit the playbook in $EDITOR", Writes: true, Terminal: true},
 	{Args: []string{"playbook", "restore"}, Group: "rules", Summary: "Restore the default playbook", Writes: true},
 	{Args: []string{"policy", "check"}, Group: "rules", Summary: "Validate the routing policy without routing"},
-	{Args: []string{"learning", "stats"}, Group: "rules", Summary: "What the learning store has seen"},
-	{Args: []string{"learning", "suggestions"}, Group: "rules", Summary: "What the learning store suggests"},
-	{Args: []string{"learning", "export"}, Group: "rules", Summary: "Dump the learning store"},
-	{Args: []string{"learning", "clear"}, Group: "rules", Summary: "Clear the learning store", Writes: true},
-	{Args: []string{"loop"}, Group: "rules", Summary: "Autonomous loop with sensor verification", Terminal: true},
 
 	// Experimental
+	{Args: []string{"learning", "stats"}, Group: "experimental", Summary: "What the learning store has seen"},
+	{Args: []string{"learning", "suggestions"}, Group: "experimental", Summary: "What the learning store suggests"},
+	{Args: []string{"learning", "export"}, Group: "experimental", Summary: "Dump the learning store"},
+	{Args: []string{"learning", "clear"}, Group: "experimental", Summary: "Clear the learning store", Writes: true},
+	{Args: []string{"loop"}, Group: "experimental", Summary: "Autonomous loop with sensor verification", Terminal: true},
 	{Args: []string{"context", "status"}, Group: "experimental", Summary: "Context optimization status and provider"},
 	{Args: []string{"context", "providers"}, Group: "experimental", Summary: "Supported context optimization providers"},
 	{Args: []string{"context", "doctor"}, Group: "experimental", Summary: "Diagnose context optimization providers"},

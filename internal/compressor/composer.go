@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Composer (PHP) install/update output compressor.
@@ -16,13 +17,13 @@ import (
 
 var (
 	// Composer summary patterns
-	reComposerPackageOps = regexp.MustCompile(`Package operations: (\d+) installs?, (\d+) updates?, (\d+) removals?`)
-	reComposerNothingTo  = regexp.MustCompile(`(?m)^Nothing to install,? (?:update|modify)`)
-	reComposerLockFresh  = regexp.MustCompile(`(?m)^Installing dependencies from lock file`)
-	reComposerGenerating = regexp.MustCompile(`(?m)^Generating (?:optimized )?autoload files`)
-	reComposerRunScript  = regexp.MustCompile(`(?m)^> [\w@:/-]+`)
-	reComposerWarning    = regexp.MustCompile(`(?i)warning|deprecated`)
-	reComposerError      = regexp.MustCompile(`(?i)^  \[[\w\\]+Exception\]|fatal error|composer install failed`)
+	reComposerPackageOps = lazyre.New(`Package operations: (\d+) installs?, (\d+) updates?, (\d+) removals?`)
+	reComposerNothingTo  = lazyre.New(`(?m)^Nothing to install,? (?:update|modify)`)
+	reComposerLockFresh  = lazyre.New(`(?m)^Installing dependencies from lock file`)
+	reComposerGenerating = lazyre.New(`(?m)^Generating (?:optimized )?autoload files`)
+	reComposerRunScript  = lazyre.New(`(?m)^> [\w@:/-]+`)
+	reComposerWarning    = lazyre.New(`(?i)warning|deprecated`)
+	reComposerError      = lazyre.New(`(?i)^  \[[\w\\]+Exception\]|fatal error|composer install failed`)
 )
 
 // isComposer detects composer install/update output.

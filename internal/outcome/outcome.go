@@ -18,12 +18,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Task is one directory under the tasks root: task.json, stub.go (starting
@@ -110,7 +111,7 @@ func SolverPrompt(t Task) (string, error) {
 		"Task: %s\n\nStarting point (stub.go):\n```go\n%s```\n", t.Prompt, stub), nil
 }
 
-var fence = regexp.MustCompile("(?s)```(?:go|golang)?\\s*\\n(.*?)```")
+var fence = lazyre.New("(?s)```(?:go|golang)?\\s*\\n(.*?)```")
 
 // ExtractGo returns the first fenced code block of out, or out itself.
 func ExtractGo(out string) string {

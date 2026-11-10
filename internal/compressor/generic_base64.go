@@ -5,14 +5,15 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // minBase64Run is the shortest run of base64 characters that is elided.
 const minBase64Run = 1024
 
-var reDataURI = regexp.MustCompile(`data:([A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+);base64,$`)
+var reDataURI = lazyre.New(`data:([A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+);base64,$`)
 
 func isBase64Byte(c byte) bool {
 	return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '+' || c == '/'

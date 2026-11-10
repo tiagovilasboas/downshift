@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // golangci-lint default (line) output:
@@ -21,11 +22,11 @@ import (
 // "(linter)" suffix on file:line:col rows.
 var (
 	// "path/file.go:12:6: message (linter)" — col may be absent.
-	reGolangciViolation = regexp.MustCompile(`^(\S+\.go):(\d+):(?:(\d+):)?\s+.*\(([a-z0-9_-]+)\)\s*$`)
+	reGolangciViolation = lazyre.New(`^(\S+\.go):(\d+):(?:(\d+):)?\s+.*\(([a-z0-9_-]+)\)\s*$`)
 	// Multiline detector: at least one row anywhere carries the "(linter)"
 	// suffix. The per-line regex above is anchored for use inside the compressor
 	// loop, so detection needs its own (?m) scan.
-	reGolangciDetect = regexp.MustCompile(`(?m)^(\S+\.go):(\d+):(?:(\d+):)?\s+.*\([a-z0-9_-]+\)\s*$`)
+	reGolangciDetect = lazyre.New(`(?m)^(\S+\.go):(\d+):(?:(\d+):)?\s+.*\([a-z0-9_-]+\)\s*$`)
 )
 
 func isGolangciLint(input []byte) bool {

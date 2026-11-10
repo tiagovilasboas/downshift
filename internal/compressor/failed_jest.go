@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Jest failed runs, read from the default and the verbose reporter. A run is
@@ -22,16 +23,16 @@ import (
 
 var (
 	// reJestFailBlock opens the first failure block.
-	reJestFailBlock = regexp.MustCompile(`^  ● \S.*$`)
+	reJestFailBlock = lazyre.New(`^  ● \S.*$`)
 	// reJestFailedSuites confirms the kept part ends in a summary that counts failed suites.
-	reJestFailedSuites = regexp.MustCompile(`(?m)^Test Suites:\s.*\bfailed\b`)
+	reJestFailedSuites = lazyre.New(`(?m)^Test Suites:\s.*\bfailed\b`)
 	// reJestPassedFile is a PASS file line; reJestFailedFile a FAIL one (kept).
-	reJestPassedFile = regexp.MustCompile(`^ ?PASS\s+\S.*$`)
-	reJestFailedFile = regexp.MustCompile(`^ ?FAIL\s+\S.*$`)
+	reJestPassedFile = lazyre.New(`^ ?PASS\s+\S.*$`)
+	reJestFailedFile = lazyre.New(`^ ?FAIL\s+\S.*$`)
 	// reJestPassedTest is a verbose line of a test that passed, with its duration.
-	reJestPassedTest = regexp.MustCompile(`^ +✓ \S.* \(\d+ ms\)$`)
+	reJestPassedTest = lazyre.New(`^ +✓ \S.* \(\d+ ms\)$`)
 	// reJestIndented is a describe line, a ✕, ○ or ✎ test line, or what a test printed.
-	reJestIndented = regexp.MustCompile(`^ +\S.*$`)
+	reJestIndented = lazyre.New(`^ +\S.*$`)
 )
 
 // compactFailedJest cuts the passing lines of a failed jest run and prepends

@@ -6,9 +6,10 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // cargo build output (rustc diagnostic format):
@@ -34,23 +35,23 @@ import (
 // unchanged, so an unexpected shape never loses a fact.
 var (
 	// "error: ...", "error[E0308]: ...", "warning: ..." header line.
-	reCargoBuildHeader = regexp.MustCompile(`^(error|warning)(?:\[[A-Za-z0-9]+\])?:\s+(.*)$`)
+	reCargoBuildHeader = lazyre.New(`^(error|warning)(?:\[[A-Za-z0-9]+\])?:\s+(.*)$`)
 	// Multiline guard: at least one diagnostic header anywhere in the input.
-	reCargoBuildHeaderM = regexp.MustCompile(`(?m)^(?:error|warning)(?:\[[A-Za-z0-9]+\])?:\s+`)
+	reCargoBuildHeaderM = lazyre.New(`(?m)^(?:error|warning)(?:\[[A-Za-z0-9]+\])?:\s+`)
 	// "  --> src/main.rs:4:9" location line.
-	reCargoBuildLocation = regexp.MustCompile(`^\s*-->\s+(\S+?):(\d+):(\d+)\s*$`)
+	reCargoBuildLocation = lazyre.New(`^\s*-->\s+(\S+?):(\d+):(\d+)\s*$`)
 	// Multiline guard for the location line.
-	reCargoBuildLocationM = regexp.MustCompile(`(?m)^\s*-->\s+\S+?:\d+:\d+\s*$`)
+	reCargoBuildLocationM = lazyre.New(`(?m)^\s*-->\s+\S+?:\d+:\d+\s*$`)
 	// Progress / status lines cargo prints to stderr during a build.
-	reCargoBuildProgress = regexp.MustCompile(`^\s*(?:Compiling|Checking|Downloading|Downloaded|Updating|Fresh|Building|Installing|Compiling|Blocking|Adding|Removing|Finished)\b`)
+	reCargoBuildProgress = lazyre.New(`^\s*(?:Compiling|Checking|Downloading|Downloaded|Updating|Fresh|Building|Installing|Compiling|Blocking|Adding|Removing|Finished)\b`)
 	// Aggregate roll-up lines: "error: aborting due to ...", "warning: `crate`
 	// (bin "crate") generated 2 warnings", "error: could not compile ...".
-	reCargoBuildAggregate = regexp.MustCompile(`^(?:error:\s+aborting due to\b|error:\s+could not compile\b|(?:error|warning):\s+.*\bgenerated\s+\d+\s+(?:warnings?|errors?)\b)`)
+	reCargoBuildAggregate = lazyre.New(`^(?:error:\s+aborting due to\b|error:\s+could not compile\b|(?:error|warning):\s+.*\bgenerated\s+\d+\s+(?:warnings?|errors?)\b)`)
 	// Code-frame context lines of a located diagnostic: the "N | source",
 	// "  | ^^^ help", "  = note/help", and bare "  |" rails rustc prints.
 	// Recognizing them explicitly means an arbitrary line inside a diagnostic
 	// still breaks the grammar and preserves, rather than being swallowed.
-	reCargoBuildContext = regexp.MustCompile(`^\s*(?:\d+\s*)?[|=]`)
+	reCargoBuildContext = lazyre.New(`^\s*(?:\d+\s*)?[|=]`)
 )
 
 // isCargoBuild returns true when the output carries at least one rustc
@@ -60,7 +61,7 @@ var (
 // transcript (a "running N tests" header or a "test result:" line) is excluded,
 // as is a bare "error[E...]: ... --> file:line" fragment with no build marker,
 // which stays with cargo test (checked after this detector).
-var reCargoBuildMarker = regexp.MustCompile(`(?m)^\s*(?:Compiling|Checking)\s+\S|^error:\s+(?:aborting due to|could not compile)\b`)
+var reCargoBuildMarker = lazyre.New(`(?m)^\s*(?:Compiling|Checking)\s+\S|^error:\s+(?:aborting due to|could not compile)\b`)
 
 func isCargoBuild(input []byte) bool {
 	if reCargoTestHeader.Match(input) || bytes.Contains(input, []byte("test result:")) {

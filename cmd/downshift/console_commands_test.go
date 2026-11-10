@@ -3,7 +3,11 @@
 
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/clispec"
+)
 
 // consoleSkip are help topics the console does not list: hook plumbing the
 // harness calls, a removed command, help itself, and the hidden docs-manifest
@@ -23,6 +27,23 @@ func TestConsoleListsEveryCommand(t *testing.T) {
 			if !consoleSkip[name] && !listed[name] {
 				t.Errorf("help topic %q has no console entry in consoleCommands", name)
 			}
+		}
+	}
+}
+
+// The console groups what clispec marks Experimental with the experimental or
+// maintainer entries, not with the daily ones.
+func TestConsoleGroupsExperimentalCommands(t *testing.T) {
+	experimental := map[string]bool{}
+	for _, n := range clispec.ExperimentalNames() {
+		experimental[n] = true
+	}
+	for _, c := range consoleCommands {
+		if !experimental[c.Args[0]] {
+			continue
+		}
+		if c.Group != "experimental" && c.Group != "maintainer" {
+			t.Errorf("console entry %v is experimental in clispec but sits in group %q", c.Args, c.Group)
 		}
 	}
 }

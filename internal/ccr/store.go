@@ -12,11 +12,11 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
@@ -27,7 +27,7 @@ var (
 	ErrInvalidID = errors.New("ccr: invalid id")
 )
 
-var reID = regexp.MustCompile(`^[0-9a-f]{12}$`)
+var reID = lazyre.New(`^[0-9a-f]{12}$`)
 
 // ValidID reports whether id has the shape Put produces.
 func ValidID(id string) bool { return reID.MatchString(id) }

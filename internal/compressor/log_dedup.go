@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // The deduplicated view of a log file read (cat x.log, tail -n N x.log).
@@ -18,8 +19,8 @@ const (
 )
 
 var (
-	reLogUUID  = regexp.MustCompile(`[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
-	reLogDigit = regexp.MustCompile(`[0-9]+`)
+	reLogUUID  = lazyre.New(`[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
+	reLogDigit = lazyre.New(`[0-9]+`)
 )
 
 // logShape is a line with its volatile parts (ids and every run of digits,

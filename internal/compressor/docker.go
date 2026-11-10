@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Docker output compressor.
@@ -16,9 +17,9 @@ import (
 
 var (
 	// docker ps header detection
-	reDockerPsHeader = regexp.MustCompile(`^CONTAINER ID\s+IMAGE\s+COMMAND\s+CREATED\s+STATUS\s+PORTS\s+NAMES`)
+	reDockerPsHeader = lazyre.New(`^CONTAINER ID\s+IMAGE\s+COMMAND\s+CREATED\s+STATUS\s+PORTS\s+NAMES`)
 	// docker images header detection
-	reDockerImagesHeader = regexp.MustCompile(`^REPOSITORY\s+TAG\s+IMAGE ID\s+CREATED\s+SIZE`)
+	reDockerImagesHeader = lazyre.New(`^REPOSITORY\s+TAG\s+IMAGE ID\s+CREATED\s+SIZE`)
 )
 
 // isDockerPs detects docker ps output.

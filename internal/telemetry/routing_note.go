@@ -3,12 +3,12 @@
 
 package telemetry
 
-import "regexp"
+import "github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 
 // identPattern is the identifier shape routing/contract and the policy loader
 // enforce on rule ids and profile names. It is repeated here because telemetry
 // must not import the router (core).
-var identPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,63}$`)
+var identPattern = lazyre.New(`^[a-z0-9][a-z0-9_.-]{0,63}$`)
 
 // RoutingNote is the routing note of one decision as the event log holds it:
 // enums, tiers and declared rule or profile ids only (routing/contract.Note

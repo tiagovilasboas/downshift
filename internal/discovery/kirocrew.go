@@ -8,9 +8,10 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // KiroCrew does not expose the running model as an environment variable, unlike
@@ -40,7 +41,7 @@ const EnvKiroCrewDir = "DOWNSHIFT_KIROCREW_DIR"
 var errKiroModelUnresolved = errors.New("kirocrew: model not resolved for session")
 
 // sessionIDPattern matches a UUID-style session ID to prevent path traversal.
-var sessionIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+var sessionIDPattern = lazyre.New(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
 // kiroModelCache memoizes resolution per session id. The routing hot path can
 // ask for the same session many times; the JSONL is read at most once per id

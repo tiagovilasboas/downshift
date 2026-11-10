@@ -17,8 +17,9 @@ package discovery
 import (
 	"context"
 	"errors"
-	"regexp"
 	"time"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Model is one model a harness reported, in the order the source listed it.
@@ -74,7 +75,7 @@ func Run(ctx context.Context, sources []Source, perSource time.Duration) []Outco
 // modelIDPattern is the shape every discovered id must have, whatever the
 // source: no spaces, control or escape characters, bounded length. Ids that do
 // not match are dropped before they reach the cache or the terminal.
-var modelIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/+\[\],=-]{0,127}$`)
+var modelIDPattern = lazyre.New(`^[A-Za-z0-9][A-Za-z0-9._:/+\[\],=-]{0,127}$`)
 
 func validModels(models []Model) []Model {
 	out := models[:0:0]

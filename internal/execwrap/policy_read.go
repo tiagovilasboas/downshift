@@ -4,9 +4,10 @@
 package execwrap
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -23,7 +24,7 @@ const (
 )
 
 // reSedRange is the one sed script accepted: print lines A to B (or line A).
-var reSedRange = regexp.MustCompile(`^([1-9][0-9]{0,8})(?:,([1-9][0-9]{0,8}))?p$`)
+var reSedRange = lazyre.New(`^([1-9][0-9]{0,8})(?:,([1-9][0-9]{0,8}))?p$`)
 
 // maxLineCount bounds head and tail -n so a count cannot overflow.
 const maxLineCount = 1_000_000

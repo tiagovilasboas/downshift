@@ -5,14 +5,15 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // goFoldDanger marks lines a fold must never summarise away or hide behind a
 // PASS header: failures, panics, races, timeouts and build-error headers.
-var goFoldDanger = regexp.MustCompile(`(?i)fail|panic|race|timeout|^# `)
+var goFoldDanger = lazyre.New(`(?i)fail|panic|race|timeout|^# `)
 
 // goCoverHeaderMin is the largest ok-package count whose header omits the
 // coverage min and max; larger runs state them up front.
@@ -20,7 +21,7 @@ const goCoverHeaderMin = 3
 
 // reGoCoverStandalone is the `coverage: N% of statements` line that package
 // directory mode prints before the ok line, which repeats the same figure.
-var reGoCoverStandalone = regexp.MustCompile(`^coverage: (\S+) of statements$`)
+var reGoCoverStandalone = lazyre.New(`^coverage: (\S+) of statements$`)
 
 type goPlainPkg struct {
 	name    string

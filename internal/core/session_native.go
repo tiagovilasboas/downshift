@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"regexp"
 	"time"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 const nativeSessionTTL = 5 * time.Minute
 
-var nativeModelID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/+\-]*$`)
+var nativeModelID = lazyre.New(`^[A-Za-z0-9][A-Za-z0-9._:/+\-]*$`)
 
 // LoadNativeSession consumes a complete current Cursor export offline. Presence
 // is authoritative even on failure: stale/malformed native availability must

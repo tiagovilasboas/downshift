@@ -9,7 +9,7 @@ var dailyCommands = []Command{
 	{Name: "setup", Summary: "Wire the hooks into every harness found (backup, diff, --undo)", Flags: f("--tui", "--no-tui", "--dry-run", "--undo", "--yes|-y", "--no-session-policy", "--you-should-know", "--no-plugin", "--no-mods", "--no-mcp", "--no-skills", "--no-steering", "--no-policy", "--keep-binaries", "--workers", "--allow-unsafe-binary", "!--mcp")},
 	{Name: "uninstall", Summary: "Restore harness hook configurations and remove wrappers", Flags: f("--dry-run", "--yes|-y", "--purge")},
 	{Name: "accept", Summary: "Record developer acceptance for code delivered by subagents", Flags: f("--session", "--used", "--discarded")},
-	{Name: "loop", Summary: "Run an engineering loop with sensor verification and cascade auto-upgrade", Flags: f("--task", "--sensor", "--iterations", "--timeout", "--session", "--model", "--batch", "--continue-on-error", "--json")},
+	{Name: "loop", Summary: "Run an engineering loop with sensor verification and cascade auto-upgrade", Flags: f("--task", "--sensor", "--iterations", "--timeout", "--session", "--model", "--batch", "--continue-on-error", "--json"), Experimental: true},
 	{Name: "doctor", Summary: "Checklist: binary, hooks per harness, state, with a fix per failure", Flags: f("--verbose", "--json", "--quiet", "--check-latest", "--harness", "--self-test")},
 	{Name: "stats", Summary: "Decisions and the tiers spawns ran on", Flags: f("--days", "--by-harness", "--detail", "--export")},
 	{Name: "report", Summary: "Measured: routed spawns, tokens per completed task, rework per verdict", Flags: f("--days", "--json", "--text", "--markdown", "--daily", "--history", "--by")},

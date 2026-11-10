@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // npm/pnpm/yarn/bun install output compressor.
@@ -16,26 +17,26 @@ import (
 
 var (
 	// npm patterns
-	reNpmAdded    = regexp.MustCompile(`(?m)^added (\d+) packages?(?:.*?in (\d+(?:\.\d+)?m?s))?`)
-	reNpmUpToDate = regexp.MustCompile(`(?m)^up to date(?:.*?in (\d+(?:\.\d+)?m?s))?`)
+	reNpmAdded    = lazyre.New(`(?m)^added (\d+) packages?(?:.*?in (\d+(?:\.\d+)?m?s))?`)
+	reNpmUpToDate = lazyre.New(`(?m)^up to date(?:.*?in (\d+(?:\.\d+)?m?s))?`)
 
 	// pnpm patterns
-	rePnpmPackages = regexp.MustCompile(`(?m)^Packages: \+(\d+)`)
-	rePnpmProgress = regexp.MustCompile(`(?m)^Progress: resolved (\d+), reused (\d+), downloaded (\d+), added (\d+)(?:, done)?`)
-	rePnpmDone     = regexp.MustCompile(`(?m)^Done in (\d+(?:\.\d+)?m?s)`)
-	rePnpmLockfile = regexp.MustCompile(`(?m)^Lockfile is up to date`)
+	rePnpmPackages = lazyre.New(`(?m)^Packages: \+(\d+)`)
+	rePnpmProgress = lazyre.New(`(?m)^Progress: resolved (\d+), reused (\d+), downloaded (\d+), added (\d+)(?:, done)?`)
+	rePnpmDone     = lazyre.New(`(?m)^Done in (\d+(?:\.\d+)?m?s)`)
+	rePnpmLockfile = lazyre.New(`(?m)^Lockfile is up to date`)
 
 	// yarn patterns
-	reYarnSuccess  = regexp.MustCompile(`(?m)^success Saved lockfile`)
-	reYarnDone     = regexp.MustCompile(`(?m)^Done in (\d+(?:\.\d+)?m?s)`)
-	reYarnResolved = regexp.MustCompile(`(?m)^Resolving packages\.\.\.`)
+	reYarnSuccess  = lazyre.New(`(?m)^success Saved lockfile`)
+	reYarnDone     = lazyre.New(`(?m)^Done in (\d+(?:\.\d+)?m?s)`)
+	reYarnResolved = lazyre.New(`(?m)^Resolving packages\.\.\.`)
 
 	// bun patterns
-	reBunInstalled = regexp.MustCompile(`(?m)^\s*(\d+) packages? installed`)
-	reBunDone      = regexp.MustCompile(`(?m)\[(\d+(?:\.\d+)?m?s)\]$`)
+	reBunInstalled = lazyre.New(`(?m)^\s*(\d+) packages? installed`)
+	reBunDone      = lazyre.New(`(?m)\[(\d+(?:\.\d+)?m?s)\]$`)
 
 	// Error indicators (fail-open)
-	reNpmError = regexp.MustCompile(`(?im)(?:^npm ERR!|^ERR!|ERESOLVE|ENOENT|EACCES|EPERM|E404|ETARGET|ENOTFOUND|code E\d{3})`)
+	reNpmError = lazyre.New(`(?im)(?:^npm ERR!|^ERR!|ERESOLVE|ENOENT|EACCES|EPERM|E404|ETARGET|ENOTFOUND|code E\d{3})`)
 )
 
 // isNpmInstall detects npm/pnpm/yarn/bun install output.

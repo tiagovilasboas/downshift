@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Laravel/Lumen Artisan command output compressor.
@@ -15,17 +16,17 @@ import (
 
 var (
 	// artisan migrate patterns
-	reArtisanMigrating      = regexp.MustCompile(`(?m)^\s*Migrating:\s+(.+)$`)
-	reArtisanMigrated       = regexp.MustCompile(`(?m)^\s*Migrated:\s+(.+)\s+\([\d.]+ms\)$`)
-	reArtisanNothingMigrate = regexp.MustCompile(`(?m)Nothing to migrate`)
-	reArtisanRollingBack    = regexp.MustCompile(`(?m)^\s*Rolling back:\s+`)
+	reArtisanMigrating      = lazyre.New(`(?m)^\s*Migrating:\s+(.+)$`)
+	reArtisanMigrated       = lazyre.New(`(?m)^\s*Migrated:\s+(.+)\s+\([\d.]+ms\)$`)
+	reArtisanNothingMigrate = lazyre.New(`(?m)Nothing to migrate`)
+	reArtisanRollingBack    = lazyre.New(`(?m)^\s*Rolling back:\s+`)
 
 	// artisan route:list patterns (table with lots of columns)
-	reArtisanRouteHeader = regexp.MustCompile(`(?m)^\s*(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\|`)
-	reArtisanRouteDomain = regexp.MustCompile(`(?m)^\s*Domain\s+\|\s+Method\s+\|`)
+	reArtisanRouteHeader = lazyre.New(`(?m)^\s*(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\|`)
+	reArtisanRouteDomain = lazyre.New(`(?m)^\s*Domain\s+\|\s+Method\s+\|`)
 
 	// artisan general patterns
-	reArtisanError = regexp.MustCompile(`(?m)^\s*ERROR\s+|Exception|SQLSTATE`)
+	reArtisanError = lazyre.New(`(?m)^\s*ERROR\s+|Exception|SQLSTATE`)
 )
 
 // isArtisanMigrate detects artisan migrate output.

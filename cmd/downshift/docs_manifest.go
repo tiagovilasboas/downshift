@@ -28,12 +28,13 @@ type docsManifest struct {
 }
 
 type manifestCommand struct {
-	Name    string         `json:"name"`
-	Summary string         `json:"summary"`
-	Hidden  bool           `json:"hidden,omitempty"`
-	AliasOf string         `json:"alias_of,omitempty"`
-	Legacy  bool           `json:"legacy,omitempty"`
-	Flags   []clispec.Flag `json:"flags,omitempty"`
+	Name         string         `json:"name"`
+	Summary      string         `json:"summary"`
+	Hidden       bool           `json:"hidden,omitempty"`
+	AliasOf      string         `json:"alias_of,omitempty"`
+	Legacy       bool           `json:"legacy,omitempty"`
+	Experimental bool           `json:"experimental,omitempty"`
+	Flags        []clispec.Flag `json:"flags,omitempty"`
 }
 
 // buildDocsManifest gathers the manifest from the shared registries. Slices
@@ -47,7 +48,7 @@ func buildDocsManifest() docsManifest {
 		Harnesses: map[string]core.HarnessCapabilities{},
 	}
 	for _, c := range clispec.Commands() {
-		m.Commands = append(m.Commands, manifestCommand{Name: c.Name, Summary: c.Summary, Hidden: c.Hidden, AliasOf: c.AliasOf, Legacy: c.Legacy, Flags: c.Flags})
+		m.Commands = append(m.Commands, manifestCommand{Name: c.Name, Summary: c.Summary, Hidden: c.Hidden, AliasOf: c.AliasOf, Legacy: c.Legacy, Experimental: c.Experimental, Flags: c.Flags})
 	}
 	for _, h := range core.AllHarnessCaps() {
 		m.Harnesses[h.Harness] = h.Caps

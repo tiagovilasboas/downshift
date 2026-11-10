@@ -5,7 +5,8 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Stack-trace fold for the generic chain. A run of more than stackFoldMin
@@ -32,12 +33,12 @@ const (
 )
 
 var (
-	reStackJS     = regexp.MustCompile(`^\s+at (?:async )?(?:[\w$.<>\[\]]+(?: \[as [\w$]+\])? \(.+:\d+:\d+\)|[^\s()]+:\d+:\d+)$`)
-	reStackJava   = regexp.MustCompile(`^\s+at [\w$.<>/]+\([^()\s][^()]*\)$`)
-	reStackPyFile = regexp.MustCompile(`^  File ".+", line \d+(?:, in .+)?$`)
-	reStackPyCode = regexp.MustCompile(`^    \S`)
-	reStackGoFn   = regexp.MustCompile(`^[A-Za-z_]\S*\(.*\)$`)
-	reStackGoFile = regexp.MustCompile(`^\t\S+\.go:\d+(?: \+0x[0-9a-f]+)?$`)
+	reStackJS     = lazyre.New(`^\s+at (?:async )?(?:[\w$.<>\[\]]+(?: \[as [\w$]+\])? \(.+:\d+:\d+\)|[^\s()]+:\d+:\d+)$`)
+	reStackJava   = lazyre.New(`^\s+at [\w$.<>/]+\([^()\s][^()]*\)$`)
+	reStackPyFile = lazyre.New(`^  File ".+", line \d+(?:, in .+)?$`)
+	reStackPyCode = lazyre.New(`^    \S`)
+	reStackGoFn   = lazyre.New(`^[A-Za-z_]\S*\(.*\)$`)
+	reStackGoFile = lazyre.New(`^\t\S+\.go:\d+(?: \+0x[0-9a-f]+)?$`)
 )
 
 // stackRun is a foldable run: the index of the first line of each frame and

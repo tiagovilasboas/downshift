@@ -5,10 +5,11 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // ESLint "stylish" formatter output (default):
@@ -20,11 +21,11 @@ import (
 //	✖ 3 problems (2 errors, 1 warning)
 var (
 	// A bare file path header line (no leading spaces, not a violation or summary).
-	reEslintFile = regexp.MustCompile(`^(?:[./~]|[A-Za-z]:\\)\S*$`)
+	reEslintFile = lazyre.New(`^(?:[./~]|[A-Za-z]:\\)\S*$`)
 	// "  12:5  error  message  rule-name"
-	reEslintViolation = regexp.MustCompile(`^\s+(\d+):(\d+)\s+(error|warning)\s+.+?\s+([@A-Za-z0-9/_-]+)\s*$`)
+	reEslintViolation = lazyre.New(`^\s+(\d+):(\d+)\s+(error|warning)\s+.+?\s+([@A-Za-z0-9/_-]+)\s*$`)
 	// "✖ 3 problems (2 errors, 1 warning)"
-	reEslintSummary = regexp.MustCompile(`(?m)^[✖✗x]?\s*(\d+)\s+problems?\s+\((\d+)\s+errors?,\s*(\d+)\s+warnings?\)`)
+	reEslintSummary = lazyre.New(`(?m)^[✖✗x]?\s*(\d+)\s+problems?\s+\((\d+)\s+errors?,\s*(\d+)\s+warnings?\)`)
 )
 
 func isEslint(input []byte) bool {
