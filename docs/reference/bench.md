@@ -26,9 +26,9 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | gh_pr | lossless | 2 | 1843 | 1756 | 4.7 | 460 | 439 | 1848 | -0.3 |
 | gh_run_list | lossless | 1 | 378 | 221 | 41.5 | 94 | 55 | 267 | 29.4 |
 | gh_run_log | lossy | 2 | 2451 | 637 | 74.0 | 612 | 159 | 729 | 70.3 |
-| git_diff | lossless | 2 | 541 | 533 | 1.5 | 135 | 133 | 625 | -15.5 |
+| git_diff | lossless | 3 | 810 | 822 | -1.5 | 202 | 205 | 960 | -18.5 |
 | git_log | lossy | 5 | 2265 | 610 | 73.1 | 566 | 152 | 840 | 62.9 |
-| git_show | lossless | 1 | 363 | 367 | -1.1 | 90 | 91 | 413 | -13.8 |
+| git_show | lossless | 2 | 786 | 810 | -3.1 | 196 | 202 | 902 | -14.8 |
 | git_stash | lossy | 1 | 192 | 175 | 8.9 | 48 | 43 | 221 | -15.1 |
 | git_status | lossless | 5 | 1113 | 538 | 51.7 | 278 | 134 | 768 | 31.0 |
 | glab | lossy | 2 | 1673 | 1672 | 0.1 | 418 | 418 | 1764 | -5.4 |
@@ -41,7 +41,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | http_fetch | lossy | 1 | 4980 | 1841 | 63.0 | 1245 | 460 | 1298 | 73.9 |
 | jest | lossless | 2 | 459 | 208 | 54.7 | 114 | 52 | 300 | 34.6 |
 | kubectl_pods | lossy | 1 | 229 | 182 | 20.5 | 57 | 45 | 228 | 0.4 |
-| lockfile_diff | lossy | 1 | 2479 | 219 | 91.2 | 619 | 54 | 265 | 89.3 |
+| lockfile_diff | lossy | 2 | 4998 | 657 | 86.9 | 1249 | 164 | 749 | 85.0 |
 | markdown | lossy | 2 | 1063 | 921 | 13.4 | 265 | 230 | 1013 | 4.7 |
 | maven | lossy | 3 | 6676 | 880 | 86.8 | 1669 | 220 | 1018 | 84.8 |
 | mypy | lossy | 2 | 710 | 373 | 47.5 | 177 | 93 | 465 | 34.5 |
@@ -61,8 +61,8 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | tsc | lossless | 3 | 946 | 204 | 78.4 | 236 | 51 | 342 | 63.8 |
 | turbo | lossless | 1 | 494 | 101 | 79.6 | 123 | 25 | 147 | 70.2 |
 | vitest | lossless | 4 | 3624 | 931 | 74.3 | 906 | 232 | 1115 | 69.2 |
-| uncompacted (CCR only) | lossy | 3 | 6105 | 6105 | 0.0 | 1526 | 1526 | 1176 | 80.7 |
-| TOTAL | - | 110 | 191662 | 90172 | 53.0 | 47915 | 22543 | 63008 | 67.1 |
+| uncompacted (CCR only) | lossy | 3 | 6150 | 6150 | 0.0 | 1537 | 1537 | 1221 | 80.1 |
+| TOTAL | - | 113 | 194873 | 91342 | 53.1 | 48718 | 22835 | 64316 | 67.0 |
 
 ## Lossless and lossy split
 
@@ -70,15 +70,27 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 
 | Class | Fixtures | Raw bytes | Downshift bytes | Saving % |
 |---|--:|--:|--:|--:|
-| lossless | 62 | 103694 | 41131 | 60.3 |
-| lossy | 48 | 87968 | 49041 | 44.3 |
+| lossless | 64 | 104386 | 41863 | 59.9 |
+| lossy | 49 | 90487 | 49479 | 45.3 |
 
 ## Relationship to live token savings
 
-The figures above measure raw byte reduction across a synthetic corpus of 110 compacted fixtures: command output and agent-desktop reads.
+The figures above measure raw byte reduction across a synthetic corpus of 113 compacted fixtures: command output and agent-desktop reads.
 
 - In live LLM sessions, compaction cuts verbose command outputs before they enter the prompt context, directly saving input tokens and subsequent prompt cache reads.
-- With CCR enabled, overall corpus reduction is **67.1% fewer bytes** (and **53.0%** with CCR disabled).
-- Lossless families (62 fixtures) have **60.3% fewer bytes** while keeping every failure line, exit code and stack trace.
+- With CCR enabled, overall corpus reduction is **67.0% fewer bytes** (and **53.1%** with CCR disabled).
+- Lossless families (64 fixtures) have **59.9% fewer bytes** while keeping every failure line, exit code and stack trace.
 - Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.
 - Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
+
+## Balanced: large outputs
+
+Balanced compaction (on by default) cuts an output over 16 KB once CCR stored its raw output, so every cut line stays retrievable. These fixtures are real outputs of this repository. `Lossless` is the compressor alone; `Balanced` adds the cut. Bytes include the marker line.
+
+| Fixture | Raw bytes | Lossless bytes | Lossless saving % | Balanced bytes | Balanced saving % |
+|---|--:|--:|--:|--:|--:|
+| diff_git_log_p | 57777 | 57777 | 0.0 | 23737 | 58.9 |
+| diff_git_show | 38009 | 36256 | 4.6 | 17723 | 53.4 |
+| log_go_test_v | 130408 | 18449 | 85.9 | 9269 | 92.9 |
+| matches_grep_rn | 98719 | 98719 | 0.0 | 26223 | 73.4 |
+| TOTAL | 324913 | 211201 | 35.0 | 76952 | 76.3 |

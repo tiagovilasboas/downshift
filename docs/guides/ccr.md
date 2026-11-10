@@ -32,7 +32,7 @@ what is acted on first, and the marker names the id to read the rest back:
 | Output | What the agent reads |
 |--------|----------------------|
 | test runs, builds, pushes, any log | the first 60 and last 80 lines, and every failure line in between (up to 300) with the 3 lines after it |
-| `git diff`, `git show` | every file and hunk header, the first 40 lines of each hunk, at most 600 in all |
+| `git diff`, `git show` | every file and hunk header, the first 30 lines of each hunk, at most 250 in all |
 | `grep`, `rg`, `git grep` | the first 20 matches of each file, at most 250, then a count per file of the rest |
 
 A line longer than 300 characters is cut. File reads and agent-desktop reads are never
