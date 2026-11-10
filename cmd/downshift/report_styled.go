@@ -36,7 +36,7 @@ func styledReportData(d reportOut, events []telemetry.Event, days int, scope acc
 		Harnesses: rows,
 		Tabs: []reportview.Tab{
 			tabOf("Savings", func(w io.Writer) {
-				printCompactionLead(w, d.TokensByHarness, scope)
+				printSummaryText(w, d.Summary, scope.Label())
 				fmt.Fprintf(w, "\n📦 COMPACTOR (%s)\n", d.Numbers.Scope.Label())
 				fmt.Fprintf(w, "   %s\n", d.Numbers.Display.Compactor)
 				printCompactionDetailText(w, d.CompactionDetail)

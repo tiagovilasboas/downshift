@@ -17,20 +17,9 @@ import (
 // tables a chat renders. Per harness, never summed; no money.
 func printReportMarkdown(w io.Writer, out reportOut, scope string) {
 	fmt.Fprintf(w, "# Downshift report (%s)\n\n", scope)
-
-	fmt.Fprint(w, "## Compaction savings per harness\n\nTokens kept out of the context by the Compactor.\n\n")
-	fmt.Fprintln(w, "| harness | tokens avoided |")
-	fmt.Fprintln(w, "|---|--:|")
-	have := map[string]bool{}
-	for _, r := range out.TokensByHarness {
-		have[r.Harness] = true
-		if r.CompactorAvoided > 0 {
-			fmt.Fprintf(w, "| %s | %s |\n", r.Harness, telemetry.ShortTokens(r.CompactorAvoided))
-		}
-	}
-	fmt.Fprintf(w, "\n%s\n", noEventsLine(have))
+	printSummaryMarkdown(w, out.Summary)
 	if n := out.Numbers.Compactor.RetrievedBytes; n > 0 {
-		fmt.Fprintf(w, "_Read back with `retrieve`: %d bytes, already subtracted from the savings above._\n", n)
+		fmt.Fprintf(w, "_Read back with `retrieve`: %d bytes, already subtracted from the savings above._\n\n", n)
 	}
 	fmt.Fprintln(w)
 	printCompactionDetailMarkdown(w, out.CompactionDetail)

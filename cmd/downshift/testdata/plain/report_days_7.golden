@@ -4,10 +4,9 @@ exit: 0
 
 ## Compaction savings per harness
 
-Tokens kept out of the context by the Compactor.
+Tokens kept out of the context by the Compactor, with the rest of what the agents pane shows, per harness.
 
-| harness | tokens avoided |
-|---|--:|
+No compaction events in this window.
 
 _No events: antigravity, claude-code, codex, cursor, kiro, kirocrew, opencode._
 

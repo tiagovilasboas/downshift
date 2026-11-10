@@ -163,6 +163,26 @@
   "compactor_saved_bytes": 4000,
   "compactor_tokens_estimate": 1000,
   "tokens_saved_estimate": 1000,
+  "summary_by_harness": [
+    {
+      "harness": "claude-code",
+      "compactor_tokens_saved": 1000,
+      "compactor_raw_bytes": 4400,
+      "compactor_saved_bytes": 4000,
+      "compactor_cut_pct": 90.9090909090909,
+      "compactor_commands": 1,
+      "compactor_compacted": 1,
+      "compactor_retrieved_bytes": 0,
+      "compactor_hook_commands": 0,
+      "compactor_direct_commands": 1,
+      "spawns_model_switched": 3,
+      "spawns_effort_changed": 0,
+      "spawns_held": 0,
+      "spawns_held_guardrail": 0,
+      "cheaper_observed": false,
+      "cheaper_pct": 0
+    }
+  ],
   "numbers": {
     "scope": {
       "kind": "days"

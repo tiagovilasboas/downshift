@@ -94,6 +94,7 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		WhySpawnsChanged: why, TokensByHarness: perHarness, CompactionByHarness: compactionRows(perHarness),
 		MainSessionWork: mainWork, CompactionDetail: detail, Efficiency: efficiency,
 		Adoption: accounting.BuildAdoption(events, scope),
+		Summary:  buildPaneRows(events, execEvents, scope),
 	}
 	if styledReportWanted && !asJSON && !asText {
 		if err := showStyledReport(styledReportData(data, events, days, scope)); err == nil {
@@ -118,7 +119,7 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	// The Compactor leads: it runs on every harness and OS with no
 	// model-rewrite channel, so it carries no platform risk. Per harness, in
 	// tokens, from the same exec-log rows the routing table reuses below.
-	printCompactionLead(stdout, perHarness, scope)
+	printSummaryText(stdout, data.Summary, scope.Label())
 
 	// The routed row, the rework per verdict, the plan lens and the per-harness
 	// completion lines are the canonical report; telemetry owns their wording
@@ -146,6 +147,8 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 // plus the Numbers every surface shares.
 type reportOut struct {
 	telemetry.Report
+	// Summary is the head of the report: what the agents pane shows, for the window.
+	Summary        []paneRow                 `json:"summary_by_harness"`
 	Numbers        accounting.Numbers        `json:"numbers"`
 	CurrentHarness string                    `json:"current_harness,omitempty"`
 	ByHarness      []telemetry.HarnessReport `json:"by_harness,omitempty"`

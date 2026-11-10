@@ -1,7 +1,14 @@
 COMPACTION SAVINGS PER HARNESS (all time; tokens kept out of the context, per harness, never summed)
-   harness        tokens avoided (Compactor)
-   claude-code    1.0k
-   no events: antigravity, cursor, kiro, kirocrew, opencode
+   claude-code    1.0k tokens saved
+      output cut                           91% (3.9 KB of 4.3 KB)
+      runs · compacted                     1 · 1
+      hook · direct                        0 · 1
+      read back                            -
+      subagents: model · effort · held     3 · 0 · 0 (0 guardrail)
+      subagent tokens on a cheaper model   unobserved
+   Per harness, never summed. Tokens saved are the Compactor's (saved bytes / 4, an estimate, net of what `retrieve` read back). Cheaper-model tokens still ran, below the session model: never added to tokens saved.
+   no events: antigravity, codex, cursor, kiro, kirocrew, opencode
+
 Current harness: claude-code
 
 Routed spawns, all time
@@ -49,8 +56,8 @@ Routing tokens, by harness (billable = input + output + cache write)
 
 COMPACTION DETAIL PER HARNESS (tokens are bytes / 4, an estimate)
    claude-code: 1 commands, 1 compacted
-      family             commands compacted output tokens tokens avoided
-      other                     1         1          1.1k           1.0k
+      family             commands compacted output tokens tokens avoided   cut
+      other                     1         1          1.1k           1.0k   91%
 
 EFFICIENCY PER HARNESS (all time)
    More work done, less premium intelligence consumed. Compactor tokens: see the section above.

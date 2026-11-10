@@ -57,7 +57,7 @@ func quotaByHarness(now time.Time) map[string]accounting.QuotaUsed {
 
 // printQuotaByHarness writes one line per harness with the quota it has used.
 // The Compactor tokens are printed once, by the leading section
-// (printCompactionLead), and the routing tokens once, by the routed report
+// (the summary per harness), and the routing tokens once, by the routed report
 // (telemetry.PrintRouting); neither is repeated here.
 func printQuotaByHarness(w io.Writer, rows []accounting.HarnessTokens, scope accounting.Scope) {
 	fmt.Fprintf(w, "\nQUOTA USED PER HARNESS (%s)\n", scope.Label())
