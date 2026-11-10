@@ -6,9 +6,9 @@
 
 # Downshift
 
-### Less command noise. Smarter subagent routing.
+### Cut the token waste in Claude Code, Codex and other coding agents.
 
-Downshift is an open-source CLI for AI coding agents. It helps reduce LLM token usage through command output compaction and applies subagent model routing within your policy. Single Go binary.
+AI coding agents spend much of their context on test logs, build output and status dumps, and every subagent runs on your main model unless something sets another. That burns tokens and fills the context window. Downshift is an open-source CLI that compacts supported command output before the agent reads it, with failures and exit codes kept: 67.1% fewer bytes on a 110-fixture benchmark. It also applies the model and effort chosen for each subagent, within the policy you declare. Single Go binary.
 
 Works with coding harnesses including Claude Code and Codex CLI; integration capabilities and available models vary by harness and session.
 
@@ -155,6 +155,16 @@ These are separate measurements in different units and workloads. The synthetic 
 
 [Compaction benchmark](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/bench.md) · [Routing study](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/evidence/four-arm-mechanical-2026-10-21.md) · [Evidence guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/evidence.md)
 
+## Research behind the design
+
+Downshift's design starts from Anthropic's published work on orchestration. A strong lead plans and checks, cheaper workers do bounded work, and every extra agent has to earn its tokens.
+
+- [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (2025): an Opus lead with Sonnet subagents beat a single Opus agent by 90.2% on research, at about 15× the tokens of a chat. The same post notes that coding parallelizes less than research.
+- [Patterns and problems in emerging multiagent systems](https://www.anthropic.com/research/multiagent-systems) (2026): a coordinating swarm found 266 vulnerabilities to the independent agents' 21, largely by searching more ground; inside the same directories, tokens per finding were comparable.
+- [Riemann zeta research with 60 subagents](https://www.anthropic.com/research/riemann-zeta) (2026): of 60 subagents, 2 developed the key ideas, 30 tried and failed, and 13 validated the arguments.
+
+How each finding maps to a design principle, and what it does not show: [True north](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/true-north.md) · [Reconciliation](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)
+
 ## Built for inspection and control
 
 - Hooks fail open: errors or timeouts leave the requested spawn unchanged.
@@ -176,6 +186,20 @@ These are separate measurements in different units and workloads. The synthetic 
 | `downshift mcp serve` | Run local stdio MCP server (13 native tools) |
 
 [Safety](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/safety.md) · [Telemetry](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/telemetry.md) · [Known limitations](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/known-limitations.md)
+
+## FAQ
+
+**How do I reduce token usage in Claude Code, Codex or Cursor?** Install Downshift and run `downshift setup`. Supported command output is compacted before it reaches the context window, and each subagent runs on the model chosen for it, bounded by your policy. On Claude Code the rewrite is automatic; elsewhere the agent runs `downshift compact -- <command>`. Check your numbers with `downshift session` and `downshift report`.
+
+**Do Claude Code subagents burn my usage limit faster?** They can. Each subagent starts with a fresh context and sends its own requests, which count toward the same usage limits as your main conversation, and it runs on your main model unless something sets another. Put routine subagents on a smaller model: `downshift policy init` writes an `explore` profile that sends Explore to the small tier. [Guide](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/)
+
+**Does Downshift save my Claude Code usage limit?** Not measured yet. Downshift reports the tokens that ran below your session model and the bytes compaction removed. How a plan converts tokens into its 5-hour and weekly limits is not published, so no limit saving is claimed.
+
+**Does subagent routing break prompt caching?** No. The choice applies to whole subagent spawns, not to turns of your main session, which keeps one model for the whole conversation.
+
+**How is this different from `/compact`?** `/compact` summarizes conversation history already in the context window. Downshift shrinks command output before it enters. They are complementary.
+
+**How is this different from `CLAUDE_CODE_SUBAGENT_MODEL`?** That variable sets one default model for every subagent nothing else sets. Downshift applies the model chosen for each spawn within a policy you declare, keeps the requested model when in doubt, records where tokens ran, and also works in Codex, Cursor and OpenCode.
 
 ## Documentation and community
 
