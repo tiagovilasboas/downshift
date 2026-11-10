@@ -135,10 +135,11 @@ Downshift was built with Claude Code and supports other harnesses at different s
 | --- | --- | --- |
 | Claude Code | Completed | Rewrite observed on a real child. |
 | Codex | Functional | Rewrite emitted; honor inferred, not directly observed. |
+| Kiro IDE | Functional | MCP advisory mode; models mirrored from KiroCrew. |
+| KiroCrew | Functional | MCP advisory mode; hooks wired for policy enforcement. |
 | OpenCode | Beta | Routing and child usage observed on OpenCode 2.2.5. |
 | Cursor | Experimental | Rewrite emitted; executor honor unconfirmed. |
 | Antigravity | Experimental | One child observed on one build. |
-| KiroCrew | Experimental | Policy mode, without in-place model rewrite. |
 
 Models available to one harness or session are not assumed to be available to another. See the [full harness matrix](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/harness-matrix.md) for integration details, evidence and limits.
 
