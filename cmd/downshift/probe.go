@@ -11,10 +11,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"time"
 
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
@@ -30,7 +30,7 @@ import (
 
 const probeMaxBytes = 2 << 20 // stop recording at 2 MiB
 
-var probeEventPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_.-]{0,39}$`)
+var probeEventPattern = lazyre.New(`^[A-Za-z][A-Za-z0-9_.-]{0,39}$`)
 
 // Fields whose value is a model id or a short label: kept as they are.
 var probeValueFields = []string{"hook_event_name", "cursor_version", "model", "model_id", "subagent_model", "tool_name", "subagent_type", "composer_mode", "source"}

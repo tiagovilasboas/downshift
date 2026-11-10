@@ -6,23 +6,24 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // reFlutterProgress is one status segment of the Dart test reporter that
 // `flutter test` and `dart test` share: `00:03 +12 ~1: name`. The failure
 // counter (`-N`) is parsed only so it can be refused.
-var reFlutterProgress = regexp.MustCompile(`^(\d{2,}:\d{2}) \+(\d+)(?: -(\d+))?(?: ~(\d+))?: (.+)$`)
+var reFlutterProgress = lazyre.New(`^(\d{2,}:\d{2}) \+(\d+)(?: -(\d+))?(?: ~(\d+))?: (.+)$`)
 
 // reFlutterTestFailure marks a failing, erroring or diagnostic run. Detection
 // reports it as an error so the raw output is kept.
-var reFlutterTestFailure = regexp.MustCompile(`\[E\]|Some tests failed|\+\d+ -\d+|Expected:|Actual:|EXCEPTION CAUGHT`)
+var reFlutterTestFailure = lazyre.New(`\[E\]|Some tests failed|\+\d+ -\d+|Expected:|Actual:|EXCEPTION CAUGHT`)
 
 // reFlutterDanger marks segment text that must never be dropped: a print can
 // imitate the status format, so such a segment makes the run ambiguous.
-var reFlutterDanger = regexp.MustCompile(`(?i)error|exception|fail|warning|panic|fatal|secret|token|password`)
+var reFlutterDanger = lazyre.New(`(?i)error|exception|fail|warning|panic|fatal|secret|token|password`)
 
 const flutterAllPassed = "All tests passed!"
 

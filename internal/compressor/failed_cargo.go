@@ -6,9 +6,10 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Cargo test failed runs. The output is read as blocks, one per test binary:
@@ -32,11 +33,11 @@ import (
 // the blocks (Compiling, warnings, "error: test failed") is kept as written.
 
 var (
-	reCargoFailedSignal = regexp.MustCompile(`(?m)^test result: FAILED\. `)
-	reCargoBlockStart   = regexp.MustCompile(`^\s+(?:Running \S.*|Doc-tests \S+)$`)
-	reCargoRunningN     = regexp.MustCompile(`^running (\d+) tests?$`)
-	reCargoTestLine     = regexp.MustCompile(`^test (\S.*) \.\.\. (ok|FAILED|ignored(?:, .*)?)$`)
-	reCargoResultLine   = regexp.MustCompile(`^test result: (ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; \d+ measured; \d+ filtered out; finished in \S+$`)
+	reCargoFailedSignal = lazyre.New(`(?m)^test result: FAILED\. `)
+	reCargoBlockStart   = lazyre.New(`^\s+(?:Running \S.*|Doc-tests \S+)$`)
+	reCargoRunningN     = lazyre.New(`^running (\d+) tests?$`)
+	reCargoTestLine     = lazyre.New(`^test (\S.*) \.\.\. (ok|FAILED|ignored(?:, .*)?)$`)
+	reCargoResultLine   = lazyre.New(`^test result: (ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; \d+ measured; \d+ filtered out; finished in \S+$`)
 )
 
 // cargoCut counts what a failed run dropped.

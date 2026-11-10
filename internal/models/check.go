@@ -10,9 +10,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 	"time"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // ProviderConfig describes one provider's model-list API.
@@ -89,7 +90,7 @@ const maxModelListBytes = 4 << 20
 // modelIDPattern is what a model id may look like. Anything else (escape
 // sequences, spaces, control characters) is dropped, so a hostile answer can
 // neither reach the terminal nor the user catalog.
-var modelIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/+-]{0,127}$`)
+var modelIDPattern = lazyre.New(`^[A-Za-z0-9][A-Za-z0-9._:/+-]{0,127}$`)
 
 func validModelID(id string) bool { return modelIDPattern.MatchString(id) }
 

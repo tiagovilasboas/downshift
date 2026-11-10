@@ -4,8 +4,9 @@
 package classify
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // A bounded brief is a long delegation prompt that fences its own work. It
@@ -15,15 +16,15 @@ import (
 // project description, "no git commit", "other agents work concurrently") that
 // describe context or constraints, not the task.
 var (
-	briefScopeRE  = regexp.MustCompile(`(?i)\b(read[- ]only|do not (edit|modify|touch)|don't (edit|modify|touch)|edit nothing|edit only|only edit|write only|work only|n[aã]o edite|somente leitura|apenas leitura|stay within these|do not publish, deploy|modify unrelated subsystems|bounded .{0,40} workstream)\b`)
-	briefVerifyRE = regexp.MustCompile(`(?i)\b(go (test|vet|build)|npm (run )?(test|build|lint)|pnpm (test|build)|yarn test|pytest|cargo (test|build)|vitest|jest|make (test|check)|run the relevant tests)\b`)
-	briefBudgetRE = regexp.MustCompile(`(?i)\b(reply|respond|answer|report|summary|responda)\b[^.\n]{0,40}?(<=|≤|under|at most|no more than|max(imum)?|até)\s*\d+\s*(words|lines|rows|palavras|linhas)|\b(under|<=|≤)\s*\d+\s*(words|palavras)`)
+	briefScopeRE  = lazyre.New(`(?i)\b(read[- ]only|do not (edit|modify|touch)|don't (edit|modify|touch)|edit nothing|edit only|only edit|write only|work only|n[aã]o edite|somente leitura|apenas leitura|stay within these|do not publish, deploy|modify unrelated subsystems|bounded .{0,40} workstream)\b`)
+	briefVerifyRE = lazyre.New(`(?i)\b(go (test|vet|build)|npm (run )?(test|build|lint)|pnpm (test|build)|yarn test|pytest|cargo (test|build)|vitest|jest|make (test|check)|run the relevant tests)\b`)
+	briefBudgetRE = lazyre.New(`(?i)\b(reply|respond|answer|report|summary|responda)\b[^.\n]{0,40}?(<=|≤|under|at most|no more than|max(imum)?|até)\s*\d+\s*(words|lines|rows|palavras|linhas)|\b(under|<=|≤)\s*\d+\s*(words|palavras)`)
 	// Review and retry wording names the kind of work even inside a brief, so
 	// it is never discounted (see reviewSignals and the retry rows).
-	briefStrongRE = regexp.MustCompile(`(?i)\b(security\s+(audit|review)|code\s+review|trade-?offs?|design\s+doc|rfc|think\s+through|(auditoria|revis\S{1,3}o)\s+de\s+seguran|previous\s+attempt|tentativa\s+anterior|compilation\s+failed|failed\s+to\s+compile|subagent\s+failed|subagente\s+falhou|tests?\s+failed|testes?\s+falharam|fix\s+(the\s+)?(build|compilation))\b`)
+	briefStrongRE = lazyre.New(`(?i)\b(security\s+(audit|review)|code\s+review|trade-?offs?|design\s+doc|rfc|think\s+through|(auditoria|revis\S{1,3}o)\s+de\s+seguran|previous\s+attempt|tentativa\s+anterior|compilation\s+failed|failed\s+to\s+compile|subagent\s+failed|subagente\s+falhou|tests?\s+failed|testes?\s+falharam|fix\s+(the\s+)?(build|compilation))\b`)
 	// trivialNegationRE matches immediately before a TRIVIAL keyword on long
 	// delegation briefs: "no git commit", "never push", "não rode git pull".
-	trivialNegationRE = regexp.MustCompile(`(?i)\b(do not|don't|never|nor|without|not|no|n[aã]o|nunca|sem|jamais)\b[^.;:\n]{0,30}$`)
+	trivialNegationRE = lazyre.New(`(?i)\b(do not|don't|never|nor|without|not|no|n[aã]o|nunca|sem|jamais)\b[^.;:\n]{0,30}$`)
 )
 
 const (
@@ -42,7 +43,7 @@ func boundedBrief(prompt string, wordCount int) bool {
 		return false
 	}
 	n := 0
-	for _, re := range []*regexp.Regexp{briefScopeRE, briefVerifyRE, briefBudgetRE} {
+	for _, re := range []*lazyre.Regexp{briefScopeRE, briefVerifyRE, briefBudgetRE} {
 		if re.MatchString(prompt) {
 			n++
 		}

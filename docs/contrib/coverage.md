@@ -56,7 +56,6 @@ file or from `AGENTS.md`.
 | `internal/contextopt` | Shell | Config for compaction and headroom |
 | `internal/core` | Routing | `Route`, `Check` (R1-R9), `PlanSession`, `HarnessCapabilities` |
 | `internal/cursorbridge` | Adapters | Cursor native session bridge |
-| `internal/discover` | Shell | `downshift discover`: transcript scan for commands that ran bare (counts and families only) |
 | `internal/discovery` | Routing | `models discover/list/check/pull` |
 | `internal/docscheck` | Quality | CI gates for markdown layout and package inventory |
 | `internal/execwrap` | Shell | Allowlist policy, family classification, compactor runner |
@@ -68,8 +67,10 @@ file or from `AGENTS.md`.
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |
 | `internal/clispec` | CLI | Command registry as data (names, summaries, flags, hidden, deprecated) and the `DOWNSHIFT_*` variables the code reads; read by help, `docs-manifest` and the docs guards |
 | `internal/installer` | Setup | Tests for the root `install.sh` (offline, with fake curl and gh); no production code |
+| `internal/lazyre` | — | Regular expression compiled on first use, so package init stays cheap on every start; `CompileAll` for tests (startup guard: `internal/archtest/startup_test.go`) |
 | `internal/limits` | Adapters | Centralized harness limitations registry |
 | `internal/loop` | Loop | Autonomous engineering loop runner (Plan -> Implement -> Sensor -> Cascade -> Accept) |
+| `internal/missedsavings` | Shell | `downshift discover`: transcript scan for commands that ran bare (counts and families only). Was `internal/discover`, renamed so it no longer reads like `internal/discovery` |
 | `internal/models` | Routing | `models` subcommand helpers |
 | `internal/outcome` | Quality | Offline eval runner |
 | `internal/operatorexport` | Telemetry | Operator export (roadmap P3.2): counts and token totals only, built from the `report` aggregation; `Check` is the allowlist sensor that fails on any string field or value it does not allow |

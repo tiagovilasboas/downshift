@@ -4,8 +4,9 @@
 package compressor
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // The short forms of the node grammar (agent_desktop_node.go). Each one
@@ -87,7 +88,7 @@ func desktopCut(rest map[string]any) string {
 }
 
 // reDesktopClass is a CSS class name that needs no quoting after a dot.
-var reDesktopClass = regexp.MustCompile(`^[A-Za-z_-][A-Za-z0-9_-]*$`)
+var reDesktopClass = lazyre.New(`^[A-Za-z_-][A-Za-z0-9_-]*$`)
 
 // desktopClasses writes dom_classes as .a.b.
 func desktopClasses(rest map[string]any) string {

@@ -10,8 +10,9 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // OpenCodeCLI uses OpenCode's read-only `models` command, which prints one
@@ -40,8 +41,8 @@ func (c OpenCodeCLI) Discover(ctx context.Context) ([]Model, error) {
 	return parseOpenCodeList(out)
 }
 
-var openCodeID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._:/+-]*$`)
-var openCodeANSI = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
+var openCodeID = lazyre.New(`^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._:/+-]*$`)
+var openCodeANSI = lazyre.New(`\x1b\[[0-?]*[ -/]*[@-~]`)
 
 // parseOpenCodeList accepts only lines that are provider/model ids. Any other
 // line, or a duplicate, makes the whole listing unknown rather than partial.

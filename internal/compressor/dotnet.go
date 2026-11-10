@@ -6,27 +6,28 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // .NET test output patterns
 var (
 	// "Passed!  - Failed:     0, Passed:    42, Skipped:     0, Total:    42"
-	reDotnetTestSummary = regexp.MustCompile(`(?m)^(Passed!|Failed!)\s+-\s+Failed:\s*(\d+),\s*Passed:\s*(\d+),\s*Skipped:\s*(\d+),\s*Total:\s*(\d+)`)
+	reDotnetTestSummary = lazyre.New(`(?m)^(Passed!|Failed!)\s+-\s+Failed:\s*(\d+),\s*Passed:\s*(\d+),\s*Skipped:\s*(\d+),\s*Total:\s*(\d+)`)
 	// "Test run for /path/to/project.dll (.NETCoreApp,Version=v8.0)"
-	reDotnetTestHeader = regexp.MustCompile(`(?m)^Test run for\s+`)
+	reDotnetTestHeader = lazyre.New(`(?m)^Test run for\s+`)
 	// "Total tests: 42"
-	reDotnetTestTotal = regexp.MustCompile(`(?m)^Total tests:\s*(\d+)`)
+	reDotnetTestTotal = lazyre.New(`(?m)^Total tests:\s*(\d+)`)
 	// Duration: "Duration: 1.2345 s"
-	reDotnetTestDuration = regexp.MustCompile(`(?m)Duration:\s*(\d+(?:\.\d+)?)\s*s`)
+	reDotnetTestDuration = lazyre.New(`(?m)Duration:\s*(\d+(?:\.\d+)?)\s*s`)
 	// Detect failures
-	reDotnetTestFailure = regexp.MustCompile(`(?m)(?:^Failed!|^\s*Failed\s+|^\s*X\s+|Error Message:|Stack Trace:)`)
+	reDotnetTestFailure = lazyre.New(`(?m)(?:^Failed!|^\s*Failed\s+|^\s*X\s+|Error Message:|Stack Trace:)`)
 )
 
 // reDotnetTestKnownLine matches the lines of a green dotnet test run: the
 // runner banner, the restore and build notes that precede it, the count lines
 // of the older format and the verdict line.
-var reDotnetTestKnownLine = regexp.MustCompile(`^(Test run for .*|VSTest version .*|Starting test execution, please wait\.\.\.|A total of \d+ test files? matched the specified pattern\.|Passed!\s+- .*|Total tests: \d+|\s+(Passed|Skipped): \d+|\s+Total time: .*|Determining projects to restore\.\.\.|All projects are up-to-date for restore\.|Build started, please wait\.\.\.|Build completed\.|\s*\S+ -> \S+)$`)
+var reDotnetTestKnownLine = lazyre.New(`^(Test run for .*|VSTest version .*|Starting test execution, please wait\.\.\.|A total of \d+ test files? matched the specified pattern\.|Passed!\s+- .*|Total tests: \d+|\s+(Passed|Skipped): \d+|\s+Total time: .*|Determining projects to restore\.\.\.|All projects are up-to-date for restore\.|Build started, please wait\.\.\.|Build completed\.|\s*\S+ -> \S+)$`)
 
 // dotnetTestLinesRecognised reports whether every line is one of a green run's.
 func dotnetTestLinesRecognised(input []byte) bool {

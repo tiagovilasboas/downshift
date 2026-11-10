@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Vitest clean runs. A transcript is read line by line against a closed
@@ -26,30 +27,30 @@ const (
 )
 
 var (
-	reVitestTests  = regexp.MustCompile(`(?m)^\s*Tests\s+(\d+)\s+passed`)
-	reVitestFiles  = regexp.MustCompile(`(?m)^\s*Test Files\s+(\d+)\s+passed`)
-	reVitestHeader = regexp.MustCompile(`(?m)^\s*RUN\s+v\d+\.\d+`)
-	reVitestFail   = regexp.MustCompile(`(?m)^\s*(?:Test Files|Tests)\s+.*failed`)
-	reVitestError  = regexp.MustCompile(`(?:FAIL|Error:|AssertionError)`)
+	reVitestTests  = lazyre.New(`(?m)^\s*Tests\s+(\d+)\s+passed`)
+	reVitestFiles  = lazyre.New(`(?m)^\s*Test Files\s+(\d+)\s+passed`)
+	reVitestHeader = lazyre.New(`(?m)^\s*RUN\s+v\d+\.\d+`)
+	reVitestFail   = lazyre.New(`(?m)^\s*(?:Test Files|Tests)\s+.*failed`)
+	reVitestError  = lazyre.New(`(?:FAIL|Error:|AssertionError)`)
 
-	reVitestHeaderLine = regexp.MustCompile(`^\s*RUN\s+v\d+\.\d+\.\d+(?:\s+\S+)?$`)
+	reVitestHeaderLine = lazyre.New(`^\s*RUN\s+v\d+\.\d+\.\d+(?:\s+\S+)?$`)
 	// One test file: "✓ path (5)" (vitest 1), "✓ path (6 tests) 2ms" (vitest 2
 	// to 5), "|project|" before the path in a workspace, and "↓ path (3 tests |
 	// 3 skipped)" for a file whose tests were all skipped.
-	reVitestFileLine = regexp.MustCompile(`^\s*[✓↓]\s+(?:\|[\w@./-]+\|\s+)?\S+\s+\((?:\d+|\d+ tests?(?: \| ` +
+	reVitestFileLine = lazyre.New(`^\s*[✓↓]\s+(?:\|[\w@./-]+\|\s+)?\S+\s+\((?:\d+|\d+ tests?(?: \| ` +
 		vitestExtraCount + `)*)\)(?:\s+` + vitestSpan + `)?$`)
-	reVitestSummaryLine = regexp.MustCompile(`^\s*(Test Files|Tests)\s+(\d+ passed(?: \| ` + vitestExtraCount + `)*)\s+\((\d+)\)$`)
-	reVitestStartLine   = regexp.MustCompile(`^\s*Start at\s+\d{2}:\d{2}:\d{2}$`)
+	reVitestSummaryLine = lazyre.New(`^\s*(Test Files|Tests)\s+(\d+ passed(?: \| ` + vitestExtraCount + `)*)\s+\((\d+)\)$`)
+	reVitestStartLine   = lazyre.New(`^\s*Start at\s+\d{2}:\d{2}:\d{2}$`)
 	// "Duration 9.14s (transform 3.10s, setup 9.12s, ...)"; vitest 5 gives the
 	// breakdown in percent.
-	reVitestDurationLine = regexp.MustCompile(`^\s*Duration\s+(` + vitestSpan + `)(?:\s+\(\w+ (?:` + vitestSpan +
+	reVitestDurationLine = lazyre.New(`^\s*Duration\s+(` + vitestSpan + `)(?:\s+\(\w+ (?:` + vitestSpan +
 		`|\d+%)(?:, \w+ (?:` + vitestSpan + `|\d+%))*\))?$`)
 	// Runtime notices a clean run can print: a Node warning, its "(Use `node
 	// --trace-... ...`)" hint, and a jsdom "Not implemented" message.
-	reVitestNotice = regexp.MustCompile("^(?:\\(node:\\d+\\) (?:\\[[A-Z]+\\d+\\] )?[A-Za-z]*Warning: .+" +
+	reVitestNotice = lazyre.New("^(?:\\(node:\\d+\\) (?:\\[[A-Z]+\\d+\\] )?[A-Za-z]*Warning: .+" +
 		"|\\(Use `node --trace-(?:warnings|deprecation) \\.\\.\\.` to show where the warning was created\\)" +
 		"|Not implemented: .+)$")
-	reNodePID = regexp.MustCompile(`^\(node:\d+\)`)
+	reNodePID = lazyre.New(`^\(node:\d+\)`)
 )
 
 func isVitest(input []byte) bool {

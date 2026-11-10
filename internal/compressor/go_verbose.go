@@ -5,19 +5,20 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reGoVerboseRun     = regexp.MustCompile(`(?m)^=== RUN\s+([A-Za-z0-9_]+)$`)
-	reGoVerboseOutcome = regexp.MustCompile(`^--- (PASS|FAIL|SKIP): ([A-Za-z0-9_]+) \([^()]*\)$`)
-	reGoVerboseOK      = regexp.MustCompile(`^ok\s+(\S+)\s+(\S+)(?:\s+coverage: .+)?$`)
-	reGoVerboseFAIL    = regexp.MustCompile(`^FAIL\s+(\S+)\s+(\S+)$`)
+	reGoVerboseRun     = lazyre.New(`(?m)^=== RUN\s+([A-Za-z0-9_]+)$`)
+	reGoVerboseOutcome = lazyre.New(`^--- (PASS|FAIL|SKIP): ([A-Za-z0-9_]+) \([^()]*\)$`)
+	reGoVerboseOK      = lazyre.New(`^ok\s+(\S+)\s+(\S+)(?:\s+coverage: .+)?$`)
+	reGoVerboseFAIL    = lazyre.New(`^FAIL\s+(\S+)\s+(\S+)$`)
 	// Subtest scaffolding: a nested run header, and its indented outcome line.
-	reGoVerboseSubRun     = regexp.MustCompile(`^=== RUN\s+(\S+)$`)
-	reGoVerbosePauseCont  = regexp.MustCompile(`^=== (?:PAUSE|CONT|NAME)\s+(\S+)$`)
-	reGoVerboseSubOutcome = regexp.MustCompile(`^\s+--- (PASS|FAIL|SKIP): (\S+) \([^()]*\)$`)
+	reGoVerboseSubRun     = lazyre.New(`^=== RUN\s+(\S+)$`)
+	reGoVerbosePauseCont  = lazyre.New(`^=== (?:PAUSE|CONT|NAME)\s+(\S+)$`)
+	reGoVerboseSubOutcome = lazyre.New(`^\s+--- (PASS|FAIL|SKIP): (\S+) \([^()]*\)$`)
 )
 
 // parseGoVerbose compacts a complete, single-package `go test -v` transcript

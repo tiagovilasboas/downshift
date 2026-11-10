@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // gitOut runs git with args and returns its standard output.
@@ -68,7 +69,7 @@ func selectPackages(files []string) ([]string, error) {
 
 // wideFiles matches the files ci-test-packages.sh never narrows: go.mod, go.sum,
 // scripts, workflows, web and any file at the repository root.
-var wideFiles = regexp.MustCompile(`^(go\.mod|go\.sum|scripts/|\.github/|web/)|^[^/]+$`)
+var wideFiles = lazyre.New(`^(go\.mod|go\.sum|scripts/|\.github/|web/)|^[^/]+$`)
 
 // explainSelection says in one line why pkgs were chosen for files.
 func explainSelection(files, pkgs []string) string {

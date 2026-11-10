@@ -5,20 +5,21 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reNextBuildHeader = regexp.MustCompile(`^▲ Next\.js\s+\S+\s*$`)
-	reNextBuildTime   = regexp.MustCompile(`^✓ Compiled successfully(?: in ([0-9]+(?:\.[0-9]+)?s))?$`)
-	reNextBuildPages  = regexp.MustCompile(`^✓ Generating static pages \(([0-9]+)/([0-9]+)\)$`)
-	reNextBuildRoute  = regexp.MustCompile(`^[┌├└] [○●ƒλ] /\S*\s+[0-9]+(?:\.[0-9]+)? (?:B|kB|MB)\s+[0-9]+(?:\.[0-9]+)? (?:B|kB|MB)$`)
-	reNextBuildShared = regexp.MustCompile(`^\+ First Load JS shared by all\s+([0-9]+(?:\.[0-9]+)? (?:B|kB|MB))$`)
-	reNextBuildChunk  = regexp.MustCompile(`^  [├└] chunks/\S+\s+[0-9]+(?:\.[0-9]+)? (?:B|kB|MB)$`)
-	reNextBuildOther  = regexp.MustCompile(`^  [├└] other shared chunks \(total\)\s+[0-9]+(?:\.[0-9]+)? (?:B|kB|MB)$`)
-	reNextBuildError  = regexp.MustCompile(`(?i)(?:^|\b)(?:warning|error|failed|failure|exception|traceback)(?:\b|:)`)
+	reNextBuildHeader = lazyre.New(`^▲ Next\.js\s+\S+\s*$`)
+	reNextBuildTime   = lazyre.New(`^✓ Compiled successfully(?: in ([0-9]+(?:\.[0-9]+)?s))?$`)
+	reNextBuildPages  = lazyre.New(`^✓ Generating static pages \(([0-9]+)/([0-9]+)\)$`)
+	reNextBuildRoute  = lazyre.New(`^[┌├└] [○●ƒλ] /\S*\s+[0-9]+(?:\.[0-9]+)? (?:B|kB|MB)\s+[0-9]+(?:\.[0-9]+)? (?:B|kB|MB)$`)
+	reNextBuildShared = lazyre.New(`^\+ First Load JS shared by all\s+([0-9]+(?:\.[0-9]+)? (?:B|kB|MB))$`)
+	reNextBuildChunk  = lazyre.New(`^  [├└] chunks/\S+\s+[0-9]+(?:\.[0-9]+)? (?:B|kB|MB)$`)
+	reNextBuildOther  = lazyre.New(`^  [├└] other shared chunks \(total\)\s+[0-9]+(?:\.[0-9]+)? (?:B|kB|MB)$`)
+	reNextBuildError  = lazyre.New(`(?i)(?:^|\b)(?:warning|error|failed|failure|exception|traceback)(?:\b|:)`)
 )
 
 func isNextBuild(input []byte) bool {

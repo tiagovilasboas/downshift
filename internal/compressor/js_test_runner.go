@@ -3,7 +3,7 @@
 
 package compressor
 
-import "regexp"
+import "github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 
 // A package script (`npm test`, `pnpm test`) runs vitest or jest, and the
 // command line does not say which. Each runner prints a summary line the other
@@ -11,8 +11,8 @@ import "regexp"
 // "⎯⎯⎯ Failed Tests" heading, jest its "Test Suites:" count. The FAIL and Tests lines are shared, so they decide
 // nothing.
 var (
-	reVitestRunMark = regexp.MustCompile(`(?m)^\s*(?:RUN\s+v\d+\.\d+|Test Files\s+\d|⎯{3,} Failed Tests)`)
-	reJestRunMark   = regexp.MustCompile(`(?m)^Test Suites:\s`)
+	reVitestRunMark = lazyre.New(`(?m)^\s*(?:RUN\s+v\d+\.\d+|Test Files\s+\d|⎯{3,} Failed Tests)`)
+	reJestRunMark   = lazyre.New(`(?m)^Test Suites:\s`)
 )
 
 // JSTestRunner reports which JavaScript test runner wrote a transcript:

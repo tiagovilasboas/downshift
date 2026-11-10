@@ -5,17 +5,18 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reGoTestPass   = regexp.MustCompile(`(?m)^ok\s+([^\s]+)\s+([^\s]+)(?:\s+coverage:\s+(.+))?$`)
-	reGoTestNoTest = regexp.MustCompile(`(?m)^\?\s+([^\s]+)\s+\[no test files\]\s*$`)
+	reGoTestPass   = lazyre.New(`(?m)^ok\s+([^\s]+)\s+([^\s]+)(?:\s+coverage:\s+(.+))?$`)
+	reGoTestNoTest = lazyre.New(`(?m)^\?\s+([^\s]+)\s+\[no test files\]\s*$`)
 	// reGoTestCoverNoFiles is the line `go test -cover` prints for a package
 	// with no test files under the tab-indented form (no "ok" or "?" prefix).
-	reGoTestCoverNoFiles = regexp.MustCompile(`^\t(\S+)\t+coverage: [\d.]+% of statements$`)
-	reGoTestFail         = regexp.MustCompile(`(?m)^(?:--- FAIL:|FAIL|\s*panic:)`)
+	reGoTestCoverNoFiles = lazyre.New(`^\t(\S+)\t+coverage: [\d.]+% of statements$`)
+	reGoTestFail         = lazyre.New(`(?m)^(?:--- FAIL:|FAIL|\s*panic:)`)
 )
 
 // compressGoTest folds a clean (exit 0) go test run. A -v transcript goes to

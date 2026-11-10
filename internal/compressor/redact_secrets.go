@@ -3,7 +3,7 @@
 
 package compressor
 
-import "regexp"
+import "github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 
 // redactedMark replaces a secret in a compacted view.
 const redactedMark = "[redacted]"
@@ -11,13 +11,13 @@ const redactedMark = "[redacted]"
 var (
 	// A GitLab token: personal access, deploy, pipeline trigger, runner and
 	// the other glXXX- prefixed kinds, followed by 20 or more token characters.
-	reGitLabToken = regexp.MustCompile(`\b(?:glpat|gldt|glptt|glrt|glcbt|glimt|glagent|glft|glsoat|gloas)-[A-Za-z0-9_\-]{20,}`)
+	reGitLabToken = lazyre.New(`\b(?:glpat|gldt|glptt|glrt|glcbt|glimt|glagent|glft|glsoat|gloas)-[A-Za-z0-9_\-]{20,}`)
 	// A PRIVATE-TOKEN, JOB-TOKEN or DEPLOY-TOKEN header or assignment.
-	reTokenHeader = regexp.MustCompile(`(?i)\b((?:private|job|deploy)-token\s*[:=]\s*)[^\s"']+`)
+	reTokenHeader = lazyre.New(`(?i)\b((?:private|job|deploy)-token\s*[:=]\s*)[^\s"']+`)
 	// An Authorization bearer value.
-	reBearer = regexp.MustCompile(`(?i)\b(bearer\s+)[A-Za-z0-9._~+/=\-]{8,}`)
+	reBearer = lazyre.New(`(?i)\b(bearer\s+)[A-Za-z0-9._~+/=\-]{8,}`)
 	// user:token@ (or token@) in front of the host of a URL.
-	reURLCredentials = regexp.MustCompile(`(?i)\b([a-z][a-z0-9+.\-]*://)[^/\s@"']+@`)
+	reURLCredentials = lazyre.New(`(?i)\b([a-z][a-z0-9+.\-]*://)[^/\s@"']+@`)
 )
 
 // RedactSecrets replaces GitLab tokens, PRIVATE-TOKEN and Bearer values and

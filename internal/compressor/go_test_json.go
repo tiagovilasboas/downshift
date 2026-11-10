@@ -6,19 +6,20 @@ package compressor
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // `go test -json` prints one JSON event per line (test2json): run, output,
 // pass, fail, skip, pause, cont, with the package and test it belongs to.
 
 // reGoJSONFirst is the first event line of a `go test -json` stream.
-var reGoJSONFirst = regexp.MustCompile(`^\{(?:"Time":"[^"]*",)?"Action":"(?:start|run|output|pass|fail|skip|pause|cont|name|bench)"`)
+var reGoJSONFirst = lazyre.New(`^\{(?:"Time":"[^"]*",)?"Action":"(?:start|run|output|pass|fail|skip|pause|cont|name|bench)"`)
 
 // reGoJSONDanger marks test output that must keep a run raw even when the
 // test passed: a panic, a data race, a fatal runtime error or a failed header.
-var reGoJSONDanger = regexp.MustCompile(`(?i)panic:|data race|fatal error:|--- FAIL|^FAIL\b|\[(?:build|setup) failed\]`)
+var reGoJSONDanger = lazyre.New(`(?i)panic:|data race|fatal error:|--- FAIL|^FAIL\b|\[(?:build|setup) failed\]`)
 
 // goJSONEvent is one decoded event line plus the bytes it came from.
 type goJSONEvent struct {

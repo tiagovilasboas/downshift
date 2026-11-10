@@ -6,8 +6,9 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // MaxProcessableBytes prevents unbounded memory usage.
@@ -144,7 +145,7 @@ func CompressExit(input []byte, mode Mode, exitCode int) Result {
 // reHardFailure is a failure the runner itself reports: a FAIL header, a
 // failed test, a panic or a summary that counts failures. Console noise such
 // as "Error:" in a log is not one.
-var reHardFailure = regexp.MustCompile(`(?m)^\s*(?:FAIL\b|--- FAIL|panic:|(?:Test Files|Tests|Test Suites):.*\bfailed\b)|^\s*FAIL\s`)
+var reHardFailure = lazyre.New(`(?m)^\s*(?:FAIL\b|--- FAIL|panic:|(?:Test Files|Tests|Test Suites):.*\bfailed\b)|^\s*FAIL\s`)
 
 // cleanExitTrusted reports whether a zero exit overrides the error heuristic
 // of detectFormat for format: the test runners whose compressor demands a

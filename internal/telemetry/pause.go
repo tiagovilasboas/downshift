@@ -6,9 +6,9 @@ package telemetry
 import (
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
 
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
@@ -18,7 +18,7 @@ const PauseTTL = 12 * time.Hour
 
 // sessionHashPattern is the shape HashSessionID returns. Only a value of this
 // shape names a marker file, so a hostile id can never build a path.
-var sessionHashPattern = regexp.MustCompile(`^[a-f0-9]{64}$`)
+var sessionHashPattern = lazyre.New(`^[a-f0-9]{64}$`)
 
 // ValidSessionHash reports whether h is a session hash HashSessionID produced.
 func ValidSessionHash(h string) bool { return sessionHashPattern.MatchString(h) }

@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Vitest failed runs. A run is split at the first failure section heading
@@ -21,22 +22,22 @@ import (
 
 var (
 	// reVitestFailSection starts the part of the report that is kept whole.
-	reVitestFailSection = regexp.MustCompile(`^⎯{3,} (?:Failed Tests|Failed Suites|Unhandled Errors) ?\d* ⎯{3,}$`)
-	reVitestFailHeading = regexp.MustCompile(`^⎯{3,} Failed (?:Tests|Suites) (\d+) ⎯{3,}$`)
-	reVitestFailFooter  = regexp.MustCompile(`^⎯+\[(\d+)/(\d+)\]⎯$`)
-	reVitestFailSummary = regexp.MustCompile(`(?m)^\s*(?:Test Files|Tests|Errors)\s+.*\b(?:failed|errors?)\b`)
+	reVitestFailSection = lazyre.New(`^⎯{3,} (?:Failed Tests|Failed Suites|Unhandled Errors) ?\d* ⎯{3,}$`)
+	reVitestFailHeading = lazyre.New(`^⎯{3,} Failed (?:Tests|Suites) (\d+) ⎯{3,}$`)
+	reVitestFailFooter  = lazyre.New(`^⎯+\[(\d+)/(\d+)\]⎯$`)
+	reVitestFailSummary = lazyre.New(`(?m)^\s*(?:Test Files|Tests|Errors)\s+.*\b(?:failed|errors?)\b`)
 
 	// A file that failed or was skipped keeps its line: "❯ path (8 tests | 3 failed | 1 skipped) 10ms".
-	reVitestKeptFileLine = regexp.MustCompile(`^ {1,2}[❯↓] (?:\|[\w@./-]+\| +)?\S+ \(\d+(?: tests?)?(?: \| \d+ [a-z]+)*\)(?: ` + vitestSpan + `)?$`)
+	reVitestKeptFileLine = lazyre.New(`^ {1,2}[❯↓] (?:\|[\w@./-]+\| +)?\S+ \(\d+(?: tests?)?(?: \| \d+ [a-z]+)*\)(?: ` + vitestSpan + `)?$`)
 	// Lines of the test tree that are not a pass: failed (×), skipped (↓),
 	// todo (□) and a suite with a failure (❯, vitest 5), plus the "→ reason"
 	// line vitest 3 prints under a failed test.
-	reVitestKeptTreeLine = regexp.MustCompile(`^ {3,}[×↓□❯] \S.*$`)
-	reVitestReasonLine   = regexp.MustCompile(`^ {4,}→ .*$`)
+	reVitestKeptTreeLine = lazyre.New(`^ {3,}[×↓□❯] \S.*$`)
+	reVitestReasonLine   = lazyre.New(`^ {4,}→ .*$`)
 	// A passed test, or a passed suite, in the tree of a file that failed.
-	reVitestPassedTreeLine = regexp.MustCompile(`^ {3,}✓ \S.*(?: \d+(?:\.\d+)?(?:ms|s)| \(\d+\))$`)
+	reVitestPassedTreeLine = lazyre.New(`^ {3,}✓ \S.*(?: \d+(?:\.\d+)?(?:ms|s)| \(\d+\))$`)
 	// reVitestStreamHeader opens what a test wrote: "stdout | path > test name".
-	reVitestStreamHeader = regexp.MustCompile(`^(?:stdout|stderr) \| \S.*$`)
+	reVitestStreamHeader = lazyre.New(`^(?:stdout|stderr) \| \S.*$`)
 )
 
 // vitestCut counts what a failed run dropped.

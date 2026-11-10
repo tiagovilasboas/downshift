@@ -6,9 +6,10 @@ package compressor
 import (
 	"fmt"
 	"path"
-	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatLockfileDiff marks a git diff whose every file is a lockfile
@@ -20,7 +21,7 @@ const FormatLockfileDiff Format = "lockfile_diff"
 // lockfileListCap bounds the package lines of a summary.
 const lockfileListCap = 100
 
-var reGitDiffFile = regexp.MustCompile(`^diff --git a/(.+) b/(.+)$`)
+var reGitDiffFile = lazyre.New(`^diff --git a/(.+) b/(.+)$`)
 
 // diffStructure lists the line starts a unified diff of a text file may have
 // outside hunks. Anything else in a lockfile diff is not understood.

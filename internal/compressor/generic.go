@@ -4,8 +4,9 @@
 package compressor
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatGeneric marks output that matched no known tool shape and was
@@ -20,7 +21,7 @@ const genericNoGain = "no_compression_gain"
 // reGenericDanger widens reDangerWord for text of an unknown shape. The chain
 // cuts lines it cannot read, so a failure marker, a stack frame or a refusal
 // anywhere in the output keeps the whole run raw.
-var reGenericDanger = regexp.MustCompile(
+var reGenericDanger = lazyre.New(
 	`(?i)not ok\b|\berr\b|^\s+at .+:\d+`)
 
 // dangerSubstrings are checked on the lower-cased text with strings.Contains,
@@ -40,7 +41,7 @@ const maxRegexLine = 4096
 
 // reChainMarker matches text that already looks like a chain marker; such
 // input is kept raw so a marker is never ambiguous.
-var reChainMarker = regexp.MustCompile(`(?:lines|frames) elided\]|\[base64 |\[x[0-9]+\]$`)
+var reChainMarker = lazyre.New(`(?:lines|frames) elided\]|\[base64 |\[x[0-9]+\]$`)
 
 // compressGeneric runs the generic chain over text of an unknown shape. It
 // returns the input untouched, with a reason, when the text carries any
