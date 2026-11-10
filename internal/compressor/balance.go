@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 // Balanced compaction: a lossy cut of a large output whose raw text is
@@ -75,7 +76,11 @@ func balanceCut(l string) string {
 	if len(l) <= balanceLineCells {
 		return l
 	}
-	return l[:balanceLineCells] + fmt.Sprintf(" … (%d more chars)", len(l)-balanceLineCells)
+	n := balanceLineCells
+	for n > 0 && !utf8.RuneStart(l[n]) {
+		n-- // never split a multi-byte character
+	}
+	return l[:n] + fmt.Sprintf(" … (%d more bytes)", len(l)-n)
 }
 
 // balanceDiff keeps headers and the first lines of each hunk.
