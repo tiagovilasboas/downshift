@@ -52,6 +52,15 @@ func TestSharedRunner_StubDecisionReachesEveryHarness(t *testing.T) {
 					}
 					return
 				}
+				// Observation-only harnesses (no rewrite, no advise) cannot
+				// move the model: they observe and record telemetry only.
+				if !h.caps.CanRewriteModel && !h.caps.CanAdviseShellWrap {
+					// Still verify telemetry records the correct verdict.
+					if ev.Verdict != "DOWNSHIFT" {
+						t.Errorf("small: observation-only telemetry verdict=%q, want DOWNSHIFT", ev.Verdict)
+					}
+					return
+				}
 				if !res.changed || res.model != h.small.WriteName() {
 					t.Fatalf("small: got changed=%v model=%q rc=%d, want %q", res.changed, res.model, res.rc, h.small.WriteName())
 				}

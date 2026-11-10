@@ -20,7 +20,6 @@ package kiro
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/core"
 	"github.com/tiagovilasboas/downshift-ai/internal/hookutil"
@@ -90,9 +89,9 @@ type HookSpecificOutput struct {
 // records it for telemetry, but cannot rewrite the model in place. The spawn
 // runs with whatever model Kiro decided internally.
 //
-// If the computed tier differs from the spawn's tier (when a model is known),
-// the adapter returns permissionDecision: "allow" with a reason noting the
-// recommendation. This is advisory only.
+// The adapter returns empty output (no JSON) — Kiro IDE does not process
+// hookSpecificOutput.updatedInput, and emitting permissionDecision without
+// a rewrite would fail harness conformance tests.
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if ev.ToolName != "invoke_sub_agent" {
 		return allow(), "", core.Decision{}
@@ -120,7 +119,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	res = core.ResolveSessionModels(harnessID, session, res)
 
-	// Compute the routing decision (for telemetry and advisory).
+	// Compute the routing decision (for telemetry only — Kiro cannot apply it).
 	decision := core.RouteSpawn(core.Request{
 		Prompt:         taskText,
 		Harness:        harnessID,
@@ -133,26 +132,21 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// Plan the session but do NOT attempt rewrite (Kiro cannot apply it).
 	plan := decision.PlanSession(core.KiroCaps, res, session, currentModel)
 
-	// Always allow: Kiro IDE cannot apply a rewrite, so we observe only.
-	// If a different tier was computed, note it in the reason for advisory.
-	note := decision.Summary()
-	if plan.RewriteModel && plan.Model.ID != "" && plan.Model.ID != currentModel {
-		note = fmt.Sprintf("advisory: would route to %s (%s tier) if rewrite were supported", plan.WriteName, plan.Model.Tier)
-	}
-
 	// Record the routing note for telemetry.
-	// Note: we cannot rewrite the model (Kiro is observation-only), but we log
-	// the verdict and reason for diagnostic purposes.
+	// Note: we do not return a note to the shared runner because that would
+	// mark the outcome as "rewrite_emitted". Observation-only adapters must
+	// return an empty note so the runner records "allow".
 	decision.Note = core.RoutingNote{
 		Verdict: decision.Verdict.String(),
 		Reason:  "observation-only",
 		TierTo:  plan.Model.Tier.String(),
 	}
 
-	return Output{HookSpecificOutput: &HookSpecificOutput{
-		PermissionDecision:       "allow",
-		PermissionDecisionReason: fmt.Sprintf("downshift: %s (observation-only)", note),
-	}}, note, decision
+	// Return empty output and no note: Kiro IDE is observation-only, so we only
+	// record telemetry. The shared runner will record OutcomeAllow because note
+	// is empty. No permissionDecision is emitted (harness conformance requires
+	// that unchanged spawns emit no permissionDecision).
+	return allow(), "", decision
 }
 
 func allow() Output { return Output{} }
