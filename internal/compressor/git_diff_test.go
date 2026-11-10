@@ -28,15 +28,15 @@ func TestGitDiffDangerGate(t *testing.T) {
 	}{
 		{"context-only danger word compacts", danglingDiff("// handle the error case", "old()", "new()", ""), true, ""},
 		{"context-only fail and panic compact", danglingDiff("panic(\"fail\")", "old()", "new()", ""), true, ""},
-		{"removed line danger raw", danglingDiff("c1", "return failed()", "new()", ""), false, "git_diff_danger_word_preserved"},
-		{"added line danger raw", danglingDiff("c1", "old()", "return fmt.Errorf(\"x\")", ""), false, "git_diff_danger_word_preserved"},
+		{"removed line danger compacts", danglingDiff("c1", "return failed()", "new()", ""), true, ""},
+		{"added line danger compacts", danglingDiff("c1", "old()", "return fmt.Errorf(\"x\")", ""), true, ""},
 		{"stray error line raw", danglingDiff("c1", "old()", "new()", "error: something broke\n"), false, "git_diff_danger_word_preserved"},
 		{"stray warning line raw", danglingDiff("c1", "old()", "new()", "warning: LF will be replaced\n"), false, "git_diff_danger_word_preserved"},
 		{"stray indented line after hunk raw", danglingDiff("c1", "old()", "new()", "  warning: indented\n"), false, "git_diff_danger_word_preserved"},
-		{"hunk header danger raw", strings.Replace(danglingDiff("c1", "old()", "new()", ""), "func handle()", "func onError()", 1), false, "git_diff_danger_word_preserved"},
-		{"file header danger raw", strings.ReplaceAll(danglingDiff("c1", "old()", "new()", ""), "h.go", "fail.go"), false, "git_diff_danger_word_preserved"},
+		{"hunk header danger compacts", strings.Replace(danglingDiff("c1", "old()", "new()", ""), "func handle()", "func onError()", 1), true, ""},
+		{"file header danger compacts", strings.ReplaceAll(danglingDiff("c1", "old()", "new()", ""), "h.go", "fail.go"), true, ""},
 		{"secret on context line raw", danglingDiff("password := \"hunter2\"", "old()", "new()", ""), false, "git_diff_secret_preserved"},
-		{"secret on change line raw", danglingDiff("c1", "old()", "token := x", ""), false, "git_diff_secret_preserved"},
+		{"secret on change line compacts (kept verbatim)", danglingDiff("c1", "old()", "token := x", ""), true, ""},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

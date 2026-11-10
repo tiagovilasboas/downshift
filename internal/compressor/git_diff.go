@@ -96,21 +96,30 @@ func compressGitShow(input []byte) ([]byte, bool, string) {
 }
 
 // gitDiffUnsafe is the fail-open safety gate for the diff/show compressors.
-// It returns (reason, false) when the input must be passed through unchanged:
-// a danger word (error/fail/panic/warning/...) on any line other than an
-// unchanged context line, or any secret-looking line, makes compaction unsafe.
-// A danger word on a +/- line, a header, a hunk header or a stray non-diff line
-// (for example a "warning:" line mixed into the output) means the text is
-// about a failure, and the whole input stays raw. A danger word on a context
-// line (a leading single space inside a hunk, counted from the hunk header)
-// is source code that did not change: trimming it cannot hide a failure, and
-// every +/- line is verified to survive by changeLinesPreserved (owner
-// decision, 2026-11-04). When it returns ("", true), compaction may proceed.
+// It returns (reason, false) when the input must be passed through unchanged.
+//
+// The compressors only ever drop unchanged context lines and the "index"
+// provenance line; every change line, header, hunk header and commit line is
+// kept verbatim (changeLinesPreserved verifies it). So a danger word
+// (error/fail/panic/warning/...) on a line that is kept cannot be hidden, and
+// it does not stop compaction: in a code diff such words are everywhere (an
+// added `return fmt.Errorf(...)`, a file named errors.go, a commit message
+// "fix failing test"). Two things still keep the whole input raw:
+//   - a danger word on a stray line that is not part of the diff grammar (a
+//     "warning:" or "fatal:" line git printed around the diff), because the
+//     output is then about a failure, not only a diff;
+//   - a secret-looking line among the context lines the compressor may drop,
+//     so a key that sits in unchanged code is never summarised away.
+//
+// Owner decision, 2026-11-04: context lines are exempt from the danger gate.
+// Widened 2026-11-10 to every line the compressor keeps verbatim, after real
+// use showed 6 MB of git show and 1.2 MB of git diff kept raw by danger words
+// on change lines and headers.
 func gitDiffUnsafe(input []byte) (string, bool) {
-	if diffDangerOutsideContext(input) {
+	if diffStrayDanger(input) {
 		return "git_diff_danger_word_preserved", false
 	}
-	if reGitDiffSecret.Match(input) {
+	if diffDroppableSecret(input) {
 		return "git_diff_secret_preserved", false
 	}
 	return "", true
@@ -120,35 +129,69 @@ func gitDiffUnsafe(input []byte) (string, bool) {
 // omitted count means 1.
 var reGitDiffHunkCounts = regexp.MustCompile(`^@@ -\d+(?:,(\d+))? \+\d+(?:,(\d+))? @@`)
 
-// diffDangerOutsideContext reports whether a danger word sits on any line that
-// is not an unchanged context line of a hunk. The hunk header declares how many
-// old and new lines the body holds, so a space-prefixed line counts as context
-// only while those counts are not used up; a stray indented line after the
-// hunk is outside it and is checked like any other.
-func diffDangerOutsideContext(input []byte) bool {
+// reGitDiffFileMeta is a file-level line between "diff --git" and the first
+// hunk: ---/+++ paths, modes, renames, copies, similarity, binary notes.
+var reGitDiffFileMeta = regexp.MustCompile(`^(--- |\+\+\+ |old mode |new mode |deleted file mode |new file mode |similarity index |dissimilarity index |rename from |rename to |copy from |copy to |Binary files )`)
+
+// diffLines walks a diff and calls visit for every line with its role:
+// "preamble" (before the first file header), "grammar" (headers, hunk
+// headers, change lines), "context" (an unchanged line inside a hunk) or
+// "stray" (anything else). Hunk headers declare how many old and new lines
+// the body holds, so a line after the body is used up is stray.
+func diffLines(input []byte, visit func(line, role string)) {
 	oldLeft, newLeft := 0, 0
-	for _, line := range strings.Split(string(input), "\n") {
-		if m := reGitDiffHunkCounts.FindStringSubmatch(line); m != nil {
-			oldLeft, newLeft = hunkCount(m[1]), hunkCount(m[2])
-		} else if oldLeft > 0 || newLeft > 0 {
-			switch {
-			case strings.HasPrefix(line, " "):
-				if oldLeft > 0 && newLeft > 0 {
-					oldLeft--
-					newLeft--
-					continue // unchanged context: exempt from the danger gate
-				}
-			case strings.HasPrefix(line, "-"):
-				oldLeft--
-			case strings.HasPrefix(line, "+"):
-				newLeft--
-			}
+	inDiff := false
+	for _, line := range strings.Split(strings.TrimSuffix(string(input), "\n"), "\n") {
+		role := "stray"
+		switch m := reGitDiffHunkCounts.FindStringSubmatch(line); {
+		case reGitDiffHeader.MatchString(line):
+			inDiff, oldLeft, newLeft, role = true, 0, 0, "grammar"
+		case !inDiff:
+			role = "preamble"
+		case m != nil:
+			oldLeft, newLeft, role = hunkCount(m[1]), hunkCount(m[2]), "grammar"
+		case oldLeft > 0 && newLeft > 0 && (strings.HasPrefix(line, " ") || line == ""):
+			oldLeft, newLeft, role = oldLeft-1, newLeft-1, "context"
+		case oldLeft > 0 && strings.HasPrefix(line, "-"):
+			oldLeft, role = oldLeft-1, "grammar"
+		case newLeft > 0 && strings.HasPrefix(line, "+"):
+			newLeft, role = newLeft-1, "grammar"
+		case strings.HasPrefix(line, `\ `), reGitDiffIndex.MatchString(line), reGitDiffFileMeta.MatchString(line):
+			role = "grammar"
 		}
-		if reDangerWord.MatchString(line) {
-			return true
-		}
+		visit(line, role)
 	}
-	return false
+}
+
+// diffStrayDanger reports whether a danger word sits on a stray line, or on a
+// preamble line of a bare diff (a git show preamble is its commit block).
+func diffStrayDanger(input []byte) bool {
+	show := isGitShow(input)
+	found := false
+	diffLines(input, func(line, role string) {
+		if role == "stray" || (role == "preamble" && !show) {
+			found = found || reDangerWord.MatchString(line)
+		}
+	})
+	return found
+}
+
+// reGitDiffSecretValue is a context line that holds a secret, not one that
+// only names the idea: a secret-named key given a value (`token = x`,
+// `"api_key": "x"`), a private key block, an AWS secret or a bearer token.
+// Prose and identifiers such as "tokens saved" or TokenCount do not match.
+var reGitDiffSecretValue = regexp.MustCompile(`(?i)((secret|token|password|passwd|api[_-]?key|private[_-]?key|access[_-]?key)["']?\s*(:=|=|:)|BEGIN [A-Z ]*PRIVATE KEY|aws_secret|bearer [A-Za-z0-9._~+/-]{8,})`)
+
+// diffDroppableSecret reports whether a secret sits on a line the compressor
+// may drop: an unchanged context line.
+func diffDroppableSecret(input []byte) bool {
+	found := false
+	diffLines(input, func(line, role string) {
+		if role == "context" {
+			found = found || reGitDiffSecretValue.MatchString(line)
+		}
+	})
+	return found
 }
 
 // hunkCount parses a hunk header count; empty means the default of 1.

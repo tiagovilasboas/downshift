@@ -1,0 +1,18 @@
+diff --git a/handler.go b/handler.go
+index abc123..def456 100644
+--- a/handler.go
++++ b/handler.go
+@@ -10,11 +10,11 @@ func handle() {
+ 	// handle
+ 	ctx := context.Background()
+ 	client := newClient(ctx)
+ 	log := newLogger()
+ 	cfg := load()
+-	return client.do()
++	return client.doWithRetry(cfg)
+ 	ctx := context.Background()
+ 	client := newClient(ctx)
+ 	log := newLogger()
+ 	cfg := load()
+ }
+warning: in the working copy of 'handler.go', LF will be replaced by CRLF
