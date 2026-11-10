@@ -6,9 +6,9 @@
 
 # Downshift
 
-### Menos ruído nos comandos. Roteamento de subagentes com sua política.
+### Corte o desperdício de tokens no Claude Code, no Codex e em outros agentes de programação.
 
-Downshift é uma CLI open source para agentes de programação com IA. Ajuda a reduzir o consumo de tokens de LLM ao compactar a saída de comandos e aplica roteamento de modelos por subagente dentro da sua política. Um único binário Go.
+Agentes de programação com IA gastam boa parte do contexto com logs de teste, saída de build e status, e cada subagente roda no seu modelo principal, a menos que algo defina outro. Isso queima tokens e enche a janela de contexto. Downshift é uma CLI open source que compacta a saída dos comandos suportados antes que o agente a leia, mantendo falhas e códigos de saída: 67,1% menos bytes num benchmark de 110 fixtures. Também aplica o modelo e o esforço escolhidos para cada subagente, dentro da política que você declara. Um único binário Go.
 
 Funciona com harnesses de programação, incluindo Claude Code e Codex CLI; as capacidades de integração e os modelos disponíveis variam por harness e sessão.
 
@@ -153,6 +153,16 @@ São medições separadas, com unidades e cargas de trabalho diferentes. Os tota
 
 [Benchmark de compactação](../reference/bench.md) · [Estudo de roteamento](../evidence/four-arm-mechanical-2026-10-21.md) · [Guia de evidências](../guides/evidence.md)
 
+## A pesquisa por trás do design
+
+O design do Downshift parte dos trabalhos publicados pela Anthropic sobre orquestração. Um líder forte planeja e confere, workers mais baratos fazem trabalho delimitado, e cada agente a mais precisa pagar os tokens que gasta.
+
+- [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (2025): um líder Opus com subagentes Sonnet superou um único agente Opus em 90,2% em pesquisa, com cerca de 15× os tokens de um chat. O mesmo texto observa que programação se paraleliza menos que pesquisa.
+- [Patterns and problems in emerging multiagent systems](https://www.anthropic.com/research/multiagent-systems) (2026): um enxame coordenado encontrou 266 vulnerabilidades contra 21 dos agentes independentes, em boa parte por cobrir mais terreno; nos mesmos diretórios, os tokens por achado foram comparáveis.
+- [Riemann zeta research with 60 subagents](https://www.anthropic.com/research/riemann-zeta) (2026): de 60 subagentes, 2 desenvolveram as ideias centrais, 30 tentaram e falharam, e 13 validaram os argumentos.
+
+Como cada achado vira um princípio de design, e o que ele não mostra: [True north](../true-north.md) · [Reconciliação](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)
+
 ## Feito para inspeção e controle
 
 | Comando | Descrição e Finalidade |
@@ -174,6 +184,20 @@ São medições separadas, com unidades e cargas de trabalho diferentes. Os tota
 - Workers com escrita exigem ativação explícita e usam worktrees separados. O Downshift não mescla suas branches nem oferece uma etapa de aprovação para deploys e outras ações de risco.
 
 [Segurança](../features/safety.md) · [Telemetria](../features/telemetry.md) · [Limitações conhecidas](../reference/known-limitations.md)
+
+## Perguntas frequentes
+
+**Como reduzir o consumo de tokens no Claude Code, no Codex ou no Cursor?** Instale o Downshift e rode `downshift setup`. A saída dos comandos suportados é compactada antes de entrar na janela de contexto, e cada subagente roda no modelo escolhido para ele, dentro da sua política. No Claude Code a reescrita é automática; nos outros, o agente roda `downshift compact -- <comando>`. Confira seus números com `downshift session` e `downshift report`.
+
+**Subagentes do Claude Code gastam meu limite de uso mais rápido?** Podem gastar. Cada subagente começa com um contexto novo e faz as próprias requisições, que contam no mesmo limite da conversa principal, e roda no seu modelo principal, a menos que algo defina outro. Coloque os subagentes de rotina num modelo menor: `downshift policy init` grava um perfil `explore` que manda o Explore para o tier pequeno. [Guia](https://downshift-ai.vercel.app/pt-br/guias/subagentes-gastam-limite-claude-code/)
+
+**O Downshift economiza meu limite de uso do Claude Code?** Ainda não foi medido. O Downshift mostra os tokens que rodaram abaixo do modelo da sessão e os bytes que a compactação removeu. Como um plano converte tokens nos limites de 5 horas e semanal não é público, então não afirmamos economia de limite.
+
+**O roteamento de subagentes quebra o cache de prompt?** Não. A escolha vale para o subagente inteiro, não para turnos da sessão principal, que mantém um único modelo durante toda a conversa.
+
+**Qual a diferença para o `/compact`?** O `/compact` resume o histórico que já está na janela de contexto. O Downshift encolhe a saída dos comandos antes que ela entre. Os dois se complementam.
+
+**Qual a diferença para o `CLAUDE_CODE_SUBAGENT_MODEL`?** Essa variável define um modelo padrão para todo subagente que nada mais configura. O Downshift aplica o modelo escolhido para cada subagente dentro de uma política declarada, mantém o modelo pedido na dúvida, registra onde os tokens rodaram e também funciona no Codex, no Cursor e no OpenCode.
 
 ## Documentação e comunidade
 
