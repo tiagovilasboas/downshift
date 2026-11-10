@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/accounting"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 	"github.com/tiagovilasboas/downshift-ai/internal/mainwork"
 	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
@@ -78,24 +79,9 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	execEvents, _ := accounting.ReadExecEvents()
 	nums := accounting.Compute(events, execEvents, accounting.Scope{Kind: accounting.ScopeDays, Days: days})
 
-	rep := telemetry.BuildReport(events, days)
-	rep.SetCompactor(nums.Compactor.SavedBytes, nums.Compactor.Tokens)
-	currentHarness, segments := telemetry.SegmentReports(events, days)
 	scope := accounting.Scope{Kind: accounting.ScopeDays, Days: days}
-	why := accounting.BuildRoutingWhy(events, scope)
-	mainWork := mainWorkRows(days, time.Now())
-	skips, _ := accounting.ReadSkipEvents()
-	detail := accounting.BuildCompactionDetail(execEvents, skips, scope, time.Now())
-	efficiency := accounting.BuildEfficiency(events, scope)
-	perHarness := accounting.TokensByHarness(events, execEvents, scope, quotaByHarness(time.Now()))
+	data := buildReportOut(events, execEvents, nums, days, scope)
 
-	data := reportOut{
-		Report: rep, Numbers: nums, CurrentHarness: currentHarness, ByHarness: segments,
-		WhySpawnsChanged: why, TokensByHarness: perHarness, CompactionByHarness: compactionRows(perHarness),
-		MainSessionWork: mainWork, CompactionDetail: detail, Efficiency: efficiency,
-		Adoption: accounting.BuildAdoption(events, scope),
-		Summary:  buildPaneRows(events, execEvents, scope),
-	}
 	if styledReportWanted && !asJSON && !asText {
 		if err := showStyledReport(styledReportData(data, events, days, scope)); err == nil {
 			return 0
@@ -130,14 +116,14 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	// appended here rather than inside telemetry.PrintReport.
 	fmt.Fprintf(stdout, "\n📦 COMPACTOR (%s)\n", nums.Scope.Label())
 	fmt.Fprintf(stdout, "   %s\n", nums.Display.Compactor)
-	printCompactionDetailText(stdout, detail)
-	printEfficiencyText(stdout, efficiency)
+	printCompactionDetailText(stdout, data.CompactionDetail)
+	printEfficiencyText(stdout, data.Efficiency)
 
 	// The routing note and the quota per harness: added sections, built from
 	// the same events and window, with no money in either.
-	printRoutingWhy(stdout, why)
-	printMainWork(stdout, mainWork, scope.Label())
-	printQuotaByHarness(stdout, perHarness, scope)
+	printRoutingWhy(stdout, data.WhySpawnsChanged)
+	printMainWork(stdout, data.MainSessionWork, scope.Label())
+	printQuotaByHarness(stdout, data.TokensByHarness, scope)
 	fmt.Fprintf(stdout, "\n%s\n", accounting.AdoptionLine(data.Adoption))
 
 	return 0
@@ -170,4 +156,26 @@ type reportOut struct {
 	Efficiency accounting.Efficiency `json:"efficiency"`
 	// Adoption is the MCP plan and delegate calls over the window (counts only).
 	Adoption accounting.Adoption `json:"adoption"`
+}
+
+// buildReportOut assembles every section of the report from the logs, for
+// days and scope. Pure apart from reading the quota and main-work files.
+func buildReportOut(events []telemetry.Event, execEvents []execwrap.Event, nums accounting.Numbers, days int, scope accounting.Scope) reportOut {
+	rep := telemetry.BuildReport(events, days)
+	rep.SetCompactor(nums.Compactor.SavedBytes, nums.Compactor.Tokens)
+	currentHarness, segments := telemetry.SegmentReports(events, days)
+	why := accounting.BuildRoutingWhy(events, scope)
+	mainWork := mainWorkRows(days, time.Now())
+	skips, _ := accounting.ReadSkipEvents()
+	detail := accounting.BuildCompactionDetail(execEvents, skips, scope, time.Now())
+	efficiency := accounting.BuildEfficiency(events, scope)
+	perHarness := accounting.TokensByHarness(events, execEvents, scope, quotaByHarness(time.Now()))
+
+	return reportOut{
+		Report: rep, Numbers: nums, CurrentHarness: currentHarness, ByHarness: segments,
+		WhySpawnsChanged: why, TokensByHarness: perHarness, CompactionByHarness: compactionRows(perHarness),
+		MainSessionWork: mainWork, CompactionDetail: detail, Efficiency: efficiency,
+		Adoption: accounting.BuildAdoption(events, scope),
+		Summary:  buildPaneRows(events, execEvents, scope),
+	}
 }
