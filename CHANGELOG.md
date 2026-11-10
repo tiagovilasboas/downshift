@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `downshift setup` wizard: it draws in place below the command instead of full screen, so the choices stay in the terminal history; a new **Profile** step after the harnesses offers *Essential* (hooks, plugin, steering, project policy; the default), *Complete* (every component on by default, then the worker question) and *Custom* (the full list, as before); each component's line says what it does for you; and the run ends with a summary (a green check, harnesses, profile, components, the equivalent command and the next steps). A profile never selects a component a flag turned off or a destructive one. Flags and `--yes` are unchanged.
 - `downshift report` opens with what the agents pane shows, per harness: tokens saved, share of raw output cut, runs and compacted, hook against direct calls, bytes read back with `retrieve`, spawns by model change, effort change and held, and the share of subagent tokens on a cheaper model (`summary_by_harness` in `--json`). The family table gains a `cut` column.
 - `downshift report --daily` and `--history` add `runs` and `compacted` per harness, so a day with runs and nothing compacted reads apart from a day with no runs.
 

@@ -31,6 +31,9 @@ func (m Model) leaveHarnesses() Model {
 		m.msg = "Select at least one harness to continue."
 		return m
 	}
+	if m.hasPresets() {
+		return m.enterPreset()
+	}
 	m.step = stepComponents
 	return m
 }
