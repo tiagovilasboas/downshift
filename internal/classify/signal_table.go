@@ -3,7 +3,10 @@
 
 package classify
 
-import "regexp"
+import (
+	"regexp"
+	"sync"
+)
 
 // signal is a weighted matcher for a complexity class.
 type signal struct {
@@ -16,7 +19,10 @@ type signal struct {
 // signals are ordered from strongest to weakest evidence. We score every
 // class and pick the top; ties break toward the higher complexity to stay
 // safe (never underpower a task).
-var signals = compileSignals()
+//
+// Compiled on first use, not at package init: every hook call and every
+// wrapped command starts this binary, and most never classify a task.
+var signals = sync.OnceValue(compileSignals)
 
 func compileSignals() []signal {
 	out := make([]signal, 0, len(RawSignals))

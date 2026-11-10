@@ -11,7 +11,7 @@ import (
 func TestDomainSignalsIntegrity(t *testing.T) {
 	seen := make(map[string]bool)
 	domains := make(map[string]bool)
-	for _, row := range RawDomainSignals {
+	for _, row := range RawDomainSignals() {
 		if row.ID == "" || row.Domain == "" || seen[row.ID] {
 			t.Fatalf("invalid or duplicate signal: %+v", row)
 		}
@@ -27,8 +27,8 @@ func TestDomainSignalsIntegrity(t *testing.T) {
 			t.Fatalf("%s invalid regex: %v", row.ID, err)
 		}
 	}
-	if len(domains) != 8 || len(RawDomainSignals) != 32 {
-		t.Fatalf("expected 8 domains / 32 rules, got %d domains / %d rules", len(domains), len(RawDomainSignals))
+	if len(domains) != 8 || len(RawDomainSignals()) != 32 {
+		t.Fatalf("expected 8 domains / 32 rules, got %d domains / %d rules", len(domains), len(RawDomainSignals()))
 	}
 }
 
@@ -71,11 +71,11 @@ func TestDomainSignalsBilingualParity(t *testing.T) {
 		{"ci-progressive-delivery", "Design canary rollout", "Projete deploy progressivo", "Implemente automated rollback"},
 		{"ci-cache-invalidation", "Diagnose pipeline cache invalidation", "Investigue invalidação de cache da pipeline", "Corrija cache misses no CI"},
 	}
-	if len(examples) != len(RawDomainSignals) {
-		t.Fatalf("coverage incomplete: %d bilingual groups / %d rules", len(examples), len(RawDomainSignals))
+	if len(examples) != len(RawDomainSignals()) {
+		t.Fatalf("coverage incomplete: %d bilingual groups / %d rules", len(examples), len(RawDomainSignals()))
 	}
 	byID := make(map[string]DomainSignalDef)
-	for _, s := range RawDomainSignals {
+	for _, s := range RawDomainSignals() {
 		byID[s.ID] = s
 	}
 	for _, pair := range examples {
@@ -109,7 +109,7 @@ func TestDomainSignalsNoBareTechnologyPromotions(t *testing.T) {
 		"SAST", "OWASP", "FOCUS", "Helm", "Postgres", "CI/CD",
 		"Explique o que é React.", "Summarize Kubernetes docs.",
 	} {
-		for _, rule := range RawDomainSignals {
+		for _, rule := range RawDomainSignals() {
 			if regexp.MustCompile("(?i)" + rule.Pattern).MatchString(prompt) {
 				t.Errorf("technical mention %q unexpectedly triggered %s", prompt, rule.ID)
 			}
@@ -119,15 +119,15 @@ func TestDomainSignalsNoBareTechnologyPromotions(t *testing.T) {
 
 func TestDomainSignalsEnabledByDefault(t *testing.T) {
 	t.Setenv("DOWNSHIFT_DOMAIN_SIGNALS", "")
-	if len(activeSignals()) != len(signals)+len(RawDomainSignals)+len(RawExtendedDomainSignals) {
+	if len(activeSignals()) != len(signals())+len(RawDomainSignals())+len(RawExtendedDomainSignals()) {
 		t.Fatal("default must include domain signals")
 	}
 	t.Setenv("DOWNSHIFT_DOMAIN_SIGNALS", "0")
-	if len(activeSignals()) != len(signals) {
+	if len(activeSignals()) != len(signals()) {
 		t.Fatal("explicit opt-out must restore original classifier signals")
 	}
 	t.Setenv("DOWNSHIFT_DOMAIN_SIGNALS", "1")
-	if len(activeSignals()) != len(signals)+len(RawDomainSignals)+len(RawExtendedDomainSignals) {
+	if len(activeSignals()) != len(signals())+len(RawDomainSignals())+len(RawExtendedDomainSignals()) {
 		t.Fatal("explicit opt-in must include domain signals")
 	}
 }
