@@ -815,15 +815,24 @@ Left unwrapped on purpose, and a chain is refused whole when any segment holds
 one: `||`, a lone `&`, an empty segment (`;;`, a trailing `;`), a pipe into
 anything but `tail`/`head -N` (`git diff | grep '^[+-]'`, `tee`, a second
 pipe), `tail -f`, `tail -n +N`, file redirects (`>`, `>>`, `1>&2`), heredocs,
-subshells, a pipe with no spaces around `|`, and anything with an expansion, a
-glob or a quote (a quoted `;` is never split). Each of these can change what
+subshells, a pipe with no spaces around `|`, and anything with an expansion or
+a glob. A quote is allowed only inside the command that is wrapped (see Quoted
+words below); a segment, `cd` dir or pipe part kept as written that holds one
+refuses the command, and a `;` or `&&` inside a quote leaves an unclosed quote
+in its segment, which refuses it too. Each of these can change what
 the command does or which exit code the agent sees in ways a word match cannot
 prove safe.
 
-**Quoted words (2026-11-06).** One command (not a chain or shape) may hold
+**Quoted words (2026-11-06).** One command may hold
 closed `'...'` words, `"..."` words with no `$`, backtick, `\` or `!`, and an
 exact trailing `2>/dev/null` and/or `|| true`; it is rewritten to
 `'<bin>' compact [--discard-stderr] [--exit-zero] -- '<w0>' '<w1>' ...`.
+Since 2026-11-10 the command a shape or a chain wraps may hold the same quoted
+words and trailing `2>/dev/null` (`go test -run 'A|B' ./... 2>&1 | tail -20`,
+`git status && grep -rn "x" .`); `|| true` there, and `2>/dev/null` before a
+`2>&1` merge, are refused, because the list or the merge would change what
+they mean. Such a command keeps the reason `allowlisted_quoted`, so the
+`quoted_rule` skip still applies to it.
 The read-only approval path of Codex and Cursor still refuses all of them.
 Threat note: [compactor-default-on-adr.md](../design/compactor-default-on-adr.md).
 

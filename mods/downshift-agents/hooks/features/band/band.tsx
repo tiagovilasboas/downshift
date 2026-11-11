@@ -40,6 +40,8 @@ export function bandSegments(
     tasks: ReturnType<typeof progressOf>
     agents: ReturnType<typeof agentCounts>
     compact?: number
+    /** The session's run counts, for the honest zero: copied from Downshift, never computed. */
+    runs?: { commands: number; compacted: number }
     isDownshiftOk: boolean
     working?: ReturnType<typeof workingNow>
   },
@@ -71,12 +73,22 @@ export function bandSegments(
   if (tasks.blocked > 0) {
     segments.push(segment('blocked', 80, [{ text: `${tasks.blocked} blocked`, color: WARN }]))
   }
-  segments.push(
-    input.isDownshiftOk && input.compact !== undefined
-      ? segment('compact', 75, [{ text: 'Compact ' }, { text: `~${tokens(input.compact)}*`, color: WARN, bold: true }])
-      : segment('compact', 75, [{ text: 'Downshift n/a', color: MUTED }]),
-  )
+  segments.push(segment('compact', 75, compactParts(input)))
   return segments.filter(s => columns >= s.min)
+}
+
+/** A saving shows in WARN; none shows muted as compacted/commands, so a zero reads as a count, not a defect. */
+function compactParts(input: { compact?: number; runs?: { commands: number; compacted: number }; isDownshiftOk: boolean }): Part[] {
+  if (!input.isDownshiftOk || input.compact === undefined) {
+    return [{ text: 'Downshift n/a', color: MUTED }]
+  }
+  if (input.compact > 0) {
+    return [{ text: 'Compact ' }, { text: `~${tokens(input.compact)}*`, color: WARN, bold: true }]
+  }
+  const { runs } = input
+  return runs !== undefined && runs.commands > 0
+    ? [{ text: `Compact ${runs.compacted}/${runs.commands}`, color: MUTED }]
+    : [{ text: 'Compact —', color: MUTED }]
 }
 
 function tasksParts(tasks: ReturnType<typeof progressOf>, cells: number): Part[] {
@@ -109,6 +121,7 @@ export function drawBand(on: On): void {
         tasks,
         agents: counts,
         compact: snapshot.status === 'ok' ? snapshot.compactor?.estimatedTokens : undefined,
+        runs: snapshot.status === 'ok' && snapshot.compactor ? { commands: snapshot.compactor.commands, compacted: snapshot.compactor.compacted } : undefined,
         isDownshiftOk: snapshot.status === 'ok',
         working: workingNow(agents),
       },
