@@ -1,4 +1,5 @@
 {
+  "note": "Illustrative hook config. Downshift only verified the command (downshift kiro) and the payload shape in kiro-ide-pretooluse.json; the Kiro IDE hook file format itself is not verified here. downshift setup writes the real wiring.",
   "version": "v1",
   "hooks": [
     {
@@ -8,7 +9,7 @@
       "matcher": "invoke_sub_agent",
       "action": {
         "type": "command",
-        "command": "downshift hook kiro"
+        "command": "downshift kiro"
       },
       "timeout": 5
     },
