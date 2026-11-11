@@ -35,7 +35,9 @@ func TestFoldEmbeddedRuns_RefusedBlockStaysLinear(t *testing.T) {
 			in := []byte(b.String())
 			start := time.Now()
 			r := FoldEmbeddedRuns(in)
-			if took := time.Since(start); took > 2*time.Second {
+			// Linear takes 0.1 s here and about 4 s under -race on a CI runner;
+			// the quadratic draft took 109 s for this log without -race.
+			if took := time.Since(start); took > 30*time.Second {
 				t.Fatalf("fold of %d bytes took %v; want linear time", len(in), took)
 			}
 			if r.Applied {
