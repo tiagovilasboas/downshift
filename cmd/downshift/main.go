@@ -135,6 +135,8 @@ func main() {
 		os.Exit(runLearning(args[1:], os.Stdout, os.Stderr))
 	case "setup":
 		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
+	case "update":
+		os.Exit(runUpdate(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "uninstall":
 		os.Exit(runUninstall(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "accept":
