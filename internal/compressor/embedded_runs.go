@@ -11,10 +11,14 @@ import (
 )
 
 // embeddedBlock reads one complete passing test-runner block that starts at
-// lines[i]. It returns the runner's own pass summary and the index just past
-// the block, or ok=false when lines[i] opens no block or the block cannot be
-// bounded and parsed with certainty.
-type embeddedBlock func(lines []string, i int) (summary string, next int, ok bool)
+// line i of the scan. It returns the runner's own pass summary and the index
+// just past the block, or ok=false when line i opens no block or the block
+// cannot be bounded and parsed with certainty. On ok=false, next is where the
+// scan resumes: lines i to next stay verbatim (next is i+1 when line i opens
+// no block). A refused block is skipped whole, since any later opener inside
+// it reaches the same end; with the precomputed closers this keeps the fold
+// linear in the number of lines.
+type embeddedBlock func(s *blockScan, i int) (summary string, next int, ok bool)
 
 // embeddedBlocks lists the runner shapes that have a certain start line and a
 // certain end line inside another program's transcript. jest has neither (its
@@ -50,18 +54,21 @@ func FoldEmbeddedRuns(input []byte) Result {
 		return res
 	}
 	lines := strings.Split(strings.TrimSuffix(string(text), "\n"), "\n")
+	scan := newBlockScan(lines)
 	var out strings.Builder
 	folded := 0
 	for i := 0; i < len(lines); {
-		if summary, next, ok := foldBlockAt(lines, i); ok {
+		summary, next, ok := foldBlockAt(scan, i)
+		if ok {
 			out.WriteString(summary)
 			folded++
 			i = next
 			continue
 		}
-		out.WriteString(lines[i])
-		out.WriteByte('\n')
-		i++
+		for ; i < next; i++ {
+			out.WriteString(lines[i])
+			out.WriteByte('\n')
+		}
 	}
 	if folded == 0 {
 		res.Reason = "embedded_runs_none_folded"
@@ -95,11 +102,16 @@ func FoldTestRuns(input []byte) Result {
 	return rows
 }
 
-func foldBlockAt(lines []string, i int) (string, int, bool) {
+// foldBlockAt tries each runner at line i. On a refusal it returns the furthest
+// resume index a runner gave, at least i+1.
+func foldBlockAt(s *blockScan, i int) (string, int, bool) {
+	resume := i + 1
 	for _, b := range embeddedBlocks {
-		if summary, next, ok := b(lines, i); ok {
+		summary, next, ok := b(s, i)
+		if ok {
 			return summary, next, true
 		}
+		resume = max(resume, next)
 	}
-	return "", 0, false
+	return "", resume, false
 }
