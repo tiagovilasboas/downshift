@@ -57,6 +57,11 @@ type Options struct {
 	// compacted and may store it; ok makes the marker carry the id. It never
 	// fails the run: a panic or false keeps the plain marker.
 	Keep func(raw []byte) (id string, ok bool)
+	// Session is the hashed session of the caller, empty when unknown. With
+	// it the kept-output hint reads `downshift retrieve --session=<ref> <id>`
+	// (SessionRef), so a later read is charged to this session; without it
+	// the hint is unchanged.
+	Session string
 	// KeepFailed is Keep for a run that exited non-zero only, used when Keep
 	// is nil: CCR on failure, successes are not stored.
 	KeepFailed func(raw []byte) (id string, ok bool)
@@ -164,7 +169,7 @@ func Run(argv []string, o Options) (res Result) {
 	// The ports run once, inside finish, on this goroutine; the id of the one
 	// that stored the output goes on the Result and the event.
 	var keptID string
-	g.keep, g.keepFailed = captureKept(o.Keep, &keptID), captureKept(o.KeepFailed, &keptID)
+	g.keep, g.keepFailed = captureKept(o.Keep, &keptID, o.Session), captureKept(o.KeepFailed, &keptID, o.Session)
 	cmd := exec.Command(path, argv[1:]...)
 	cmd.Args[0] = argv[0]
 	cmd.Env = append(os.Environ(), DepthEnv+"=1")
@@ -244,8 +249,14 @@ func exitStatus(err error) (int, string) {
 }
 
 // captureKept wraps a keep port so the id of what it stored is written to id.
-// A nil port stays nil.
-func captureKept(keep func(raw []byte) (string, bool), id *string) func(raw []byte) (string, bool) {
+// With a session, the value the port hands to the markers is the retrieve
+// argument `--session=<ref> <id>`; id itself stays the bare CCR id. A nil port
+// stays nil.
+func captureKept(keep func(raw []byte) (string, bool), id *string, session string) func(raw []byte) (string, bool) {
+	prefix := ""
+	if ref := SessionRef(session); ref != "" {
+		prefix = "--session=" + ref + " "
+	}
 	if keep == nil {
 		return nil
 	}
@@ -253,6 +264,7 @@ func captureKept(keep func(raw []byte) (string, bool), id *string) func(raw []by
 		k, ok := keep(raw)
 		if ok {
 			*id = k
+			k = prefix + k
 		}
 		return k, ok
 	}

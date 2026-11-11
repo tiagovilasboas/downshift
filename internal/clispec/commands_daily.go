@@ -25,7 +25,7 @@ var dailyCommands = []Command{
 	{Name: "compact", Summary: "Cut a test, build or status command's output to its PASS/FAIL summary", Flags: f("--session", "--harness", "--allowlisted", "--discard-stderr", "--exit-zero")},
 	{Name: "compactor", Summary: "Product name of compact", AliasOf: "compact", Legacy: true},
 	{Name: "exec", Summary: "Old name of compact", AliasOf: "compact", Legacy: true},
-	{Name: "retrieve", Summary: "Print the full output the compactor kept for an id", Flags: f("--grep", "--head", "--tail", "--lines")},
+	{Name: "retrieve", Summary: "Print the full output the compactor kept for an id", Flags: f("--grep", "--head", "--tail", "--lines", "--session")},
 	{Name: "version", Summary: "Print the binary version"},
 	{Name: "--version", Summary: "Print the binary version", AliasOf: "version", Legacy: true},
 	{Name: "help", Summary: "Show the common commands, or every command with --all", Flags: f("--all|-a")},

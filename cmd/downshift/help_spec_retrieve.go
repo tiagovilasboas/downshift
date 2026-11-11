@@ -15,6 +15,7 @@ Flags:
   --head N      Keep the first N lines
   --tail N      Keep the last N lines
   --lines A:B   Keep lines A to B (1-based, inclusive), each prefixed with its number
+  --session REF Session reference copied from the marker; charges the read to that session
 
 The id comes from the marker the compactor prints while CCR is on (the default;
 DOWNSHIFT_CCR=0 turns it off).

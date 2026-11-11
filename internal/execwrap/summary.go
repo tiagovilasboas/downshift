@@ -104,7 +104,8 @@ func Summarize(path string) (Summary, error) { return SummarizeSession(path, "")
 // SummarizeSession totals only the records of one hashed session; an empty
 // session totals the whole log. Records written before the session field
 // existed belong to no session. Retrievals are matched to the runs in scope by
-// CCR id, so a session counts only what was read back from its own runs.
+// CCR id, and a read that carries a session only to that session's runs, so a
+// session counts only what was read back from its own runs.
 func SummarizeSession(path, session string) (Summary, error) {
 	var evs []Event
 	err := scanLog(path, func(line []byte) {
@@ -117,7 +118,7 @@ func SummarizeSession(path, session string) (Summary, error) {
 		}
 		evs = append(evs, ev)
 	})
-	return SummarizeEvents(ApplyRetrievals(evs, ReadRetrievals(path))), err
+	return SummarizeEvents(applyLogged(evs, path)), err
 }
 
 // SummarizeEvents totals already-read records. It is the one place the

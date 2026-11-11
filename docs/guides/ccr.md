@@ -100,6 +100,8 @@ With CCR on, when `downshift compact -- <cmd>` compacts output:
 1. The raw output is stored at `~/.downshift/ccr/<id>.txt`.
 2. The marker line names the id:
    `[downshift compact: compacted N to M bytes; full output: downshift retrieve <id>]`
+   (with a session: `... downshift retrieve --session=<ref> <id>]`, see
+   [Bytes read back are subtracted](#bytes-read-back-are-subtracted))
 3. Runs of 8 or more same-shape lines (digits ignored) fold to the first 3 and last 2
    lines plus `[... N similar lines folded]`. A clean run the compressor chain would
    have left raw gets this fold too. The fold happens only when the raw output was
@@ -170,9 +172,32 @@ number of bytes it returned to `exec-retrievals.jsonl`, and nothing else: no que
 no output, no path. When the logs are read, the bytes returned for an id are matched
 to the runs that kept it and subtracted from their saving, never below zero.
 
+Two sessions that keep the same output share one id, so the id alone cannot say who
+read it. When a run has a session, its marker carries a short reference to it:
+`full output: downshift retrieve --session=<ref> <id>`, where `<ref>` is the first 12
+hex characters of the hashed session (the same hash the exec log carries). The
+`retrieve` command takes `--session=<ref>` (12 to 64 lowercase hex characters, else it
+is ignored) and records the 12-character reference in the row as `session`. A row with
+a session is charged only to runs of that session that kept the id. Without a session
+in the marker (a harness or a call that has none) the hint is just
+`downshift retrieve <id>`.
+
+What is session-scoped and what is per id:
+
+| Read | Charged to |
+|------|------------|
+| `downshift retrieve --session=<ref> <id>` (copied from a marker) | the runs of that session that kept `<id>` |
+| `downshift retrieve <id>` without the flag | every run that kept `<id>`, in log order |
+| MCP tool `retrieve` (it records no session) | every run that kept `<id>`, in log order |
+| Rows written before the `session` field | every run that kept `<id>`, in log order |
+
+The post-run hook that cuts a large tool result prints the hint without a session, so
+a read from that hint is per id.
+
 - `report`, `session`, the panel, the context summary and `stats` show the net saving.
   The compactor line adds `Read back with retrieve: N bytes` when there is any.
-- A session counts only the retrievals of its own runs.
+- A session counts only the retrievals of its own runs (a read without a session
+  is matched by id, see above).
 - Two runs with the same output share one id, so one read is shared out between
   them in log order, each up to what it saved.
 - Logs written before this change have no ids and no retrievals, and their totals

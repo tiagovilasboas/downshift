@@ -90,10 +90,10 @@ func TestRecordRetrievalRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	now := time.Now()
-	RecordRetrieval(idA, 200, now)
-	RecordRetrieval(idA, 150, now) // read twice: both count
-	RecordRetrieval("not-an-id", 999, now)
-	RecordRetrieval(idB, 0, now)
+	RecordRetrieval(idA, "", 200, now)
+	RecordRetrieval(idA, "", 150, now) // read twice: both count
+	RecordRetrieval("not-an-id", "", 999, now)
+	RecordRetrieval(idB, "", 0, now)
 
 	if got := ReadRetrievals(events); len(got) != 1 || got[idA] != 350 {
 		t.Fatalf("ReadRetrievals = %v, want {%s: 350}", got, idA)
@@ -116,12 +116,12 @@ func TestRetrievalsReadFromRotatedGeneration(t *testing.T) {
 	if err := Append(events, keptRun(idA, 1000, 100)); err != nil {
 		t.Fatal(err)
 	}
-	RecordRetrieval(idA, 400, time.Now())
+	RecordRetrieval(idA, "", 400, time.Now())
 	rp := retrievalsPath(events)
 	if err := os.Rename(rp, rp+rotatedSuffix); err != nil {
 		t.Fatal(err)
 	}
-	RecordRetrieval(idA, 100, time.Now()) // lands in a fresh current file
+	RecordRetrieval(idA, "", 100, time.Now()) // lands in a fresh current file
 	s, err := Summarize(events)
 	if err != nil {
 		t.Fatal(err)
@@ -141,8 +141,8 @@ func TestSummarizeSessionCountsOnlyItsOwnRetrievals(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	RecordRetrieval(idA, 300, time.Now())
-	RecordRetrieval(idB, 900, time.Now())
+	RecordRetrieval(idA, "", 300, time.Now())
+	RecordRetrieval(idB, "", 900, time.Now())
 	s, err := SummarizeSession(events, "s1")
 	if err != nil {
 		t.Fatal(err)
@@ -168,5 +168,74 @@ func TestRunReportsKeptID(t *testing.T) {
 	r := Result{Family: "go-test", RawBytes: 1000, EmittedBytes: 100, Compacted: true, KeptID: idA}
 	if ev := EventFrom(r, time.Now()); ev.Kept != idA {
 		t.Fatalf("EventFrom kept = %q, want %q", ev.Kept, idA)
+	}
+}
+
+const (
+	hashS1 = "1111111111112222222222223333333333334444444444445555555555556666"
+	hashS2 = "aaaaaaaaaaaabbbbbbbbbbbbccccccccccccddddddddddddeeeeeeeeeeeeffff"
+)
+
+// Two sessions that kept the same output share one CCR id. A read that carries
+// the session of one of them must not change the other's total.
+func TestSummarizeSessionIgnoresRetrievalsOfOtherSessionsSameID(t *testing.T) {
+	events := setState(t)
+	s1, s2 := keptRun(idA, 1000, 0), keptRun(idA, 1000, 0)
+	s1.Session, s2.Session = hashS1, hashS2
+	for _, ev := range []Event{s1, s2} {
+		if err := Append(events, ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+	RecordRetrieval(idA, hashS2, 1000, time.Now()) // read by the agent of s2
+	got1, err := SummarizeSession(events, hashS1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got2, err := SummarizeSession(events, hashS2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got1.RetrievedBytes != 0 || got2.RetrievedBytes != 1000 {
+		t.Fatalf("s1 retrieved=%d (want 0), s2 retrieved=%d (want 1000)", got1.RetrievedBytes, got2.RetrievedBytes)
+	}
+	all, err := Summarize(events)
+	if err != nil || all.RetrievedBytes != 1000 {
+		t.Fatalf("whole log retrieved=%d err=%v, want 1000", all.RetrievedBytes, err)
+	}
+	evs, err := ReadEvents(events)
+	if err != nil || evs[0].RetrievedBytes != 0 || evs[1].RetrievedBytes != 1000 {
+		t.Fatalf("ReadEvents = %+v err=%v", evs, err)
+	}
+}
+
+// A read without a session (the MCP tool, rows from before the field) is
+// matched by id alone, as it always was.
+func TestRetrievalWithoutSessionStaysPerID(t *testing.T) {
+	events := setState(t)
+	s1, s2 := keptRun(idA, 1000, 0), keptRun(idA, 1000, 0)
+	s1.Session, s2.Session = hashS1, hashS2
+	for _, ev := range []Event{s1, s2} {
+		if err := Append(events, ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+	RecordRetrieval(idA, "", 1000, time.Now())
+	RecordRetrieval(idA, "not-hex", 500, time.Now()) // a malformed session is no session
+	got1, _ := SummarizeSession(events, hashS1)
+	got2, _ := SummarizeSession(events, hashS2)
+	if got1.RetrievedBytes != 1500 || got2.RetrievedBytes != 1500 {
+		t.Fatalf("s1 retrieved=%d s2 retrieved=%d, want 1500 each", got1.RetrievedBytes, got2.RetrievedBytes)
+	}
+}
+
+func TestSessionRef(t *testing.T) {
+	for in, want := range map[string]string{
+		hashS1: "111111111111", "abcdef012345": "abcdef012345",
+		"": "", "abc": "", "ABCDEF012345": "", "zzzzzzzzzzzz": "", hashS1 + "0": "",
+	} {
+		if got := SessionRef(in); got != want {
+			t.Errorf("SessionRef(%q) = %q, want %q", in, got, want)
+		}
 	}
 }

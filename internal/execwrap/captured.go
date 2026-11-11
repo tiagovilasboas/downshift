@@ -80,7 +80,7 @@ func CompactCaptured(argv []string, family Family, data []byte, exitCode int, ke
 		keep = nil
 	}
 	var kept string
-	h := compactHeld(argv, data, family, exitCode, false, captureKept(keep, &kept), nil, balanced, balanceConfig{})
+	h := compactHeld(argv, data, family, exitCode, false, captureKept(keep, &kept, ""), nil, balanced, balanceConfig{})
 	res = Captured{Output: h.out, Compacted: h.compacted, Folded: h.folded, Passthrough: h.passthrough, Detail: h.detail}
 	if h.compacted {
 		res.KeptID = kept

@@ -399,6 +399,7 @@ downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]
 - `--head` — Keep the first N lines
 - `--tail` — Keep the last N lines
 - `--lines` — Keep lines A to B (1-based, inclusive), each prefixed with its number
+- `--session` — Session reference copied from the marker (`retrieve --session=<ref> <id>`); charges the read to that session. Ignored when malformed
 
 The id is the 12-hex marker the compactor prints while CCR is on (the default; `DOWNSHIFT_CCR=0` turns it off). Kept output lives under
 the state directory for 24 hours (see [ccr.md](../guides/ccr.md)). Exit 0 on success, 1 when the output is gone

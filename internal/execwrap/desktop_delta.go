@@ -16,8 +16,9 @@ import (
 // lines would hide refs behind a retrieve.
 var noFoldStored = map[Family]bool{FamilyAgentDesktop: true}
 
-// reKeptMarker reads the CCR id from MarkerWithID.
-var reKeptMarker = lazyre.New(`; full output: downshift retrieve ([0-9a-f]{12})\]\n$`)
+// reKeptMarker reads the retrieve argument from MarkerWithID: the CCR id, with
+// the session flag in front when the run had a session.
+var reKeptMarker = lazyre.New(`; full output: downshift retrieve ((?:--session=[0-9a-f]{12} )?[0-9a-f]{12})\]\n$`)
 
 // applyDesktop runs the Desktop step on an agent-desktop view whose raw
 // output was kept: the delta it returns replaces the view, and the marker is
