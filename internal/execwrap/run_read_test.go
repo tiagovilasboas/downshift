@@ -42,7 +42,7 @@ func TestRun_FileReadFoldsLongSourceAndKeepsShortOnes(t *testing.T) {
 	if !r.Compacted || r.Family != FamilyFileRead || len(out) >= len(raw) {
 		t.Fatalf("long file not folded: compacted=%v family=%q %d>=%d", r.Compacted, r.Family, len(out), len(raw))
 	}
-	for _, want := range []string{"5: func Step0(", "434: func Step39(", "full text: sed -n '1,444p' " + long, " bytes; "} {
+	for _, want := range []string{"5: func Step0(", "434: func Step39(", "full text: sed -n '1,444p' " + long, "; original not kept]"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output lacks %q:\n%s", want, out)
 		}

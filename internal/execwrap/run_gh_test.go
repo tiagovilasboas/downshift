@@ -183,7 +183,7 @@ func TestRun_GhCompactionAndFailOpen(t *testing.T) {
 				if len(out) >= len(tc.body) {
 					t.Fatalf("compacted output not shorter: %d >= %d", len(out), len(tc.body))
 				}
-				if !strings.Contains(out, " bytes; ") {
+				if !strings.Contains(out, "; original not kept]") {
 					t.Fatalf("missing compaction marker: %q", out)
 				}
 			} else {

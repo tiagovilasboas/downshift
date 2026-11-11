@@ -3,7 +3,43 @@
 
 package execwrap
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+// A copy is never stored and then denied. The guard sizes the marker with the
+// longest hint (the session flag included) before keep is called, so a run
+// whose output would reach the raw length with that hint is not stored and its
+// marker says no copy exists. When a copy is stored the hint names its id.
+func TestKeepRawFor_TextMatchesWhetherACopyWasStored(t *testing.T) {
+	const summary = "* main\n M a.go\n"
+	for _, tc := range []struct {
+		name       string
+		rawLen     int
+		id         string
+		wantStored bool
+		wantSuffix string
+	}{
+		{"no room for the session hint", 100, "--session=aaaaaaaaaaaa 0123456789ab", false, "; original not kept]\n"},
+		{"room, session hint", 400, "--session=aaaaaaaaaaaa 0123456789ab", true, "; downshift retrieve --session=aaaaaaaaaaaa 0123456789ab]\n"},
+		{"room, bare id", 400, "0123456789ab", true, "; downshift retrieve 0123456789ab]\n"},
+	} {
+		raw := []byte(strings.Repeat("x", tc.rawLen-1) + "\n")
+		calls := 0
+		keep := func([]byte) (string, bool) { calls++; return tc.id, true }
+		out := keepRawFor(FamilyNone, keep, raw, []byte(summary+Marker(len(raw), len(summary))))
+		if (calls > 0) != tc.wantStored {
+			t.Errorf("%s: keep called %d times, want stored=%v", tc.name, calls, tc.wantStored)
+		}
+		if !strings.HasSuffix(string(out), tc.wantSuffix) {
+			t.Errorf("%s: marker is %q, want it to end %q", tc.name, out, tc.wantSuffix)
+		}
+		if len(out) >= len(raw) {
+			t.Errorf("%s: output %d bytes, raw %d", tc.name, len(out), len(raw))
+		}
+	}
+}
 
 // The two marker texts are the contract the agent reads: the size cut, then
 // either the command that returns the original or the plain statement that no

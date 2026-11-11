@@ -19,6 +19,11 @@ func MarkerWithID(raw, summary int, id string) string {
 	return fmt.Sprintf("[downshift compact: %d to %d bytes; downshift retrieve %s]\n", raw, summary, id)
 }
 
+// longestHintID is the longest retrieve argument a marker can carry: the
+// session flag and the id. keepRawFor sizes its guard with it before storing, so
+// a copy is never stored and then denied by a marker that came out too long.
+const longestHintID = "--session=000000000000 000000000000"
+
 // keepRaw offers the raw held bytes to keep (Options.Keep) and, when it
 // stores them, swaps the trailing marker of out for MarkerWithID. Keep never
 // fails the run: a panic, a false return or an out without a marker leaves out
@@ -47,7 +52,7 @@ func keepRawFor(family Family, keep func(raw []byte) (string, bool), raw, out []
 	if !noFoldStored[family] {
 		summary = foldStored(summary)
 	}
-	if len(raw) > len(out) && len(summary)+len(MarkerWithID(len(raw), len(summary), "000000000000")) >= len(raw) {
+	if len(raw) > len(out) && len(summary)+len(MarkerWithID(len(raw), len(summary), longestHintID)) >= len(raw) {
 		return out
 	}
 	id, ok := keep(append([]byte(nil), raw...))
