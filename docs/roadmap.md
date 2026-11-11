@@ -72,6 +72,10 @@ pillars P2 (multi-user exports) and P3 (routed-versus-control token comparison).
 | P1 | Learned complexity scorer for EN and PT-BR (hashed word and char n-grams plus structural features, embedded JSON under 1 MB, shadow first, abstain to MEDIUM). Needs about 2,400 labelled prompts, at least 40% PT-BR |
 | P1 | Confident upshift targets the smallest model that meets the tier, not the last id in the list (decision pending; `explicit_upshift` keeps the strongest) |
 | P1 | Session-start discovery hooks for harnesses that expose one (Codex, Cursor, Kiro); needs evidence per harness before `SessionFromCatalog` is enabled there |
+| P1 | Compactor: the notes `compact` appends after a compacted output (`2>/dev/null`, `\|\| true`) count in the "never longer than the raw output" check and in the emitted bytes (2 pts, `internal/execwrap`) |
+| P1 | Compactor: bytes read back with `downshift retrieve` are charged only to the session that read them, so another session's retrieval never lowers a session's saving (3 pts, `internal/execwrap` and `internal/accounting`) |
+| P2 | Compactor: a post-run replacement is counted as saved only once the harness is known to honor `updatedToolOutput`; until then the figure is labelled unverified (3 pts; needs a honor signal from the harness, see [post-run compaction](design/post-run-compaction.md)) |
+| P2 | Compactor: with CCR off, a lossy cut says in its marker that no copy was kept, or the lossy families require CCR (2 pts; product decision first, see [ccr.md](guides/ccr.md)) |
 | P2 | Promote routing v2 only with reviewed labels + shadow evidence |
 
 ---
