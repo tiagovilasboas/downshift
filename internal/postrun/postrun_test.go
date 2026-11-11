@@ -147,3 +147,17 @@ func TestCompact_ShellSmallOutputStaysRaw(t *testing.T) {
 		}
 	}
 }
+
+func TestCompact_CompoundCommandNamesItsShape(t *testing.T) {
+	shell := func(cmd string) hookport.ToolOutput {
+		return hookport.ToolOutput{Category: core.CategoryShell, Command: cmd, Stdout: "a\nb\n", HasStdout: true, ExitCode: 0}
+	}
+	res := Compact(allCaps, shell("go test ./... | tail -5"), Options{Keep: keepOK, Balanced: true})
+	if !res.Considered || res.Inner != "go-test" || res.Kind != "pipe_other" {
+		t.Errorf("compound: inner %q kind %q, want go-test pipe_other", res.Inner, res.Kind)
+	}
+	res = Compact(allCaps, shell("git status"), Options{Keep: keepOK, Balanced: true})
+	if res.Inner != "" || res.Kind != "" {
+		t.Errorf("simple command: inner %q kind %q, want none", res.Inner, res.Kind)
+	}
+}

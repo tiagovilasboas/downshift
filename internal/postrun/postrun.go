@@ -66,6 +66,9 @@ type Result struct {
 	Passthrough, Detail    string
 	KeptID                 string
 	ExitCode               int
+	// Inner and Kind describe a shell command with no family that the
+	// policy refuses for a metacharacter: execwrap.CompoundShape. Empty otherwise.
+	Inner, Kind string
 }
 
 // Compact returns the compaction of in, a finished tool call on a harness
@@ -104,6 +107,9 @@ func compactShell(in hookport.ToolOutput, o Options) Result {
 	}
 	family, argv := execwrap.SimpleFamily(in.Command)
 	res := Result{Considered: true, Family: family, ExitCode: exit, Output: in}
+	if family == execwrap.FamilyNone {
+		res.Inner, res.Kind = execwrap.CompoundShape(in.Command)
+	}
 	res.RawBytes = int64(len(in.Stdout) + len(in.Stderr))
 	out := execwrap.CompactCaptured(argv, family, []byte(in.Stdout), exit, o.Keep, o.Balanced, o.Session)
 	res.Compacted, res.Folded, res.Passthrough, res.Detail, res.KeptID = out.Compacted, out.Folded, out.Passthrough, out.Detail, out.KeptID

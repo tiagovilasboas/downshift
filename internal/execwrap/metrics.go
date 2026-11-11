@@ -105,6 +105,11 @@ type Event struct {
 	// that retrievals of Kept pulled back into context, matched to this run.
 	// NetSavedBytes subtracts them.
 	RetrievedBytes int64 `json:"retrieved_bytes,omitempty"`
+	// Inner and Kind are set only on a post-run row of a compound command
+	// (Family "other"): Inner is InnerFamily, the first allowlisted program
+	// inside it ("" when none), Kind its MetacharKind. Codes, never text.
+	Inner string `json:"inner,omitempty"`
+	Kind  string `json:"kind,omitempty"`
 }
 
 // NetSavedBytes is what the run saved after the agent read part of the raw

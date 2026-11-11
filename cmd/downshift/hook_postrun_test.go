@@ -137,6 +137,9 @@ func TestPostRun_PipedCommandCompactedAndCounted(t *testing.T) {
 		if strings.Contains(r.Session, postSession) {
 			t.Error("the raw session id reached the exec log")
 		}
+		if r.Inner != "go-test" || r.Kind == "" {
+			t.Errorf("row inner %q kind %q, want the compound command's go-test and its kind", r.Inner, r.Kind)
+		}
 	}
 }
 

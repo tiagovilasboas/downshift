@@ -79,6 +79,7 @@ func recordPostRun(harness, session string, res postrun.Result) {
 		ev.Session = telemetry.HashSessionID(session)
 	}
 	ev.Harness, ev.Entry, ev.Client = harness, postrun.Entry, envClient()
+	ev.Inner, ev.Kind = res.Inner, res.Kind
 	_ = execwrap.Append(path, ev)
 }
 
