@@ -117,30 +117,15 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
-	res = core.ResolveSessionModels(harnessID, session, res)
-
-	// Compute the routing decision (for telemetry only — Kiro cannot apply it).
-	decision := core.RouteSpawn(core.Request{
+	// Observation-only: Kiro cannot apply the decision, so it is computed for
+	// telemetry and no note goes back to the runner (outcome allow).
+	decision := core.ObserveSpawn(core.Request{
 		Prompt:         taskText,
 		Harness:        harnessID,
 		AgentType:      hookutil.StringField(ti, "name"),
 		ModelInherited: hookutil.StringField(ti, "model") == "",
 		CurrentModelID: currentModel,
-	}, res)
-	decision.Baseline.RequestedID = currentModel
-
-	// Plan the session but do NOT attempt rewrite (Kiro cannot apply it).
-	plan := decision.PlanSession(core.KiroCaps, res, session, currentModel)
-
-	// Record the routing note for telemetry.
-	// Note: we do not return a note to the shared runner because that would
-	// mark the outcome as "rewrite_emitted". Observation-only adapters must
-	// return an empty note so the runner records "allow".
-	decision.Note = core.RoutingNote{
-		Verdict: decision.Verdict.String(),
-		Reason:  "observation-only",
-		TierTo:  plan.Model.Tier.String(),
-	}
+	}, core.KiroCaps, session, res)
 
 	// Return empty output and no note: Kiro IDE is observation-only, so we only
 	// record telemetry. The shared runner will record OutcomeAllow because note

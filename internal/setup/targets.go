@@ -236,6 +236,8 @@ var Targets = []Target{
 			// Child end (N5). Matcher uses fnmatch glob: *spawn_run* matches both
 			// the bare name and the MCP-qualified mcp_kirocrew_core_spawn_run.
 			{Event: "postToolUse", Matcher: "*spawn_run*", Args: "end kirocrew", Wrapper: "kirocrew-post-tool-use"},
+			// kiro-cli 3.x spawns through the model-less "subagent" tool.
+			{Event: "postToolUse", Matcher: "subagent", Args: "end kirocrew", Wrapper: "kirocrew-post-tool-use"},
 		},
 		Notes: []string{
 			"Restart KiroCrew so it regenerates its agent spec with the hook, then run `downshift doctor`.",
