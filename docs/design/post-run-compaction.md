@@ -40,7 +40,11 @@ Rules:
 - **Same compaction as the wrapper.** One plain allowlisted command gets its
   family's compressor. Anything else (a pipe, a redirect, a chain, an unknown
   program) gets only the balanced log cut, which needs the raw output stored by
-  CCR and a gain of at least a quarter. stdout is compacted; stderr is cut only
+  CCR and a gain of at least a quarter. The exception is a command led by a
+  search (`grep`, `rg`, `git grep`) with exit 0 or 1, which gets
+  `execwrap.CutSearch` at any size instead: rows are grouped by file, with 25
+  kept per file and 200 in all, kept rows cut at 80 bytes once one is
+  dropped, and a count per file of the rest (`compressor.CapSearchRows`). stdout is compacted; stderr is cut only
   when it alone is over 16 KB.
 - **Search (M2).** A Grep or Glob result over 16 KB is cut once CCR stored it:
   matches keep the first 20 of each file and a count per file of the rest
