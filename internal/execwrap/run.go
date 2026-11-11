@@ -199,9 +199,11 @@ func Run(argv []string, o Options) (res Result) {
 
 	res.ExitCode, res.ExitClass = exitStatus(cmd.Wait())
 	release()
+	g.noteBytes = len(tailNotes(o, res.ExitCode))
 	res.RawBytes, res.EmittedBytes, res.Compacted, res.Folded, res.Passthrough = g.finish(res.ExitCode, res.Family)
 	res.PassthroughDetail = g.detail
 	if res.Compacted {
+		res.EmittedBytes += int64(g.noteBytes)
 		res.KeptID = keptID
 	}
 	return res
