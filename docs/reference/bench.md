@@ -12,12 +12,12 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | bazel | lossy | 2 | 911 | 340 | 62.7 | 227 | 85 | 368 | 59.6 |
 | cargo_build | lossy | 1 | 440 | 183 | 58.4 | 110 | 45 | 197 | 55.2 |
 | cargo_test | lossless | 3 | 3660 | 284 | 92.2 | 915 | 71 | 299 | 91.8 |
-| cypress | lossless | 1 | 910 | 162 | 82.2 | 227 | 40 | 176 | 80.7 |
+| cypress | lossless | 1 | 910 | 162 | 82.2 | 227 | 40 | 164 | 82.0 |
 | docker_build | lossy | 1 | 388 | 196 | 49.5 | 97 | 49 | 210 | 45.9 |
 | docker_images | lossy | 1 | 248 | 133 | 46.4 | 62 | 33 | 147 | 40.7 |
 | docker_ps | lossy | 1 | 475 | 237 | 50.1 | 118 | 59 | 251 | 47.2 |
 | dotnet_build | lossy | 1 | 468 | 360 | 23.1 | 117 | 90 | 374 | 20.1 |
-| dotnet_test | lossless | 1 | 333 | 111 | 66.7 | 83 | 27 | 125 | 62.5 |
+| dotnet_test | lossless | 1 | 333 | 111 | 66.7 | 83 | 27 | 120 | 64.0 |
 | eslint | lossy | 3 | 2091 | 1080 | 48.4 | 522 | 270 | 1122 | 46.3 |
 | file_read | lossy | 1 | 11594 | 2422 | 79.1 | 2898 | 605 | 2436 | 79.0 |
 | flutter_test | lossless | 5 | 6624 | 558 | 91.6 | 1656 | 139 | 583 | 91.2 |
@@ -33,7 +33,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | git_status | lossless | 5 | 1113 | 583 | 47.6 | 278 | 145 | 653 | 41.3 |
 | glab | lossy | 2 | 1673 | 1690 | -1.0 | 418 | 422 | 1718 | -2.7 |
 | go_build | lossy | 2 | 632 | 518 | 18.0 | 158 | 129 | 546 | 13.6 |
-| go_test | lossless | 13 | 13425 | 6167 | 54.1 | 3356 | 1541 | 4546 | 66.1 |
+| go_test | lossless | 13 | 13425 | 6167 | 54.1 | 3356 | 1541 | 4516 | 66.4 |
 | golangci_lint | lossy | 2 | 569 | 415 | 27.1 | 142 | 103 | 443 | 22.1 |
 | gradle | lossy | 4 | 1875 | 854 | 54.5 | 468 | 213 | 910 | 51.5 |
 | grep_counts | lossy | 1 | 226 | 123 | 45.6 | 56 | 30 | 137 | 39.4 |
@@ -55,14 +55,14 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 | playwright | lossless | 2 | 906 | 185 | 79.6 | 226 | 46 | 197 | 78.3 |
 | progress | lossy | 1 | 2181 | 128 | 94.1 | 545 | 32 | 142 | 93.5 |
 | pytest | lossless | 2 | 1216 | 180 | 85.2 | 304 | 45 | 190 | 84.4 |
-| rspec | lossless | 1 | 443 | 100 | 77.4 | 110 | 25 | 114 | 74.3 |
+| rspec | lossless | 1 | 443 | 100 | 77.4 | 110 | 25 | 106 | 76.1 |
 | rubocop | lossless | 2 | 685 | 510 | 25.5 | 171 | 127 | 538 | 21.5 |
 | ruff | lossy | 2 | 492 | 357 | 27.4 | 123 | 89 | 385 | 21.7 |
 | tsc | lossless | 3 | 946 | 231 | 75.6 | 236 | 57 | 273 | 71.1 |
 | turbo | lossless | 1 | 494 | 110 | 77.7 | 123 | 27 | 124 | 74.9 |
 | vitest | lossless | 4 | 3624 | 967 | 73.3 | 906 | 241 | 989 | 72.7 |
 | uncompacted (CCR only) | lossy | 3 | 6150 | 6150 | 0.0 | 1537 | 1537 | 1152 | 81.3 |
-| TOTAL | - | 113 | 194873 | 92359 | 52.6 | 48718 | 23089 | 59774 | 69.3 |
+| TOTAL | - | 113 | 194873 | 92359 | 52.6 | 48718 | 23089 | 59719 | 69.4 |
 
 ## Lossless and lossy split
 
@@ -78,7 +78,7 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 The figures above measure raw byte reduction across a synthetic corpus of 113 compacted fixtures: command output and agent-desktop reads.
 
 - In live LLM sessions, compaction cuts verbose command outputs before they enter the prompt context, directly saving input tokens and subsequent prompt cache reads.
-- With CCR enabled, overall corpus reduction is **69.3% fewer bytes** (and **52.6%** with CCR disabled).
+- With CCR enabled, overall corpus reduction is **69.4% fewer bytes** (and **52.6%** with CCR disabled).
 - Lossless families (64 fixtures) have **59.3% fewer bytes** while keeping every failure line, exit code and stack trace.
 - Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.
 - Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).

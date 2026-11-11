@@ -23,7 +23,7 @@ Este documento apresenta a análise técnica detalhada e os resultados oficiais 
 
 | Métrica Avaliada | Tamanho Bruto (Raw) | Downshift (sem CCR) | Economia sem CCR | Downshift (com CCR) | Economia com CCR |
 |---|--:|--:|--:|--:|--:|
-| **Total do Corpus (113 fixtures)** | **194.873 bytes**<br>*(~48.718 tokens)* | **92.359 bytes**<br>*(~23.089 tokens)* | **52.6%** | **59.774 bytes**<br>*(~14.943 tokens)* | **69.3%** |
+| **Total do Corpus (113 fixtures)** | **194.873 bytes**<br>*(~48.718 tokens)* | **92.359 bytes**<br>*(~23.089 tokens)* | **52.6%** | **59.719 bytes**<br>*(~14.929 tokens)* | **69.4%** |
 
 ### Divisão entre Famílias Sem Perda (*Lossless*) e Com Sumarização (*Lossy*)
 
@@ -51,12 +51,12 @@ A tabela a seguir reflete a execução oficial do benchmark:
 | **bazel** | lossy | 2 | 911 | 340 | 62.7% | 227 | 85 | 368 | 59.6% |
 | **cargo_build** | lossy | 1 | 440 | 183 | 58.4% | 110 | 45 | 197 | 55.2% |
 | **cargo_test** | lossless | 3 | 3.660 | 284 | **92.2%** | 915 | 71 | 299 | 91.8% |
-| **cypress** | lossless | 1 | 910 | 162 | **82.2%** | 227 | 40 | 176 | 80.7% |
+| **cypress** | lossless | 1 | 910 | 162 | **82.2%** | 227 | 40 | 164 | 82.0% |
 | **docker_build** | lossy | 1 | 388 | 196 | 49.5% | 97 | 49 | 210 | 45.9% |
 | **docker_images** | lossy | 1 | 248 | 133 | 46.4% | 62 | 33 | 147 | 40.7% |
 | **docker_ps** | lossy | 1 | 475 | 237 | 50.1% | 118 | 59 | 251 | 47.2% |
 | **dotnet_build** | lossy | 1 | 468 | 360 | 23.1% | 117 | 90 | 374 | 20.1% |
-| **dotnet_test** | lossless | 1 | 333 | 111 | 66.7% | 83 | 27 | 125 | 62.5% |
+| **dotnet_test** | lossless | 1 | 333 | 111 | 66.7% | 83 | 27 | 120 | 64.0% |
 | **eslint** | lossy | 3 | 2.091 | 1.080 | 48.4% | 522 | 270 | 1.122 | 46.3% |
 | **file_read** | lossy | 1 | 11.594 | 2.422 | 79.1% | 2.898 | 605 | 2.436 | 79.0% |
 | **flutter_test** | lossless | 5 | 6.624 | 558 | **91.6%** | 1.656 | 139 | 583 | 91.2% |
@@ -72,7 +72,7 @@ A tabela a seguir reflete a execução oficial do benchmark:
 | **git_status** | lossless | 5 | 1.113 | 583 | 47.6% | 278 | 145 | 653 | 41.3% |
 | **glab** | lossy | 2 | 1.673 | 1.690 | -1.0% | 418 | 422 | 1.718 | -2.7% |
 | **go_build** | lossy | 2 | 632 | 518 | 18.0% | 158 | 129 | 546 | 13.6% |
-| **go_test** | lossless | 13 | 13.425 | 6.167 | 54.1% | 3.356 | 1.541 | 4.546 | 66.1% |
+| **go_test** | lossless | 13 | 13.425 | 6.167 | 54.1% | 3.356 | 1.541 | 4.516 | 66.4% |
 | **golangci_lint** | lossy | 2 | 569 | 415 | 27.1% | 142 | 103 | 443 | 22.1% |
 | **gradle** | lossy | 4 | 1.875 | 854 | 54.5% | 468 | 213 | 910 | 51.5% |
 | **grep_counts** | lossy | 1 | 226 | 123 | 45.6% | 56 | 30 | 137 | 39.4% |
@@ -94,14 +94,14 @@ A tabela a seguir reflete a execução oficial do benchmark:
 | **playwright** | lossless | 2 | 906 | 185 | 79.6% | 226 | 46 | 197 | 78.3% |
 | **progress** | lossy | 1 | 2.181 | 128 | **94.1%** | 545 | 32 | 142 | 93.5% |
 | **pytest** | lossless | 2 | 1.216 | 180 | **85.2%** | 304 | 45 | 190 | 84.4% |
-| **rspec** | lossless | 1 | 443 | 100 | 77.4% | 110 | 25 | 114 | 74.3% |
+| **rspec** | lossless | 1 | 443 | 100 | 77.4% | 110 | 25 | 106 | 76.1% |
 | **rubocop** | lossless | 2 | 685 | 510 | 25.5% | 171 | 127 | 538 | 21.5% |
 | **ruff** | lossy | 2 | 492 | 357 | 27.4% | 123 | 89 | 385 | 21.7% |
 | **tsc** | lossless | 3 | 946 | 231 | 75.6% | 236 | 57 | 273 | 71.1% |
 | **turbo** | lossless | 1 | 494 | 110 | 77.7% | 123 | 27 | 124 | 74.9% |
 | **vitest** | lossless | 4 | 3.624 | 967 | 73.3% | 906 | 241 | 989 | 72.7% |
 | **uncompacted** | lossy | 3 | 6.150 | 6.150 | 0.0% | 1.537 | 1.537 | 1.152 | 81.3% |
-| **TOTAL** | — | **113** | **194.873** | **92.359** | **52.6%** | **48.718** | **23.089** | **59.774** | **69.3%** |
+| **TOTAL** | — | **113** | **194.873** | **92.359** | **52.6%** | **48.718** | **23.089** | **59.719** | **69.4%** |
 
 ---
 
@@ -127,7 +127,7 @@ A tabela a seguir reflete a execução oficial do benchmark:
 O Downshift adota um compromisso de transparência científica em relação a métricas de economia:
 
 1. **Degrau A — Preço de Tabela Teórico:** Suposições matemáticas de quanto um modelo custaria. O Downshift não baseia seus produtos nisso.
-2. **Degrau B — Bytes e Tokens Medidos no Corpus:** O benchmark formal desta página (52.6% e 69.3% de economia medidos byte a byte em 113 fixtures).
+2. **Degrau B — Bytes e Tokens Medidos no Corpus:** O benchmark formal desta página (52.6% e 69.4% de economia medidos byte a byte em 113 fixtures).
 3. **Degrau C — Telemetria Local Real:** O que o seu ambiente registrou em `events.jsonl` e `exec-events.jsonl` (consultável via `downshift stats`).
 4. **Degrau D — Experimento Controlado A/B com Grupo de Controle:** Medição de tarefas reais comparando execuções com e sem Downshift em condições idênticas.
 5. **Degrau E — Fatura e Custo por Tarefa Aceita:** A redução real observada na fatura do provedor de IA no final do mês.

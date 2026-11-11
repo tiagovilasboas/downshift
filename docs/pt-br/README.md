@@ -8,7 +8,7 @@
 
 ### Corte o desperdício de tokens no Claude Code, no Codex e em outros agentes de programação.
 
-Agentes de programação com IA gastam boa parte do contexto com logs de teste, saída de build e status, e cada subagente roda no seu modelo principal, a menos que algo defina outro. Isso queima tokens e enche a janela de contexto. Downshift é uma CLI open source que compacta a saída dos comandos suportados antes que o agente a leia, mantendo falhas e códigos de saída: 69,3% menos bytes num benchmark de 113 fixtures. Também aplica o modelo e o esforço escolhidos para cada subagente, dentro da política que você declara. Um único binário Go.
+Agentes de programação com IA gastam boa parte do contexto com logs de teste, saída de build e status, e cada subagente roda no seu modelo principal, a menos que algo defina outro. Isso queima tokens e enche a janela de contexto. Downshift é uma CLI open source que compacta a saída dos comandos suportados antes que o agente a leia, mantendo falhas e códigos de saída: 69,4% menos bytes num benchmark de 113 fixtures. Também aplica o modelo e o esforço escolhidos para cada subagente, dentro da política que você declara. Um único binário Go.
 
 Funciona com harnesses de programação, incluindo Claude Code e Codex CLI; as capacidades de integração e os modelos disponíveis variam por harness e sessão.
 
@@ -150,7 +150,7 @@ Os modelos disponíveis para um harness ou sessão não são considerados dispon
 | Medição | Resultado | Escopo |
 | --- | --- | --- |
 | Compactação de saída sem perda | **59,3% menos bytes** | 64 fixtures sem perda em um corpus sintético. |
-| Compactação de saída com CCR | **69,3% menos bytes** | Corpus sintético de 113 fixtures (52,6% com CCR desligado), saída de comandos e leituras do agent-desktop; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
+| Compactação de saída com CCR | **69,4% menos bytes** | Corpus sintético de 113 fixtures (52,6% com CCR desligado), saída de comandos e leituras do agent-desktop; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
 | Compactação balanced, saídas grandes | **76,3% menos bytes** | 4 saídas reais deste repositório acima de 16 KB (`go test -v`, `git show`, `git log -p`, `grep -rn`); 35,0% só com o compressor sem perda. As linhas cortadas voltam com `downshift retrieve`. |
 | Roteamento de subagentes | **24,1% menos tokens por execução aceita** | Estudo controlado com 46 execuções no Claude Code para tarefas mecânicas, realizado antes da decisão O8. |
 

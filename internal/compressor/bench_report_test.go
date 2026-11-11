@@ -224,7 +224,8 @@ func TestBenchReport(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if string(want) != doc {
+		// A Windows checkout may turn LF into CRLF; the report is LF.
+		if strings.ReplaceAll(string(want), "\r\n", "\n") != doc {
 			t.Fatalf("docs/reference/bench.md is stale: it differs from the report the compressors produce now (first difference near byte %d); run `make bench` and commit the result", firstDiff(string(want), doc))
 		}
 		return
