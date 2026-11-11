@@ -19,6 +19,15 @@ pass through unchanged.
 | Playwright | `playwright test`, `npx playwright test` |
 | Cypress | `cypress run` |
 
+A passing run of these is one count line (`Pytest: PASS (25 passed in 0.42s)`). When
+CCR keeps the raw output (the default), the kept form is shorter for `go test`
+(package rows and the common prefix are cut; the header keeps the package, no-test
+and coverage min/max figures) and for Pytest, Cargo test, Playwright, Vitest and
+dart/flutter test (the duration is cut). Jest, PHPUnit, Cypress, RSpec,
+dotnet test, `go test -v`, Gradle and Maven keep the count line as it is: its figures
+are all counts, or its shape has no duration that can be cut safely. See
+[compaction.md](../features/compaction.md#passing-runs).
+
 ## Go Toolchain
 
 | Command | Description |

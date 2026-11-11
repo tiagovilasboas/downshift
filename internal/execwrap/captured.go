@@ -25,7 +25,7 @@ func compactHeld(argv []string, data []byte, family Family, exitCode int, wroteS
 	h.out, h.passthrough, h.detail = compactOutputFor(argv, exitCode, data, family, wroteStderr)
 	h.compacted = h.passthrough == ""
 	if h.compacted {
-		h.out = keepRawFor(family, keep, data, h.out)
+		h.out = keepRawFor(family, exitCode, keep, data, h.out)
 		h.out = applyDesktop(desktop, family, data, h.out)
 	} else if folded, ok := keepUncompacted(keep, data, exitCode, family, wroteStderr); ok {
 		h = held{out: folded, compacted: true, folded: true}

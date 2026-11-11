@@ -28,7 +28,7 @@ func TestKeepRawFor_TextMatchesWhetherACopyWasStored(t *testing.T) {
 		raw := []byte(strings.Repeat("x", tc.rawLen-1) + "\n")
 		calls := 0
 		keep := func([]byte) (string, bool) { calls++; return tc.id, true }
-		out := keepRawFor(FamilyNone, keep, raw, []byte(summary+Marker(len(raw), len(summary))))
+		out := keepRawFor(FamilyNone, 0, keep, raw, []byte(summary+Marker(len(raw), len(summary))))
 		if (calls > 0) != tc.wantStored {
 			t.Errorf("%s: keep called %d times, want stored=%v", tc.name, calls, tc.wantStored)
 		}

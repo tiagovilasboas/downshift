@@ -173,8 +173,10 @@ const ccrOnlyFamily = "uncompacted (CCR only)"
 // marker the compactor really emits.
 const benchID = "000000000000"
 
-// foldedLen is the size of out after FoldRepeats, or len(out) when nothing folds.
+// foldedLen is the size of out in the kept form: ShortenPass (a passing run's
+// count line), then FoldRepeats; len(out) when neither applies.
 func foldedLen(out []byte) int {
+	out, _ = compressor.ShortenPass(out)
 	if f := compressor.FoldRepeats(out); f.Applied {
 		return len(f.Output)
 	}
