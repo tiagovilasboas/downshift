@@ -4,180 +4,137 @@
 package claudecode
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
+	"time"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/hookport"
 )
 
 // Bounds of the transcript read behind the post-run honor check. The most
 // recent files are read first, and only the tail of each: the rows being
-// checked are recent.
+// checked are recent. Whatever a bound leaves out is reported as truncation
+// and as the start of the coverage, so the shared check calls those rows
+// unverified.
 const (
-	maxToolResultFiles     = 60
-	maxToolResultFileBytes = 8 << 20
+	maxToolResultFiles      = 60
+	maxToolResultFileBytes  = 8 << 20
+	maxToolResultTotalBytes = 64 << 20
+	toolResultTimeout       = 3 * time.Second
 )
 
 // readLimits bounds one read of the transcript directory.
 type readLimits struct {
-	maxFiles     int
-	maxFileBytes int64
+	maxFiles      int
+	maxFileBytes  int64
+	maxTotalBytes int64
+	// timeout is checked before each file, not inside one: a file is at most
+	// maxFileBytes, so the read overshoots by one file at most.
+	timeout time.Duration
+	now     func() time.Time // nil means time.Now
 }
 
 // ReadToolResults is Claude Code's hookport.ReadToolResultsFunc: it looks for
 // ids in the tool results the model received, as the session transcripts under
 // ~/.claude/projects record them. Offline, in memory, bounded; it keeps no
-// text and no path, and any failure reports ok false.
-func ReadToolResults(ids []string) ([]hookport.ToolResultSample, bool) {
+// text and no path, and any failure reports an unreadable result.
+//
+// Known limits, all conservative: a result the harness spilled to a file, an
+// image block, or text that is not valid UTF-8 can make a row read as
+// mismatch or not found though the model got it.
+func ReadToolResults(ids []string) hookport.ToolResults {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
-		return nil, false
+		return hookport.ToolResults{}
 	}
-	return readToolResults(filepath.Join(home, ".claude", "projects"), ids,
-		readLimits{maxFiles: maxToolResultFiles, maxFileBytes: maxToolResultFileBytes})
+	return readToolResults(filepath.Join(home, ".claude", "projects"), ids, readLimits{
+		maxFiles:      maxToolResultFiles,
+		maxFileBytes:  maxToolResultFileBytes,
+		maxTotalBytes: maxToolResultTotalBytes,
+		timeout:       toolResultTimeout,
+	})
 }
 
 type transcriptFile struct {
 	path  string
-	mtime int64
+	mtime time.Time
 }
 
-func readToolResults(root string, ids []string, lim readLimits) ([]hookport.ToolResultSample, bool) {
+// readToolResults scans the transcripts under root, newest first. Coverage:
+// Since is the later of the oldest line read and the newest moment a skipped
+// or cut-off part may hold (a skipped file's mtime, a tail-cut file's first
+// line read). A row before Since is outside what the read saw.
+func readToolResults(root string, ids []string, lim readLimits) hookport.ToolResults {
 	if len(ids) == 0 {
-		return nil, false
+		return hookport.ToolResults{}
 	}
+	now := lim.now
+	if now == nil {
+		now = time.Now
+	}
+	deadline := now().Add(lim.timeout)
+	files := listTranscripts(root)
+	acc := newResultAccumulator(ids)
+	budget := lim.maxTotalBytes
+	var res hookport.ToolResults
+	var oldest, gap time.Time // oldest line read; newest moment left unread
+	for i, f := range files {
+		if i >= lim.maxFiles || budget <= 0 || !now().Before(deadline) {
+			res.Truncated = true
+			gap = laterOf(gap, f.mtime) // files are newest first
+			break
+		}
+		scan := acc.scanFile(f.path, min(lim.maxFileBytes, budget))
+		if !scan.ok { // unreadable: what it holds is unseen
+			res.Truncated = true
+			gap = laterOf(gap, f.mtime)
+			continue
+		}
+		res.Readable = true
+		budget -= scan.read
+		first := scan.firstStamp
+		if first.IsZero() {
+			first = f.mtime
+		}
+		if oldest.IsZero() || first.Before(oldest) {
+			oldest = first
+		}
+		if scan.cut {
+			res.Truncated = true
+			gap = laterOf(gap, first)
+		}
+	}
+	if !res.Readable {
+		return hookport.ToolResults{}
+	}
+	res.Truncated = res.Truncated || acc.truncated
+	res.Since = laterOf(oldest, gap)
+	res.Samples = acc.samples()
+	return res
+}
+
+func laterOf(a, b time.Time) time.Time {
+	if b.After(a) {
+		return b
+	}
+	return a
+}
+
+// listTranscripts returns the regular .jsonl files under root, newest first.
+// A file it cannot see is skipped.
+func listTranscripts(root string) []transcriptFile {
 	var files []transcriptFile
 	_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !d.Type().IsRegular() || filepath.Ext(p) != ".jsonl" {
-			return nil // a file we cannot see is a file we skip
+			return nil
 		}
 		if info, ierr := d.Info(); ierr == nil {
-			files = append(files, transcriptFile{p, info.ModTime().UnixNano()})
+			files = append(files, transcriptFile{p, info.ModTime()})
 		}
 		return nil
 	})
-	sort.Slice(files, func(i, j int) bool { return files[i].mtime > files[j].mtime })
-	if len(files) > lim.maxFiles {
-		files = files[:lim.maxFiles]
-	}
-	var out []hookport.ToolResultSample
-	readAny := false
-	for _, f := range files {
-		samples, ok := scanTranscriptTail(f.path, ids, lim.maxFileBytes)
-		if ok {
-			readAny = true
-			out = append(out, samples...)
-		}
-	}
-	if !readAny {
-		return nil, false
-	}
-	return out, true
-}
-
-// scanTranscriptTail reads at most max bytes from the end of one transcript
-// and returns a sample for every user tool_result that names one of ids.
-func scanTranscriptTail(path string, ids []string, max int64) ([]hookport.ToolResultSample, bool) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, false
-	}
-	defer f.Close()
-	fi, err := f.Stat()
-	if err != nil || !fi.Mode().IsRegular() {
-		return nil, false
-	}
-	rd := bufio.NewReaderSize(f, 1<<20)
-	if fi.Size() > max {
-		if _, err := f.Seek(fi.Size()-max, io.SeekStart); err != nil {
-			return nil, false
-		}
-		rd.Reset(f)
-		_, _ = rd.ReadBytes('\n') // drop the partial first line
-	}
-	var out []hookport.ToolResultSample
-	for {
-		line, err := rd.ReadBytes('\n')
-		out = append(out, toolResultSamples(line, ids)...)
-		if err != nil {
-			break
-		}
-	}
-	return out, true
-}
-
-// toolResultSamples parses one transcript line. Malformed lines, lines of
-// another type and results that name no id give nothing.
-func toolResultSamples(line []byte, ids []string) []hookport.ToolResultSample {
-	if !bytes.Contains(line, []byte(`"tool_result"`)) || !containsAnyID(line, ids) {
-		return nil
-	}
-	var row struct {
-		Type    string `json:"type"`
-		Message struct {
-			Content json.RawMessage `json:"content"`
-		} `json:"message"`
-	}
-	if json.Unmarshal(line, &row) != nil || row.Type != "user" {
-		return nil
-	}
-	var blocks []struct {
-		Type    string          `json:"type"`
-		Content json.RawMessage `json:"content"`
-	}
-	if json.Unmarshal(row.Message.Content, &blocks) != nil {
-		return nil
-	}
-	var out []hookport.ToolResultSample
-	for _, b := range blocks {
-		if b.Type != "tool_result" {
-			continue
-		}
-		text := resultText(b.Content)
-		for _, id := range ids {
-			if strings.Contains(text, id) {
-				out = append(out, hookport.ToolResultSample{ID: id, Bytes: len(text)})
-			}
-		}
-	}
-	return out
-}
-
-func containsAnyID(line []byte, ids []string) bool {
-	for _, id := range ids {
-		if bytes.Contains(line, []byte(id)) {
-			return true
-		}
-	}
-	return false
-}
-
-// resultText is the text of a tool_result's content: a string, or the text
-// blocks of a list, joined as they are.
-func resultText(raw json.RawMessage) string {
-	var s string
-	if json.Unmarshal(raw, &s) == nil {
-		return s
-	}
-	var parts []struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
-	}
-	if json.Unmarshal(raw, &parts) != nil {
-		return ""
-	}
-	var sb strings.Builder
-	for _, p := range parts {
-		if p.Type == "text" {
-			sb.WriteString(p.Text)
-		}
-	}
-	return sb.String()
+	sort.Slice(files, func(i, j int) bool { return files[i].mtime.After(files[j].mtime) })
+	return files
 }

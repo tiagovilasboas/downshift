@@ -95,7 +95,7 @@ downshift doctor [flags]
 - Permissions
 - State directory
 - Catalog validity
-- `post-run replacement`: whether the harness used the output the post-run hook offered. Over the latest 200 compacted `post_tool_use` rows it counts honored, not found, mismatch and unverified (see [post-run compaction](../design/post-run-compaction.md#honor-check)). Warns only when rows exist and none could be honored. No such rows, no check
+- `post-run replacement`: one row per harness, on whether it used the output the post-run hook offered. Over the latest 200 compacted `post_tool_use` rows it counts honored, not found, mismatch and unverified (see [post-run compaction](../design/post-run-compaction.md#honor-check)). Warns only when the harness has checked rows and none was honored; unverified rows (no kept id, no transcript reader, outside the transcript coverage) are never a failure. No such rows, no check
 
 ---
 

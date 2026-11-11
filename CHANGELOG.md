@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Post-run honor check in `downshift doctor`.** A `post-run replacement` row counts, over the latest 200 compacted post-run rows, how many the harness used (honored), could not be found, mismatched in length, or could not be verified (no kept id, or no transcript). On Claude Code it joins each row's CCR id and emitted length to the tool results in the session transcripts, offline, bounded and in memory; other harnesses classify every row as unverified. It warns only when rows exist and none could be honored. The report note now calls post-run figures output offered to the model. New `postrun.ClassifyHonor` and `hookport.Port.ReadToolResults`.
+- **Post-run honor check in `downshift doctor`.** A `post-run replacement` row per harness counts, over the latest 200 compacted post-run rows, how many the harness used (honored), could not be found, mismatched in length, or could not be verified. Honored means a transcript result carries the row's kept id in its retrieve hint at the emitted length or one byte less, each result used once. Rows without a kept id, without a transcript reader, or outside the transcript coverage stay unverified, and a harness warns only when it has checked rows and none honored. On Claude Code the read is offline, in memory and bounded (60 files, 8 MiB each, 64 MiB, 3 s), one pass per line. The report note now calls post-run figures output offered to the model. New `postrun.ClassifyHonor` and `hookport.Port.ReadToolResults`.
 
 ## [0.15.0] - 2026-11-11
 

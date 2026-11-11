@@ -140,27 +140,45 @@ to the model, not what was saved. `downshift doctor` closes the gap offline
 where the harness keeps a transcript of what the model received.
 
 - **Shared computation.** `postrun.ClassifyHonor` takes the latest compacted
-  `post_tool_use` rows (kept CCR id, emitted bytes) and a
-  `hookport.ReadToolResultsFunc`, and returns counts only: *honored* (a
-  tool result in the transcript names the id and its text has the emitted
-  length, or one byte less, because a transcript drops a trailing newline),
-  *not found* (transcripts were read, none names the id), *mismatch* (results
-  name the id, none at that length) and *unverified* (no kept id, so no join
-  key, or no transcript to read). The id alone proves nothing: the pre-run
-  wrapper prints the same `downshift retrieve <id>` marker, so the length has
-  to agree too.
-- **Port.** The reader is the optional `Port.ReadToolResults`; a harness
-  without it classifies every row as unverified (layering rule 5; see the
-  harness matrix). Claude Code's reads `~/.claude/projects/**/*.jsonl`, most
-  recent 60 files first, the last 8 MiB of each, user `tool_result` text only.
-  It runs in memory, keeps no text, id or path, prints none, and any error
-  means unverified.
-- **Surface.** The `post-run replacement` row of `doctor` shows the counts
-  over the latest 200 rows and warns only when rows exist and none were
-  honored. `report` says its post-run rows are offered output.
-- **Limit.** A first check on one machine matched 9 of 11 rows; the rest are
-  *not found* or *mismatch*, not proof the model did not get them (a
-  transcript may be rotated away or hold the result in another shape).
+  `post_tool_use` rows (kept CCR id, emitted bytes, time) and a
+  `hookport.ReadToolResultsFunc`, and returns counts only: *honored* (a tool
+  result in the transcript names the id in its retrieve hint and its text has
+  the emitted length, or one byte less, because a transcript drops a trailing
+  newline), *not found* (the read covered the row and no result names the id),
+  *mismatch* (results name the id, none at that length) and *unverified*.
+  The id alone proves nothing: the pre-run wrapper prints the same hint, so the
+  length has to agree too.
+- **Unverified, never failed.** A row is unverified when it has no kept id (no
+  join key) or no emitted bytes, when its harness has no transcript reader
+  (layering rule 5; see the harness matrix), when no transcript could be read,
+  when it was logged before the read's coverage, and, when a cap or the
+  deadline cut the read short, when its id is simply not found.
+- **One result, one row.** Each transcript result honors at most one row, so two
+  rows that kept the same output need two results. Results are told apart by
+  their `tool_use_id`, so a resumed session that copies another transcript's
+  history counts once. Rows are taken in log order; a row takes a result one
+  byte shorter than it emitted first (the usual shape), then an exact one, so
+  when lengths collide the earlier row wins and a later one reads as mismatch.
+- **Port.** The reader is the optional `Port.ReadToolResults`. It returns
+  samples (id, text length, how many results), whether it could read, where its
+  coverage starts and whether it was cut short; never text. Claude Code's
+  reads `~/.claude/projects/**/*.jsonl` with one pass per line: it finds the
+  literal `downshift retrieve [--session=<ref> ]<id>` hint and tests the 12-hex
+  id against the wanted set, so the cost does not grow with the number of ids
+  and a result that merely contains the id elsewhere does not count. Bounds:
+  the 60 newest files, the last 8 MiB of each, 64 MiB in all, and 3 s (checked
+  between files). Coverage starts at the later of the oldest line read and the
+  newest moment anything unread may hold (a skipped file's mtime, the first
+  line read of a tail-cut file). It runs in memory, keeps no text, id or path,
+  prints none, and any error means unverified.
+- **Surface.** One `post-run replacement` row per harness in `doctor`, over the
+  latest 200 rows, never pooled across harnesses. It warns only when its
+  harness has rows, none honored, and some not found or mismatched; unverified
+  rows alone are ok. `report` says its post-run rows are offered output.
+- **Limits.** An output the harness spills to a file, an image block, or text
+  that is not valid UTF-8 can read as a mismatch or not found though the model
+  got it. This errs toward a warning only when no row of the harness is
+  honored. On one machine a first check matched 9 of 11 rows.
 
 ## Not verified
 
