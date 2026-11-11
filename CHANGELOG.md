@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-11
+
+### Security
+
+- **Built with Go 1.27.4** for GO-2026-6859 in the standard library's `net/http`, reachable from the OpenCode adapter. govulncheck reports no vulnerabilities.
+
 ### Changed
 
 - **Search output led by `grep`, `rg` or `git grep` is cut at any size once its raw output is kept.** A command such as `grep -rn x . | head` or `git grep -n x | grep -v y` has no family, so until now its rows reached the model whole under 16 KB and were cut as a log above it. After the run (post-run hook, CCR on, balanced cut on), the rows are grouped by file in the order the search printed them, with the first 25 kept per file and 200 in all. Once a row is dropped, every kept row is cut at 80 bytes and says how many it lost. Each file that lost rows ends with a count, and `downshift retrieve` returns everything. Commands led by a file read (`cat f | grep x`) are never cut, nor is a run that exited with 2 or more. Over 14 days of real transcripts, this cut 183 of 1,312 search outputs under 16 KB and saved 210 KB (10% of their bytes). A later tool call needed a dropped row in none of the 183.

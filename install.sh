@@ -9,7 +9,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh
 #
 #   # Specific version:
-#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh -s v0.16.0
+#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/install.sh | sh -s v0.17.0
 #
 # A downshift already on PATH is replaced in place, so an update never leaves a
 # second copy behind (go install, for example, puts one in ~/go/bin). Otherwise
@@ -74,7 +74,7 @@ fi
 if [ -z "$VERSION" ]; then
   echo "error: could not determine latest version (no release found, or github.com unreachable)." >&2
   echo "Pass a version explicitly:" >&2
-  echo "  sh install.sh v0.16.0" >&2
+  echo "  sh install.sh v0.17.0" >&2
   exit 1
 fi
 
