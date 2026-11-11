@@ -34,6 +34,7 @@ what is acted on first, and the marker names the id to read the rest back:
 | test runs, builds, pushes, any log | the first 60 and last 80 lines, and every failure line in between (up to 300) with the 3 lines after it |
 | `git diff`, `git show` | every file and hunk header, the first 30 lines of each hunk, at most 250 in all |
 | `grep`, `rg`, `git grep` | the first 20 matches of each file, at most 250, then a count per file of the rest |
+| a command led by `grep`, `rg` or `git grep` that no family covers (`grep -rn x . \| head`), at any size | rows grouped by file, the first 25 of each file and 200 in all, each kept row cut at 80 bytes once a row is dropped, a count per file of the rest |
 
 A line longer than 300 bytes is cut; a line the log cut keeps for a failure word keeps
 its first 300 and its last 200 bytes, since an assertion often ends the line. File

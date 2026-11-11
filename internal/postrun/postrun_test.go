@@ -161,3 +161,23 @@ func TestCompact_CompoundCommandNamesItsShape(t *testing.T) {
 		t.Errorf("simple command: inner %q kind %q, want none", res.Inner, res.Kind)
 	}
 }
+
+func TestCompact_SearchLedCut(t *testing.T) {
+	var b strings.Builder
+	for i := 1; i <= 60; i++ {
+		fmt.Fprintf(&b, "internal/execwrap/compound_search.go:%d:\tif keep == nil {\n", i)
+	}
+	stdout := b.String()
+	in := hookport.ToolOutput{Category: core.CategoryShell, Command: "grep -rn keep internal | head -80", Stdout: stdout, HasStdout: true, ExitCode: -1}
+	res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true})
+	if !res.Replaced || !res.Folded || res.KeptID != "0123456789ab" || !strings.Contains(res.Output.Stdout, "  … 35 more in internal/execwrap/compound_search.go\n") {
+		t.Fatalf("not cut: replaced %v folded %v id %q\n%s", res.Replaced, res.Folded, res.KeptID, res.Output.Stdout)
+	}
+	if res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: false}); res.Replaced {
+		t.Errorf("cut with the balanced cut off:\n%s", res.Output.Stdout)
+	}
+	in.Command = "cat rows.txt | head -80"
+	if res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true}); res.Replaced {
+		t.Errorf("file text cut:\n%s", res.Output.Stdout)
+	}
+}

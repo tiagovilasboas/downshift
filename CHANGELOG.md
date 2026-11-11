@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Search output led by `grep`, `rg` or `git grep` is cut at any size once its raw output is kept.** A command such as `grep -rn x . | head` or `git grep -n x | grep -v y` has no family, so until now its rows reached the model whole under 16 KB and were cut as a log above it. After the run (post-run hook, CCR on, balanced cut on), the rows are grouped by file in the order the search printed them, with the first 25 kept per file and 200 in all. Once a row is dropped, every kept row is cut at 80 bytes and says how many it lost. Each file that lost rows ends with a count, and `downshift retrieve` returns everything. Commands led by a file read (`cat f | grep x`) are never cut, nor is a run that exited with 2 or more. Over 14 days of real transcripts, this cut 183 of 1,312 search outputs under 16 KB and saved 210 KB (10% of their bytes). A later tool call needed a dropped row in none of the 183.
+
 ### Fixed
 
 - **kiro-cli 3.x subagent spawns are recorded.** kiro-cli spawns through a `subagent` tool that names no model, which the KiroCrew adapter did not recognise, so those spawns left no row. They are now observed like Kiro IDE spawns: the decision is recorded with reason `observation-only`, the spawn is never blocked (there is no model to ask a respawn with), and `downshift setup` adds a `subagent` postToolUse matcher for the child end. Run `downshift setup` again to add it. The observation logic Kiro IDE and KiroCrew share now lives in `core.ObserveSpawn`.
