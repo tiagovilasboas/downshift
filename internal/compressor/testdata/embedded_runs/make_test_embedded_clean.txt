@@ -1,0 +1,48 @@
+go build -o bin/widget ./cmd/widget
+go vet ./...
+go test -v -count=1 ./internal/parse
+=== RUN   TestParseEmpty
+--- PASS: TestParseEmpty (0.00s)
+=== RUN   TestParseHeader
+--- PASS: TestParseHeader (0.00s)
+=== RUN   TestParseBody
+=== RUN   TestParseBody/plain
+=== RUN   TestParseBody/quoted
+--- PASS: TestParseBody (0.00s)
+    --- PASS: TestParseBody/plain (0.00s)
+    --- PASS: TestParseBody/quoted (0.00s)
+=== RUN   TestParseTrailer
+--- PASS: TestParseTrailer (0.00s)
+=== RUN   TestParseLimits
+--- PASS: TestParseLimits (0.01s)
+=== RUN   TestParseUnicode
+--- PASS: TestParseUnicode (0.00s)
+PASS
+ok  	github.com/acme/widget/internal/parse	0.021s
+cd scripts && python -m pytest tests
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.2.0, pluggy-1.5.0
+rootdir: /work/widget/scripts
+collected 18 items
+
+tests/test_export.py ......                                              [ 33%]
+tests/test_import.py ........                                            [ 77%]
+tests/test_report.py ....                                                [100%]
+
+============================== 18 passed in 0.42s ==============================
+make[1]: Leaving directory '/work/widget/scripts'
+cd web && npx vitest run
+
+ RUN  v3.2.4 /work/widget/web
+
+ ✓ src/lib/cart.test.ts (8 tests) 7ms
+ ✓ src/lib/coupon.test.ts (9 tests) 5ms
+ ✓ src/lib/price.test.ts (10 tests) 1ms
+ ✓ src/lib/tax.test.ts (8 tests) 3ms
+
+ Test Files  4 passed (4)
+      Tests  35 passed (35)
+   Start at  10:42:07
+   Duration  1.41s (transform 210ms, setup 0ms, collect 0.60s, tests 188ms, environment 2ms, prepare 0.10s)
+
+make: Leaving directory '/work/widget'
