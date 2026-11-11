@@ -26,7 +26,7 @@ func TestBalanceNeedsStoredRaw(t *testing.T) {
 	if !ok || !bytes.Equal(stored, raw) {
 		t.Fatalf("not cut or raw not stored: ok=%v", ok)
 	}
-	if !strings.HasSuffix(string(out), "full output: downshift retrieve 0123456789ab]\n") || len(out) >= len(raw)/2 {
+	if !strings.HasSuffix(string(out), "downshift retrieve 0123456789ab]\n") || len(out) >= len(raw)/2 {
 		t.Errorf("cut output: %d of %d bytes, tail %q", len(out), len(raw), out[len(out)-80:])
 	}
 	if _, ok := balance(nil, FamilyMake, raw, raw, balanceConfig{}); ok {

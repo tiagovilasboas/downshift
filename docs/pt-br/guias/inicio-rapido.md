@@ -106,7 +106,7 @@ Go test: PASS (53 packages ok, 4 without tests) under github.com/tiagovilasboas/
 ok accounting
 ok adapters/antigravity
 ...
-[downshift compact: compacted 3956 to 998 bytes; full output: downshift retrieve 4a12b8c9]
+[downshift compact: 3956 to 998 bytes; downshift retrieve 4a12b8c9]
 ```
 
 - **Economia Imediata:** Mais de 70% de redução de tokens gastos desnecessariamente na janela de contexto.
@@ -117,7 +117,7 @@ ok adapters/antigravity
 ## Passo 5: Recuperando a Saída Bruta via CCR
 
 Note a linha final inserida pelo compactor com o identificador do CCR:
-`[downshift compact: ... full output: downshift retrieve 4a12b8c9]`
+`[downshift compact: ... downshift retrieve 4a12b8c9]`
 
 O CCR (*Command Context Recovery*) armazena localmente a saída original completa. Se o seu agente ou você precisar ver qualquer linha suprimida:
 

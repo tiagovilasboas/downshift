@@ -854,7 +854,7 @@ Threat note: [compactor-default-on-adr.md](../design/compactor-default-on-adr.md
 
 1. Make sure the Downshift plugin is installed and no deny or ask rule matches `go test`. No allow rule is needed, and none should be added for `downshift compact`.
 2. Start a new Claude Code session in a Go repository and ask it to run `go test ./...` (a repository with a dozen or more packages, all passing).
-3. Look at the tool call Claude Code shows. The command must read `'<path>/downshift' compact -- go test ./...`, and a passing result must end with a `[downshift compact: compacted N to M bytes]` line.
+3. Look at the tool call Claude Code shows. The command must read `'<path>/downshift' compact -- go test ./...`, and a passing result must end with a `[downshift compact: N to M bytes; ...]` line.
 4. Run `downshift context metrics`: `exec_metrics.commands` must have grown. With `DOWNSHIFT_EXEC=0` in the environment the command must run as typed.
 
 If the command runs as typed with the hook on, Claude Code ignores the rewrite without a decision: nothing breaks and nothing is saved, and this feature should stay documented as not working there.

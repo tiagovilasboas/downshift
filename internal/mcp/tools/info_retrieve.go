@@ -39,7 +39,7 @@ type retrieveArgs struct {
 func retrieveTool() Tool {
 	return Tool{
 		Name:        "retrieve",
-		Description: "Returns the full output the Downshift compactor kept when it cut a command's output. The cut output ends with a marker naming an id; pass that id here, and narrow with grep, head, tail or lines (A:B) to fetch only the lines you need. Kept output expires after 24 hours.",
+		Description: "Returns the full output the Downshift compactor kept when it cut a command's output. The cut output ends with a marker naming an id (`original not kept` means there is none); pass that id here, and narrow with grep, head, tail or lines (A:B) to fetch only the lines you need. Kept output expires after 24 hours.",
 		InputSchema: json.RawMessage(retrieveSchema),
 		Title:       "Kept command output", ReadOnly: true, Idempotent: true,
 		Handler: func(_ context.Context, raw json.RawMessage) (Result, error) {

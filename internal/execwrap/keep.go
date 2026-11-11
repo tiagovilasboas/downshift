@@ -16,7 +16,7 @@ const markerPrefix = "[downshift compact: "
 // MarkerWithID is the marker of a compacted run whose raw output was kept: it
 // tells the reader which id to pass to `downshift retrieve`.
 func MarkerWithID(raw, summary int, id string) string {
-	return fmt.Sprintf("[downshift compact: compacted %d to %d bytes; full output: downshift retrieve %s]\n", raw, summary, id)
+	return fmt.Sprintf("[downshift compact: %d to %d bytes; downshift retrieve %s]\n", raw, summary, id)
 }
 
 // keepRaw offers the raw held bytes to keep (Options.Keep) and, when it

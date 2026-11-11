@@ -54,7 +54,7 @@ func TestRun_AgentDesktopViewThenDelta(t *testing.T) {
 	if !r.Compacted || r.Family != FamilyAgentDesktop {
 		t.Fatalf("first read: compacted=%v family=%q passthrough=%s", r.Compacted, r.Family, r.Passthrough)
 	}
-	for _, want := range []string{"refs: eN means @s9x0lmz4:eN\n", "e173 button \"More actions\"", "e61 button \"Add reaction\"", "; full output: downshift retrieve 0123456789ab]\n"} {
+	for _, want := range []string{"refs: eN means @s9x0lmz4:eN\n", "e173 button \"More actions\"", "e61 button \"Add reaction\"", "; downshift retrieve 0123456789ab]\n"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("first read lacks %q", want)
 		}
@@ -71,7 +71,7 @@ func TestRun_AgentDesktopViewThenDelta(t *testing.T) {
 	if !r2.Compacted || !strings.Contains(out2, "delta from snapshot s9x0lmz4") || !strings.Contains(out2, "+    e175 button \"Send now\"\n") {
 		t.Fatalf("second read is not a delta:\n%s", out2)
 	}
-	if !strings.HasSuffix(out2, "; full output: downshift retrieve 0123456789ab]\n") || int(r2.EmittedBytes) != len(out2) {
+	if !strings.HasSuffix(out2, "; downshift retrieve 0123456789ab]\n") || int(r2.EmittedBytes) != len(out2) {
 		t.Fatalf("marker or byte count wrong (emitted %d, printed %d):\n%s", r2.EmittedBytes, len(out2), out2)
 	}
 	if len(out2)*5 > len(out) {
@@ -87,7 +87,7 @@ func TestRun_AgentDesktopDeltaKeepsSessionHint(t *testing.T) {
 	store := desktopview.Store{Dir: t.TempDir(), TTL: time.Minute, MaxBytes: 1 << 20}
 	key := DesktopScope("sess", []string{"agent-desktop", "snapshot", "--app", "Chat", "-i"})
 	o := Options{Keep: keep, Session: hashS2, Desktop: func(v []byte) []byte { return store.Apply(key, v) }}
-	hint := "; full output: downshift retrieve --session=aaaaaaaaaaaa 0123456789ab]\n"
+	hint := "; downshift retrieve --session=aaaaaaaaaaaa 0123456789ab]\n"
 
 	_, out := desktopRun(t, desktopFixture, o)
 	if !strings.HasSuffix(out, hint) {

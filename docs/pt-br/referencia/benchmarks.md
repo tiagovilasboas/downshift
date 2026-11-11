@@ -23,7 +23,7 @@ Este documento apresenta a análise técnica detalhada e os resultados oficiais 
 
 | Métrica Avaliada | Tamanho Bruto (Raw) | Downshift (sem CCR) | Economia sem CCR | Downshift (com CCR) | Economia com CCR |
 |---|--:|--:|--:|--:|--:|
-| **Total do Corpus (113 fixtures)** | **194.873 bytes**<br>*(~48.718 tokens)* | **91.342 bytes**<br>*(~22.835 tokens)* | **53.1%** | **64.316 bytes**<br>*(~16.079 tokens)* | **67.0%** |
+| **Total do Corpus (113 fixtures)** | **194.873 bytes**<br>*(~48.718 tokens)* | **92.359 bytes**<br>*(~23.089 tokens)* | **52.6%** | **61.717 bytes**<br>*(~15.429 tokens)* | **68.3%** |
 
 ### Divisão entre Famílias Sem Perda (*Lossless*) e Com Sumarização (*Lossy*)
 
@@ -34,10 +34,10 @@ O Downshift divide formalmente suas gramáticas em duas categorias de segurança
 
 | Categoria | Fixtures | Bytes Brutos (Raw) | Bytes Downshift | Economia (%) |
 |---|--:|--:|--:|--:|
-| **Lossless (Sem Perda)** | **64** | **104.386** | **41.863** | **59.9%** |
-| **Lossy (Sumarizada)** | **49** | **90.487** | **49.479** | **45.3%** |
+| **Lossless (Sem Perda)** | **64** | **104.386** | **42.439** | **59.3%** |
+| **Lossy (Sumarizada)** | **49** | **90.487** | **49.920** | **44.8%** |
 
-> **Destaque:** Nas famílias *lossless*, o Downshift obtém **59.9% de economia média de bytes** sem sacrificar absolutamente nenhuma linha de diagnóstico ou stack trace relevante.
+> **Destaque:** Nas famílias *lossless*, o Downshift obtém **59.3% de economia média de bytes** sem sacrificar absolutamente nenhuma linha de diagnóstico ou stack trace relevante.
 
 ---
 
@@ -47,61 +47,61 @@ A tabela a seguir reflete a execução oficial do benchmark:
 
 | Família do Comando | Categoria | Fixtures | Bytes Brutos | Bytes Downshift | Redução (%) | Tokens Brutos~ | Tokens Downshift~ | Bytes com CCR | Redução com CCR (%) |
 |---|---|--:|--:|--:|--:|--:|--:|--:|--:|
-| **agent_desktop** | lossless | 3 | 61.032 | 26.302 | 56.9% | 15.258 | 6.575 | 26.440 | 56.7% |
-| **bazel** | lossy | 2 | 911 | 322 | 64.7% | 227 | 80 | 414 | 54.6% |
-| **cargo_build** | lossy | 1 | 440 | 174 | 60.5% | 110 | 43 | 220 | 50.0% |
-| **cargo_test** | lossless | 3 | 3.660 | 257 | **93.0%** | 915 | 64 | 395 | 89.2% |
-| **cypress** | lossless | 1 | 910 | 153 | **83.2%** | 227 | 38 | 199 | 78.1% |
-| **docker_build** | lossy | 1 | 388 | 187 | 51.8% | 97 | 46 | 233 | 39.9% |
-| **docker_images** | lossy | 1 | 248 | 124 | 50.0% | 62 | 31 | 170 | 31.5% |
-| **docker_ps** | lossy | 1 | 475 | 228 | 52.0% | 118 | 57 | 274 | 42.3% |
-| **dotnet_build** | lossy | 1 | 468 | 351 | 25.0% | 117 | 87 | 397 | 15.2% |
-| **dotnet_test** | lossless | 1 | 333 | 102 | 69.4% | 83 | 25 | 148 | 55.6% |
-| **eslint** | lossy | 3 | 2.091 | 1.053 | 49.6% | 522 | 263 | 1.191 | 43.0% |
-| **file_read** | lossy | 1 | 11.594 | 2.413 | 79.2% | 2.898 | 603 | 2.459 | 78.8% |
-| **flutter_test** | lossless | 5 | 6.624 | 513 | **92.3%** | 1.656 | 128 | 743 | 88.8% |
-| **generic** | lossy | 4 | 41.608 | 33.970 | 18.4% | 10.402 | 8.492 | 2.865 | 93.1% |
-| **gh_checks** | lossless | 1 | 515 | 118 | 77.1% | 128 | 29 | 164 | 68.2% |
-| **gh_pr** | lossless | 2 | 1.843 | 1.756 | 4.7% | 460 | 439 | 1.848 | -0.3% |
-| **gh_run_list** | lossless | 1 | 378 | 221 | 41.5% | 94 | 55 | 267 | 29.4% |
-| **gh_run_log** | lossy | 2 | 2.451 | 637 | 74.0% | 612 | 159 | 729 | 70.3% |
-| **git_diff** | lossless | 2 | 541 | 533 | 1.5% | 135 | 133 | 625 | -15.5% |
-| **git_log** | lossy | 5 | 2.265 | 610 | 73.1% | 566 | 152 | 840 | 62.9% |
-| **git_show** | lossless | 1 | 363 | 367 | -1.1% | 90 | 91 | 413 | -13.8% |
-| **git_stash** | lossy | 1 | 192 | 175 | 8.9% | 48 | 43 | 221 | -15.1% |
-| **git_status** | lossless | 5 | 1.113 | 538 | 51.7% | 278 | 134 | 768 | 31.0% |
-| **glab** | lossy | 2 | 1.673 | 1.672 | 0.1% | 418 | 418 | 1.764 | -5.4% |
-| **go_build** | lossy | 2 | 632 | 500 | 20.9% | 158 | 125 | 592 | 6.3% |
-| **go_test** | lossless | 13 | 13.425 | 6.050 | 54.9% | 3.356 | 1.512 | 6.648 | 50.5% |
-| **golangci_lint** | lossy | 2 | 569 | 397 | 30.2% | 142 | 99 | 489 | 14.1% |
-| **gradle** | lossy | 4 | 1.875 | 818 | 56.4% | 468 | 204 | 1.002 | 46.6% |
-| **grep_counts** | lossy | 1 | 226 | 114 | 49.6% | 56 | 28 | 160 | 29.2% |
-| **grep_rows** | lossless | 1 | 1.920 | 1.298 | 32.4% | 480 | 324 | 998 | 48.0% |
-| **http_fetch** | lossy | 1 | 4.980 | 1.841 | 63.0% | 1.245 | 460 | 1.298 | 73.9% |
-| **jest** | lossless | 2 | 459 | 208 | 54.7% | 114 | 52 | 300 | 34.6% |
-| **kubectl_pods** | lossy | 1 | 229 | 182 | 20.5% | 57 | 45 | 228 | 0.4% |
-| **lockfile_diff** | lossy | 1 | 2.479 | 219 | **91.2%** | 619 | 54 | 265 | 89.3% |
-| **markdown** | lossy | 2 | 1.063 | 921 | 13.4% | 265 | 230 | 1.013 | 4.7% |
-| **maven** | lossy | 3 | 6.676 | 880 | **86.8%** | 1.669 | 220 | 1.018 | 84.8% |
-| **mypy** | lossy | 2 | 710 | 373 | 47.5% | 177 | 93 | 465 | 34.5% |
-| **next_build** | lossless | 1 | 578 | 135 | 76.6% | 144 | 33 | 181 | 68.7% |
-| **npm_audit** | lossy | 1 | 1.052 | 422 | 59.9% | 263 | 105 | 468 | 55.5% |
-| **npm_install** | lossless | 1 | 714 | 78 | **89.1%** | 178 | 19 | 124 | 82.6% |
-| **nx** | lossless | 1 | 350 | 96 | 72.6% | 87 | 24 | 142 | 59.4% |
-| **phpstan** | lossless | 1 | 112 | 70 | 37.5% | 28 | 17 | 116 | -3.6% |
-| **phpunit** | lossless | 1 | 260 | 111 | 57.3% | 65 | 27 | 157 | 39.6% |
-| **pip_install** | lossless | 1 | 250 | 77 | 69.2% | 62 | 19 | 123 | 50.8% |
-| **playwright** | lossless | 2 | 906 | 167 | **81.6%** | 226 | 41 | 259 | 71.4% |
-| **progress** | lossy | 1 | 2.181 | 119 | **94.5%** | 545 | 29 | 165 | 92.4% |
-| **pytest** | lossless | 2 | 1.216 | 162 | **86.7%** | 304 | 40 | 254 | 79.1% |
-| **rspec** | lossless | 1 | 443 | 91 | 79.5% | 110 | 22 | 137 | 69.1% |
-| **rubocop** | lossless | 2 | 685 | 492 | 28.2% | 171 | 123 | 584 | 14.7% |
-| **ruff** | lossy | 2 | 492 | 339 | 31.1% | 123 | 84 | 431 | 12.4% |
-| **tsc** | lossless | 3 | 946 | 204 | 78.4% | 236 | 51 | 342 | 63.8% |
-| **turbo** | lossless | 1 | 494 | 101 | 79.6% | 123 | 25 | 147 | 70.2% |
-| **vitest** | lossless | 4 | 3.624 | 931 | 74.3% | 906 | 232 | 1.115 | 69.2% |
-| **uncompacted** | lossy | 3 | 6.105 | 6.105 | 0.0% | 1.526 | 1.526 | 1.176 | 80.7% |
-| **TOTAL** | — | **113** | **194.873** | **91.342** | **53.1%** | **48.718** | **22.835** | **64.316** | **67.0%** |
+| **agent_desktop** | lossless | 3 | 61.032 | 26.329 | 56.9% | 15.258 | 6.582 | 26.371 | 56.8% |
+| **bazel** | lossy | 2 | 911 | 340 | 62.7% | 227 | 85 | 368 | 59.6% |
+| **cargo_build** | lossy | 1 | 440 | 183 | 58.4% | 110 | 45 | 197 | 55.2% |
+| **cargo_test** | lossless | 3 | 3.660 | 284 | **92.2%** | 915 | 71 | 326 | 91.1% |
+| **cypress** | lossless | 1 | 910 | 162 | **82.2%** | 227 | 40 | 176 | 80.7% |
+| **docker_build** | lossy | 1 | 388 | 196 | 49.5% | 97 | 49 | 210 | 45.9% |
+| **docker_images** | lossy | 1 | 248 | 133 | 46.4% | 62 | 33 | 147 | 40.7% |
+| **docker_ps** | lossy | 1 | 475 | 237 | 50.1% | 118 | 59 | 251 | 47.2% |
+| **dotnet_build** | lossy | 1 | 468 | 360 | 23.1% | 117 | 90 | 374 | 20.1% |
+| **dotnet_test** | lossless | 1 | 333 | 111 | 66.7% | 83 | 27 | 125 | 62.5% |
+| **eslint** | lossy | 3 | 2.091 | 1.080 | 48.4% | 522 | 270 | 1.122 | 46.3% |
+| **file_read** | lossy | 1 | 11.594 | 2.422 | 79.1% | 2.898 | 605 | 2.436 | 79.0% |
+| **flutter_test** | lossless | 5 | 6.624 | 558 | **91.6%** | 1.656 | 139 | 628 | 90.5% |
+| **generic** | lossy | 4 | 41.608 | 34.006 | 18.3% | 10.402 | 8.501 | 2.773 | 93.3% |
+| **gh_checks** | lossless | 1 | 515 | 127 | 75.3% | 128 | 31 | 141 | 72.6% |
+| **gh_pr** | lossless | 2 | 1.843 | 1.774 | 3.7% | 460 | 443 | 1.802 | 2.2% |
+| **gh_run_list** | lossless | 1 | 378 | 230 | 39.2% | 94 | 57 | 244 | 35.4% |
+| **gh_run_log** | lossy | 2 | 2.451 | 655 | 73.3% | 612 | 163 | 683 | 72.1% |
+| **git_diff** | lossless | 3 | 810 | 849 | -4.8% | 202 | 212 | 891 | -10.0% |
+| **git_log** | lossy | 5 | 2.265 | 655 | 71.1% | 566 | 163 | 725 | 68.0% |
+| **git_show** | lossless | 2 | 786 | 828 | -5.3% | 196 | 207 | 856 | -8.9% |
+| **git_stash** | lossy | 1 | 192 | 184 | 4.2% | 48 | 46 | 198 | -3.1% |
+| **git_status** | lossless | 5 | 1.113 | 583 | 47.6% | 278 | 145 | 653 | 41.3% |
+| **glab** | lossy | 2 | 1.673 | 1.690 | -1.0% | 418 | 422 | 1.718 | -2.7% |
+| **go_build** | lossy | 2 | 632 | 518 | 18.0% | 158 | 129 | 546 | 13.6% |
+| **go_test** | lossless | 13 | 13.425 | 6.167 | 54.1% | 3.356 | 1.541 | 6.349 | 52.7% |
+| **golangci_lint** | lossy | 2 | 569 | 415 | 27.1% | 142 | 103 | 443 | 22.1% |
+| **gradle** | lossy | 4 | 1.875 | 854 | 54.5% | 468 | 213 | 910 | 51.5% |
+| **grep_counts** | lossy | 1 | 226 | 123 | 45.6% | 56 | 30 | 137 | 39.4% |
+| **grep_rows** | lossless | 1 | 1.920 | 1.307 | 31.9% | 480 | 326 | 975 | 49.2% |
+| **http_fetch** | lossy | 1 | 4.980 | 1.850 | 62.9% | 1.245 | 462 | 1.275 | 74.4% |
+| **jest** | lossless | 2 | 459 | 226 | 50.8% | 114 | 56 | 254 | 44.7% |
+| **kubectl_pods** | lossy | 1 | 229 | 191 | 16.6% | 57 | 47 | 205 | 10.5% |
+| **lockfile_diff** | lossy | 2 | 4.998 | 675 | **86.5%** | 1.249 | 168 | 703 | 85.9% |
+| **markdown** | lossy | 2 | 1.063 | 939 | 11.7% | 265 | 234 | 967 | 9.0% |
+| **maven** | lossy | 3 | 6.676 | 907 | **86.4%** | 1.669 | 226 | 949 | 85.8% |
+| **mypy** | lossy | 2 | 710 | 391 | 44.9% | 177 | 97 | 419 | 41.0% |
+| **next_build** | lossless | 1 | 578 | 144 | 75.1% | 144 | 36 | 158 | 72.7% |
+| **npm_audit** | lossy | 1 | 1.052 | 431 | 59.0% | 263 | 107 | 445 | 57.7% |
+| **npm_install** | lossless | 1 | 714 | 87 | **87.8%** | 178 | 21 | 101 | 85.9% |
+| **nx** | lossless | 1 | 350 | 105 | 70.0% | 87 | 26 | 119 | 66.0% |
+| **phpstan** | lossless | 1 | 112 | 79 | 29.5% | 28 | 19 | 93 | 17.0% |
+| **phpunit** | lossless | 1 | 260 | 120 | 53.8% | 65 | 30 | 134 | 48.5% |
+| **pip_install** | lossless | 1 | 250 | 86 | 65.6% | 62 | 21 | 100 | 60.0% |
+| **playwright** | lossless | 2 | 906 | 185 | 79.6% | 226 | 46 | 213 | 76.5% |
+| **progress** | lossy | 1 | 2.181 | 128 | **94.1%** | 545 | 32 | 142 | 93.5% |
+| **pytest** | lossless | 2 | 1.216 | 180 | **85.2%** | 304 | 45 | 208 | 82.9% |
+| **rspec** | lossless | 1 | 443 | 100 | 77.4% | 110 | 25 | 114 | 74.3% |
+| **rubocop** | lossless | 2 | 685 | 510 | 25.5% | 171 | 127 | 538 | 21.5% |
+| **ruff** | lossy | 2 | 492 | 357 | 27.4% | 123 | 89 | 385 | 21.7% |
+| **tsc** | lossless | 3 | 946 | 231 | 75.6% | 236 | 57 | 273 | 71.1% |
+| **turbo** | lossless | 1 | 494 | 110 | 77.7% | 123 | 27 | 124 | 74.9% |
+| **vitest** | lossless | 4 | 3.624 | 967 | 73.3% | 906 | 241 | 1.023 | 71.8% |
+| **uncompacted** | lossy | 3 | 6.150 | 6.150 | 0.0% | 1.537 | 1.537 | 1.152 | 81.3% |
+| **TOTAL** | — | **113** | **194.873** | **92.359** | **52.6%** | **48.718** | **23.089** | **61.717** | **68.3%** |
 
 ---
 
@@ -118,7 +118,7 @@ A tabela a seguir reflete a execução oficial do benchmark:
    - Na família `generic`, a redução sem CCR foi de 18.4%. Com a ativação do CCR e a dobra de repetições (*FoldRepeats*), a economia disparou para **93.1%** (de 41.608 bytes para 2.865 bytes), pois centenas de linhas de logs repetitivos foram dobradas mantendo a garantia de recuperação integral.
 
 3. **Valores Negativos Marginais:**
-   - Em saídas minúsculas (como um `git show` ou `git diff` de 300 bytes), a adição do marcador informativo do CCR (`[downshift compact: ...]`) pode adicionar cerca de 40 a 60 bytes. Esse comportamento é esperado e desejável, pois fornece a rastreabilidade necessária para o agente.
+   - Em saídas minúsculas (como um `git show` ou `git diff` de 300 bytes), a adição do marcador informativo do CCR (`[downshift compact: ...]`) pode adicionar algumas dezenas de bytes. Esse comportamento é esperado e desejável, pois fornece a rastreabilidade necessária para o agente.
 
 ---
 
@@ -127,7 +127,7 @@ A tabela a seguir reflete a execução oficial do benchmark:
 O Downshift adota um compromisso de transparência científica em relação a métricas de economia:
 
 1. **Degrau A — Preço de Tabela Teórico:** Suposições matemáticas de quanto um modelo custaria. O Downshift não baseia seus produtos nisso.
-2. **Degrau B — Bytes e Tokens Medidos no Corpus:** O benchmark formal desta página (53.1% e 67.0% de economia medidos byte a byte em 113 fixtures).
+2. **Degrau B — Bytes e Tokens Medidos no Corpus:** O benchmark formal desta página (52.6% e 68.3% de economia medidos byte a byte em 113 fixtures).
 3. **Degrau C — Telemetria Local Real:** O que o seu ambiente registrou em `events.jsonl` e `exec-events.jsonl` (consultável via `downshift stats`).
 4. **Degrau D — Experimento Controlado A/B com Grupo de Controle:** Medição de tarefas reais comparando execuções com e sem Downshift em condições idênticas.
 5. **Degrau E — Fatura e Custo por Tarefa Aceita:** A redução real observada na fatura do provedor de IA no final do mês.

@@ -44,7 +44,9 @@ var (
 	// gh pr checks: one tab-separated check row, all passing.
 	ghPrChecksClean = "build\tpass\t1m12s\thttps://x/1\n" +
 		"test\tpass\t3m40s\thttps://x/2\n" +
-		"lint\tpass\t0m48s\thttps://x/3\n"
+		"lint\tpass\t0m48s\thttps://x/3\n" +
+		"vet\tpass\t0m31s\thttps://x/4\n" +
+		"e2e\tpass\t5m02s\thttps://x/5\n"
 )
 
 // shScript wraps body as a here-doc the fake bin prints verbatim, then exits
@@ -181,7 +183,7 @@ func TestRun_GhCompactionAndFailOpen(t *testing.T) {
 				if len(out) >= len(tc.body) {
 					t.Fatalf("compacted output not shorter: %d >= %d", len(out), len(tc.body))
 				}
-				if !strings.Contains(out, "[downshift compact: compacted") {
+				if !strings.Contains(out, " bytes; ") {
 					t.Fatalf("missing compaction marker: %q", out)
 				}
 			} else {

@@ -202,6 +202,6 @@ Para suportar suítes modernas como `pytest`, `vitest`, `playwright`, `cargo tes
 
 ### Fullstack (Experiência do Desenvolvedor e Integração)
 - **Nada a instalar**: Executado inteiramente no binário compilado em Go, sem exigir bibliotecas Python (`pytest-json-report`), pacotes npm (`vitest-custom-reporter`, reporters customizados do Playwright) ou crates adicionais do Rust.
-- **Transparência de Compactação**: Adição padronizada do marcador `[downshift compact: compacted N to M bytes]` ao final da saída, permitindo ao desenvolvedor e ao LLM saberem exatamente que a visualização foi resumida de forma segura.
+- **Transparência de Compactação**: Adição padronizada do marcador `[downshift compact: N to M bytes; ...]` ao final da saída, permitindo ao desenvolvedor e ao LLM saberem exatamente que a visualização foi resumida de forma segura.
 - **Kill-Switch Imediato**: Suporte a desligamento sem reinicialização de daemon via flag `--no-compact` ou variável de ambiente `DOWNSHIFT_EXEC=0`.
 

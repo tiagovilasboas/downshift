@@ -56,9 +56,9 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 		},
 		{
 			name: "dirty git status compacts", bin: "git",
-			script: "printf 'On branch main\\nChanges not staged for commit:\\n\\tmodified:   a.go\\n'",
+			script: "printf 'On branch main\\nChanges not staged for commit:\\n\\tmodified:   a.go\\n\\tmodified:   b.go\\n\\tmodified:   c.go\\n'",
 			argv:   []string{"git", "status"}, compact: true,
-			wantCode: 0, wantClass: ExitClassZero, wantOut: "* main\n M a.go\n" + Marker(len("On branch main\nChanges not staged for commit:\n\tmodified:   a.go\n"), len("* main\n M a.go\n")), compacted: true, wantFamily: FamilyGitStatus,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: "* main\n M a.go\n M b.go\n M c.go\n" + Marker(len("On branch main\nChanges not staged for commit:\n\tmodified:   a.go\n\tmodified:   b.go\n\tmodified:   c.go\n"), len("* main\n M a.go\n M b.go\n M c.go\n")), compacted: true, wantFamily: FamilyGitStatus,
 		},
 		{
 			name: "git log is compacted to one line per commit", bin: "git",

@@ -169,7 +169,7 @@ func TestPostRun_PlainFamilyUsesWrapperCompressor(t *testing.T) {
 	if got == nil {
 		t.Fatal("no updatedToolOutput for a clean go test -v run")
 	}
-	if out := got["stdout"].(string); !strings.Contains(out, "[downshift compact: compacted") || len(out) >= len(stdout) {
+	if out := got["stdout"].(string); !strings.Contains(out, " bytes; ") || len(out) >= len(stdout) {
 		t.Errorf("stdout = %q, want the go test summary with its marker", out)
 	}
 }

@@ -100,7 +100,7 @@ func TestKeepRaw_SkipsStoreWhenIDMarkerWouldExceedRaw(t *testing.T) {
 }
 
 // padRun sizes the folded run so the bare marker just fits.
-const padRun = 40
+const padRun = 35
 
 // A session adds `--session=<ref> ` (22 bytes) to the marker. The guard sizes
 // the marker with a bare id, so the real output must be measured again: it

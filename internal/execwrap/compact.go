@@ -110,7 +110,8 @@ func compactSafely(argv []string, data []byte, family Family, exitCode int) (out
 }
 
 // Marker is the last line of compacted output. It tells the reader that the
-// text above is a summary, not what the program printed.
+// text above is a summary, not what the program printed, and that no copy of
+// the original is kept (keepRaw swaps it for MarkerWithID when one is).
 func Marker(rawBytes, summaryBytes int) string {
-	return fmt.Sprintf("[downshift compact: compacted %d to %d bytes]\n", rawBytes, summaryBytes)
+	return fmt.Sprintf("[downshift compact: %d to %d bytes; original not kept]\n", rawBytes, summaryBytes)
 }

@@ -42,7 +42,7 @@ func TestRun_FileReadFoldsLongSourceAndKeepsShortOnes(t *testing.T) {
 	if !r.Compacted || r.Family != FamilyFileRead || len(out) >= len(raw) {
 		t.Fatalf("long file not folded: compacted=%v family=%q %d>=%d", r.Compacted, r.Family, len(out), len(raw))
 	}
-	for _, want := range []string{"5: func Step0(", "434: func Step39(", "full text: sed -n '1,444p' " + long, "[downshift compact: compacted"} {
+	for _, want := range []string{"5: func Step0(", "434: func Step39(", "full text: sed -n '1,444p' " + long, " bytes; "} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output lacks %q:\n%s", want, out)
 		}
@@ -104,9 +104,9 @@ func TestRun_FileReadNeverCompactsOrStoresSecretOrIrregularFiles(t *testing.T) {
 func TestRun_KeptHintCarriesSession(t *testing.T) {
 	long, _ := readSource(t, t.TempDir(), "long.go", 40)
 	for _, tc := range []struct{ session, want string }{
-		{"", "full output: downshift retrieve abc123abc123]"},
-		{"not-a-hash", "full output: downshift retrieve abc123abc123]"},
-		{hashS2, "full output: downshift retrieve --session=aaaaaaaaaaaa abc123abc123]"},
+		{"", "downshift retrieve abc123abc123]"},
+		{"not-a-hash", "downshift retrieve abc123abc123]"},
+		{hashS2, "downshift retrieve --session=aaaaaaaaaaaa abc123abc123]"},
 	} {
 		var out, errb bytes.Buffer
 		r := Run([]string{"cat", long}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb, Compact: true,
@@ -124,7 +124,7 @@ func TestRun_FileReadStoresRawThroughKeepOnlyWhenFolded(t *testing.T) {
 	var out, errb bytes.Buffer
 	r := Run([]string{"cat", long}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb, Compact: true,
 		Keep: func(b []byte) (string, bool) { stored = b; return "abc123abc123", true }})
-	if !r.Compacted || string(stored) != raw || !strings.Contains(out.String(), "full output: downshift retrieve abc123abc123") {
+	if !r.Compacted || string(stored) != raw || !strings.Contains(out.String(), "downshift retrieve abc123abc123") {
 		t.Errorf("compacted=%v stored=%d bytes (want %d)\n%.200s", r.Compacted, len(stored), len(raw), out.String())
 	}
 

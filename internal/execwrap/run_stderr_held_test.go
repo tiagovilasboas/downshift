@@ -80,7 +80,7 @@ func TestRun_LargeMakeWithStderrIsBalanced(t *testing.T) {
 			if len(store.got) != rawOut || out.Len()*4 > rawOut {
 				t.Fatalf("kept %d of %d bytes, printed %d", len(store.got), rawOut, out.Len())
 			}
-			for _, w := range append(tc.want, "full output: downshift retrieve 0123456789ab]") {
+			for _, w := range append(tc.want, "downshift retrieve 0123456789ab]") {
 				if !strings.Contains(out.String(), w) {
 					t.Errorf("output lacks %q", w)
 				}
