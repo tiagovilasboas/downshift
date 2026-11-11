@@ -10,7 +10,9 @@
 // Shell output goes through the same steps as `downshift compact`
 // (execwrap.CompactCaptured): the family's compressor when the command is one
 // plain allowlisted program, otherwise only the balanced cut, which needs the
-// raw output stored in CCR and a gain of at least a quarter. Search results
+// raw output stored in CCR and a gain of at least a quarter; a smaller output
+// led by a search is regrouped by path instead, lossless
+// (execwrap.RegroupCompound). Search results
 // (matches and file lists) are cut only when larger than the balanced
 // threshold, with the raw text stored first. File reads are never touched:
 // an edit needs the file's exact text.
@@ -112,6 +114,11 @@ func compactShell(in hookport.ToolOutput, o Options) Result {
 	}
 	res.RawBytes = int64(len(in.Stdout) + len(in.Stderr))
 	out := execwrap.CompactCaptured(argv, family, []byte(in.Stdout), exit, o.Keep, o.Balanced, o.Session)
+	if family == execwrap.FamilyNone && !out.Compacted {
+		if regrouped, ok := execwrap.RegroupCompound(in.Command, []byte(in.Stdout), exit, o.Keep, o.Session); ok {
+			out = regrouped
+		}
+	}
 	res.Compacted, res.Folded, res.Passthrough, res.Detail, res.KeptID = out.Compacted, out.Folded, out.Passthrough, out.Detail, out.KeptID
 	if out.Compacted {
 		res.Output.Stdout = string(out.Output)

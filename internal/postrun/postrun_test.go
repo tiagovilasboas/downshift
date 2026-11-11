@@ -161,3 +161,16 @@ func TestCompact_CompoundCommandNamesItsShape(t *testing.T) {
 		t.Errorf("simple command: inner %q kind %q, want none", res.Inner, res.Kind)
 	}
 }
+
+func TestCompact_CompoundSearchRegrouped(t *testing.T) {
+	stdout := strings.Repeat("internal/execwrap/compound_search.go:12:\tif keep == nil {\n", 10)
+	in := hookport.ToolOutput{Category: core.CategoryShell, Command: "grep -rn keep internal | head -20", Stdout: stdout, HasStdout: true, ExitCode: -1}
+	res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true})
+	if !res.Replaced || res.Folded || res.KeptID != "0123456789ab" || !strings.HasPrefix(res.Output.Stdout, "internal/execwrap/compound_search.go\n 12:\tif keep") {
+		t.Fatalf("not regrouped: replaced %v folded %v id %q\n%s", res.Replaced, res.Folded, res.KeptID, res.Output.Stdout)
+	}
+	in.Command = "cat rows.txt | head -20"
+	if res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true}); res.Replaced {
+		t.Errorf("file text regrouped:\n%s", res.Output.Stdout)
+	}
+}
