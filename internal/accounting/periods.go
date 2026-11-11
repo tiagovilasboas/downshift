@@ -27,6 +27,10 @@ type PeriodHarness struct {
 	// RoutingBelowTokens is the billable tokens of spawns that ran below the
 	// session model; unobserved spawns are not counted.
 	RoutingBelowTokens int64 `json:"routing_below_tokens"`
+	// Commands and Compacted are the Compactor runs of the period, so a day
+	// with runs and nothing compacted reads apart from a day with no runs.
+	Commands  int64 `json:"compactor_commands"`
+	Compacted int64 `json:"compactor_compacted"`
 }
 
 // PeriodRow is one day or week. Period is "2006-01-02" (the day, or the Monday
@@ -132,20 +136,26 @@ func BuildPeriods(events []telemetry.Event, execEvents []execwrap.Event, o Perio
 	return sortedRows(cells)
 }
 
-// addCompaction folds the Compactor's saved bytes into the cells, converting
-// to tokens once per cell so rounding does not accumulate.
+// addCompaction folds the Compactor's runs and net saved bytes into the
+// cells, converting to tokens once per cell so rounding does not accumulate.
 func addCompaction(execEvents []execwrap.Event, o PeriodOptions, in func(time.Time) bool, cell func(p, h string) *PeriodHarness) {
 	saved := map[[2]string]int64{}
 	for _, ev := range execEvents {
 		t, ok := parseStamp(ev.TS)
-		if !ok || !in(t) || ev.RawBytes <= ev.EmittedBytes {
+		if !ok || !in(t) {
 			continue
 		}
 		h := ev.Harness
 		if h == "" {
 			h = UnknownHarness
 		}
-		saved[[2]string{o.periodKey(t), h}] += ev.RawBytes - ev.EmittedBytes
+		k := [2]string{o.periodKey(t), h}
+		c := cell(k[0], k[1])
+		c.Commands++
+		if ev.Compacted {
+			c.Compacted++
+		}
+		saved[k] += ev.NetSavedBytes()
 	}
 	for k, b := range saved {
 		cell(k[0], k[1]).CompactionTokens = b / execwrap.BytesPerToken

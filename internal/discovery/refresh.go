@@ -9,8 +9,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // DefaultRefreshRetry is how long a refresh marker holds. It stops a second
@@ -21,7 +22,7 @@ const DefaultRefreshRetry = 5 * time.Minute
 
 // refreshMarkerPattern limits marker names to safe harness ids, so a harness
 // id can never name a path outside the cache directory.
-var refreshMarkerPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,63}$`)
+var refreshMarkerPattern = lazyre.New(`^[a-z0-9][a-z0-9-]{0,63}$`)
 
 // Refresher decides whether one harness needs a background discovery round and
 // starts it through Spawn. It runs no source itself. The caller's Spawn starts

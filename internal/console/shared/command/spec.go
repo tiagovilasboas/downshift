@@ -22,6 +22,9 @@ type Spec struct {
 	// Terminal marks a command that needs the real terminal (it prompts, reads
 	// stdin, or keeps running); the console hands the terminal over to it.
 	Terminal bool
+	// Plain marks a command that prints a line and exits (version): typed in
+	// a terminal it never opens the console. The console still lists it.
+	Plain bool
 }
 
 // Name is the command line as typed after "downshift".

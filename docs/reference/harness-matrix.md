@@ -1,9 +1,41 @@
 # Harness x plan x rewrite-honored matrix
 
-> **Status:** Claude Code stable; Codex and Cursor functional; OpenCode beta; Antigravity and KiroCrew experimental.
+> **Support tiers:** Claude Code Supported; Codex, OpenCode, KiroCrew and Kiro IDE Beta; Cursor, Antigravity and the Claude Desktop surfaces Experimental. Criteria and evidence: [Support tiers](#support-tiers).
 
 Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift-ai
+
+## Support tiers
+
+The tier is the support claim: the README table follows it. It answers one
+question, "has a Downshift hook been seen working in a real session of this
+harness?", and a harness keeps the lower tier until the evidence for the higher
+one exists. The status words in the next section keep the finer verification
+stage behind it.
+
+- **Supported:** `doctor` verified the hook in a real session. Its `last hook event`
+  check read decisions recorded by the hook in real sessions, and its `rewrite honored`
+  check saw a later record of the same session confirm the routed model (or the
+  harness reported the child model).
+- **Beta:** the hook ran in a real session at least once and the run is written up in
+  `docs/evidence` (or a linked write-up), but `doctor` has not verified it: the effect
+  is inferred, partial or observed only through a bridge, or the hook needs a harness
+  step (flag, trust) that `doctor` cannot confirm from the event log.
+- **Experimental:** the hook's effect is unconfirmed on the real harness (emitted but
+  possibly discarded on some plans), seen once on one build, documented but not
+  live-verified, or the surface has no hook. No production claim.
+
+| harness | tier | evidence | what moves it up |
+|---|---|---|---|
+| claude-code | Supported | Rewrite observed honored on a real child (2026-10-06, model reported by the API in the child transcript); `doctor` reported `seen: 12 of 14 rewrites` from real sessions (2026-10-29, above). | n/a |
+| codex | Beta | Rewrite emitted on a real spawn, honor inferred from the next spawn (2026-10-02). On the maintainer's machine (2026-11-10) the hooks were wired but `doctor` found no Codex hook event and none of 784 compact runs came through the hook: Codex needs `[features] hooks = true` on older releases and skips a new hook until it is trusted with `/hooks`. `doctor` now reads both flags and names that fix. The shell-rewrite wire matches the Codex hooks engine (`internal/adapters/codex/wire_conformance_test.go`). | A real session where `doctor` shows a recent Codex `last hook event` and `rewrite honored` seen |
+| opencode | Beta | Routing and child usage observed live on OpenCode 2.2.5 through the bridge plugin (status row below). | The same observation read by `doctor` from the event log on a current OpenCode release |
+| kirocrew | Beta | Policy block and retry observed on Kiro CLI 2.29.0 (2026-10-10); no in-place rewrite by design. | `doctor` reading a block decision from a real session |
+| kiro | Beta | A live probe hook captured the `invoke_sub_agent` payload in Kiro IDE ([REA](../evidence/kiro-observation-only-rea-2026-11-10.md)); observation-only, no rewrite. | `doctor` reading a recorded Kiro decision from a real session |
+| cursor | Experimental | Rewrite emitted on a real spawn; the executor model is absent from the transcript and the rewrite is discarded on Free and legacy Pro. | Executor honor observed on a paid plan |
+| antigravity | Experimental | One observed child on desktop 2.21.1; the `run_command` shell rewrite is documented, not live-verified. | A second observation and a `doctor`-read event on a current build |
+| claude-desktop-chat, claude-desktop-cowork | Experimental | No hook reaches these surfaces (status rows below). | n/a without a hook channel |
+| grok | not tiered | Config only: no hook runs. | n/a |
 
 ## Status per harness
 
@@ -20,11 +52,11 @@ Each harness carries exactly one of four status words (owner decision 2026-10-17
 |---|---|---|---|
 | claude-code | Completed | Rewrite observed honored (2026-10-06, API-reported child model); usage tokens read from the child transcript at `SubagentStop`; child end recorded; plugin and session policy ship. Failure payload is still GAP-CHILD-FAILURE (see "Child end" below). | [rewrite honored](../evidence/claude-code-rewrite-honored-2026-10-06.md), [billing audit](../evidence/billing-gap-audit.md), [routing A/B](../evidence/subagent-routing-ab-2026-10-15.md), [reconciliation](../evidence/claude-execution-workflow-reconciliation-2026-11-07.md) |
 | codex | Functional | Rewrite emitted on a real spawn; honored is inferred from the next spawn, not observed; child end parser unverified, no usage source. | [codex rewrite](../evidence/codex-rewrite-honored-2026-10-02.md) |
-| cursor | Experimental | Rewrite emitted on a real spawn; the child executor model is absent from the transcript, so honored is unconfirmed (discarded on Free and legacy Pro); end parser unverified, no usage; native quota collector blocked on Cursor 3.24.9. | [cursor rewrite](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md) |
-| kirocrew | Experimental | Policy mode: block and retry observed once on Kiro CLI 2.29.0, no in-place rewrite; child end via postToolUse (unverified: needs real payload). | [native hook](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md) |
-| kiro | Experimental | Observation-only mode (REA 2026-11-10): Kiro IDE does NOT support `updatedInput` for model rewrite; model decided internally, custom agent `model:` field ignored (issue #6637); child end via PostToolUse (unverified). | [REA evidence](../evidence/kiro-observation-only-rea-2026-11-10.md), [issue #6637](https://github.com/kirodotdev/Kiro/issues/6637), [issue #4180](https://github.com/kirodotdev/Kiro/issues/4180) |
-| antigravity | Experimental | One observed child on desktop 2.21.1 (requested `pro`, executed `flash_lite`); the `overwrite` envelope is documented by the vendor hooks page (shallow-merged into `toolCall.args`), and the `run_command` shell rewrite built on it is documented, not live-verified; no child end recorded; quota mapping unresolved. | [executor ack](../evidence/antigravity-executor-ack.md), [runtime source](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/antigravity/findings/F1-antigravity-runtime-source.md) |
+| kiro | Functional | MCP advisory mode with automatic model discovery from KiroCrew (same AWS account). Hooks wired via `downshift setup kiro`. Observation-only: model decisions recorded for telemetry but not rewritten in place (Kiro IDE does NOT support `updatedInput`). | [REA evidence](../evidence/kiro-observation-only-rea-2026-11-10.md), [setup guide](../guides/kiro-ide.md) |
+| kirocrew | Functional | MCP advisory mode with hooks wired for policy enforcement. Block and retry observed on Kiro CLI 2.29.0; no in-place rewrite. Child end via postToolUse. | [native hook](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md) |
 | opencode | Beta | Integration through a bridge plugin that `downshift setup` installs at `~/.config/opencode/plugins/downshift/` (`index.ts` plus `models.ts`, `shell_sessions.ts`, `shell_trust.ts` and `wire.ts`). This reopens the plugin surface removed with the mods on 2026-10-29, at the owner's request for full OpenCode support. Live-verified on OpenCode 2.2.5: route to a smaller model, honored model chain, shell rewrite, child end and per-child token usage. Not live-verified yet: the retry fallback after a provider failure, and a `go test` rewrite through the plugin. | [adapter tests](../../internal/adapters/opencode/), [conformance](../../cmd/downshift/conformance_test.go) |
+| cursor | Experimental | Rewrite emitted on a real spawn; the child executor model is absent from the transcript, so honored is unconfirmed (discarded on Free and legacy Pro); end parser unverified, no usage; native quota collector blocked on Cursor 3.24.9. | [cursor rewrite](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md) |
+| antigravity | Experimental | One observed child on desktop 2.21.1 (requested `pro`, executed `flash_lite`); the `overwrite` envelope is documented by the vendor hooks page (shallow-merged into `toolCall.args`), and the `run_command` shell rewrite built on it is documented, not live-verified; no child end recorded; quota mapping unresolved. | [executor ack](../evidence/antigravity-executor-ack.md), [runtime source](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/antigravity/findings/F1-antigravity-runtime-source.md) |
 | grok | Config only | No hook rewrite; reasoning is pinned in `config.toml`. | [install.md](../guides/install.md#grok-cli-config-not-hook) |
 | claude-desktop-chat | Experimental | Chat spawns no model-carrying subagent and has no shell tool, so model_rewrite, compaction and mid_session_routing are none; the read-only MCP tools (providers, status, playbook, apply, plan) answer over stdio, while delegate/collect/cancel/diff/send/steer/release fail with ErrNoVerifiedMode when the worker mode is off. Harnesses with an MCP client get the worker tools; harnesses without one see the computed state in `downshift doctor` and `downshift report`. Not a hooked harness: it has no row in the per-plan, child-end or discovery tables. | [F2-chat-mcp](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/claude-desktop/findings/F2-chat-mcp.md) |
 | claude-desktop-cowork | Experimental | The Claude Desktop local agent runs in a Linux arm64 VM that shares only granted folders over virtiofs; host hooks, the plugin, ~/.claude and the macOS binary never reach the guest, so model_rewrite, compaction, token_counts, mid_session_routing and savings_estimation are none and MCP reachability is unverified. Not a hooked harness: it has no row in the per-plan, child-end or discovery tables. | [F3-cowork-vm](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/claude-desktop/findings/F3-cowork-vm.md) |
@@ -124,6 +156,7 @@ so flip the code and this table together. `NativeUsageSource` and
 | `WorkerAgent` | yes | no | yes | no | no | no | no | A worker agent CLI runs on this harness. |
 | `WorkerReadOnlyVerified` | yes | no | no | no | no | no | no | A read-only worker was verified unable to write. |
 | `SessionWideTranscript` | yes (nested spawn, 2026-11-06, Claude Code 2.1.319: transcript_path verified, nested spawn payload unverified) | no | no | no | no | no | no | A hook fired inside a subagent still gets the main session's `transcript_path`, so a nested spawn (a subagent spawning a subagent) cannot read its parent's model from it. With `agent_id` set the baseline is unknown and the spawn is held; no parent model is recorded. Other harnesses: nesting not assessed. See the note below. |
+| `ReplacesToolOutput` | yes (shell, search and read; Downshift rewrites shell and search only) | no | no | no | no | no | no | A hook answer can replace a tool's result after the tool ran, before the model reads it. The shared post-run compaction (`internal/postrun`) runs only where this is declared. See [Replace tool output after the run](#replace-tool-output-after-the-run-2026-11-10). |
 
 **Nested spawns (Claude Code 2.1.319, 2026-11-06).** Verified live: a `PreToolUse` hook fired inside a subagent (a Bash call) carries `agent_id` and `agent_type`, and its `session_id` and `transcript_path` equal the main session's; the subagent's own transcript appears only as `agent_transcript_path` on `SubagentStop`. Verified live: a subagent has no `Agent` tool, even when its definition lists one (two runs), so a nested `Agent` spawn could not be captured and its `PreToolUse` payload is **unverified**; routes that do nest (teammates, workflow agents) are not captured here either (workflow agents never reach `PreToolUse`, see the evidence note of 2026-10-11). The rule follows the documented hook input: a spawn with `agent_id` set and no model named by the call, the agent definition or the environment is held with an unknown baseline, and the main model is not recorded as its `parent_model`; a model the call names, or a parent model the mod reports, still routes as usual. Test: `TestHookE2E_ClaudeCodeNestedSpawn`. Telemetry keys decisions by the main session's hash, so a nested spawn counts under the main session, once. Detailed write-up and reconciliation: `docs/evidence/claude-code-nested-spawn-2026-11-07.md` and `docs/evidence/claude-execution-workflow-reconciliation-2026-11-07.md`.
 
@@ -782,22 +815,31 @@ Left unwrapped on purpose, and a chain is refused whole when any segment holds
 one: `||`, a lone `&`, an empty segment (`;;`, a trailing `;`), a pipe into
 anything but `tail`/`head -N` (`git diff | grep '^[+-]'`, `tee`, a second
 pipe), `tail -f`, `tail -n +N`, file redirects (`>`, `>>`, `1>&2`), heredocs,
-subshells, a pipe with no spaces around `|`, and anything with an expansion, a
-glob or a quote (a quoted `;` is never split). Each of these can change what
+subshells, a pipe with no spaces around `|`, and anything with an expansion or
+a glob. A quote is allowed only inside the command that is wrapped (see Quoted
+words below); a segment, `cd` dir or pipe part kept as written that holds one
+refuses the command, and a `;` or `&&` inside a quote leaves an unclosed quote
+in its segment, which refuses it too. Each of these can change what
 the command does or which exit code the agent sees in ways a word match cannot
 prove safe.
 
-**Quoted words (2026-11-06).** One command (not a chain or shape) may hold
+**Quoted words (2026-11-06).** One command may hold
 closed `'...'` words, `"..."` words with no `$`, backtick, `\` or `!`, and an
 exact trailing `2>/dev/null` and/or `|| true`; it is rewritten to
 `'<bin>' compact [--discard-stderr] [--exit-zero] -- '<w0>' '<w1>' ...`.
+Since 2026-11-10 the command a shape or a chain wraps may hold the same quoted
+words and trailing `2>/dev/null` (`go test -run 'A|B' ./... 2>&1 | tail -20`,
+`git status && grep -rn "x" .`); `|| true` there, and `2>/dev/null` before a
+`2>&1` merge, are refused, because the list or the merge would change what
+they mean. Such a command keeps the reason `allowlisted_quoted`, so the
+`quoted_rule` skip still applies to it.
 The read-only approval path of Codex and Cursor still refuses all of them.
 Threat note: [compactor-default-on-adr.md](../design/compactor-default-on-adr.md).
 
 | harness | shell rewrite | status | limit |
 |---|---|---|---|
 | claude-code | `PreToolUse` on `Bash` → `updatedInput.command`, every sibling field kept, no `permissionDecision` | Wired, on by default | The plugin's `hooks.json` carries the `Bash` PreToolUse entry running `downshift claude-code`. Verified live on 2026-10-20. If Claude Code ever ignores `updatedInput` without a `permissionDecision`, the command runs unchanged: nothing breaks, nothing is saved. Permissions: no allow rule is installed or required. The rewrite is skipped when a deny or ask rule in the managed, user (`CLAUDE_CONFIG_DIR` honoured), project or local settings matches the **original** command (as written and normalised); an unreadable or invalid settings file also means no rewrite. The hook emits no `permissionDecision`, so Claude Code's own permission flow, including any approval prompt, applies to the rewritten command as it would to the original. Deny rules from `--disallowedTools`, Agent SDK `disallowedTools`, `--settings <file>`, server-managed policy or MDM cannot be read, and they would not match the wrapped form; in `bypassPermissions` or `dontAsk` mode (or any mode the adapter does not know) nothing prompts, so the rewrite is limited to one read-only command, as for Codex (skip `not_read_only`). A call with `run_in_background` set is never wrapped (skip `background`): the compactor holds output until the command exits. Never add a broad `Bash(downshift compact:*)`. |
-| codex | `PreToolUse` on `Bash` (also reported for `exec_command`) → `permissionDecision: "allow"` plus `updatedInput.command`, every sibling field kept | Wired, Unverified live | `downshift setup` writes a `^Bash$` entry running `downshift codex` next to the `Agent` one. Codex honors `updatedInput` only together with `permissionDecision: "allow"`, so a rewritten call is approved by the hook and Codex does not ask the user (`RewriteImpliesApproval`). The shared runner therefore rewrites only one read-only command (`execwrap.ReadOnly`): no shell metacharacter at all (no `;`, `&&`, `\|\|`, `\|`, `&`, `$(`, backtick, redirection, quote or newline), no leading `NAME=value`, and one of `git status/log/diff/show` (without `--output`, `--ext-diff`, `--textconv`), `git branch` and `git remote` with listing flags only, `git stash list`, `git rev-parse`, `git ls-files`, `gh pr view/list/status/diff/checks`, `gh issue view/list/status`, `gh run/workflow/repo/release/gist view/list`, `gh search`, `go version`, `go doc`, `go env` (without `-w`/`-u`), `go list` (without `-toolexec`, `-exec`, `-export`, `-compiled`, `-mod`), `mise/rtx/asdf list/ls/current`, `direnv status` and `ls`. Every runner, build, test and install family (`go test`, `make`, `npm test`, `uv run`, ...), every chain or compound shape and every mutating subcommand is left untouched with no `permissionDecision`, so Codex asks as usual; the skip is logged as `not_read_only`. An unchanged call emits `{}`. Codex has no deny or ask rules the adapter can read, so `ShellBlocked` is always false. Unverified live until a Codex session runs a wrapped `git status` (the hook must be trusted in `/hooks`). |
+| codex | `PreToolUse` on `Bash` (also reported for `exec_command`) → `permissionDecision: "allow"` plus `updatedInput.command`, every sibling field kept | Wired, Unverified live | `downshift setup` writes a `^Bash$` entry running `downshift codex` next to the `Agent` one. Codex honors `updatedInput` only together with `permissionDecision: "allow"` (the Codex hooks engine marks `updatedInput` without `allow`, and `allow` without `updatedInput`, as a failed hook and runs the original command; it also rejects unknown fields; checked by `internal/adapters/codex/wire_conformance_test.go`), so a rewritten call is approved by the hook and Codex does not ask the user (`RewriteImpliesApproval`). The shared runner therefore rewrites only one read-only command (`execwrap.ReadOnly`): no shell metacharacter at all (no `;`, `&&`, `\|\|`, `\|`, `&`, `$(`, backtick, redirection, quote or newline), no leading `NAME=value`, and one of `git status/log/diff/show` (without `--output`, `--ext-diff`, `--textconv`), `git branch` and `git remote` with listing flags only, `git stash list`, `git rev-parse`, `git ls-files`, `gh pr view/list/status/diff/checks`, `gh issue view/list/status`, `gh run/workflow/repo/release/gist view/list`, `gh search`, `go version`, `go doc`, `go env` (without `-w`/`-u`), `go list` (without `-toolexec`, `-exec`, `-export`, `-compiled`, `-mod`), `mise/rtx/asdf list/ls/current`, `direnv status` and `ls`. Every runner, build, test and install family (`go test`, `make`, `npm test`, `uv run`, ...), every chain or compound shape and every mutating subcommand is left untouched with no `permissionDecision`, so Codex asks as usual; the skip is logged as `not_read_only`. An unchanged call emits `{}`. Codex has no deny or ask rules the adapter can read, so `ShellBlocked` is always false. Unverified live until a Codex session runs a wrapped `git status` (the hook must be trusted in `/hooks`). |
 | cursor | `preToolUse` on `Shell` → `updated_input.command`, every sibling field kept, no `permission` field | Wired | Unverified live; Cursor ignored `updated_input` for Task on some plans, Shell needs its own proof. `downshift setup` writes the `Shell` entry in `hooks.json`. No deny/ask rule is read (Cursor has no readable rule file), so a rule on the original text could miss the wrapped form (`UnknownUserRules`): the preToolUse rewrite is limited to the same single read-only command set as Codex (`execwrap.ReadOnly`, see the codex row), and every other command, such as `go test` or `gh repo delete x --yes`, is left as written (skip `not_read_only`). Advise fallback: `beforeShellExecution` (matcher `*`) answers `agent_message` with no `permission` field (never `allow`, so Cursor keeps its own approval flow), naming the `downshift compact` form for an allowlisted family (`CanAdviseShellWrap`); the advise is not limited to the read-only set. It never denies and cannot rewrite. Any other shell command gets the neutral `{}`. Unverified live: that Cursor shows `agent_message` when the answer carries no permission, and that `{}` defers to its own flow. |
 | opencode | `shell.create.before` → the command is replaced in place (the session tag comes from `tool.execute.before`, which runs first) | Wired by the bridge; live-checked on `git status` (rewritten through the plugin, output unrecognised, passed through raw). `go test` compaction through the plugin not yet checked live | The rewrite runs only for allowlisted families with no shell metacharacters; any permission rule that is not `allow` blocks it, and so does a source the check cannot read or parse. The check reads `OPENCODE_CONFIG_CONTENT`, `OPENCODE_PERMISSION`, `OPENCODE_CONFIG`, the config dirs (`$XDG_CONFIG_HOME/opencode`, `~/.config/opencode`, the managed dir, `OPENCODE_CONFIG_DIR`), and for the session directory and the shell's directory each `opencode.jsonc`, `opencode.json` and `.opencode` folder from that directory up to the filesystem root. Markdown files under `agent`, `agents`, `mode` and `modes` that declare `permission` in their frontmatter count (the scan reads JSONC). Any doubt keeps the command unchanged: no known directory or a relative one, a linked `agent`, `agents`, `mode` or `modes` folder or an entry in one, a frontmatter the scan cannot read, a config file over 1 MiB, a non-regular file, or a macOS managed profile (`/Library/Managed Preferences/ai.opencode.managed.plist`, also under any user folder there). Each config read is capped at 1 MiB. The bridge applies a rewrite only when the original command has no quote, `$`, backtick, backslash or control character, only runs of ASCII spaces differ, and each wrapper is in command position (at the start, or after `;`, `&&`, `||` or `|`, optionally after `NAME=value` words) and names the pinned binary (`DOWNSHIFT_BIN`, or `downshift` resolved from PATH once at startup, skipping relative entries and files without an execute bit). A pending session tag of a shell call expires after 30 s, at most 500 are held in total (oldest dropped), and the bridge waits at most 2 s for the hook. |
 | antigravity | `PreToolUse` on `run_command` → `decision: "allow"` plus `overwrite.CommandLine`, which the vendor shallow-merges into `toolCall.args`, so sibling arguments stay as sent | Wired, documented, not live-verified | Contract from the vendor hooks page (antigravity.google/docs/hooks); no Antigravity build with a hook that could be exercised non-interactively was available on 2026-11-06, so no run has shown `overwrite.CommandLine` honored. `downshift setup` writes a `run_command` entry next to `invoke_subagent`. The answer approves the call (`decision: "allow"`) and the user's rules cannot be read (`UnknownUserRules`), so the shared runner rewrites only one read-only command (`execwrap.ReadOnly`, see the codex row); every other command is left as written (skip `not_read_only`). `ShellBlocked` is always false. |
@@ -816,6 +858,46 @@ Threat note: [compactor-default-on-adr.md](../design/compactor-default-on-adr.md
 4. Run `downshift context metrics`: `exec_metrics.commands` must have grown. With `DOWNSHIFT_EXEC=0` in the environment the command must run as typed.
 
 If the command runs as typed with the hook on, Claude Code ignores the rewrite without a decision: nothing breaks and nothing is saved, and this feature should stay documented as not working there.
+
+## Replace tool output after the run (2026-11-10)
+
+Where a harness lets a hook replace a tool's result after the tool ran, the
+Compactor no longer depends on wrapping the command first: pipes, redirects,
+long commands and stderr reach it too, and so do the agent's own search tools.
+The capability is data (`HarnessCapabilities.ReplacesToolOutput`, the tool
+categories the harness allows); the policy is shared (`internal/postrun`,
+reached from the honor runner); the adapter only reads its payload into
+`hookport.ToolOutput` and writes the answer. Design and measurements:
+[post-run compaction](../design/post-run-compaction.md).
+
+| Harness | Replaces tool output | Evidence |
+|---|---|---|
+| claude-code | yes: `PostToolUse` `hookSpecificOutput.updatedToolOutput`, for built-in tools (Bash, Read, Grep, Glob). A value that does not match the tool's output shape is ignored and the original is used | hooks reference, "PostToolUse decision control", read 2026-11-10. Bash's shape is documented (`stdout`, `stderr`, `interrupted`, `isImage`); Grep's and Glob's are not, so only the fields a result carries (`content`, `filenames`) are rewritten and every other field, counts included, is sent back as received. Not yet verified live from a session on this machine |
+| cursor | no | no post-run event is wired; none documented that replaces a result |
+| codex | no: PostToolUse accepts `additionalContext` only; `updatedMCPToolOutput` is rejected as unsupported and unknown fields fail the hook | Codex hooks engine (`codex-rs/hooks/src/schema.rs`, `engine/output_parser.rs`) |
+| kiro | no | observation only |
+| kirocrew | no | `postToolUse` exit 0 / exit 2 only |
+| antigravity | no | no post-run event wired |
+| opencode | no | the bridge forwards spawn intent, shell commands and `child_done`; no result replacement known |
+
+What Downshift rewrites where the capability is declared (on by default;
+`DOWNSHIFT_POST_COMPACT=0`, `DOWNSHIFT_EXEC=0` or `"exec": false` turn it off):
+
+| Tool category | Rewritten | Rule |
+|---|---|---|
+| shell | `stdout`; `stderr` only when it alone is over 16 KB | A command the pre-run rewrite wrapped (or would wrap) is left alone, and so is an output that already ends with the wrapper's marker. One plain allowlisted command gets its family's compressor, as in the wrapper. Any other command (pipe, redirect, chain, unknown program) gets only the balanced log cut: over 16 KB, raw output stored by CCR, a gain of at least a quarter. An interrupted run or an image is never changed |
+| search | `content` (matches) and `filenames` | Only over 16 KB and only once CCR stored the raw text: the first 20 matches of each file, a count per file of the rest, held to 12 KB; a file list keeps its head within 12 KB. The last line or entry names the `downshift retrieve` id |
+| read | never | An edit needs the file's exact text (roadmap task M3) |
+
+Each considered call adds one row to `exec-events.jsonl` with entry
+`post_tool_use`, so `report` counts it like a wrapped run. The post-run hook
+reads a payload up to 16 MiB where the capability is declared (every other
+hook keeps the 1 MiB cap); a larger payload is not read, and its result stays
+whole.
+
+The persisted contract token `hook_cannot_replace_tool_output` in the context config
+is kept for existing configs; it describes the native context provider, which
+measures only, not the post-run compaction above.
 
 ## Several hooks rewriting one call (2026-11-06)
 

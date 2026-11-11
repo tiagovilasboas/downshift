@@ -8,7 +8,8 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Verification values recorded on a usage event.
@@ -21,7 +22,7 @@ const (
 // verifyCommand matches the shell commands that count as a subagent checking
 // its own work: test runners, linters and type checkers. It is deliberately a
 // short allowlist; an unrecognised command counts as no verification.
-var verifyCommand = regexp.MustCompile(`(?:^|[\s;&|(])(?:go\s+(?:test|vet)|pytest|python3?\s+-m\s+(?:pytest|unittest)|npm\s+(?:run\s+)?(?:test|lint)|pnpm\s+(?:run\s+)?(?:test|lint)|yarn\s+(?:test|lint)|vitest|jest|cargo\s+(?:test|clippy)|tsc|eslint|ruff|golangci-lint|make\s+(?:test|lint|check))(?:\s|$)`)
+var verifyCommand = lazyre.New(`(?:^|[\s;&|(])(?:go\s+(?:test|vet)|pytest|python3?\s+-m\s+(?:pytest|unittest)|npm\s+(?:run\s+)?(?:test|lint)|pnpm\s+(?:run\s+)?(?:test|lint)|yarn\s+(?:test|lint)|vitest|jest|cargo\s+(?:test|clippy)|tsc|eslint|ruff|golangci-lint|make\s+(?:test|lint|check))(?:\s|$)`)
 
 // readSubagentVerification reports whether a subagent verified its own work.
 // It pairs each recognised check command (a Bash tool_use) with the matching

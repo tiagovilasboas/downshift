@@ -45,7 +45,7 @@ Hooks (your harness calls these, you do not)
   downshift claude-code | cursor | codex | antigravity | kirocrew | opencode
 
 More
-  downshift help --all             Every command: watch, models, quota, context, and the rest
+  downshift help --all             Every command: watch, models, quota, and the experimental ones
   downshift version                Print the binary version
 
 Examples

@@ -1,0 +1,1023 @@
+internal/compressor/corpus_per_runner_test.go:18:func TestCorpus_Pytest(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:24:	t.Run("clean/exit=0", func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:39:		t.Run(fmt.Sprintf("clean/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:49:		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:62:func TestCorpus_Vitest(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:68:	t.Run("clean/exit=0", func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:83:		t.Run(fmt.Sprintf("clean/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:93:		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:106:func TestCorpus_Playwright(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:112:	t.Run("clean/exit=0", func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:127:		t.Run(fmt.Sprintf("clean/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:137:		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:150:func TestCorpus_CargoTest(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:156:	t.Run("clean/exit=0", func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:171:		t.Run(fmt.Sprintf("clean/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:181:		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:194:func TestCorpus_TSC(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:200:	t.Run("clean/exit=0", func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:215:		t.Run(fmt.Sprintf("clean/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_per_runner_test.go:225:		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+internal/compressor/agent_desktop_short.go:17:func desktopStates(rest map[string]any) string {
+internal/compressor/agent_desktop_short.go:27:func desktopActions(rest map[string]any) string {
+internal/compressor/agent_desktop_short.go:38:func desktopBox(rest map[string]any) string {
+internal/compressor/agent_desktop_short.go:56:func desktopNativeID(rest map[string]any) string {
+internal/compressor/agent_desktop_short.go:71:func desktopMore(rest map[string]any) string {
+internal/compressor/agent_desktop_short.go:81:func desktopCut(rest map[string]any) string {
+internal/compressor/agent_desktop_short.go:93:func desktopClasses(rest map[string]any) string {
+internal/compressor/agent_desktop_short.go:105:func desktopDefaultActions(rest map[string]any, def string) string {
+internal/compressor/flutter_test.go:14:func readFlutterFixture(t *testing.T, name string) []byte {
+internal/compressor/flutter_test.go:23:func TestCompressFlutterTestCompactsCleanTranscripts(t *testing.T) {
+internal/compressor/flutter_test.go:36:func TestCompressFlutterTestWithoutSkips(t *testing.T) {
+internal/compressor/flutter_test.go:44:func TestCompressFlutterTestPreservesAnythingAmbiguous(t *testing.T) {
+internal/compressor/flutter_test.go:79:func TestCompressFlutterTestNonASCIIIsPreservedByteIdentically(t *testing.T) {
+internal/compressor/flutter_test.go:95:func TestCompressFlutterTestDangerWordsArePreserved(t *testing.T) {
+internal/compressor/flutter_test.go:119:func TestFlutterTestDetectionIsNarrow(t *testing.T) {
+internal/compressor/flutter_test.go:134:func TestCompressExitCarriageReturnGateOnlyOpensForFlutter(t *testing.T) {
+internal/compressor/phpunit.go:21:func isPHPUnit(input []byte) bool {
+internal/compressor/phpunit.go:30:func compressPHPUnit(input []byte) ([]byte, bool, string) {
+internal/compressor/phpunit.go:123:func parsePHPUnitCount(value string) (int, error) {
+internal/compressor/go_test_runs.go:38:func FoldGoTestRuns(input []byte) Result {
+internal/compressor/docker.go:25:func isDockerPs(input []byte) bool {
+internal/compressor/docker.go:30:func isDockerImages(input []byte) bool {
+internal/compressor/docker.go:35:func compressDockerPs(input []byte) ([]byte, bool, string) {
+internal/compressor/docker.go:125:func compressDockerImages(input []byte) ([]byte, bool, string) {
+internal/compressor/docker.go:193:func compressDockerLogs(input []byte) ([]byte, bool, string) {
+internal/compressor/docker.go:205:	flush := func() {
+internal/compressor/gh_pr_body.go:17:func ghPrBody(s string) string {
+internal/compressor/table_rows.go:15:func tableRowsRecognised(lines [][]byte, isRow func(fields []string) bool) bool {
+internal/compressor/table_rows.go:33:func isDockerPsRow(fields []string) bool {
+internal/compressor/table_rows.go:38:func isDockerImagesRow(fields []string) bool {
+internal/compressor/table_rows.go:43:func isKubectlPodRow(fields []string) bool {
+internal/compressor/git_remote_test.go:65:func TestCompressGitRemoteGolden(t *testing.T) {
+internal/compressor/git_remote_test.go:67:		t.Run(c.name, func(t *testing.T) {
+internal/compressor/git_remote_test.go:106:func TestCompressGitRemoteKeepsErrorLines(t *testing.T) {
+internal/compressor/git_remote_test.go:123:func TestCompressGitRemoteFailsOpen(t *testing.T) {
+internal/compressor/git_remote_test.go:139:func TestCompressGitRemoteKeepsBoxContentOnFailure(t *testing.T) {
+internal/compressor/fixture_coverage_ast_test.go:25:func stringConsts(t *testing.T, glob, typeName string) map[string]string {
+internal/compressor/fixture_coverage_ast_test.go:65:func formatConsts(t *testing.T) map[string]string {
+internal/compressor/fixture_coverage_ast_test.go:75:func familyConsts(t *testing.T) map[string]string {
+internal/compressor/fixture_coverage_ast_test.go:87:func expectedFormatsOf(t *testing.T) map[string][]string {
+internal/compressor/fixture_coverage_ast_test.go:96:	ast.Inspect(file, func(n ast.Node) bool {
+internal/compressor/go_test_fold_test.go:15:func foldRun(t *testing.T, in string) compressor.Result {
+internal/compressor/go_test_fold_test.go:20:func mustFold(t *testing.T, in string, want ...string) string {
+internal/compressor/go_test_fold_test.go:37:func mustStayRaw(t *testing.T, in string) {
+internal/compressor/go_test_fold_test.go:46:func verboseLogged(n int) string {
+internal/compressor/go_test_fold_test.go:56:func TestFold_VerbosePassedLogsFold(t *testing.T) {
+internal/compressor/go_test_fold_test.go:66:func TestFold_VerbosePauseContFolds(t *testing.T) {
+internal/compressor/go_test_fold_test.go:76:func TestFold_VerboseUnrecognisedBlockKept(t *testing.T) {
+internal/compressor/go_test_fold_test.go:87:func TestFold_VerboseSkipAndDangerBlocksKept(t *testing.T) {
+internal/compressor/go_test_fold_test.go:95:func TestFold_VerboseFailStaysRaw(t *testing.T) {
+internal/compressor/go_test_fold_test.go:103:func TestFold_VerboseStrayDangerStaysRaw(t *testing.T) {
+internal/compressor/go_test_fold_test.go:109:func TestFold_VerboseStrayLineKept(t *testing.T) {
+internal/compressor/go_test_fold_test.go:113:func plainRun(n int) string {
+internal/compressor/go_test_fold_test.go:122:func TestFold_PlainStrayLinesKeptInOrder(t *testing.T) {
+internal/compressor/go_test_fold_test.go:132:func TestFold_PlainDangerStrayStaysRaw(t *testing.T) {
+internal/compressor/go_test_fold_test.go:139:func TestFold_PlainCoverSinglePackage(t *testing.T) {
+internal/compressor/go_test_fold_test.go:146:func TestFold_PlainSingleLineStaysRaw(t *testing.T) {
+internal/compressor/go_test_fold_test.go:151:func TestFold_PlainCoverMinMax(t *testing.T) {
+internal/compressor/go_test_fold_test.go:158:func TestFold_VerboseMixed(t *testing.T) {
+internal/compressor/go_test_fold_test.go:167:func TestFold_Idempotent(t *testing.T) {
+internal/compressor/go_test_fold_test.go:178:func TestFold_JSONStaysRaw(t *testing.T) {
+internal/compressor/git_log_test.go:14:func logBlock(head, extra, msg string) string {
+internal/compressor/git_log_test.go:18:func TestGitLogCompaction(t *testing.T) {
+internal/compressor/git_log_test.go:75:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/git_log_test.go:93:func TestGitLogNonZeroExitStaysRaw(t *testing.T) {
+internal/compressor/generic_cap.go:33:func capLines(lines []string) ([]string, bool) {
+internal/compressor/cargo_clippy.go:39:func isCargoClippy(input []byte) bool {
+internal/compressor/cargo_clippy.go:46:func compressCargoClippy(input []byte) ([]byte, bool, string) {
+internal/compressor/cypress_test.go:14:func TestCompressCypress_PassingRunKeepsSummaryFacts(t *testing.T) {
+internal/compressor/cypress_test.go:34:func TestCompressCypressPassesThroughPublicCompressor(t *testing.T) {
+internal/compressor/cypress_test.go:45:func TestCompressCypressPreservesErrorOutputWithPassingSummary(t *testing.T) {
+internal/compressor/cypress_test.go:53:func TestCompressCypressPreservesWarningsWithPassingSummary(t *testing.T) {
+internal/compressor/cypress_test.go:61:func TestCompressCypressPreservesUnknownOutputWithPassingSummary(t *testing.T) {
+internal/compressor/cypress_test.go:69:func TestCompressCypress_FailurePreservesActionableOutput(t *testing.T) {
+internal/compressor/cypress_test.go:81:func TestCompressCypress_AmbiguousOutputPreserved(t *testing.T) {
+internal/compressor/go_test_failed_test.go:28:func TestCompressFailedGoTestGolden(t *testing.T) {
+internal/compressor/go_test_failed_test.go:35:		t.Run(name, func(t *testing.T) {
+internal/compressor/go_test_failed_test.go:65:func assertFailureLinesSurvive(t *testing.T, in, out []byte) {
+internal/compressor/go_test_failed_test.go:99:func TestCompressFailedGoTestKeepsEveryFailureBlock(t *testing.T) {
+internal/compressor/go_test_failed_test.go:117:func TestCompressFailedGoTestBenchmarkMultiPackagePanic(t *testing.T) {
+internal/compressor/go_test_failed_test.go:132:		"testing.tRunner.func1.2({0x100d04860, 0x140000a6048})\n" +
+internal/compressor/go_test_failed_test.go:134:		"testing.tRunner.func1({0x100d3d578, 0x140000880e0})\n" +
+internal/compressor/go_test_failed_test.go:182:func TestCompressFailedGoTestFailsOpen(t *testing.T) {
+internal/compressor/go_test_failed_test.go:204:func TestCompressFailedGoTestKeepsCoverageAndLoggedTests(t *testing.T) {
+internal/compressor/go_test_failed_test.go:223:func TestCompressExitStillPreservesNonzero(t *testing.T) {
+internal/compressor/generic_stack.go:52:func frameAt(lines []string, i int) (stackKind, int) {
+internal/compressor/generic_stack.go:78:func findStackRuns(lines []string) []stackRun {
+internal/compressor/generic_stack.go:109:func foldStackRuns(lines []string) (gated, folded []string, ok bool) {
+internal/compressor/agent_desktop_node.go:45:func isDesktopToken(s string) bool { return reDesktopToken.MatchString(s) }
+internal/compressor/agent_desktop_node.go:46:func isDesktopID(s string) bool    { return reDesktopID.MatchString(s) }
+internal/compressor/agent_desktop_node.go:65:func writeDesktopNode(b *strings.Builder, node map[string]any, depth int, cx desktopCtx) bool {
+internal/compressor/agent_desktop_node.go:100:func writeDesktopFields(b *strings.Builder, role string, rest map[string]any, cx desktopCtx) bool {
+internal/compressor/agent_desktop_node.go:118:	for _, form := range []func(map[string]any) string{desktopStates, desktopActions, desktopBox, desktopNativeID, desktopClasses, desktopMore, desktopCut} {
+internal/compressor/agent_desktop_node.go:151:func desktopRef(ref any, sid string) string {
+internal/compressor/agent_desktop_node.go:161:func joinDesktopWords(v any, word *regexp.Regexp) (string, bool) {
+internal/compressor/agent_desktop_node.go:178:func desktopNumber(v any) (string, bool) {
+internal/compressor/failed_vitest_test.go:24:func vitestNoise(in []byte) func(string) bool {
+internal/compressor/failed_vitest_test.go:34:	return func(l string) bool {
+internal/compressor/failed_vitest_test.go:47:func TestCompressFailedVitestRealRuns(t *testing.T) {
+internal/compressor/failed_vitest_test.go:98:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/failed_vitest_test.go:108:func TestCompressFailedVitestFailsOpen(t *testing.T) {
+internal/compressor/failed_vitest_test.go:128:		t.Run(tc.name, func(t *testing.T) { assertRaw(t, compressor.FormatVitest, tc.input, tc.reason) })
+internal/compressor/failed_vitest_test.go:133:func TestCompressFailedVitestKeepsWhatATestPrinted(t *testing.T) {
+internal/compressor/failed_vitest_test.go:144:func failureOnlyVitest() []string {
+internal/compressor/docker_build.go:28:func isDockerBuild(input []byte) bool {
+internal/compressor/docker_build.go:41:func compressDockerBuild(input []byte) ([]byte, bool, string) {
+internal/compressor/docker_build.go:120:func isDockerPush(input []byte) bool {
+internal/compressor/docker_build.go:127:func compressDockerPush(input []byte) ([]byte, bool, string) {
+internal/compressor/docker_build.go:189:func truncateBytes(b []byte, maxLen int) []byte {
+internal/compressor/gh_run_log_test.go:14:func buildGhRunLog(job string, rows [][2]string) []byte {
+internal/compressor/gh_run_log_test.go:31:func jobLine(t *testing.T, summary, job string) string {
+internal/compressor/gh_run_log_test.go:42:func summarize(t *testing.T, in []byte) (summary string, applied bool) {
+internal/compressor/gh_run_log_test.go:51:func TestGhRunLog_ErrorAnnotationMarksJobFailed(t *testing.T) {
+internal/compressor/gh_run_log_test.go:77:func TestGhRunLog_NonZeroExitCodeMarksJobFailed(t *testing.T) {
+internal/compressor/gh_run_log_test.go:103:func TestGhRunLog_ZeroExitCodeDoesNotMarkJobFailed(t *testing.T) {
+internal/compressor/gh_run_log_test.go:131:func TestGhRunLog_BenignWarningKeepsJobGreenButPreservesLine(t *testing.T) {
+internal/compressor/mypy.go:33:func isMypy(input []byte) bool {
+internal/compressor/mypy.go:39:func compressMypy(input []byte) ([]byte, bool, string) {
+internal/compressor/rspec_test.go:13:func TestCompressRspecKeepsIndentedNoticesRaw(t *testing.T) {
+internal/compressor/rspec_test.go:21:		t.Run(name, func(t *testing.T) {
+internal/compressor/rspec_test.go:30:func TestCompressRspecSummarisesSlowestBlock(t *testing.T) {
+internal/compressor/grep_group.go:21:func compressGrep(input []byte) ([]byte, bool, string) {
+internal/compressor/failed_run_test.go:21:func readFailedFixture(t *testing.T, dir, name string) []byte {
+internal/compressor/failed_run_test.go:31:func goldenFailedRun(t *testing.T, dir string, f compressor.Format, name string) (in []byte, r compressor.Result) {
+internal/compressor/failed_run_test.go:59:func assertOnlyNoiseCut(t *testing.T, in, out []byte, summaryPrefix string, isNoise func(line string) bool) {
+internal/compressor/failed_run_test.go:78:func assertContains(t *testing.T, out []byte, lines []string) {
+internal/compressor/failed_run_test.go:88:func assertRaw(t *testing.T, f compressor.Format, in []byte, wantReason string) {
+internal/compressor/failed_run_test.go:100:func mutate(t *testing.T, in []byte, old, repl string) []byte {
+internal/compressor/failed_run_test.go:108:func TestCompressExitStillPreservesFailedVitestAndPlaywright(t *testing.T) {
+internal/compressor/compressor_playwright_test.go:13:func TestCompress_Playwright_PassCompaction(t *testing.T) {
+internal/compressor/compressor_playwright_test.go:28:func TestCompress_Playwright_ErrorsPreserveRaw(t *testing.T) {
+internal/compressor/compressor_playwright_test.go:42:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/compressor_playwright_test.go:61:func TestCompress_Playwright_UnrecognisedLinePreservesRaw(t *testing.T) {
+internal/compressor/compressor_playwright_test.go:76:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/go_test_failed.go:26:	// reGoStdlibFunc matches stack frame function names originating in stdlib runtime or testing.
+internal/compressor/go_test_failed.go:34:func compactFailedGoTest(input string) (string, bool) {
+internal/compressor/go_test_failed.go:59:	cuttable := func(name string) bool { return passed[name] && !failed[name] && !logged[name] }
+internal/compressor/go_test_failed.go:117:func isGoStdlibFrame(fnLine, pathLine string) bool {
+internal/compressor/go_test_failed.go:124:func FoldGoStdlibFrames(lines []string) []string {
+internal/compressor/go_test_failed.go:143:func isIndentedLog(line, indent string) bool {
+internal/compressor/compressor_test.go:15:func TestCompress_EmptyInput(t *testing.T) {
+internal/compressor/compressor_test.go:25:func TestCompress_ModeOff(t *testing.T) {
+internal/compressor/compressor_test.go:36:func TestCompress_ModeObserve(t *testing.T) {
+internal/compressor/compressor_test.go:51:func TestCompress_BinaryData_Preserved(t *testing.T) {
+internal/compressor/compressor_test.go:62:func TestCompress_SearchResults_Preserved(t *testing.T) {
+internal/compressor/compressor_test.go:74:func TestCompressExit_NonZeroPreservesPassingText(t *testing.T) {
+internal/compressor/compressor_test.go:89:func TestCompress_RepetitiveLogs(t *testing.T) {
+internal/compressor/compressor_test.go:104:func TestCompress_PrecedenceOverSearch(t *testing.T) {
+internal/compressor/listing_ls.go:34:func compressLs(input []byte) ([]byte, bool, string) {
+internal/compressor/listing_ls.go:48:func compressLongLs(input []byte, lines []string) ([]byte, bool, string) {
+internal/compressor/listing_ls.go:99:func compressPlainLs(input []byte, lines []string) ([]byte, bool, string) {
+internal/compressor/bazel.go:38:func isBazel(input []byte) bool { return reBazelDone.Match(input) }
+internal/compressor/bazel.go:41:func compressBazel(input []byte) ([]byte, bool, string) {
+internal/compressor/failed_jest_test.go:22:func jestNoise(l string) bool { return jestSuiteMark.MatchString(l) || jestTestMark.MatchString(l) }
+internal/compressor/failed_jest_test.go:26:func TestCompressFailedJestCutsOnlyPassingLines(t *testing.T) {
+internal/compressor/failed_jest_test.go:56:		t.Run(c.file, func(t *testing.T) {
+internal/compressor/failed_jest_test.go:69:func TestCompressFailedJestAllFailingStaysRaw(t *testing.T) {
+internal/compressor/failed_jest_test.go:75:func TestCompressFailedJestFailsOpen(t *testing.T) {
+internal/compressor/failed_jest_test.go:90:		t.Run(c.name, func(t *testing.T) {
+internal/compressor/redact_secrets.go:26:func RedactSecrets(text string) (string, bool) {
+internal/compressor/redact_secrets_test.go:11:func TestRedactSecrets(t *testing.T) {
+internal/compressor/redact_secrets_test.go:25:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/redact_secrets_test.go:37:func TestRedactSecretsLeavesPlainText(t *testing.T) {
+internal/compressor/redact_secrets_test.go:48:func TestCompressGlabRedactsAndCutsNothingElse(t *testing.T) {
+internal/compressor/git_status.go:36:func compressGitStatus(input []byte) ([]byte, bool, string) {
+internal/compressor/git_status.go:59:func compressDirtyGitStatus(input []byte, s string) ([]byte, bool, string) {
+internal/compressor/git_status.go:156:func gitStatusCode(changeType string) byte {
+internal/compressor/git_status.go:175:func formatGitBranchHeader(branch, upstream string, ahead, behind int) string {
+internal/compressor/noise_test.go:8:func TestStripNoise(t *testing.T) {
+internal/compressor/noise_test.go:48:		t.Run(c.name, func(t *testing.T) {
+internal/compressor/noise_test.go:62:func TestStripNoiseLeavesRawResultAlone(t *testing.T) {
+internal/compressor/noise_test.go:69:func TestStripNoiseKeepsDurations(t *testing.T) {
+internal/compressor/git_diff.go:40:func isGitDiff(input []byte) bool {
+internal/compressor/git_diff.go:51:func isGitShow(input []byte) bool {
+internal/compressor/git_diff.go:62:func compressGitDiff(input []byte) ([]byte, bool, string) {
+internal/compressor/git_diff.go:81:func compressGitShow(input []byte) ([]byte, bool, string) {
+internal/compressor/git_diff.go:118:func gitDiffUnsafe(input []byte) (string, bool) {
+internal/compressor/git_diff.go:141:func diffLines(input []byte, visit func(line, role string)) {
+internal/compressor/git_diff.go:168:func diffStrayDanger(input []byte) bool {
+internal/compressor/git_diff.go:171:	diffLines(input, func(line, role string) {
+internal/compressor/git_diff.go:187:func diffDroppableSecret(input []byte) bool {
+internal/compressor/git_diff.go:189:	diffLines(input, func(line, role string) {
+internal/compressor/git_diff.go:198:func hunkCount(s string) int {
+internal/compressor/git_diff.go:214:func changeLinesPreserved(input, out []byte) bool {
+internal/compressor/compressor_cargo_test.go:14:func TestCompress_CargoTest_PassCompaction(t *testing.T) {
+internal/compressor/compressor_cargo_test.go:32:func TestCompress_CargoTest_UnrecognisedLinePreservesRaw(t *testing.T) {
+internal/compressor/compressor_cargo_test.go:72:func TestCompress_CargoTest_ErrorTextInCargoShapedLinePreservesRaw(t *testing.T) {
+internal/compressor/compressor_cargo_test.go:105:func TestCompress_CargoTest_ErrorsPreserveRaw(t *testing.T) {
+internal/compressor/compressor_cargo_test.go:116:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/next_build.go:24:func isNextBuild(input []byte) bool {
+internal/compressor/next_build.go:31:func compressNextBuild(input []byte) ([]byte, bool, string) {
+internal/compressor/grep_group_test.go:11:func TestCompressGrepTable(t *testing.T) {
+internal/compressor/grep_group_test.go:22:				"internal/compressor/apply.go:12:\tfunc applyFormatCompression(input []byte, f Format) {",
+internal/compressor/grep_group_test.go:29:				" 12: func applyFormatCompression(input []byte, f Format) {",
+internal/compressor/grep_group_test.go:52:			input:       "internal/compressor/apply.go:12:func a() {}\ninternal/compressor/apply.go-13-\n",
+internal/compressor/grep_group_test.go:58:			input:       "internal/compressor/apply.go:12:func a() {}\nBinary file internal/x.bin matches\n",
+internal/compressor/grep_group_test.go:70:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/build_diagnostics.go:28:func newBuildDiagnostics() *buildDiagnostics {
+internal/compressor/build_diagnostics.go:32:func (b *buildDiagnostics) ensure(file string) *fileDiagnostics {
+internal/compressor/build_diagnostics.go:44:func (b *buildDiagnostics) add(file string, isError bool, message string) {
+internal/compressor/build_diagnostics.go:56:func (b *buildDiagnostics) fileCount() int {
+internal/compressor/build_diagnostics.go:77:func (b *buildDiagnostics) render(tool string) []byte {
+internal/compressor/script_runs_test.go:22:func reduction(in, out []byte) float64 {
+internal/compressor/script_runs_test.go:26:func TestScriptRunsCleanShrink(t *testing.T) {
+internal/compressor/script_runs_test.go:40:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/script_runs_test.go:64:func scriptRunNoise(in []byte) func(string) bool {
+internal/compressor/script_runs_test.go:67:	return func(l string) bool {
+internal/compressor/script_runs_test.go:75:func TestScriptRunsFailedShrinkKeepsFailures(t *testing.T) {
+internal/compressor/script_runs_test.go:76:	summary := func(files, tests string) []string {
+internal/compressor/script_runs_test.go:108:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/script_runs_test.go:126:func TestScriptRunsFailOpen(t *testing.T) {
+internal/compressor/gh_cli.go:38:func isGhPrView(input []byte) bool {
+internal/compressor/gh_cli.go:58:func compressGhPrView(input []byte) ([]byte, bool, string) {
+internal/compressor/gh_cli.go:113:func isGhPrChecks(input []byte) bool {
+internal/compressor/gh_cli.go:126:func compressGhPrChecks(input []byte) ([]byte, bool, string) {
+internal/compressor/gh_cli.go:189:func isGhRunList(input []byte) bool {
+internal/compressor/gh_cli.go:201:func compressGhRunList(input []byte) ([]byte, bool, string) {
+internal/compressor/gh_cli.go:232:	emit := func(b *strings.Builder, r run, marker string) {
+internal/compressor/gh_cli.go:266:func stripGhDecoration(s string) string {
+internal/compressor/gh_cli.go:279:func ghDroppedDangerLine(input, out []byte) bool {
+internal/compressor/js_test_runner.go:22:func JSTestRunner(input []byte) Format {
+internal/compressor/script_banner.go:30:func dropScriptBanner(input []byte) []byte {
+internal/compressor/dotnet.go:32:func dotnetTestLinesRecognised(input []byte) bool {
+internal/compressor/dotnet.go:45:func isDotnetTest(input []byte) bool {
+internal/compressor/dotnet.go:50:func compressDotnetTest(input []byte) ([]byte, bool, string) {
+internal/compressor/repeat_fold.go:39:func lineShape(line string) string { return reDigitRun.ReplaceAllString(line, "#") }
+internal/compressor/repeat_fold.go:42:func foldLineUnsafe(line string) bool {
+internal/compressor/repeat_fold.go:47:func isFilePathLine(s string) bool {
+internal/compressor/repeat_fold.go:67:func isFilePathRun(run []string) bool {
+internal/compressor/repeat_fold.go:86:func FoldRepeats(input []byte) Result {
+internal/compressor/repeat_fold.go:130:func runUnsafe(run []string) bool {
+internal/compressor/artisan.go:32:func isArtisanMigrate(input []byte) bool {
+internal/compressor/artisan.go:43:func isArtisanRouteList(input []byte) bool {
+internal/compressor/artisan.go:51:func compressArtisanMigrate(input []byte) ([]byte, bool, string) {
+internal/compressor/artisan.go:113:func compressArtisanRouteList(input []byte) ([]byte, bool, string) {
+internal/compressor/file_read.go:36:func compressFileRead(input []byte, h CommandHint) ([]byte, bool, string) {
+internal/compressor/file_read.go:82:func keptLines(lines []string, markdown bool) []bool {
+internal/compressor/file_read.go:119:func fullTextCommand(h CommandHint, first, total int) string {
+internal/compressor/file_read.go:132:func cutLine(s string) string {
+internal/compressor/bench_guard_compare_test.go:12:func TestCompareBaselineAggregates(t *testing.T) {
+internal/compressor/bench_guard_compare_test.go:23:func TestCompareBaseline(t *testing.T) {
+internal/compressor/bench_guard_compare_test.go:40:		t.Run(c.name, func(t *testing.T) {
+internal/compressor/bench_guard_compare_test.go:66:func TestCorpusNoUnintendedCR(t *testing.T) {
+internal/compressor/npm_install_lines.go:44:func classifyInstall(input []byte) (findings []string, ok bool) {
+internal/compressor/vitest_test.go:13:func TestCompressVitestRealShapes(t *testing.T) {
+internal/compressor/vitest_test.go:44:func TestCompressVitestKeepsEveryNoticeOnce(t *testing.T) {
+internal/compressor/vitest_test.go:73:func TestCompressVitestKeepsUnknownShapesRaw(t *testing.T) {
+internal/compressor/git_diff_gate_test.go:12:func TestGitDiffUnsafeGate(t *testing.T) {
+internal/compressor/git_diff_gate_test.go:25:		{"hunk header danger", "diff --git a/h.go b/h.go\n--- a/h.go\n+++ b/h.go\n@@ -1,3 +1,3 @@ func onError()\n x\n-a\n+b\n c\n", true},
+internal/compressor/git_diff_gate_test.go:37:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/compressor_git_status_test.go:14:func TestCompress_GitStatus_CleanTree(t *testing.T) {
+internal/compressor/compressor_git_status_test.go:25:func TestCompress_GitStatus_WithChanges_Preserved(t *testing.T) {
+internal/compressor/compressor_git_status_test.go:36:func TestCompress_GitStatus_KeepsTrackingAndDetached(t *testing.T) {
+internal/compressor/compressor_git_status_test.go:49:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/compressor_git_status_test.go:62:func TestCompress_GitStatus_DirtyStripsAdviceAndKeepsChanges(t *testing.T) {
+internal/compressor/compressor_git_status_test.go:99:func TestCompress_GitStatus_DirtyMixedStagedUnstaged(t *testing.T) {
+internal/compressor/bench_report_test.go:37:func (r benchRow) saving() float64 { return savingPct(r.raw, r.reduced) }
+internal/compressor/bench_report_test.go:39:func savingPct(raw, reduced int) float64 {
+internal/compressor/bench_report_test.go:48:func benchCorpus(t *testing.T) []benchRow {
+internal/compressor/bench_report_test.go:102:	sort.Slice(rows, func(i, j int) bool { return rows[i].family < rows[j].family })
+internal/compressor/bench_report_test.go:136:func rowClass(family string) string {
+internal/compressor/bench_report_test.go:143:func familyClass(family string) string {
+internal/compressor/bench_report_test.go:151:func classTotals(rows []benchRow) (lossless, lossy benchRow) {
+internal/compressor/bench_report_test.go:177:func foldedLen(out []byte) int {
+internal/compressor/bench_report_test.go:184:func renderBench(rows []benchRow) string {
+internal/compressor/bench_report_test.go:215:func TestBenchReport(t *testing.T) {
+internal/compressor/bench_report_test.go:231:func benchCompress(in []byte, f compressor.Format) compressor.Result {
+internal/compressor/find_tree.go:25:func compressFind(input []byte) ([]byte, bool, string) {
+internal/compressor/find_tree.go:47:func findPathOK(p string) bool {
+internal/compressor/find_tree.go:61:func (n *findNode) insert(p string) {
+internal/compressor/find_tree.go:74:func (n *findNode) child(name string) *findNode {
+internal/compressor/find_tree.go:88:func (n *findNode) write(b *strings.Builder, depth int) {
+internal/compressor/find_tree.go:99:func (n *findNode) label() string {
+internal/compressor/apply.go:7:func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
+internal/compressor/maven_test.go:14:func readMavenFixture(t *testing.T, name string) []byte {
+internal/compressor/maven_test.go:23:func TestCompressMavenCompactsCleanBuild(t *testing.T) {
+internal/compressor/maven_test.go:44:func TestCompressMavenPreservesAmbiguousOutputByteIdentically(t *testing.T) {
+internal/compressor/maven_test.go:46:	mutate := func(old, repl string) []byte {
+internal/compressor/maven_test.go:86:func TestMavenDetectionIsExclusive(t *testing.T) {
+internal/compressor/maven_test.go:102:func TestCompressMavenChatterOutsideTestRegionStillCompacts(t *testing.T) {
+internal/compressor/kubectl.go:22:func isKubectlGetPods(input []byte) bool {
+internal/compressor/kubectl.go:27:func compressKubectlGetPods(input []byte) ([]byte, bool, string) {
+internal/compressor/kubectl.go:111:func compressKubectlLogs(input []byte) ([]byte, bool, string) {
+internal/compressor/kubectl.go:172:func itoa(n int) string {
+internal/compressor/failed_cargo_test.go:24:func assertCargoOnlyPassingCut(t *testing.T, in, out []byte) {
+internal/compressor/failed_cargo_test.go:45:func cargoFixtureCut(t *testing.T, file string) (in []byte, r compressor.Result) {
+internal/compressor/failed_cargo_test.go:57:func TestCompressFailedCargoLibOnly(t *testing.T) {
+internal/compressor/failed_cargo_test.go:77:func TestCompressFailedCargoMultiCrate(t *testing.T) {
+internal/compressor/failed_cargo_test.go:101:func TestCompressFailedCargoFailsOpen(t *testing.T) {
+internal/compressor/failed_cargo_test.go:104:	t.Run("CRLF", func(t *testing.T) {
+internal/compressor/failed_cargo_test.go:107:	t.Run("missing final newline", func(t *testing.T) {
+internal/compressor/failed_cargo_test.go:110:	t.Run("colour escape", func(t *testing.T) {
+internal/compressor/failed_cargo_test.go:113:	t.Run("no failure signal", func(t *testing.T) {
+internal/compressor/failed_cargo_test.go:117:	t.Run("nothing to cut", func(t *testing.T) {
+internal/compressor/failed_cargo_test.go:121:	t.Run("passed count disagrees keeps the crate", func(t *testing.T) {
+internal/compressor/failed_cargo_test.go:130:	t.Run("unrecognised line inside a passing crate keeps the crate", func(t *testing.T) {
+internal/compressor/failed_cargo_test.go:138:	t.Run("interleaved output in a failing crate keeps the crate", func(t *testing.T) {
+internal/compressor/failed_cargo_test.go:147:	t.Run("failed count disagrees keeps the crate", func(t *testing.T) {
+internal/compressor/colour_test.go:8:func TestStripColour(t *testing.T) {
+internal/compressor/colour_test.go:40:func TestScreenText(t *testing.T) {
+internal/compressor/failed_playwright_test.go:23:func playwrightNoise(in []byte) func(string) bool {
+internal/compressor/failed_playwright_test.go:33:	return func(l string) bool { return passing[l] }
+internal/compressor/failed_playwright_test.go:39:func TestCompressFailedPlaywrightRealRuns(t *testing.T) {
+internal/compressor/failed_playwright_test.go:64:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/failed_playwright_test.go:74:func TestCompressFailedPlaywrightFailsOpen(t *testing.T) {
+internal/compressor/failed_playwright_test.go:98:		t.Run(tc.name, func(t *testing.T) { assertRaw(t, compressor.FormatPlaywright, tc.input, tc.reason) })
+internal/compressor/failed_playwright_test.go:103:func TestCompressFailedDeclinesOtherFormats(t *testing.T) {
+internal/compressor/rubocop.go:39:func isRubocop(input []byte) bool {
+internal/compressor/rubocop.go:53:func (o *rubocopOffenses) add(m []string) {
+internal/compressor/rubocop.go:65:func parseRubocop(lines []string) (*rubocopOffenses, string, bool) {
+internal/compressor/rubocop.go:105:func compressRubocop(input []byte) ([]byte, bool, string) {
+internal/compressor/rubocop.go:124:func (o *rubocopOffenses) render(summary string) []byte {
+internal/compressor/rubocop.go:140:func countList(counts map[string]int) string {
+internal/compressor/rubocop.go:145:	sort.Slice(names, func(i, j int) bool {
+internal/compressor/npm_audit_test.go:13:func readCorpus(t *testing.T, name string) string {
+internal/compressor/npm_audit_test.go:22:func TestCompressNpmAudit(t *testing.T) {
+internal/compressor/npm_audit_test.go:47:func TestCompressNpmAuditCriticalOnlyKeepsEverything(t *testing.T) {
+internal/compressor/npm_audit_test.go:54:func TestCompressNpmAuditFailsOpen(t *testing.T) {
+internal/compressor/npm_audit_test.go:66:		t.Run(name, func(t *testing.T) {
+internal/compressor/vitest.go:55:func isVitest(input []byte) bool {
+internal/compressor/vitest.go:74:func (r *vitestRun) add(line string) string {
+internal/compressor/vitest.go:115:func (r *vitestRun) tolerate(line string) {
+internal/compressor/vitest.go:122:func compressVitest(input []byte) ([]byte, bool, string) {
+internal/compressor/cargo_test_run.go:19:func isCargoTest(input []byte) bool {
+internal/compressor/cargo_test_run.go:42:func cargoTestLinesRecognised(input []byte) bool {
+internal/compressor/cargo_test_run.go:56:func matchesAnyCargoTestLine(line []byte) bool {
+internal/compressor/cargo_test_run.go:68:func compressCargoTest(input []byte) ([]byte, bool, string) {
+internal/compressor/json_schema_test.go:14:func bigJSON(n int) string {
+internal/compressor/json_schema_test.go:28:func TestJSONSchemaView(t *testing.T) {
+internal/compressor/json_schema_test.go:58:func TestJSONSchemaJQNamesItsFullCommand(t *testing.T) {
+internal/compressor/json_schema_test.go:65:func TestJSONSchemaStaysRaw(t *testing.T) {
+internal/compressor/json_schema_test.go:88:func TestJSONSchemaLabelsAndLimits(t *testing.T) {
+internal/compressor/corpus_fixtures_test.go:143:func readFixture(t *testing.T, name string) []byte {
+internal/compressor/corpus_fixtures_test.go:154:func allFixtures(t *testing.T) []string {
+internal/compressor/workspace_prefix.go:30:func stripWorkspacePrefix(text []byte) ([]byte, string) {
+internal/compressor/kubectl_test.go:11:func TestDetectKubectlPods(t *testing.T) {
+internal/compressor/kubectl_test.go:19:func TestCompressKubectlGetPods(t *testing.T) {
+internal/compressor/kubectl_test.go:40:func TestCompressKubectlLogsDedup(t *testing.T) {
+internal/compressor/kubectl_test.go:59:func TestCompressKubectlLogsNoDuplicates(t *testing.T) {
+internal/compressor/playwright.go:19:func isPlaywright(input []byte) bool {
+internal/compressor/playwright.go:37:func playwrightLinesRecognised(input []byte) bool {
+internal/compressor/playwright.go:56:func compressPlaywright(input []byte) ([]byte, bool, string) {
+internal/compressor/agent_desktop_roundtrip_test.go:33:func decodeDesktopView(t *testing.T, view string) map[string]any {
+internal/compressor/agent_desktop_roundtrip_test.go:74:func (d *viewDecoder) tree(t *testing.T, lines []string) map[string]any {
+internal/compressor/agent_desktop_roundtrip_test.go:94:func (d *viewDecoder) node(t *testing.T, line string) map[string]any {
+internal/compressor/agent_desktop_roundtrip_test.go:130:func (d *viewDecoder) field(t *testing.T, n map[string]any, rest string) string {
+internal/compressor/agent_desktop_roundtrip_test.go:164:func (d *viewDecoder) plainField(t *testing.T, n map[string]any, key, w string) {
+internal/compressor/agent_desktop_roundtrip_test.go:186:func (d *viewDecoder) findDefaults(n map[string]any) {
+internal/compressor/agent_desktop_roundtrip_test.go:198:func words(s string) []any {
+internal/compressor/agent_desktop_roundtrip_test.go:207:func splitKeyJSON(t *testing.T, s string) (string, any, string) {
+internal/compressor/agent_desktop_roundtrip_test.go:218:func readJSON(t *testing.T, s string) (any, string) {
+internal/compressor/agent_desktop_roundtrip_test.go:229:func parseEnvelope(t *testing.T, in []byte) map[string]any {
+internal/compressor/agent_desktop_roundtrip_test.go:240:func assertRoundTrip(t *testing.T, in []byte) Result {
+internal/compressor/agent_desktop_roundtrip_test.go:255:func TestAgentDesktopViewKeepsEveryFieldOfTheCorpus(t *testing.T) {
+internal/compressor/agent_desktop_roundtrip_test.go:257:		t.Run(name, func(t *testing.T) {
+internal/compressor/compressor_jest_test.go:14:func TestCompress_Jest_PassCompaction(t *testing.T) {
+internal/compressor/compressor_jest_test.go:29:func TestCompress_Jest_ErrorsPreserveRaw(t *testing.T) {
+internal/compressor/compressor_jest_test.go:40:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/compressor_jest_test.go:56:func TestCompress_Jest_KeepsFewConsoleLinesVerbatim(t *testing.T) {
+internal/compressor/compressor_jest_test.go:65:func TestCompress_Jest_DropsManyConsoleLinesWithCount(t *testing.T) {
+internal/compressor/compressor_jest_test.go:75:func TestCompress_Jest_CleanRunSummary(t *testing.T) {
+internal/compressor/npm_install_test.go:11:func installPad(prefix string, n int) string {
+internal/compressor/npm_install_test.go:19:func TestCompressInstallSummaries(t *testing.T) {
+internal/compressor/npm_install_test.go:43:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/npm_install_test.go:57:func TestCompressInstallKeepsEveryWarningAndErrorRaw(t *testing.T) {
+internal/compressor/npm_install_test.go:74:		t.Run(name, func(t *testing.T) {
+internal/compressor/rubocop_test.go:12:func rubocopFixture(t *testing.T, name string) string {
+internal/compressor/rubocop_test.go:21:func TestCompressRubocop(t *testing.T) {
+internal/compressor/rubocop_test.go:69:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/rubocop_test.go:97:func TestDetectRubocop(t *testing.T) {
+internal/compressor/cargo_build.go:65:func isCargoBuild(input []byte) bool {
+internal/compressor/cargo_build.go:78:func compressCargoBuild(input []byte) ([]byte, bool, string) {
+internal/compressor/jest.go:23:func isJest(input []byte) bool {
+internal/compressor/jest.go:30:func compressJest(input []byte) ([]byte, bool, string) {
+internal/compressor/jest.go:73:func foldJestConsole(input []byte) (kept []string, dropped int) {
+internal/compressor/progress_test.go:11:func TestCollapseProgress(t *testing.T) {
+internal/compressor/progress_test.go:31:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/progress_test.go:40:func TestCompressCollapsesProgressOnly(t *testing.T) {
+internal/compressor/failed_pytest_test.go:29:func pytestNoise(in []byte) func(string) bool {
+internal/compressor/failed_pytest_test.go:76:	return func(l string) bool {
+internal/compressor/failed_pytest_test.go:136:func TestCompressFailedPytestCutsOnlyPassedTests(t *testing.T) {
+internal/compressor/failed_pytest_test.go:161:		t.Run(c.file, func(t *testing.T) {
+internal/compressor/failed_pytest_test.go:175:func TestCompressFailedPytestStaysRawWhenNothingCutOrUnknown(t *testing.T) {
+internal/compressor/failed_pytest_test.go:180:func TestCompressFailedPytestQuietMode(t *testing.T) {
+internal/compressor/failed_pytest_test.go:189:func TestCompressFailedPytestBenchmarkFactPreservation(t *testing.T) {
+internal/compressor/failed_pytest_test.go:262:func TestCompressFailedPytestFailsOpen(t *testing.T) {
+internal/compressor/failed_pytest_test.go:277:		t.Run(c.name, func(t *testing.T) {
+internal/compressor/runner_failure_guard_test.go:35:func failingFixtures(t *testing.T) (failing map[compressor.Format][]string, withClean map[compressor.Format]bool) {
+internal/compressor/runner_failure_guard_test.go:65:func TestRunnerHasFailingFixture(t *testing.T) {
+internal/compressor/runner_failure_guard_test.go:83:func TestRunnerFailingFixtureStaysRawAtEveryExit(t *testing.T) {
+internal/compressor/runner_failure_guard_test.go:90:				t.Run(fmt.Sprintf("%s/%s/exit=%d", f, file, code), func(t *testing.T) {
+internal/compressor/repeat_fold_test.go:12:func seqLines(format string, from, to int) []string {
+internal/compressor/repeat_fold_test.go:20:func TestFoldRepeats(t *testing.T) {
+internal/compressor/repeat_fold_test.go:44:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/bazel_test.go:16:func TestCompressBazel(t *testing.T) {
+internal/compressor/bazel_test.go:35:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/detect.go:11:func detectFormat(input []byte) (Format, bool) {
+internal/compressor/types.go:107:func (r Result) SavingsRatio() float64 {
+internal/compressor/agent_desktop_find.go:18:func agentDesktopFindView(env agentDesktopEnvelope) ([]byte, bool) {
+internal/compressor/agent_desktop_find.go:68:func trimDesktopFindDefaults(match map[string]any) {
+internal/compressor/generic.go:48:func compressGeneric(input []byte) ([]byte, bool, string) {
+internal/compressor/generic.go:76:func genericHasDanger(text string) bool {
+internal/compressor/tsc.go:26:func isTSC(input []byte) bool {
+internal/compressor/tsc.go:33:func compressTSC(input []byte) ([]byte, bool, string) {
+internal/compressor/tsc.go:50:func tscLinesRecognized(input []byte) bool {
+internal/compressor/bench_guard_test.go:46:func (r baseRow) permille() int {
+internal/compressor/bench_guard_test.go:53:func (r baseRow) pct() string { return fmt.Sprintf("%.1f%%", float64(r.permille())/10) }
+internal/compressor/bench_guard_test.go:55:func isAggregate(family string) bool { return strings.HasPrefix(family, "@") }
+internal/compressor/bench_guard_test.go:59:func guardRows(rows []benchRow) []baseRow {
+internal/compressor/bench_guard_test.go:67:	sort.Slice(out, func(i, j int) bool { return out[i].family < out[j].family })
+internal/compressor/bench_guard_test.go:76:func formatBaseline(rows []baseRow) string {
+internal/compressor/bench_guard_test.go:86:func readBaseline(path string) ([]baseRow, error) {
+internal/compressor/bench_guard_test.go:115:func compareBaseline(base, got []baseRow) []string {
+internal/compressor/bench_guard_test.go:149:func TestBenchGuard(t *testing.T) {
+internal/compressor/bench_guard_test.go:160:func TestBenchBaselineWrite(t *testing.T) {
+internal/compressor/log_search.go:15:func compressSearchResults(input []byte) ([]byte, bool, string) {
+internal/compressor/log_search.go:20:func compressFileList(input []byte) ([]byte, bool, string) {
+internal/compressor/log_search.go:25:func isRepetitiveLog(input []byte) bool {
+internal/compressor/log_search.go:40:func deduplicateLogs(input []byte) ([]byte, bool, string) {
+internal/compressor/vitest_failed.go:47:func compactFailedVitest(text string) (string, string) {
+internal/compressor/vitest_failed.go:80:func checkVitestFailureSection(tail []string) string {
+internal/compressor/vitest_failed.go:100:func cutPassingVitest(lines []string) (kept []string, cut vitestCut, reason string) {
+internal/compressor/vitest_failed.go:148:func isPassedVitestFile(l string) bool {
+internal/compressor/git_stash.go:17:func isGitStashList(input []byte) bool {
+internal/compressor/git_stash.go:34:func compressGitStashList(input []byte) ([]byte, bool, string) {
+internal/compressor/compressor_tsc_test.go:13:func TestCompress_TSC_PassCompaction(t *testing.T) {
+internal/compressor/compressor_tsc_test.go:28:func TestCompress_TSC_ErrorsPreserveRaw(t *testing.T) {
+internal/compressor/compressor_tsc_test.go:37:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/compressor_tsc_test.go:56:func TestCompress_TSC_UnrecognisedLinePreservesRaw(t *testing.T) {
+internal/compressor/compressor_tsc_test.go:79:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/flutter.go:33:func flutterSegments(line string) []string {
+internal/compressor/flutter.go:42:func isFlutterTest(input []byte) bool {
+internal/compressor/flutter.go:64:func isPrintableASCII(s string) bool {
+internal/compressor/flutter.go:73:func compressFlutterTest(input []byte) ([]byte, bool, string) {
+internal/compressor/benchmark_test.go:13:func BenchmarkCompress_GoTest(b *testing.B) {
+internal/compressor/benchmark_test.go:21:func BenchmarkCompress_GitStatus(b *testing.B) {
+internal/compressor/benchmark_test.go:29:func BenchmarkCompress_RepetitiveLogs(b *testing.B) {
+internal/compressor/generic_base64.go:17:func isBase64Byte(c byte) bool {
+internal/compressor/generic_base64.go:24:func looksBase64(run string) bool {
+internal/compressor/generic_base64.go:43:func elideBase64(text string) (string, int) {
+internal/compressor/generic_base64.go:81:func humanKB(n int) string {
+internal/compressor/listing_ls_test.go:21:func TestCompressLsTable(t *testing.T) {
+internal/compressor/listing_ls_test.go:105:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/go_test_json_failed.go:16:func compactFailedGoTestJSON(text string) (string, string) {
+internal/compressor/gh_pr_body_test.go:12:func ghPrViewSample(bodyLines int) string {
+internal/compressor/gh_pr_body_test.go:24:func TestCompressGhPrViewKeepsFacts(t *testing.T) {
+internal/compressor/gh_pr_body_test.go:48:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/colour.go:23:func screenText(input []byte) (text []byte, reason string) {
+internal/compressor/colour.go:44:func stripColour(input []byte) ([]byte, bool) {
+internal/compressor/nx.go:31:func isNx(input []byte) bool { return reNxDone.Match(input) }
+internal/compressor/nx.go:34:func compressNx(input []byte) ([]byte, bool, string) {
+internal/compressor/lockfile_parse.go:56:func isLockfilePath(p string) bool { return lockfileNames[path.Base(p)] }
+internal/compressor/lockfile_parse.go:60:func scanLockfile(base string, lines []string) lockScan {
+internal/compressor/lockfile_parse.go:92:func (s *lockScan) add(sign byte, name string, haveName bool, version string) {
+internal/compressor/lockfile_parse.go:103:func npmLockLine(add func(byte, string, bool, string), sign byte, c, name string, have bool) (string, bool, bool) {
+internal/compressor/lockfile_parse.go:124:func yarnLockLine(add func(byte, string, bool, string), sign byte, c, name string, have bool) (string, bool, bool) {
+internal/compressor/lockfile_parse.go:139:func pnpmLockLine(s *lockScan, sign byte, c string) bool {
+internal/compressor/lockfile_parse.go:151:func cargoLockLine(add func(byte, string, bool, string), sign byte, c, name string, have bool) (string, bool, bool) {
+internal/compressor/lockfile_parse.go:169:func lockLineUnsafe(content string) bool {
+internal/compressor/glab.go:10:func compressGlab(input []byte) ([]byte, bool, string) {
+internal/compressor/command_output.go:19:func CompressCommandOutput(input []byte, f Format, exitCode int) Result {
+internal/compressor/command_output.go:46:func CompressCommandOutputHint(input []byte, f Format, exitCode int, h CommandHint) Result {
+internal/compressor/command_output.go:79:func screenCommandText(input []byte, f Format) ([]byte, string) {
+internal/compressor/command_output.go:90:func commandLines(text []byte) []string {
+internal/compressor/command_output.go:96:func applyCommandFormat(text []byte, f Format, h CommandHint) ([]byte, bool, string) {
+internal/compressor/go_test_large_clean_test.go:18:func goCoverRun(n int) string {
+internal/compressor/go_test_large_clean_test.go:29:func TestCompress_GoTest_CoverNoTestFilesLineCompacts(t *testing.T) {
+internal/compressor/go_test_large_clean_test.go:41:func TestCompress_GoTest_LargeCleanCoverRunCompacts(t *testing.T) {
+internal/compressor/go_test_large_clean_test.go:56:func TestCompress_GoTest_CoverRunWithFailurePreservesRaw(t *testing.T) {
+internal/compressor/go_test_large_clean_test.go:69:func TestCompress_GoVerbose_SubtestsPreservedByDesign(t *testing.T) {
+internal/compressor/dotnet_build.go:50:func isDotnetBuild(input []byte) bool {
+internal/compressor/dotnet_build.go:58:func compressDotnetBuild(input []byte) ([]byte, bool, string) {
+internal/compressor/pip_install_noun_test.go:12:func TestPipInstallSingularPackageNoun(t *testing.T) {
+internal/compressor/go_test_plain.go:36:func foldGoTestPlain(input []byte) ([]byte, bool, string) {
+internal/compressor/go_test_plain.go:131:func goCoverValue(c string) (float64, bool) {
+internal/compressor/go_test_plain.go:141:func goCoverRange(pkgs []goPlainPkg) (lo, hi string, ok bool) {
+internal/compressor/go_test_plain.go:161:func dropRepeatedCoverLines(stray, figures []string, pkgs []goPlainPkg) []string {
+internal/compressor/balance_test.go:12:func TestBalanceLogKeepsHeadTailAndFailures(t *testing.T) {
+internal/compressor/balance_test.go:39:func TestBalanceDiffKeepsEveryHeader(t *testing.T) {
+internal/compressor/balance_test.go:62:func TestBalanceMatchesCapsPerFileAndCounts(t *testing.T) {
+internal/compressor/balance_test.go:77:func TestBalanceSmallGainKeepsText(t *testing.T) {
+internal/compressor/lossless_invariant_test.go:22:func losslessCleanFormats(t *testing.T) []compressor.Format {
+internal/compressor/lossless_invariant_test.go:32:	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+internal/compressor/lossless_invariant_test.go:36:func TestLosslessEveryFamilyHasInvariantOrAllowlistEntry(t *testing.T) {
+internal/compressor/lossless_invariant_test.go:63:func TestLosslessSignalLinesSurvive(t *testing.T) {
+internal/compressor/lossless_invariant_test.go:69:		t.Run(e.file, func(t *testing.T) {
+internal/compressor/lossless_invariant_test.go:84:func TestLosslessInvariantBites(t *testing.T) {
+internal/compressor/lossless_invariant_test.go:104:		t.Run(c.name, func(t *testing.T) {
+internal/compressor/lossless_invariant_test.go:110:	t.Run("faithful output passes", func(t *testing.T) {
+internal/compressor/lossless_invariant_test.go:120:func TestLosslessInvariantBitesOnRealFixtures(t *testing.T) {
+internal/compressor/lossless_invariant_test.go:126:		t.Run(e.file, func(t *testing.T) {
+internal/compressor/grep_rows.go:18:func compressGrepRows(input []byte, h CommandHint) ([]byte, bool, string) {
+internal/compressor/grep_rows.go:39:func underRoot(p string, roots []string) bool {
+internal/compressor/fixture_coverage_test.go:26:func bucket(n int) string {
+internal/compressor/fixture_coverage_test.go:37:func (r coverageRow) singleSample() bool { return r.clean == 1 || r.preserve == 1 }
+internal/compressor/fixture_coverage_test.go:40:func manifestCounts(t *testing.T) map[string]*coverageRow {
+internal/compressor/fixture_coverage_test.go:59:func formatCoverage(t *testing.T) []coverageRow {
+internal/compressor/fixture_coverage_test.go:75:	sort.Slice(rows, func(i, j int) bool { return rows[i].name < rows[j].name })
+internal/compressor/fixture_coverage_test.go:82:func familyCoverage(t *testing.T) []coverageRow {
+internal/compressor/fixture_coverage_test.go:105:	sort.Slice(rows, func(i, j int) bool { return rows[i].name < rows[j].name })
+internal/compressor/fixture_coverage_test.go:109:func renderCoverage(title string, rows []coverageRow) string {
+internal/compressor/fixture_coverage_test.go:118:func TestFixtureCoverageListsEveryFormatAndFamily(t *testing.T) {
+internal/compressor/fixture_coverage_test.go:140:func TestFixtureCoverageSingleSample(t *testing.T) {
+internal/compressor/lossless_invariant_checks_test.go:19:type invariant func(in, out []byte) (lost []string)
+internal/compressor/lossless_invariant_checks_test.go:32:func dangerSignals(in []byte) []string {
+internal/compressor/lossless_invariant_checks_test.go:44:func hasNumber(out []byte, n int) bool {
+internal/compressor/lossless_invariant_checks_test.go:48:func matchNumbers(in []byte, re *regexp.Regexp) []int {
+internal/compressor/lossless_invariant_checks_test.go:61:type passTotal func(in []byte) (n int, ok bool)
+internal/compressor/lossless_invariant_checks_test.go:63:func sumOf(re *regexp.Regexp) passTotal {
+internal/compressor/lossless_invariant_checks_test.go:64:	return func(in []byte) (int, bool) {
+internal/compressor/lossless_invariant_checks_test.go:73:func maxOf(re *regexp.Regexp) passTotal {
+internal/compressor/lossless_invariant_checks_test.go:74:	return func(in []byte) (int, bool) {
+internal/compressor/lossless_invariant_checks_test.go:83:func lastOf(re *regexp.Regexp) passTotal {
+internal/compressor/lossless_invariant_checks_test.go:84:	return func(in []byte) (int, bool) {
+internal/compressor/lossless_invariant_checks_test.go:107:func goTestTotal(in []byte) (int, bool) {
+internal/compressor/lossless_invariant_checks_test.go:117:func runnerInvariant(total passTotal) invariant {
+internal/compressor/lossless_invariant_checks_test.go:118:	return func(in, out []byte) []string {
+internal/compressor/lossless_invariant_checks_test.go:136:func grepInvariant(in, out []byte) []string {
+internal/compressor/lossless_invariant_checks_test.go:154:func grepRowsInvariant(in, out []byte) []string {
+internal/compressor/lossless_invariant_checks_test.go:172:func rubocopInvariant(in, out []byte) []string {
+internal/compressor/lossless_invariant_checks_test.go:173:	lost := runnerInvariant(func([]byte) (int, bool) { return 0, false })(in, out)
+internal/compressor/grep_search_test.go:12:func TestCompressGrepRows(t *testing.T) {
+internal/compressor/grep_search_test.go:44:func TestCompressGrepCaps(t *testing.T) {
+internal/compressor/grep_search_test.go:71:func TestCompressGrepWithinCapsIsLossless(t *testing.T) {
+internal/compressor/grep_search_test.go:79:func TestCompressGrepCounts(t *testing.T) {
+internal/compressor/gradle.go:27:func isGradle(input []byte) bool {
+internal/compressor/gradle.go:36:func compressGradle(input []byte) ([]byte, bool, string) {
+internal/compressor/go_verbose.go:28:func parseGoVerbose(input []byte) ([]byte, bool, string) {
+internal/compressor/go_verbose.go:69:func scanGoVerbose(lines []string, allowEmpty bool) (goVerboseSeg, string) {
+internal/compressor/go_verbose.go:200:func openOwner(open map[string][]string, name string) string {
+internal/compressor/go_verbose.go:213:func current0(blocks [][]string) []string { return blocks[len(blocks)-1] }
+internal/compressor/go_verbose.go:219:func classifyPassedBlock(block []string) (logged, foldable bool) {
+internal/compressor/generic_test.go:13:func numbered(n int, prefix string) string {
+internal/compressor/generic_test.go:21:func blob(n int) string {
+internal/compressor/generic_test.go:30:func TestElideBase64(t *testing.T) {
+internal/compressor/generic_test.go:50:func TestDedupLines(t *testing.T) {
+internal/compressor/generic_test.go:71:func TestCapLines(t *testing.T) {
+internal/compressor/generic_test.go:72:	mk := func(n int) []string { return strings.Split(strings.TrimSuffix(numbered(n, "l"), "\n"), "\n") }
+internal/compressor/generic_test.go:87:func TestCapLinesKeepsFlaggedLines(t *testing.T) {
+internal/compressor/generic_test.go:116:func TestCompressGeneric(t *testing.T) {
+internal/compressor/generic_test.go:159:func TestCompressGenericReduction(t *testing.T) {
+internal/compressor/generic_test.go:167:func TestCompressExitGenericFormat(t *testing.T) {
+internal/compressor/generic_test.go:186:func TestElideBase64LinearOnHugeLine(t *testing.T) {
+internal/compressor/phpstan.go:35:func isPHPStan(input []byte) bool {
+internal/compressor/phpstan.go:43:func isPsalm(input []byte) bool {
+internal/compressor/phpstan.go:56:func phpstanCleanLinesRecognised(input []byte) bool {
+internal/compressor/phpstan.go:69:func compressPHPStan(input []byte) ([]byte, bool, string) {
+internal/compressor/phpstan.go:128:func extractPHPStanRule(msg string) string {
+internal/compressor/phpstan.go:144:func compressPsalm(input []byte) ([]byte, bool, string) {
+internal/compressor/turbo.go:34:func isTurbo(input []byte) bool {
+internal/compressor/turbo.go:39:func compressTurbo(input []byte) ([]byte, bool, string) {
+internal/compressor/js_test_runner_test.go:12:func TestJSTestRunner(t *testing.T) {
+internal/compressor/js_test_runner_test.go:13:	read := func(parts ...string) string {
+internal/compressor/js_test_runner_test.go:38:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/failed_make.go:18:func plainMakeFailedText(input []byte) ([]byte, bool) {
+internal/compressor/failed_make.go:31:func compactMakeFailedRun(text string) (string, string) {
+internal/compressor/file_read_decl.go:19:	reStrongDecl = regexp.MustCompile(`^(?:(?:export|pub(?:\([a-z]+\))?|public|private|protected|internal|static|async|abstract|final|default|open|override|unsafe|extern|declare|data|sealed|suspend|inline)\s+)*(?:func|fn|def|class|struct|enum|trait|interface|impl|type|function|fun|module|namespace|object|package|protocol|extension|mod|record)\b`)
+internal/compressor/file_read_decl.go:42:func fileExt(name string) string {
+internal/compressor/file_read_decl.go:46:func isMarkdown(ext string) bool { return ext == ".md" || ext == ".mdx" || ext == ".markdown" }
+internal/compressor/file_read_decl.go:49:func isDeclLine(line string, markdown bool) bool {
+internal/compressor/colour_corpus_test.go:16:func colourEveryLine(in []byte) []byte {
+internal/compressor/colour_corpus_test.go:29:func TestColourNeverChangesTheAnswer(t *testing.T) {
+internal/compressor/colour_corpus_test.go:35:		t.Run(e.file, func(t *testing.T) {
+internal/compressor/colour_corpus_test.go:55:func TestNonColourEscapeKeepsCleanOutputRaw(t *testing.T) {
+internal/compressor/composer.go:29:func isComposer(input []byte) bool {
+internal/compressor/composer.go:41:func compressComposer(input []byte) ([]byte, bool, string) {
+internal/compressor/composer.go:155:func truncateLine(s string, maxLen int) string {
+internal/compressor/composer.go:163:func atoi(s string) int {
+internal/compressor/big_output_test.go:20:func readBig(t *testing.T, name string) []byte {
+internal/compressor/big_output_test.go:30:func assertKeepsLines(t *testing.T, in, out []byte, want func(string) bool) {
+internal/compressor/big_output_test.go:50:func TestBigOutput_GoVerboseMultiPackage(t *testing.T) {
+internal/compressor/big_output_test.go:72:func TestBigOutput_GoVerboseFailureKeepsEveryFailLine(t *testing.T) {
+internal/compressor/big_output_test.go:74:	signal := func(l string) bool {
+internal/compressor/big_output_test.go:93:func TestBigOutput_GoVerboseUnknownStretchStaysVerbatim(t *testing.T) {
+internal/compressor/big_output_test.go:109:func TestBigOutput_GoJSON(t *testing.T) {
+internal/compressor/big_output_test.go:127:func TestBigOutput_GoJSONFailure(t *testing.T) {
+internal/compressor/big_output_test.go:133:	assertKeepsLines(t, in, res.Output, func(l string) bool {
+internal/compressor/big_output_test.go:150:func TestBigOutput_PackageScripts(t *testing.T) {
+internal/compressor/big_output_test.go:163:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/big_output_test.go:184:func TestBigOutput_PackageScriptsStayRaw(t *testing.T) {
+internal/compressor/big_output_test.go:196:func TestBigOutput_MakeFailure(t *testing.T) {
+internal/compressor/big_output_test.go:202:	assertKeepsLines(t, in, res.Output, func(l string) bool {
+internal/compressor/go_verbose_test.go:14:func TestParseGoVerboseCompactsPassingTests(t *testing.T) {
+internal/compressor/go_verbose_test.go:30:func TestCompressGoVerbosePassesThroughPublicCompressor(t *testing.T) {
+internal/compressor/go_verbose_test.go:38:func TestParseGoVerbosePreservesFailureOutput(t *testing.T) {
+internal/compressor/go_verbose_test.go:48:func TestParseGoVerboseCompactsPassingSubtests(t *testing.T) {
+internal/compressor/go_verbose_test.go:63:func TestParseGoVerboseFallsBackForUnexpectedOrAmbiguousOutput(t *testing.T) {
+internal/compressor/go_verbose_test.go:72:		t.Run(string(rune('a'+i)), func(t *testing.T) {
+internal/compressor/go_verbose_test.go:81:func readGoVerboseFixture(t *testing.T, name string) []byte {
+internal/compressor/go_verbose_test.go:93:func TestParseGoVerboseCompactsRealSubtestTranscript(t *testing.T) {
+internal/compressor/playwright_failed.go:39:func compactFailedPlaywright(text string) (string, string) {
+internal/compressor/playwright_failed.go:72:func checkPlaywrightFailureSection(tail []string) string {
+internal/compressor/playwright_failed.go:94:func cutPassingPlaywright(lines []string) (kept []string, cut int, reason string) {
+internal/compressor/az_pipelines.go:29:func isAzPipelines(input []byte) bool {
+internal/compressor/az_pipelines.go:38:func compressAzPipelines(input []byte) ([]byte, bool, string) {
+internal/compressor/az_pipelines.go:56:func compressAzPipelinesJSON(input []byte) ([]byte, bool, string) {
+internal/compressor/az_pipelines.go:122:func compressAzPipelinesTable(input []byte) ([]byte, bool, string) {
+internal/compressor/cypress.go:34:func isCypress(input []byte) bool {
+internal/compressor/cypress.go:42:func compressCypress(input []byte) ([]byte, bool, string) {
+internal/compressor/cypress.go:74:func parseCypressSummary(output string) (cypressSummary, bool) {
+internal/compressor/cypress.go:126:func isKnownCypressLine(line string) bool {
+internal/compressor/file_read_test.go:12:// goSource builds a synthetic Go file of n funcs of 11 lines each.
+internal/compressor/file_read_test.go:13:func goSource(funcs int) string {
+internal/compressor/file_read_test.go:16:	for i := 0; i < funcs; i++ {
+internal/compressor/file_read_test.go:17:		fmt.Fprintf(&b, "func Step%d(s string) string {\n", i)
+internal/compressor/file_read_test.go:26:func TestCompressFileReadFoldsLongSource(t *testing.T) {
+internal/compressor/file_read_test.go:35:		"5: func Step0(s string) string {\n",    // declaration, with its file line number
+internal/compressor/file_read_test.go:36:		"434: func Step39(s string) string {\n", // last declaration
+internal/compressor/file_read_test.go:54:func TestCompressFileReadStaysRaw(t *testing.T) {
+internal/compressor/file_read_test.go:78:func TestCompressFileReadKeepsDangerLinesWhole(t *testing.T) {
+internal/compressor/file_read_test.go:87:func TestCompressFileReadLineNumbersAndCommands(t *testing.T) {
+internal/compressor/file_read_test.go:100:func TestCompressFileReadMarkdownHeadings(t *testing.T) {
+internal/compressor/file_read_test.go:114:func TestCutLineKeepsRunes(t *testing.T) {
+internal/compressor/npm_install.go:42:func isNpmInstall(input []byte) bool {
+internal/compressor/npm_install.go:63:func detectNpmInstall(input []byte) (Format, bool) {
+internal/compressor/npm_install.go:75:func compressNpmInstall(input []byte) ([]byte, bool, string) {
+internal/compressor/npm_install.go:158:func packageNoun(count string) string {
+internal/compressor/next_build_test.go:14:func TestCompressNextBuildSuccessfulRouteAndChunkTables(t *testing.T) {
+internal/compressor/next_build_test.go:28:func TestCompressNextBuildPreservesUnsafeOrAmbiguousOutput(t *testing.T) {
+internal/compressor/next_build_test.go:35:		t.Run(strings.TrimSuffix(name, ".txt"), func(t *testing.T) {
+internal/compressor/next_build_test.go:45:func TestCompressNextBuildPreservesIncompleteAndOversizedInput(t *testing.T) {
+internal/compressor/next_build_test.go:60:func readNextBuildFixture(t *testing.T, name string) []byte {
+internal/compressor/balance.go:15:// stored; these functions never decide that.
+internal/compressor/balance.go:55:func Balance(kind BalanceKind, text []byte) ([]byte, bool) {
+internal/compressor/balance.go:74:func balanceCut(l string) string {
+internal/compressor/balance.go:82:func balanceDiff(lines []string) []string {
+internal/compressor/balance.go:85:	flush := func() {
+internal/compressor/balance.go:120:func matchFile(l string) string {
+internal/compressor/balance.go:128:func balanceMatches(lines []string) []string {
+internal/compressor/balance.go:171:func balanceLog(lines []string) []string {
+internal/compressor/generic_stack_test.go:14:var stackShapes = map[string]func(i int) []string{
+internal/compressor/generic_stack_test.go:15:	"js": func(i int) []string {
+internal/compressor/generic_stack_test.go:18:	"java": func(i int) []string {
+internal/compressor/generic_stack_test.go:21:	"python": func(i int) []string {
+internal/compressor/generic_stack_test.go:24:	"go": func(i int) []string {
+internal/compressor/generic_stack_test.go:29:func stackText(shape string, n int) (text string, frames [][]string) {
+internal/compressor/generic_stack_test.go:41:func joinFrames(fs [][]string) string {
+internal/compressor/generic_stack_test.go:49:func TestStackFoldEachShape(t *testing.T) {
+internal/compressor/generic_stack_test.go:51:		t.Run(shape, func(t *testing.T) {
+internal/compressor/generic_stack_test.go:63:func TestStackFoldBoundary(t *testing.T) {
+internal/compressor/generic_stack_test.go:84:func TestStackFoldKeepsRawWhenGateFires(t *testing.T) {
+internal/compressor/generic_stack_test.go:85:	cases := map[string]func(in string) string{
+internal/compressor/generic_stack_test.go:86:		"message line": func(in string) string { return strings.Replace(in, "caller dump follows", "Error: boom", 1) },
+internal/compressor/generic_stack_test.go:87:		"line after":   func(in string) string { return in + "1 failed\n" },
+internal/compressor/generic_stack_test.go:88:		"unknown at line": func(in string) string {
+internal/compressor/generic_stack_test.go:101:func TestStackFoldInterleavedLineBreaksRun(t *testing.T) {
+internal/compressor/generic_stack_test.go:114:func TestStackFoldMixedKindsDoNotJoin(t *testing.T) {
+internal/compressor/generic_stack_test.go:125:func TestStackFoldLinearOnHugeInput(t *testing.T) {
+internal/compressor/generic_stack_test.go:137:func TestStackFoldMarkerInInputKeepsRaw(t *testing.T) {
+internal/compressor/command_output_test.go:11:func TestCompressCommandOutputGuards(t *testing.T) {
+internal/compressor/command_output_test.go:27:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/command_output_test.go:39:func TestCompressCommandOutputAppliesAndStripsColour(t *testing.T) {
+internal/compressor/noise.go:22:func StripNoise(r Result, cwd string) Result {
+internal/compressor/noise.go:50:func keepLineRaw(line string) bool {
+internal/compressor/noise.go:58:func cwdPrefixes(cwd string) []string {
+internal/compressor/noise.go:70:func isASCIILetter(c byte) bool { return c|0x20 >= 'a' && c|0x20 <= 'z' }
+internal/compressor/noise.go:72:func containsAny(text string, subs []string) bool {
+internal/compressor/noise.go:85:func trimPrefixAtBoundaries(line, prefix string) string {
+internal/compressor/noise.go:107:func pathStartsAt(s string, i int) bool {
+internal/compressor/noise.go:119:func isSpace(c byte) bool { return c == ' ' || c == '\t' || c == '\r' }
+internal/compressor/json_schema.go:40:func compressJSONSchema(input []byte, h CommandHint) ([]byte, bool, string) {
+internal/compressor/json_schema.go:66:func nameOrFile(name string) string {
+internal/compressor/json_schema.go:74:func parseJSONShape(data []byte) (*jsonNode, error) {
+internal/compressor/json_schema.go:86:func readJSONValue(dec *json.Decoder, depth int) (*jsonNode, error) {
+internal/compressor/json_schema.go:110:func readJSONObject(dec *json.Decoder, depth int) (*jsonNode, error) {
+internal/compressor/json_schema.go:128:func readJSONArray(dec *json.Decoder, depth int) (*jsonNode, error) {
+internal/compressor/json_schema.go:147:func jsonLabel(n *jsonNode) string {
+internal/compressor/json_schema.go:163:func jsonEmit(b *strings.Builder, n *jsonNode, level int) {
+internal/compressor/agent_desktop_test.go:11:func desktopEnv(command, data string) []byte {
+internal/compressor/agent_desktop_test.go:17:func rows(sid string, from int) string {
+internal/compressor/agent_desktop_test.go:25:func TestAgentDesktopViewKeepsUnusualFields(t *testing.T) {
+internal/compressor/agent_desktop_test.go:35:		t.Run(name, func(t *testing.T) { assertRoundTrip(t, desktopEnv("snapshot", data)) })
+internal/compressor/agent_desktop_test.go:39:func TestAgentDesktopViewReadsSortedTopLevelKeys(t *testing.T) {
+internal/compressor/agent_desktop_test.go:47:func TestAgentDesktopViewLeavesOtherOutputRaw(t *testing.T) {
+internal/compressor/agent_desktop_test.go:62:		t.Run(name, func(t *testing.T) {
+internal/compressor/agent_desktop_test.go:71:func TestAgentDesktopViewKeepsAFailedRunRaw(t *testing.T) {
+internal/compressor/agent_desktop_test.go:78:func TestAgentDesktopViewLegends(t *testing.T) {
+internal/compressor/conformance_test.go:46:func loadManifest(t *testing.T) []manifestEntry {
+internal/compressor/conformance_test.go:87:func wrapperOutput(in []byte, want compressor.Format) (out []byte, compacted bool) {
+internal/compressor/conformance_test.go:98:func compressFor(in []byte, f compressor.Format, exitCode int) compressor.Result {
+internal/compressor/conformance_test.go:128:func TestConformanceCleanCompactsShorter(t *testing.T) {
+internal/compressor/conformance_test.go:133:		t.Run(e.file, func(t *testing.T) {
+internal/compressor/conformance_test.go:146:func TestConformancePreserveStaysIdentical(t *testing.T) {
+internal/compressor/conformance_test.go:151:		t.Run(e.file, func(t *testing.T) {
+internal/compressor/conformance_test.go:171:func splitLines(b []byte) []string {
+internal/compressor/conformance_test.go:175:func joinLines(lines []string) []byte { return []byte(strings.Join(lines, "\n") + "\n") }
+internal/compressor/conformance_test.go:177:func insertAt(lines []string, i int, s string) []string {
+internal/compressor/conformance_test.go:183:func replaceAt(lines []string, i int, s string) []string {
+internal/compressor/conformance_test.go:190:func positions(n int) []int {
+internal/compressor/conformance_test.go:203:func mutationsOf(in []byte) []mutation {
+internal/compressor/conformance_test.go:207:	add := func(name string, data []byte) { ms = append(ms, mutation{name, data}) }
+internal/compressor/conformance_test.go:244:func dangerLinesAdded(original, mutated []byte) []string {
+internal/compressor/conformance_test.go:267:func buildKnownViolations() map[string]string {
+internal/compressor/conformance_test.go:271:func TestConformanceMutationClosure(t *testing.T) {
+internal/compressor/go_test_json.go:31:func isGoJSON(input []byte) bool {
+internal/compressor/go_test_json.go:41:func parseGoJSON(text string) ([]goJSONEvent, bool) {
+internal/compressor/go_test_json.go:67:func compressGoTestJSON(input []byte) ([]byte, bool, string) {
+internal/compressor/go_test_json.go:109:func (p *goJSONPackage) count(action string) {
+internal/compressor/go_test_json.go:120:func (p *goJSONPackage) packageOutput(out string) string {
+internal/compressor/go_test_json.go:136:func renderGoJSON(input []byte, pkgs map[string]*goJSONPackage, order []string) ([]byte, bool, string) {
+internal/compressor/git_diff_test.go:16:func danglingDiff(ctxFirst, minus, plus, tail string) string {
+internal/compressor/git_diff_test.go:18:		"@@ -1,9 +1,9 @@ func handle() {\n" +
+internal/compressor/git_diff_test.go:22:func TestGitDiffDangerGate(t *testing.T) {
+internal/compressor/git_diff_test.go:36:		{"hunk header danger compacts", strings.Replace(danglingDiff("c1", "old()", "new()", ""), "func handle()", "func onError()", 1), true, ""},
+internal/compressor/git_diff_test.go:42:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/find_tree_test.go:14:func findPathSet(t *testing.T, tree string) map[string]bool {
+internal/compressor/find_tree_test.go:48:func lines(s ...string) string { return strings.Join(s, "\n") + "\n" }
+internal/compressor/find_tree_test.go:50:func TestCompressFindTable(t *testing.T) {
+internal/compressor/find_tree_test.go:168:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/agent_desktop.go:41:func compressAgentDesktop(input []byte) ([]byte, bool, string) {
+internal/compressor/agent_desktop.go:68:func parseAgentDesktop(input []byte) (agentDesktopEnvelope, bool) {
+internal/compressor/agent_desktop.go:86:func agentDesktopSnapshotView(env agentDesktopEnvelope) ([]byte, bool) {
+internal/compressor/agent_desktop.go:115:func writeDesktopHeader(b *strings.Builder, env agentDesktopEnvelope, skip string) bool {
+internal/compressor/agent_desktop.go:136:func desktopCommonActions(tree map[string]any, sid string) string {
+internal/compressor/agent_desktop.go:138:	var walk func(n map[string]any)
+internal/compressor/agent_desktop.go:139:	walk = func(n map[string]any) {
+internal/compressor/agent_desktop.go:163:func writeDesktopRefLegend(b *strings.Builder, sid string) {
+internal/compressor/agent_desktop.go:171:func desktopSnapshotID(data map[string]json.RawMessage) string {
+internal/compressor/agent_desktop.go:180:func decodeDesktopValue(raw json.RawMessage) any {
+internal/compressor/agent_desktop.go:191:func desktopJSON(v any) string {
+internal/compressor/log_dedup.go:28:func logShape(line string) string {
+internal/compressor/log_dedup.go:38:func compressLogRead(input []byte, h CommandHint) ([]byte, bool, string) {
+internal/compressor/log_dedup.go:72:func collapsible(run []string) bool {
+internal/compressor/log_dedup.go:89:func foldNote(run []string) string {
+internal/compressor/go_verbose_multi.go:22:func countGoVerbosePackages(input []byte) int {
+internal/compressor/go_verbose_multi.go:36:func splitGoVerbosePackages(lines []string) []goVerboseEntry {
+internal/compressor/go_verbose_multi.go:39:	flush := func() {
+internal/compressor/go_verbose_multi.go:72:func parseGoVerboseMulti(input []byte) ([]byte, bool, string) {
+internal/compressor/go_verbose_multi.go:114:func writeGoVerboseEntry(b *strings.Builder, e goVerboseEntry, prefix string) {
+internal/compressor/gh_run_log.go:63:func isGhRunLog(input []byte) bool {
+internal/compressor/gh_run_log.go:84:func compressGhRunLog(input []byte) ([]byte, bool, string) {
+internal/compressor/grep_caps.go:29:func newMatchGroups() *matchGroups { return &matchGroups{rows: map[string][]string{}} }
+internal/compressor/grep_caps.go:32:func (g *matchGroups) add(file, row string) {
+internal/compressor/grep_caps.go:43:func (g *matchGroups) render() string {
+internal/compressor/failed_pytest.go:49:func compactFailedPytest(text string) (string, string) {
+internal/compressor/failed_pytest.go:78:func pytestFailureSplit(lines []string) int {
+internal/compressor/failed_pytest.go:94:func hasPytestFinalLine(tail []string) bool {
+internal/compressor/failed_pytest.go:106:func cutPassingPytest(lines []string) (kept []string, passed int, reason string) {
+internal/compressor/failed_pytest.go:129:func compactPytestTail(tail []string) (kept []string, passed int) {
+internal/compressor/failed_pytest.go:149:	flushSummary := func() {
+internal/compressor/failed_pytest.go:225:func isPytestDuplicateFailure(nodeid string, failedTests map[string]bool) bool {
+internal/compressor/pip_install.go:35:func pipHasFindings(input []byte) bool {
+internal/compressor/pip_install.go:40:func isPipInstall(input []byte) bool {
+internal/compressor/pip_install.go:48:func detectPipInstall(input []byte) (Format, bool) {
+internal/compressor/pip_install.go:59:func compressPipInstall(input []byte) ([]byte, bool, string) {
+internal/compressor/maven.go:61:func isMaven(input []byte) bool {
+internal/compressor/maven.go:71:func compressMaven(input []byte) ([]byte, bool, string) {
+internal/compressor/failed_jest.go:39:func compactFailedJest(text string) (string, string) {
+internal/compressor/failed_jest.go:72:func cutPassingJest(lines []string) (kept []string, files, tests int, reason string) {
+internal/compressor/gradle_test.go:11:func TestCompressGradlePreserved(t *testing.T) {
+internal/compressor/gradle_test.go:32:func TestDetectGradle(t *testing.T) {
+internal/compressor/go_test_runs_test.go:16:func TestFoldGoTestRunsKeepsEveryOtherLine(t *testing.T) {
+internal/compressor/go_test_runs_test.go:50:func TestFoldGoTestRunsLeavesRawWhatItCannotFold(t *testing.T) {
+internal/compressor/go_test_runs_test.go:51:	ok := func(p string) string { return "ok  \texample.com/acme/" + p + "\t0.10s\n" }
+internal/compressor/go_test_runs_test.go:70:func TestFoldGoTestRunsKeepsFailuresRaw(t *testing.T) {
+internal/compressor/go_test_runs_test.go:71:	ok := func(p string) string { return "ok  \texample.com/acme/" + p + "\t0.10s\n" }
+internal/compressor/go_test_runs_test.go:93:func TestFoldGoTestRunsSplitsAroundOtherLines(t *testing.T) {
+internal/compressor/go_test_runs_test.go:94:	ok := func(p string) string { return "ok  \texample.com/acme/" + p + "\t0.10s\n" }
+internal/compressor/go_test_runs_test.go:108:func TestFoldGoTestRunsIsIdempotent(t *testing.T) {
+internal/compressor/danger.go:21:func linesHaveDangerWord(input []byte, allowed *regexp.Regexp) bool {
+internal/compressor/danger.go:46:func foldConsole(lines []consoleLine) (kept []string, dropped int) {
+internal/compressor/go_test_summary.go:25:func compressGoTest(input []byte) ([]byte, bool, string) {
+internal/compressor/go_test_summary.go:44:func commonPathPrefix(names []string) string {
+internal/compressor/turbo_test.go:14:func TestCompressTurbo(t *testing.T) {
+internal/compressor/turbo_test.go:27:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/ruff.go:30:func isRuff(input []byte) bool {
+internal/compressor/ruff.go:36:func compressRuff(input []byte) ([]byte, bool, string) {
+internal/compressor/log_dedup_test.go:12:func timedLines(n int, format string) string {
+internal/compressor/log_dedup_test.go:20:func TestLogDedupCollapsesNearIdenticalRuns(t *testing.T) {
+internal/compressor/log_dedup_test.go:46:func TestLogDedupKeepsVaryingDangerLines(t *testing.T) {
+internal/compressor/log_dedup_test.go:59:func TestLogDedupStaysRaw(t *testing.T) {
+internal/compressor/log_dedup_test.go:60:	distinct := func(n int) string {
+internal/compressor/log_dedup_test.go:87:func TestLogShape(t *testing.T) {
+internal/compressor/dep_tree.go:30:func isNpmLs(input []byte) bool {
+internal/compressor/dep_tree.go:37:func isCargoTree(input []byte) bool {
+internal/compressor/dep_tree.go:44:func isGoModGraph(input []byte) bool {
+internal/compressor/dep_tree.go:62:func compressNpmLs(input []byte) ([]byte, bool, string) {
+internal/compressor/dep_tree.go:147:func compressCargoTree(input []byte) ([]byte, bool, string) {
+internal/compressor/dep_tree.go:209:func compressGoModGraph(input []byte) ([]byte, bool, string) {
+internal/compressor/dep_tree.go:253:func min(a, b int) int {
+internal/compressor/generic_dedup.go:13:func dedupLines(lines []string) ([]string, bool) {
+internal/compressor/grep_counts.go:22:func compressGrepCounts(input []byte) ([]byte, bool, string) {
+internal/compressor/js_fold_test.go:28:func TestJSFoldPassKeepsFewConsoleLinesVerbatim(t *testing.T) {
+internal/compressor/js_fold_test.go:36:		t.Run(c.name, func(t *testing.T) {
+internal/compressor/js_fold_test.go:54:func TestJSFoldPassDropsManyConsoleLines(t *testing.T) {
+internal/compressor/js_fold_test.go:66:func TestJSFoldPassKeepsJestHandleAndCoverageLines(t *testing.T) {
+internal/compressor/js_fold_test.go:78:func TestJSFoldPassKeepsWarnAndDangerLines(t *testing.T) {
+internal/compressor/js_fold_test.go:88:func TestJSFoldPassWithoutSummaryStaysRaw(t *testing.T) {
+internal/compressor/js_fold_test.go:95:func TestJSFoldFailedRunKeepsFailuresAndUnknownLines(t *testing.T) {
+internal/compressor/js_fold_test.go:111:func TestJSFoldVitestFailedRunKeepsUnknownLine(t *testing.T) {
+internal/compressor/js_fold_test.go:127:func TestRemoteRunKeepsWarnLinesInHookBox(t *testing.T) {
+internal/compressor/docker_test.go:11:func TestDetectDocker(t *testing.T) {
+internal/compressor/docker_test.go:25:func TestCompressDockerPs(t *testing.T) {
+internal/compressor/docker_test.go:45:func TestCompressDockerImages(t *testing.T) {
+internal/compressor/docker_test.go:64:func TestCompressDockerLogsDedup(t *testing.T) {
+internal/compressor/docker_test.go:83:func TestCompressDockerLogsNoDuplicates(t *testing.T) {
+internal/compressor/docker_test.go:96:func TestCompressDockerBuildCleanExitKeepsPipErrorLineRaw(t *testing.T) {
+internal/compressor/corpus_test.go:25:func TestCorpusRawStaysByteIdentical(t *testing.T) {
+internal/compressor/corpus_test.go:30:			t.Run(fmt.Sprintf("%s/exit=%d", name, code), func(t *testing.T) {
+internal/compressor/corpus_test.go:40:func TestCorpusCleanCompactsAndKeepsFacts(t *testing.T) {
+internal/compressor/corpus_test.go:42:		t.Run(c.file, func(t *testing.T) {
+internal/compressor/corpus_test.go:64:func TestCorpusNonZeroExitPassesThroughRaw(t *testing.T) {
+internal/compressor/corpus_test.go:68:			t.Run(fmt.Sprintf("%s/exit=%d", c.file, code), func(t *testing.T) {
+internal/compressor/corpus_test.go:78:func TestCorpusIdempotentAndNeverGrows(t *testing.T) {
+internal/compressor/corpus_test.go:82:			t.Run(fmt.Sprintf("%s/exit=%d", name, code), func(t *testing.T) {
+internal/compressor/corpus_test.go:96:func TestCorpusOffAndObserveNeverModify(t *testing.T) {
+internal/compressor/corpus_test.go:108:func TestCorpusOverMemoryBoundStaysRaw(t *testing.T) {
+internal/compressor/corpus_test.go:129:func TestCorpusCleanReduction(t *testing.T) {
+internal/compressor/corpus_test.go:147:func TestCorpus_AdversarialGoTestFailOpenWithNoTestFiles(t *testing.T) {
+internal/compressor/corpus_test.go:153:		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+internal/compressor/corpus_test.go:163:		t.Run(fmt.Sprintf("panic/exit=%d", code), func(t *testing.T) {
+internal/compressor/golangci_lint.go:31:func isGolangciLint(input []byte) bool {
+internal/compressor/golangci_lint.go:37:func compressGolangciLint(input []byte) ([]byte, bool, string) {
+internal/compressor/compressor.go:22:func Compress(input []byte, mode Mode) Result {
+internal/compressor/compressor.go:28:func CompressExit(input []byte, mode Mode, exitCode int) Result {
+internal/compressor/compressor.go:153:func cleanExitTrusted(format Format, text []byte) bool {
+internal/compressor/compressor_vitest_test.go:14:func TestCompress_Vitest_PassCompaction(t *testing.T) {
+internal/compressor/compressor_vitest_test.go:29:func TestCompress_Vitest_NoDuration(t *testing.T) {
+internal/compressor/compressor_vitest_test.go:45:func TestCompress_Vitest_InjectedLineIsNeverLost(t *testing.T) {
+internal/compressor/compressor_vitest_test.go:58:		t.Run(name, func(t *testing.T) {
+internal/compressor/compressor_vitest_test.go:74:func TestCompress_Vitest_ErrorsPreserveRaw(t *testing.T) {
+internal/compressor/compressor_vitest_test.go:84:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/terraform_plan.go:21:func isTerraformPlan(input []byte) bool {
+internal/compressor/terraform_plan.go:28:func compressTerraformPlan(input []byte) ([]byte, bool, string) {
+internal/compressor/gh_run_log_parse.go:16:func stripTimestamp(s string) string {
+internal/compressor/gh_run_log_parse.go:34:func isNoiseWarning(msg string) bool {
+internal/compressor/gh_run_log_parse.go:50:func containsString(slice []string, s string) bool {
+internal/compressor/gh_run_log_parse.go:59:func truncate(s string, maxLen int) string {
+internal/compressor/pytest.go:41:func isPytest(input []byte) bool {
+internal/compressor/pytest.go:50:func isPlainPytestPass(input []byte) bool {
+internal/compressor/pytest.go:66:func compressPytest(input []byte) ([]byte, bool, string) {
+internal/compressor/lockfile_diff.go:34:func isLockfileDiff(input []byte) bool {
+internal/compressor/lockfile_diff.go:59:func splitLockSections(input []byte) ([]lockSection, bool) {
+internal/compressor/lockfile_diff.go:88:func hasAnyPrefix(s string, prefixes []string) bool {
+internal/compressor/lockfile_diff.go:101:func compressLockfileDiff(input []byte) ([]byte, bool, string) {
+internal/compressor/lockfile_diff.go:135:func (l lockSummary) total() int {
+internal/compressor/lockfile_diff.go:141:func summariseLock(scan lockScan) lockSummary {
+internal/compressor/lockfile_diff.go:182:func sortedKeys(m map[string]bool) []string {
+internal/compressor/lockfile_diff.go:192:func (l lockSummary) render(file string, listed *int) string {
+internal/compressor/lockfile_diff.go:202:	emit := func(mark string, name, detail string) {
+internal/compressor/lockfile_diff.go:230:func sortedMapKeys(m map[string][]string) []string {
+internal/compressor/playwright_tsc_residue_test.go:15:func TestCompress_Playwright_DangerWordInTitlePreservesRaw(t *testing.T) {
+internal/compressor/playwright_tsc_residue_test.go:27:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/playwright_tsc_residue_test.go:44:func TestCompress_TSC_DangerWordInDirectoryPreservesRaw(t *testing.T) {
+internal/compressor/playwright_tsc_residue_test.go:54:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/playwright_tsc_residue_test.go:71:func TestCompress_PlaywrightTSC_ResidueInputsByteIdentical(t *testing.T) {
+internal/compressor/failed_cargo.go:53:func plainFailedCargoText(input []byte) ([]byte, bool) {
+internal/compressor/failed_cargo.go:63:func compactFailedCargo(text string) (string, string) {
+internal/compressor/failed_cargo.go:96:func cargoBlockEnd(lines []string, start int) int {
+internal/compressor/failed_cargo.go:114:func cutCargoBlock(block []string) (kept []string, crate bool, cutLines int) {
+internal/compressor/failed_cargo.go:165:func cargoResultOf(rest []string) *cargoResult {
+internal/compressor/detect_tail.go:11:func detectFormatTail(input []byte) (Format, bool) {
+internal/compressor/progress.go:19:func collapseProgressText(input []byte) ([]byte, bool) {
+internal/compressor/progress.go:45:func collapseProgress(input []byte) ([]byte, bool) {
+internal/compressor/failed_run.go:20:	text func(input []byte) ([]byte, bool)
+internal/compressor/failed_run.go:23:	compact func(text string) (out, reason string)
+internal/compressor/failed_run.go:44:func CompressFailed(input []byte, want Format) Result {
+internal/compressor/failed_run.go:80:func plainFailedGoTestText(input []byte) ([]byte, bool) {
+internal/compressor/failed_run.go:94:func colourFreeFailedText(input []byte) ([]byte, bool) {
+internal/compressor/failed_run.go:100:func compactGoTestFailedRun(text string) (string, string) {
+internal/compressor/learning/signature_test.go:19:func TestRecord_StoresNoPathCredentialPairOrBranch(t *testing.T) {
+internal/compressor/learning/signature_test.go:39:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/learning/signature_test.go:64:func allowedBy(words []string, s string) bool {
+internal/compressor/learning/signature_test.go:68:func TestLoad_CleansLegacyKeys(t *testing.T) {
+internal/compressor/learning/lock.go:20:func lockStore() (unlock func(), ok bool) {
+internal/compressor/learning/lock.go:29:	return func() { _ = l.Unlock() }, true
+internal/compressor/learning/shape.go:73:func ShapeOf(output []byte) Shape {
+internal/compressor/learning/shape.go:88:func (s *Shape) addLine(line []byte) {
+internal/compressor/learning/shape.go:122:func lengthBucket(n int) int {
+internal/compressor/learning/shape.go:135:func isNumberHeavy(line []byte) bool {
+internal/compressor/learning/shape.go:149:func countByteClasses(data []byte) ByteClasses {
+internal/compressor/learning/shape.go:171:// this function.
+internal/compressor/learning/shape.go:172:func shapeHash(line []byte) string {
+internal/compressor/learning/store.go:67:func StorePath() (string, error) {
+internal/compressor/learning/store.go:75:func SetStorePath(p string) { storePath = p }
+internal/compressor/learning/store.go:77:func emptyStore() *Store {
+internal/compressor/learning/store.go:85:func load() (*Store, error) {
+internal/compressor/learning/store.go:119:func save(store *Store) error {
+internal/compressor/learning/store.go:167:func removeStaleTemp(p string) {
+internal/compressor/learning/privacy_test.go:26:func assertNoLeak(t *testing.T, label string, data []byte) {
+internal/compressor/learning/privacy_test.go:35:func TestRecord_StoresShapeNotText(t *testing.T) {
+internal/compressor/learning/privacy_test.go:92:func TestLoad_MigratesSchema1DroppingSample(t *testing.T) {
+internal/compressor/learning/privacy_test.go:136:func jsonString(s string) string {
+internal/compressor/learning/lock_test.go:27:func TestHelperRecordLoop(t *testing.T) {
+internal/compressor/learning/lock_test.go:42:func TestRecordAcrossProcessesLosesNoUpdate(t *testing.T) {
+internal/compressor/learning/lock_test.go:48:		go func() {
+internal/compressor/learning/lock_test.go:73:func TestRecordSkipsWhenLockBusy(t *testing.T) {
+internal/compressor/learning/lock_test.go:79:	defer func() { lockWait = old }()
+internal/compressor/learning/learning.go:40:func init() {
+internal/compressor/learning/learning.go:46:	execwrap.ObserveUncompactedHook = func(argv []string, sample []byte, family execwrap.Family) {
+internal/compressor/learning/learning.go:67:func Record(argv []string, output []byte, family execwrap.Family) error {
+internal/compressor/learning/learning.go:120:func Suggestions(limit int) ([]Suggestion, error) {
+internal/compressor/learning/learning.go:146:	sort.Slice(suggestions, func(i, j int) bool {
+internal/compressor/learning/learning.go:166:func Stats() (StoreStats, error) {
+internal/compressor/learning/learning.go:192:func Clear() error {
+internal/compressor/learning/learning.go:205:func Export() (*Store, error) {
+internal/compressor/learning/learning_test.go:14:func TestSignatureOf(t *testing.T) {
+internal/compressor/learning/learning_test.go:30:		t.Run(tt.name, func(t *testing.T) {
+internal/compressor/learning/learning_test.go:45:func TestRecordAndSuggestions(t *testing.T) {
+internal/compressor/learning/learning_test.go:87:func TestStats(t *testing.T) {
+internal/compressor/learning/learning_test.go:113:func TestClear(t *testing.T) {
+internal/compressor/learning/learning_test.go:137:func TestExport(t *testing.T) {
+internal/compressor/learning/learning_test.go:157:func TestEmptyArgv(t *testing.T) {
+internal/compressor/learning/signature.go:25:func safeWord(w string) bool {
+internal/compressor/learning/signature.go:42:func commandName(arg string) string {
+internal/compressor/learning/signature.go:65:func keepsSubcommand(command, word string) bool {
+internal/compressor/learning/signature.go:72:func signatureOf(argv []string) Signature {
+internal/compressor/learning/signature.go:83:func newSignature(words []string) Signature {
+internal/compressor/learning/signature.go:90:func cleanSignature(s Signature) (Signature, bool) {
+internal/compressor/learning/migrate.go:10:func sanitiseEntries(store *Store) bool {
+internal/compressor/learning/migrate.go:39:func mergeEntry(dst, src *Entry) {
+internal/compressor/learning/run_test.go:22:func TestRun_RecordIsOnDiskWhenRunReturns(t *testing.T) {
+internal/compressor/learning/run_test.go:35:	execwrap.ObserveUncompactedHook = func(argv []string, sample []byte, family execwrap.Family) {
+internal/compressor/learning/run_test.go:38:	defer func() { execwrap.ObserveUncompactedHook = prev }()
+internal/compressor/phpunit_test.go:14:func TestCompressPHPUnitCompactsCompletePassingTranscript(t *testing.T) {
+internal/compressor/phpunit_test.go:30:func TestCompressPHPUnitPreservesFailureAndAmbiguousOutputByteIdentically(t *testing.T) {
+internal/compressor/phpunit_test.go:49:func readPHPUnitFixture(t *testing.T, name string) []byte {
+internal/compressor/build_errors_test.go:13:func TestCompressCargoBuildErrorsAndWarnings(t *testing.T) {
+internal/compressor/build_errors_test.go:59:func TestCompressCargoBuildPreserved(t *testing.T) {
+internal/compressor/build_errors_test.go:80:func TestCompressGoBuildErrors(t *testing.T) {
+internal/compressor/build_errors_test.go:115:func TestCompressGoBuildPreserved(t *testing.T) {
+internal/compressor/build_errors_test.go:133:func TestCompressDotnetBuildErrorsAndWarnings(t *testing.T) {
+internal/compressor/build_errors_test.go:174:func TestCompressDotnetBuildPreserved(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:15:func TestCompress_Pytest_PassCompaction(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:30:func TestCompress_Pytest_QuietPassCompaction(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:42:func TestCompress_Pytest_PassWithSkipped(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:54:func TestCompress_Pytest_ErrorsPreserveRaw(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:65:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:82:func TestCompress_Pytest_UnrecognisedLinePreservesRaw(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:104:			t.Run(fmt.Sprintf("%s@%d", line, pos), func(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:125:func TestCompress_Pytest_ClosedGrammarPreservesRaw(t *testing.T) {
+internal/compressor/compressor_pytest_test.go:145:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/http_fetch.go:41:func compressHTTPFetch(input []byte, h CommandHint) ([]byte, bool, string) {
+internal/compressor/http_fetch.go:72:func writeFetchHeaders(b *strings.Builder, text string) (string, bool) {
+internal/compressor/http_fetch.go:95:func splitHeaderBlock(text string) (block, rest string) {
+internal/compressor/http_fetch.go:106:func writeKeyHeaders(b *strings.Builder, lines []string, last bool) {
+internal/compressor/http_fetch.go:127:func fetchSecretName(lower string) bool {
+internal/compressor/http_fetch.go:140:func writeFetchBody(b *strings.Builder, body string) int {
+internal/compressor/git_log.go:42:func (e gitLogEntry) line() string {
+internal/compressor/git_log.go:57:func isGitLog(input []byte) bool {
+internal/compressor/git_log.go:66:func compressGitLog(input []byte) ([]byte, bool, string) {
+internal/compressor/git_log.go:82:func parseGitLog(s string) ([]gitLogEntry, bool) {
+internal/compressor/compressor_gotest_test.go:15:func TestCompress_GoTest_PassCompaction(t *testing.T) {
+internal/compressor/compressor_gotest_test.go:29:func TestCompress_GoTest_ManyPassingPackagesCondensedToOneLine(t *testing.T) {
+internal/compressor/compressor_gotest_test.go:48:func TestCompress_GoTest_FailPreservesRaw(t *testing.T) {
+internal/compressor/compressor_gotest_test.go:62:func TestCompress_GoTest_NoTestFilesCompacted(t *testing.T) {
+internal/compressor/compressor_gotest_test.go:90:func TestCompress_GoTest_NoTestFilesWithFailPreservesRaw(t *testing.T) {
+internal/compressor/compressor_gotest_test.go:106:func TestCompress_GoTest_WarningPreserved(t *testing.T) {
+internal/compressor/eslint.go:30:func isEslint(input []byte) bool {
+internal/compressor/eslint.go:37:func compressEslint(input []byte) ([]byte, bool, string) {
+internal/compressor/eslint.go:100:func newViolationGroups() *violationGroups {
+internal/compressor/eslint.go:104:func (g *violationGroups) ensure(file string) *fileViolations {
+internal/compressor/eslint.go:114:func (g *violationGroups) add(file string, isError bool, rule string) {
+internal/compressor/eslint.go:127:func (g *violationGroups) fileCount() int {
+internal/compressor/eslint.go:143:func (g *violationGroups) render(tool string) []byte {
+internal/compressor/eslint.go:173:func pluralCount(n int, singular, plural string) string {
+internal/compressor/rspec.go:37:func rspecLinesRecognised(input []byte) bool {
+internal/compressor/rspec.go:60:func isRspec(input []byte) bool {
+internal/compressor/rspec.go:66:func compressRspec(input []byte) ([]byte, bool, string) {
+internal/compressor/lockfile_diff_test.go:12:func lockDiff(file string, hunk ...string) string {
+internal/compressor/lockfile_diff_test.go:17:func TestCompressLockfileDiff(t *testing.T) {
+internal/compressor/lockfile_diff_test.go:51:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/lockfile_diff_test.go:78:func TestCompressLockfileDiffFailsOpen(t *testing.T) {
+internal/compressor/lockfile_diff_test.go:80:	body := func(extra string) string {
+internal/compressor/lockfile_diff_test.go:92:		t.Run(name, func(t *testing.T) {
+internal/compressor/lockfile_diff_test.go:108:func TestCompressLockfileDiffNonZeroExitRaw(t *testing.T) {
+internal/compressor/http_fetch_test.go:13:func fetchResponse(status string, body string) string {
+internal/compressor/http_fetch_test.go:22:func TestHTTPFetchCapsHeadersAndBody(t *testing.T) {
+internal/compressor/http_fetch_test.go:47:func TestHTTPFetchBodyOnlyAndRedirects(t *testing.T) {
+internal/compressor/http_fetch_test.go:62:func validUTF8(b []byte) bool { return strings.ToValidUTF8(string(b), "") == string(b) }
+internal/compressor/http_fetch_test.go:64:func TestHTTPFetchStaysRaw(t *testing.T) {
+internal/compressor/npm_audit.go:29:func isNpmAudit(input []byte) bool { return reNpmAuditHeader.Match(input) }
+internal/compressor/npm_audit.go:41:func compressNpmAudit(input []byte) ([]byte, bool, string) {
+internal/compressor/npm_audit.go:78:func parseNpmAudit(lines []string) (blocks []auditBlock, tail []string, ok bool) {
+internal/compressor/git_remote.go:45:func CompressGitRemote(input []byte, exitCode int) Result {
+internal/compressor/git_remote.go:79:func dropGitRemoteNoise(body string, summarize bool) string {
+internal/compressor/git_remote.go:115:func isGitRemoteNoise(line string) bool {
+internal/compressor/git_diff_rewrite.go:16:func rewriteUnifiedDiff(input []byte, keepPreamble bool) ([]byte, int, bool) {
+internal/compressor/git_diff_rewrite.go:25:	flushHunk := func() {
+internal/compressor/git_diff_rewrite.go:84:func trimContext(body []string) []string {
+internal/compressor/git_diff_rewrite.go:85:	isContext := func(l string) bool {
+internal/compressor/lossless_invariant_desktop_test.go:19:func agentDesktopInvariant(in, out []byte) []string {
+internal/compressor/lossless_invariant_desktop_test.go:33:	var walk func(v any)
+internal/compressor/lossless_invariant_desktop_test.go:34:	walk = func(v any) {
+internal/compressor/markdown.go:31:func isGhMarkdownView(input []byte) bool {
+internal/compressor/markdown.go:48:func splitGhBody(s string) (head, body []string, ok bool) {
+internal/compressor/markdown.go:61:func compressMarkdownView(input []byte) ([]byte, bool, string) {
+internal/compressor/markdown.go:92:func slimMarkdown(body []string) ([]string, bool) {
+internal/compressor/markdown.go:142:func prevLine(out []string) string {
+internal/compressor/markdown.go:149:func indentedCode(l string) bool {
+internal/compressor/markdown.go:154:func skipBlank(body []string, i int) int {
+internal/compressor/markdown.go:163:func isBadgeLine(l string) bool {
+internal/compressor/go_build.go:47:func isGoBuild(input []byte) bool {
+internal/compressor/go_build.go:58:func compressGoBuild(input []byte) ([]byte, bool, string) {
+internal/compressor/gh_run_log_safety.go:17:func keepDangerLine(notes *[]string, msg string) {
+internal/compressor/gh_run_log_safety.go:38:func hasUnparsedDangerLine(input []byte) bool {
+internal/compressor/nx_test.go:11:func TestCompressNx(t *testing.T) {
+internal/compressor/nx_test.go:26:		t.Run(tc.name, func(t *testing.T) {
+internal/compressor/markdown_test.go:11:func TestCompressMarkdownView(t *testing.T) {
+internal/compressor/markdown_test.go:22:		"```go\nfunc main() {\n\n\n\trun()\n}\n```", "    indented code\n\n\n    stays as is",
+internal/compressor/markdown_test.go:39:func TestCompressMarkdownViewRelease(t *testing.T) {
+internal/compressor/markdown_test.go:50:func TestCompressMarkdownViewKeepsRaw(t *testing.T) {
+internal/compressor/markdown_test.go:63:		t.Run(name, func(t *testing.T) {

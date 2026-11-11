@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Kubectl output compressor.
@@ -15,7 +16,7 @@ import (
 
 var (
 	// kubectl get pods header detection
-	reKubectlPodsHeader = regexp.MustCompile(`^NAME\s+READY\s+STATUS\s+RESTARTS\s+AGE`)
+	reKubectlPodsHeader = lazyre.New(`^NAME\s+READY\s+STATUS\s+RESTARTS\s+AGE`)
 )
 
 // isKubectlGetPods detects kubectl get pods output.

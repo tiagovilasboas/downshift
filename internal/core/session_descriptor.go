@@ -3,7 +3,7 @@
 
 package core
 
-import "regexp"
+import "github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 
 // Session descriptor validation and normalization. These helpers vet and clean
 // a single reported descriptor field (tier, effort) before the resolver
@@ -22,7 +22,7 @@ func sessionTier(value string) (Tier, bool) {
 	return TierSmall, false
 }
 
-var sessionEffortToken = regexp.MustCompile(`^[a-z][a-z0-9_-]{0,31}$`)
+var sessionEffortToken = lazyre.New(`^[a-z][a-z0-9_-]{0,31}$`)
 
 func validSessionEfforts(efforts []string) bool {
 	for _, effort := range efforts {

@@ -5,22 +5,23 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reGitLogCommit            = regexp.MustCompile(`(?m)^commit\s+[0-9a-f]{40}`)
-	reGitStatusHead           = regexp.MustCompile(`(?m)^(?:On branch |HEAD detached at )`)
-	reGitStatusAdvice         = regexp.MustCompile(`^\s+\(use "git [^"]+" .*\)$`)
-	reGitStatusChangeLine     = regexp.MustCompile(`^\t(modified|new file|deleted|renamed|copied|typechange):\s+(.+)$`)
-	reGitStatusBranch         = regexp.MustCompile(`^On branch (\S+)`)
-	reGitStatusUpToDate       = regexp.MustCompile(`^Your branch is up to date with '([^']+)'`)
-	reGitStatusAhead          = regexp.MustCompile(`^Your branch is ahead of '([^']+)' by (\d+) commit`)
-	reGitStatusBehind         = regexp.MustCompile(`^Your branch is behind '([^']+)' by (\d+) commit`)
-	reGitStatusDiverged       = regexp.MustCompile(`^Your branch and '([^']+)' have diverged`)
-	reGitStatusDivergedDetail = regexp.MustCompile(`^and have (\d+) and (\d+) different commits each`)
+	reGitLogCommit            = lazyre.New(`(?m)^commit\s+[0-9a-f]{40}`)
+	reGitStatusHead           = lazyre.New(`(?m)^(?:On branch |HEAD detached at )`)
+	reGitStatusAdvice         = lazyre.New(`^\s+\(use "git [^"]+" .*\)$`)
+	reGitStatusChangeLine     = lazyre.New(`^\t(modified|new file|deleted|renamed|copied|typechange):\s+(.+)$`)
+	reGitStatusBranch         = lazyre.New(`^On branch (\S+)`)
+	reGitStatusUpToDate       = lazyre.New(`^Your branch is up to date with '([^']+)'`)
+	reGitStatusAhead          = lazyre.New(`^Your branch is ahead of '([^']+)' by (\d+) commit`)
+	reGitStatusBehind         = lazyre.New(`^Your branch is behind '([^']+)' by (\d+) commit`)
+	reGitStatusDiverged       = lazyre.New(`^Your branch and '([^']+)' have diverged`)
+	reGitStatusDivergedDetail = lazyre.New(`^and have (\d+) and (\d+) different commits each`)
 )
 
 type gitStatusEntry struct {

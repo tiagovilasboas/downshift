@@ -6,30 +6,31 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // RSpec output patterns
 var (
 	// "Finished in 0.12345 seconds (files took 1.23 seconds to load)"
-	reRspecFinished = regexp.MustCompile(`(?m)^Finished in (\d+(?:\.\d+)?) seconds?`)
+	reRspecFinished = lazyre.New(`(?m)^Finished in (\d+(?:\.\d+)?) seconds?`)
 	// "3 examples, 0 failures"
-	reRspecSummary = regexp.MustCompile(`(?m)^(\d+) examples?, (\d+) failures?(?:, (\d+) pending)?`)
+	reRspecSummary = lazyre.New(`(?m)^(\d+) examples?, (\d+) failures?(?:, (\d+) pending)?`)
 	// Detect failures
-	reRspecFailure = regexp.MustCompile(`(?m)(?:^\s*Failures?:|^\s*\d+\)\s+|FAILED|Error:|RuntimeError|(?i:DEPRECATION))`)
+	reRspecFailure = lazyre.New(`(?m)(?:^\s*Failures?:|^\s*\d+\)\s+|FAILED|Error:|RuntimeError|(?i:DEPRECATION))`)
 )
 
 // reRspecKnownLine matches the lines of a green run: the seed, the progress
 // dots, the slowest-examples header, the timing and the example count. An
 // indented line is known only inside the slowest-examples block.
-var reRspecKnownLine = regexp.MustCompile(`^(Randomized with seed \d+|[.*]+|Top \d+ slowest example(?:s|(?: groups?)?) \(.*\):|Finished in .*|\d+ examples?, \d+ failures?(, \d+ pending)?)$`)
+var reRspecKnownLine = lazyre.New(`^(Randomized with seed \d+|[.*]+|Top \d+ slowest example(?:s|(?: groups?)?) \(.*\):|Finished in .*|\d+ examples?, \d+ failures?(, \d+ pending)?)$`)
 
 // reRspecSlowHeader opens the slowest-examples block; an indented line inside
 // it (an example title or "    0.3 seconds ./spec/a_spec.rb:10") is known unless
 // reRspecSlowNotice says it is a warning or deprecation.
 var (
-	reRspecSlowHeader = regexp.MustCompile(`^Top \d+ slowest example`)
-	reRspecSlowNotice = regexp.MustCompile(`(?i)warn|deprecat`)
+	reRspecSlowHeader = lazyre.New(`^Top \d+ slowest example`)
+	reRspecSlowNotice = lazyre.New(`(?i)warn|deprecat`)
 )
 
 // rspecLinesRecognised reports whether every line is one of a green run's

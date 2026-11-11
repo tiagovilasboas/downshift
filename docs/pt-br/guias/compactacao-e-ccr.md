@@ -160,8 +160,8 @@ O CCR foi projetado com isolamento e privacidade rigorosos:
 - **Permissões do Sistema Operacional:** No Linux e macOS, o diretório `~/.downshift/ccr` é criado com permissão restrita `0700` e os arquivos de saída com modo `0600` (legíveis unicamente pelo usuário proprietário do processo). Em sistemas Windows, herdam as ACLs protegidas do perfil do usuário.
 - **Expiração Automática:** Cada arquivo gravado no CCR expira e é excluído automaticamente após **24 horas**.
 - **Limites de Tamanho e Expurgo:**
-  - Cada execução individual é limitada a no máximo 8 MiB.
-  - O volume total ocupado pela pasta de CCR é monitorado e limitado a 64 MiB; execuções antigas são expurgadas quando o teto é atingido.
+  - Cada execução individual é limitada a no máximo 32 MiB (era 8 MiB até 2026-11-10; subiu para caber a saída acima de 2 MB que o Compactor grava em arquivo temporário e corta em início e fim).
+  - O volume total ocupado pela pasta de CCR é monitorado e limitado a 128 MiB; execuções antigas são expurgadas quando o teto é atingido.
 - **Sanitização Heurística de Segredos:**
   Antes de salvar a saída no disco, o CCR examina as linhas em busca de padrões sensíveis (chaves privadas, tokens de acesso, cabeçalhos de autorização, cookies, credenciais em URLs e blocos PEM). Linhas que contenham esses padrões são censuradas com:
   `[downshift ccr: line withheld, it looked like a secret]`

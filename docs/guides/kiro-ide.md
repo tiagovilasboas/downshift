@@ -1,132 +1,213 @@
-# Kiro IDE: Observation-Only Mode
+# Kiro IDE: how Downshift works here
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift-ai
 
-Kiro IDE (the VS Code extension by AWS) spawns subagents through `invoke_sub_agent`. Unlike Claude
-Code, **Kiro IDE does not support `updatedInput` for model rewriting**. The adapter operates in
-observation-only mode: it computes routing decisions for telemetry but cannot enforce them at runtime.
+Kiro IDE is an **observation-only** harness: the adapter records routing decisions
+and provides advisory tools via MCP, but cannot rewrite the model of a subagent in
+place. This page explains the architecture, setup, and limitations.
 
-For full evidence, see [kiro-observation-only-rea-2026-11-10.md](../evidence/kiro-observation-only-rea-2026-11-10.md).
+## 1. Kiro IDE cannot rewrite models
 
-## 1. What Kiro IDE can and cannot do
+**Evidence**: REA 2026-11-10 ([kiro-kirocrew-rea-binary-2026-11-10.md](../evidence/kiro-kirocrew-rea-binary-2026-11-10.md))
 
-| Capability | Supported | Notes |
-|------------|-----------|-------|
-| Detect subagent spawn | ✅ | PreToolUse on `invoke_sub_agent` |
-| Read task/prompt | ✅ | From `tool_input.prompt` |
-| Compute recommended model | ✅ | For telemetry |
-| Block spawn (exit 2) | ✅ | Documented in kiro.dev |
-| Rewrite model via `updatedInput` | ❌ | Not supported (REA confirmed) |
-| Read spawn's model field | ❌ | Field absent from payload |
+| Capability | Kiro IDE | Claude Code |
+|------------|----------|-------------|
+| `CanRewriteModel` | `false` | `true` |
+| `updatedInput.model` | Not supported | Supported |
+| Hook protocol | exit 0/2 only | exit 0 + JSON payload |
 
-Code: `internal/adapters/kiro/kiro.go`, `internal/core/capabilities.go` (`KiroCaps`).
+Kiro's hook contract is:
+- **exit 0**: allow the tool call
+- **exit 2**: block + stderr message to the LLM
 
-## 2. Why Kiro cannot rewrite models
+There is no `updatedInput` rewrite path. The `invoke_sub_agent` payload carries no
+`model` field (the model is decided internally by the harness). Custom agent
+`model:` fields in `.kiro/agents/*.md` are ignored (GitHub issue #6637).
 
-The Kiro hook protocol supports only two outcomes:
+## 2. MCP mode: advisory routing
 
-- **Exit 0:** Allow. Stdout is added to agent context.
-- **Exit 2:** Block. Stderr is returned to the model.
+Since Downshift cannot intercept and rewrite spawns, it provides **advisory tools**
+the orchestrator can query before making a decision:
 
-There is no `updatedInput` mechanism. The official docs at kiro.dev/docs/hooks/actions/ describe
-only exit codes. All `updatedInput` issues are in `anthropics/claude-code`, not `kirodotdev/Kiro`.
+| Tool | Purpose |
+|------|---------|
+| `providers` | List available models with tiers |
+| `apply` | Dry-run: what would be applied for a choice |
+| `playbook` | Working rules for workers |
+| `status` | Quota advice |
 
-Additionally, the `invoke_sub_agent` payload has **no model field**. The model is decided internally
-by Kiro, not exposed to hooks. See [kirodotdev/Kiro#6637](https://github.com/kirodotdev/Kiro/issues/6637).
+The orchestrator (Kiro's main session) calls these tools, reads the advice, and
+chooses how to spawn subagents using steering instructions.
 
-## 3. What the adapter does instead
+## 3. Setup
 
-The Kiro adapter computes the routing decision (which model SHOULD be used) and records it for
-telemetry, but returns no output to the hook:
+### 3.1. Install Downshift
 
-```go
-// Return empty output and no note: Kiro IDE is observation-only, so we only
-// record telemetry. The shared runner will record OutcomeAllow because note
-// is empty.
-return allow(), "", decision
+```bash
+brew install tiagovilasboas/tap/downshift
+# or: go install github.com/tiagovilasboas/downshift-ai/cmd/downshift@latest
 ```
 
-This lets you:
-- Track "missed savings" in the dashboard
-- See which spawns would have been routed differently
-- Build a case for Kiro to add `updatedInput` support
+### 3.2. Configure MCP server
 
-## 4. Steering-based advisory (alternative approach)
+Create or edit `.kiro/settings/mcp.json` in your workspace (or `~/.kiro/settings/mcp.json` for global):
 
-Since Kiro cannot rewrite at runtime, consider **design-time routing** via agent definitions.
-Projects like [kiro-with-harness](https://github.com/TeiNam/kiro-with-harness) achieve model routing
-by having specialized agents with fixed models:
+```json
+{
+  "mcpServers": {
+    "downshift": {
+      "command": "downshift",
+      "args": ["mcp", "serve"],
+      "disabled": false
+    }
+  }
+}
+```
+
+If `downshift` is not in PATH, use the full path:
+
+```json
+{
+  "mcpServers": {
+    "downshift": {
+      "command": "/opt/homebrew/bin/downshift",
+      "args": ["mcp", "serve"],
+      "disabled": false
+    }
+  }
+}
+```
+
+### 3.3. Discover models (automatic)
+
+Kiro IDE shares the same AWS/Kiro account as KiroCrew, so the models are identical.
+Run discovery to populate both harnesses automatically:
+
+```bash
+# Discover KiroCrew first (uses kiro-cli)
+downshift models discover --harness kirocrew
+
+# Kiro IDE mirrors from KiroCrew (same account)
+downshift models discover --harness kiro
+```
+
+Verify with:
+
+```bash
+downshift models available --harness kiro
+```
+
+Output:
+```
+kiro: discovery cache written 2026-11-10T12:20:02Z
+  claude-haiku-4.5                 small     discovery
+  claude-sonnet-4.6                mid       discovery
+  claude-opus-4.5                  frontier  discovery
+```
+
+**When you upgrade to Kiro Pro+ with new models**, run discovery again:
+
+```bash
+downshift models discover --harness kirocrew
+downshift models discover --harness kiro
+```
+
+The discovery reads from KiroCrew's cache (7-day TTL). If KiroCrew's cache is stale,
+run `--harness kirocrew` first.
+
+### 3.4. Alternative: Manual model list
+
+If you don't have KiroCrew installed, add models manually to `~/.downshift/session-models.json`:
+
+```json
+{
+  "kiro": [
+    "claude-haiku-4.5",
+    "claude-sonnet-4.5",
+    "claude-sonnet-4.6",
+    "claude-opus-4.5"
+  ]
+}
+```
+
+Verify with:
+
+```bash
+downshift models available --harness kiro
+```
+
+### 3.5. Create steering file
+
+Create `.kiro/steering/downshift-routing.md` to instruct Kiro to use the MCP tools:
 
 ```markdown
-| Tier | Model | Agents |
-|------|-------|--------|
-| Deep reasoning | claude-opus-5.5 | architect, security-reviewer |
-| Balanced | claude-sonnet-5.5 | code-reviewer, refactor-cleaner |
-| Cost-optimized | claude-haiku-5.5 | translator-docs, article-writer |
+---
+inclusion: auto
+name: downshift-routing
+description: Advisory model routing for subagent spawns using Downshift MCP
+---
+
+# Downshift Model Routing
+
+Before spawning a subagent with `invoke_sub_agent`, call `downshift.providers`
+with `{"harness": "kiro"}` to see available models and their tiers.
+
+## Tier guidelines
+
+| Tier | Use for |
+|------|---------|
+| small | Mechanical work: grep, read, rename, single command |
+| mid | Implementation, tests, refactoring |
+| frontier | Architecture, complex debugging, difficult decisions |
+
+## Workflow
+
+1. Before spawn: call `providers(harness: "kiro")` to see models
+2. Choose tier based on the task complexity
+3. For mechanical work, add `[tier=small]` to the subagent prompt
+4. Call `apply(harness: "kiro", tier: "small")` to verify the choice
+
+## Important
+
+Kiro IDE cannot enforce model routing. The `model:` field in custom agents is
+ignored. This steering provides **advisory guidance** only. The orchestrator
+chooses how to delegate based on the advice.
 ```
 
-The orchestrator agent chooses which specialized agent to invoke based on the task. Each agent has
-its model fixed in its `.kiro/agents/*.md` definition file.
+## 4. Workflow example
 
-### Creating a steering advisory hook
+When delegating to `context-gatherer`:
 
-You can create a Kiro hook that **advises** (via context injection) without enforcing:
+1. **Before spawn**: The orchestrator calls `downshift.providers(harness: "kiro")`
+2. **Response**: Returns `{models: [{id: "claude-haiku-4.5", tier: "small"}, ...]}`
+3. **Decision**: For a codebase exploration task, choose `mid` tier
+4. **Spawn**: Invoke `context-gatherer` (Kiro picks the model internally)
 
-```json
-{
-  "version": "v1",
-  "hooks": [{
-    "name": "downshift-advisory",
-    "trigger": "PreToolUse",
-    "matcher": "invoke_sub_agent",
-    "action": {
-      "type": "agent",
-      "prompt": "Before spawning this subagent, consider the task complexity. For simple lookups or searches, delegate to a cost-optimized agent. For architecture or security work, use a reasoning-focused agent. Check .kiro/agents/ for available specialized agents."
-    }
-  }]
-}
-```
+The steering instructs the orchestrator to consider task complexity, but the
+final model selection is made by Kiro's internal routing.
 
-This injects guidance into the model's context, nudging it toward better agent selection. It's
-advisory, not enforcement: the model may or may not follow the suggestion.
+## 5. Limitations
 
-## 5. Contrast with other harnesses
+| What | Status |
+|------|--------|
+| Model rewrite | ❌ Not possible |
+| Effort level | ❌ Not supported |
+| Shell command wrap | ❌ Not supported |
+| Child usage tracking | ❌ Not available |
+| Quota enforcement | Advisory only |
 
-| Harness | Rewrite | Advisory | Telemetry |
-|---------|---------|----------|-----------|
-| Claude Code | ✅ `updatedInput` | ✅ | ✅ |
-| Codex | ✅ `updatedInput` | ✅ | ✅ |
-| Kiro IDE | ❌ | ✅ steering | ✅ |
-| Kiro CLI V3 | ❌ | ✅ steering | ✅ |
-| KiroCrew | ❌ | ✅ policy | ✅ |
+## 6. Comparison with KiroCrew
 
-## 6. Future work
+KiroCrew has the same limitation (`CanRewriteModel: false`), but adds:
+- `CanAdviseShellWrap: true` — can suggest wrapped commands via exit 2
+- `SessionEnv: "KIRO_SESSION_ID"` — session tracking
 
-If Kiro adds `updatedInput` support (or a model field to `invoke_sub_agent`), the adapter can be
-upgraded. Monitor issues:
+Both harnesses use advisory MCP mode. The difference is that KiroCrew's hook
+can block a spawn and suggest a different tier via stderr, while Kiro IDE
+can only allow or block.
 
-- [#6637](https://github.com/kirodotdev/Kiro/issues/6637): Allow custom subagents to honor model field
-- [#4180](https://github.com/kirodotdev/Kiro/issues/4180): Option to define model for hooks/subagents
+## 7. References
 
-## 7. Installation
-
-Kiro IDE uses the same Downshift binary. Install it following [install.md](install.md), then
-configure the PreToolUse hook:
-
-```json
-{
-  "version": "v1",
-  "hooks": [{
-    "name": "downshift-observe",
-    "trigger": "PreToolUse",
-    "matcher": "invoke_sub_agent",
-    "action": {
-      "type": "command",
-      "command": "downshift hook kiro"
-    }
-  }]
-}
-```
-
-Save as `.kiro/hooks/downshift.json`. The adapter will record telemetry for all spawns but will not
-modify them. Use `downshift report` to see missed savings opportunities.
+- [harness-matrix.md](../reference/harness-matrix.md) — capability comparison
+- [kirocrew-routing-guide.md](kirocrew-routing-guide.md) — KiroCrew specifics
+- [REA evidence](../evidence/kiro-kirocrew-rea-binary-2026-11-10.md) — binary analysis

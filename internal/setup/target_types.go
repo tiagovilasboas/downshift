@@ -119,6 +119,13 @@ type Target struct {
 	// Mcp says how setup --mcp registers `downshift mcp serve` in this harness.
 	// Nil means setup does not register it (stage 5 adds the other harnesses).
 	Mcp *Mcp
+	// FeatureFlags are switches in the harness's own config that the hooks
+	// need (feature_flags.go). Doctor reads them; setup does not write them.
+	FeatureFlags []FeatureFlag
+	// Activate is the step the user takes in the harness before a newly
+	// written hook runs (Codex: trust it with /hooks). Doctor names it when
+	// no hook event was ever recorded. Empty when hooks run once written.
+	Activate string
 }
 
 // Ways setup --mcp registers the server (mcp.go).

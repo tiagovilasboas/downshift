@@ -4,7 +4,7 @@
 package classify
 
 import (
-	"regexp"
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // RiskSignalDef is one deterministic risk matcher. Risk signals do not vote
@@ -47,7 +47,7 @@ var RawRiskSignals = []RiskSignalDef{
 
 // riskHighStakesWorkRE matches M3 parallel bucket prompts only (not generic
 // "implement X" medium-risk tasks in the legacy benchmark splits).
-var riskHighStakesWorkRE = regexp.MustCompile(`(?i)\bidempot\w*\b[^.\n]{0,60}\b(payments?|pagamentos?|reembolsos?|refunds?)|\b(payments?|pagamentos?|reembolsos?|refunds?)[^.\n]{0,60}\bidempot\w*\b|\bauthorization boundaries\b|\brevis\w*\s+as\s+permiss`)
+var riskHighStakesWorkRE = lazyre.New(`(?i)\bidempot\w*\b[^.\n]{0,60}\b(payments?|pagamentos?|reembolsos?|refunds?)|\b(payments?|pagamentos?|reembolsos?|refunds?)[^.\n]{0,60}\bidempot\w*\b|\bauthorization boundaries\b|\brevis\w*\s+as\s+permiss`)
 
 // riskLiterals is a prefilter, not a second table. For each category it lists
 // lowercase ASCII literals such that every match of that category's regex,

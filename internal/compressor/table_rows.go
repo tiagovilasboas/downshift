@@ -4,8 +4,9 @@
 package compressor
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // tableRowsRecognised reports whether every non-empty line after the header of
@@ -25,8 +26,8 @@ func tableRowsRecognised(lines [][]byte, isRow func(fields []string) bool) bool 
 }
 
 var (
-	reContainerID = regexp.MustCompile(`^(sha256:)?[0-9a-f]{12,64}$`)
-	reReadyPair   = regexp.MustCompile(`^\d+/\d+$`)
+	reContainerID = lazyre.New(`^(sha256:)?[0-9a-f]{12,64}$`)
+	reReadyPair   = lazyre.New(`^\d+/\d+$`)
 )
 
 // isDockerPsRow: the first field is a container id and the row has a status.

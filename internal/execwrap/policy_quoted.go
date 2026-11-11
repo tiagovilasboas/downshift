@@ -24,8 +24,10 @@ import (
 // appear. The policy builds argv itself, exactly as the shell would, and the
 // rewrite single-quotes every word (policy_quoted_rewrite.go), so the
 // program receives the same argv with or without the wrapper. This path is
-// only for the compact rewrite: ReadOnly, chains and compound shapes keep
-// the strict safe-byte gate. Threat note: docs/design/compactor-default-on-adr.md.
+// only for the compact rewrite: ReadOnly keeps the strict safe-byte gate.
+// Chains and compound shapes use it only for the command they wrap, never
+// for a part they keep as written (decideQuotedPart, policy_compound.go).
+// Threat note: docs/design/compactor-default-on-adr.md.
 
 // ReasonAllowlistedQuoted is the reason for a wrapped quoted command.
 const ReasonAllowlistedQuoted = "allowlisted_quoted"

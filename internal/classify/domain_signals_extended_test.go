@@ -14,7 +14,7 @@ import (
 func TestExtendedDomainSignalsIntegrity(t *testing.T) {
 	ids := make(map[string]bool)
 	domains := make(map[string]bool)
-	for _, table := range [][]DomainSignalDef{RawDomainSignals, RawExtendedDomainSignals} {
+	for _, table := range [][]DomainSignalDef{RawDomainSignals(), RawExtendedDomainSignals()} {
 		for _, rule := range table {
 			if rule.ID == "" || rule.Domain == "" || ids[rule.ID] {
 				t.Fatalf("duplicate or empty domain rule: %+v", rule)
@@ -105,11 +105,11 @@ func TestExtendedDomainSignalsBilingualParity(t *testing.T) {
 		{"obs-metric-cardinality", "Investigate metric label cardinality", "Investigue cardinalidade de labels das métricas", "Corrija high cardinality metrics"},
 		{"obs-alert-fatigue", "Optimize alert noise reduction", "Otimize redução de ruído de alertas", "Ajuste alert fatigue"},
 	}
-	if len(examples) != len(RawExtendedDomainSignals) {
-		t.Fatalf("expected one bilingual group per new rule, got %d / %d", len(examples), len(RawExtendedDomainSignals))
+	if len(examples) != len(RawExtendedDomainSignals()) {
+		t.Fatalf("expected one bilingual group per new rule, got %d / %d", len(examples), len(RawExtendedDomainSignals()))
 	}
 	byID := make(map[string]DomainSignalDef)
-	for _, rule := range RawExtendedDomainSignals {
+	for _, rule := range RawExtendedDomainSignals() {
 		byID[rule.ID] = rule
 	}
 	for _, pair := range examples {
@@ -147,7 +147,7 @@ func TestExtendedDomainSignalsNegativeControls(t *testing.T) {
 		"Read the design doc about service mesh mTLS",
 	}
 	for _, phrase := range prompts {
-		for _, rule := range RawExtendedDomainSignals {
+		for _, rule := range RawExtendedDomainSignals() {
 			if regexp.MustCompile("(?i)" + rule.Pattern).MatchString(phrase) {
 				t.Errorf("%q unexpectedly triggered %s", phrase, rule.ID)
 			}

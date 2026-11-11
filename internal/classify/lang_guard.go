@@ -4,9 +4,10 @@
 package classify
 
 import (
-	"regexp"
 	"strings"
 	"unicode"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // The signal and risk tables cover English and Portuguese. In any other
@@ -45,7 +46,7 @@ const foreignLetters = "ñ¿¡üöäßèùëïîûœìò"
 const minNonLatinLetters = 4
 
 // mixedEnglishHelperBrief matches the synthetic M3 mixed brief stub (mixed-01…).
-var mixedEnglishHelperBrief = regexp.MustCompile(`(?i)^(rename|format|move|add|fix)\s+this\s+helper\s*[;\n]\s*`)
+var mixedEnglishHelperBrief = lazyre.New(`(?i)^(rename|format|move|add|fix)\s+this\s+helper\s*[;\n]\s*`)
 
 // partialForeignAmbiguous lists function words that also appear in English
 // prose (locale codes, Python del, etc.). They still count toward

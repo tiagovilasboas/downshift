@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // PHPStan and Psalm static analysis output compressor.
@@ -20,15 +21,15 @@ var (
 	//  Line   path/to/File.php
 	// ------ ----------------------------------------
 	//   12    Error message here
-	rePHPStanFile     = regexp.MustCompile(`(?m)^\s*Line\s+(.+\.php)\s*$`)
-	rePHPStanError    = regexp.MustCompile(`(?m)^\s*(\d+)\s+(.+)$`)
-	rePHPStanSummary  = regexp.MustCompile(`(?m)\[(?:OK|ERROR)\] Found (\d+) errors?`)
-	rePHPStanNoErrors = regexp.MustCompile(`(?m)\[OK\] No errors`)
+	rePHPStanFile     = lazyre.New(`(?m)^\s*Line\s+(.+\.php)\s*$`)
+	rePHPStanError    = lazyre.New(`(?m)^\s*(\d+)\s+(.+)$`)
+	rePHPStanSummary  = lazyre.New(`(?m)\[(?:OK|ERROR)\] Found (\d+) errors?`)
+	rePHPStanNoErrors = lazyre.New(`(?m)\[OK\] No errors`)
 
 	// Psalm patterns
 	// ERROR: TypeMismatch - path/to/File.php:12:5 - Message
-	rePsalmError   = regexp.MustCompile(`^(ERROR|INFO|WARNING): (\w+) - (.+?):(\d+)(?::\d+)? - (.+)$`)
-	rePsalmSummary = regexp.MustCompile(`(?m)^(\d+) errors? found`)
+	rePsalmError   = lazyre.New(`^(ERROR|INFO|WARNING): (\w+) - (.+?):(\d+)(?::\d+)? - (.+)$`)
+	rePsalmSummary = lazyre.New(`(?m)^(\d+) errors? found`)
 )
 
 // isPHPStan detects PHPStan output.
@@ -49,7 +50,7 @@ func isPsalm(input []byte) bool {
 
 // rePHPStanCleanLine matches the lines of a clean analysis: the configuration
 // note, the progress bar and the verdict.
-var rePHPStanCleanLine = regexp.MustCompile(`^(Note: Using configuration file .*|\s*\d+/\d+ \[[^\]]*\]\s+\d+%|\s*\[OK\] No errors)\s*$`)
+var rePHPStanCleanLine = lazyre.New(`^(Note: Using configuration file .*|\s*\d+/\d+ \[[^\]]*\]\s+\d+%|\s*\[OK\] No errors)\s*$`)
 
 // phpstanCleanLinesRecognised reports whether every non-empty line is one of a
 // clean analysis's lines.

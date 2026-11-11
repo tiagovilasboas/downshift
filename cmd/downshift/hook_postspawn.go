@@ -38,6 +38,8 @@ func runObserver(cmd string, args []string, in io.Reader, errW io.Writer, catalo
 // read, size, panic, or encode failure prints the neutral response ({}) and
 // exits 0. A nil Honor func is unobserved: same stdout, plus one stderr line.
 // Telemetry stays inside the port func (DOWNSHIFT_EVENT_LOG respected there).
+// On a harness that can replace a tool's result, the answer may carry the
+// post-run compaction of that result (postRunAnswer).
 func runHonor(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) {
 	responded := false
 	neutral := func() int {
@@ -53,9 +55,9 @@ func runHonor(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 			rc = neutral()
 		}
 	}()
-	const maxHookPayloadBytes = 1 << 20
-	data, err := readHookPayload(in, maxHookPayloadBytes+1)
-	if err != nil || len(data) > maxHookPayloadBytes {
+	limit := honorPayloadLimit(port.ID)
+	data, err := readHookPayload(in, limit+1)
+	if err != nil || int64(len(data)) > limit {
 		return neutral()
 	}
 	if owner := foreignPayloadOwner(port.ID, data); owner != "" {
@@ -67,7 +69,7 @@ func runHonor(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 		fmt.Fprintf(os.Stderr, "downshift: honor unobserved for %s\n", port.ID)
 		return neutral()
 	}
-	encoded, err := json.Marshal(obs.Stdout)
+	encoded, err := json.Marshal(postRunAnswer(port, data, obs.Stdout))
 	if err != nil {
 		return neutral()
 	}

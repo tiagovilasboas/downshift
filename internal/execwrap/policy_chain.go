@@ -16,9 +16,13 @@ import "strings"
 // separator stays byte-identical. The wrapper keeps each segment's exit code,
 // so `;` still returns the last segment's code and `&&` still short-circuits.
 //
-// One segment the policy cannot prove safe (a quote, `||`, a lone `&`, a
-// redirect, an expansion, a pipe that is not `| tail/head -N`) refuses the
-// whole command: no segment is wrapped. So does a segment kept as written that
+// A wrapped segment may hold quoted words (decideQuotedPart); a segment kept
+// as written may not. A `;` or `&&` inside a quote still splits, but the
+// segment before it then holds an unclosed quote, which the lexer refuses.
+//
+// One segment the policy cannot prove safe (a quote outside a wrapped
+// command, `||`, a lone `&`, a redirect, an expansion, a pipe that is not
+// `| tail/head -N`) refuses the whole command: no segment is wrapped. So does a segment kept as written that
 // names a guarded program (rm, mysql, redis-cli): the guard refused it or never
 // saw it, and the rewritten line must not carry it, because a harness that
 // approves the rewrite approves the whole line.
@@ -48,6 +52,7 @@ func decideChain(trimmed, exe string) Decision {
 	var out strings.Builder
 	var first *Decision
 	var others []string
+	quoted := false
 	for i, seg := range segs {
 		if i > 0 {
 			out.WriteString(seps[i-1])
@@ -65,6 +70,7 @@ func decideChain(trimmed, exe string) Decision {
 			continue
 		}
 		out.WriteString(d.Command)
+		quoted = quoted || d.Reason == ReasonAllowlistedQuoted
 		others = append(others, d.Segments...)
 		if first == nil {
 			d := d
@@ -82,17 +88,30 @@ func decideChain(trimmed, exe string) Decision {
 		Family:   first.Family,
 		Argv:     first.Argv,
 		Segments: others,
-		Reason:   ReasonAllowlistedChain,
+		Reason:   chainReason(quoted),
 	}
+}
+
+// chainReason keeps ReasonAllowlistedQuoted on a chain with a quoted segment,
+// so the guards on the quoted path see it.
+func chainReason(quoted bool) string {
+	if quoted {
+		return ReasonAllowlistedQuoted
+	}
+	return ReasonAllowlistedChain
 }
 
 // decideSegment decides one chain segment. keep is true when a segment that
 // is not wrapped is still provably safe to leave as written: only safe bytes,
-// or a compound shape around a safe command.
+// or a compound shape around a safe command. A segment with quoted words is
+// wrapped or refused, never kept (decideQuotedPart).
 func decideSegment(seg, exe string) (d Decision, keep bool) {
 	d = decideSimple(seg, exe)
 	if d.Reason == ReasonUnsafeChar {
 		d = decideCompound(seg, exe)
+	}
+	if d.Reason == ReasonUnsafeChar {
+		d = decideQuotedPart(seg, exe, false)
 	}
 	return d, d.Rewrite || d.Reason == ReasonNotAllowlisted
 }

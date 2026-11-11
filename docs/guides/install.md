@@ -95,7 +95,7 @@ downshift setup --yes       # zero-prompt setup
 downshift setup --no-tui    # plain prompts even inside an interactive terminal
 ```
 
-The wizard has four steps. **Harnesses**: every harness setup supports, detected ones checked. **Components**: hooks (always on), MCP server, Claude Code plugin, the downshift-agents mod, session policy, skills, steering and agent triggers, the project policy offer, You should know (off) and removing other `downshift` binaries (off, destructive). Space toggles, `a` checks all, `n` none. **Review**: the diff, one file at a time (`tab` next file, `g`/`G` top and bottom). **Confirm**: one yes or no; it defaults to No when a destructive component is checked. `esc` goes back a step and `ctrl+c` cancels. After applying, the wizard prints the equivalent `downshift setup ...` command, so the same choice can be scripted.
+The wizard draws in place below the command, not full screen, so your choices stay in the terminal history. **Harnesses**: every harness setup supports, detected ones checked. **Profile**: *Essential* (the default) installs what cuts tokens on its own: the hooks, the Claude Code plugin, the steering that tells other harnesses to compact, and the project policy that runs Explore on the small model; *Complete* adds everything else that is on by default (MCP server, skills, the downshift-agents mod, session policy) and asks about worker tools; *Custom* opens the full list. A profile never brings back a component a flag turned off, and never picks a destructive one. **Components** (Custom only): hooks (always on), MCP server, Claude Code plugin, the downshift-agents mod, session policy, skills, steering and agent triggers, the project policy offer, You should know (off) and removing other `downshift` binaries (off, destructive), each with one line on what it does for you. Space toggles, `a` checks all, `n` none. **Review**: the diff, one file at a time (`tab` next file, `g`/`G` top and bottom). **Confirm**: one yes or no; it defaults to No when a destructive component is checked. `esc` goes back a step and `ctrl+c` cancels. After applying, the wizard prints a summary (harnesses, profile, components), the equivalent `downshift setup ...` command, so the same choice can be scripted, and the next steps.
 
 For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) for keys you have not set; existing values are kept, and `--no-session-policy` skips both. Claude Code's built-in You should know mod (`"enabledPlugins": {"cc-plugin-you-should-know@builtin": true}`) is opt-in because each check is a billed background request to the session's model: `setup` prints a suggestion, and `downshift setup --you-should-know` writes it (`/plugin disable cc-plugin-you-should-know@builtin` turns it off) ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, OpenCode, Codex, Antigravity and KiroCrew (Experimental), keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. A file that is a link is skipped on its own, with the reason and the fix; the rest of that harness is still set up. The "did not exist" markers and the backups of files inside plugin, skill and mod folders are kept in `~/.downshift/backups/<stamp>/`, so harness folders hold only what setup installed; older ones beside the files still work for `--undo`. KiroCrew (Experimental) gets a generated wrapper and a `preToolUse` entry in its existing `config.json`; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
 
@@ -107,7 +107,7 @@ downshift models available --harness claude-code          # the models, their ti
 
 If doctor reports `binary shadowed`, another `downshift` earlier on `PATH` (for example in `~/go/bin`) runs instead of the one you just installed, and so do the hooks. Remove the stale copy or link the newest one over it.
 
-`downshift version` reports the release even for a `go install …@v0.13.0` build (it falls back to the module version Go records). Doctor's `version sync` row compares the binary with the stamps setup left behind, offline: the Claude Code plugin's recorded version and the OpenCode bridge (a copy of what the binary embeds). A mismatch fails the check with the fix `downshift setup --yes`. The `newest on PATH` row runs `downshift version` on each copy on `PATH` and warns when the one that runs first is not the newest. `downshift doctor --check-latest` also asks the GitHub releases API for the latest tag (one request, 2 s timeout, cached 24 h under the state dir in `latest_release.json`); no network call happens without the flag or from a hook, and an offline answer is "unknown", never a failure.
+`downshift version` reports the release even for a `go install …@v0.15.0` build (it falls back to the module version Go records). Doctor's `version sync` row compares the binary with the stamps setup left behind, offline: the Claude Code plugin's recorded version and the OpenCode bridge (a copy of what the binary embeds). A mismatch fails the check with the fix `downshift setup --yes`. The `newest on PATH` row runs `downshift version` on each copy on `PATH` and warns when the one that runs first is not the newest. `downshift doctor --check-latest` also asks the GitHub releases API for the latest tag (one request, 2 s timeout, cached 24 h under the state dir in `latest_release.json`); no network call happens without the flag or from a hook, and an offline answer is "unknown", never a failure.
 
 **Step 4 — Confirm it's working.** Open a new Claude Code session and ask it to spawn a subagent for a trivial task. Then run `downshift session --why`: it lists each subagent with the model it asked for, the model it got and the reason. When the orchestrator starts the spawn's prompt with `[tier=small]`, the subagent runs on the small-tier model.
 
@@ -124,6 +124,15 @@ Whether the harness applied it is a separate fact; `downshift stats` separates
 **Step 5 — See what happened.** `downshift stats --days=1` shows decisions and tokens saved; `downshift session --tree` shows this session's subagents as a tree. In Claude Code, the plugin exposes `/downshift:status`; the optional manual alias `/downshift` is in [The /downshift command](#the-downshift-command-claude-code).
 
 **Step 6 — (Optional) Watch it live.** `downshift watch` redraws the current session's subagent tree (model, end status, tokens, why) every second, for every harness; `downshift session --tree` prints it once, and `/downshift:status` or `/downshift` shows it inside Claude Code. The older floating widget is still available: [dsmon — live monitor widget](#dsmon--live-monitor-widget).
+
+### Update to a new release
+
+```bash
+downshift update --check   # say whether a newer release exists; changes nothing
+downshift update           # install it, then refresh every harness
+```
+
+`downshift update` works the same on macOS, Linux and Windows. It downloads the archive for this platform from the latest release, checks its sha256 against `checksums.txt` (and the build provenance when the `gh` CLI is installed and signed in), and replaces the running binary in place, following a link on `PATH` to the real file. A failed check leaves the old binary untouched. It then runs the new binary's `downshift setup`, which shows the diff and asks before writing (`--yes` skips the question), and `downshift doctor`. When the binary is already current it skips the download and still runs setup, because a harness file can lag behind the binary. `--version vX.Y.Z` installs a named release. Open a new harness session afterwards so it loads the updated hooks.
 
 ### Manual setup (Claude Code)
 
@@ -343,6 +352,13 @@ hooks = true
 [features.multi_agent_v2]
 enabled = true
 ```
+
+Current Codex releases turn `hooks` on by default and earlier ones did not, so
+set it anyway. Codex also skips a new or changed hook until you trust it: run
+`/hooks` in Codex, trust the Downshift hooks, then open a new session.
+`downshift doctor` reads `~/.codex/config.toml` and reports `feature hooks`
+and `feature multi_agent_v2`; when the hooks are wired but no Codex event was
+ever recorded, its `last hook event` check names these steps as the fix.
 
 Register the hook in `.codex/hooks.json` (project) or `~/.codex/hooks.json`
 (global). The matcher covers both the `Agent` and namespaced `spawn_agent`

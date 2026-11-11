@@ -5,7 +5,8 @@ package opencode
 
 import (
 	"encoding/json"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 const harnessID = "opencode"
@@ -47,7 +48,7 @@ const (
 
 // childIDPattern is the correlation.child contract: lowercase hex, 16..64
 // characters (the plugin sends an HMAC-derived id).
-var childIDPattern = regexp.MustCompile(`^[a-f0-9]{16,64}$`)
+var childIDPattern = lazyre.New(`^[a-f0-9]{16,64}$`)
 
 // Request is one call the plugin forwards (wire v1). The kind selects which
 // fields matter: "route" for a subagent spawn, "shell" for a shell tool call,

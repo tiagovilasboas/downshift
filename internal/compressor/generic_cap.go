@@ -5,7 +5,8 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // The cap keeps the start of a long output (the command and its first
@@ -22,7 +23,7 @@ const (
 // words an agent acts on that the generic danger gate does not stop on
 // (skipped tests, missing files, vulnerabilities, outdated or pending items),
 // plus the gate's own words as a second line of defence.
-var reCapKeep = regexp.MustCompile(
+var reCapKeep = lazyre.New(
 	`(?i)skip|missing|vulnerab|outdated|pending|deprecat|warn|error|fail`)
 
 // capLines keeps the first capHead and the last capTail lines of an output

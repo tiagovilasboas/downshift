@@ -13,6 +13,20 @@ downshift compactor -- <command> [args...]
 `downshift` resolves from PATH. The compactor cuts clean, verbose output to its
 PASS/FAIL summary and keeps the real exit code, so a red run stays red.
 
+## Large outputs
+
+An output larger than 16 KB is cut to what you act on first: the head, the
+tail and the failure lines of a log; every file and hunk header of a diff;
+the first matches of each file of a search. The full output is stored, and the
+last line names it:
+
+```
+[downshift compact: compacted 591441 to 33342 bytes; full output: downshift retrieve 85298d5a7eb4]
+```
+
+Run `downshift retrieve <id>` when you need a line that was cut. Set
+`DOWNSHIFT_BALANCED=0` to keep large outputs whole.
+
 ## Allowlisted families
 
 Allowlisted families: go test, go build, git status, git diff, npm test, jest, vitest, pytest, phpunit, cargo test, make, tsc, golangci-lint run, playwright test, gh pr, gh run, ls, find, grep -rn x .

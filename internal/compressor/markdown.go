@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatMarkdown marks the markdown body that `gh issue view` and `gh release
@@ -17,12 +18,12 @@ import (
 const FormatMarkdown Format = "markdown"
 
 var (
-	reMdHeaderLine = regexp.MustCompile(`^[a-z-]+:\t.*$`)
-	reMdFence      = regexp.MustCompile("^ {0,3}(`{3,}|~{3,})")
-	reMdComment    = regexp.MustCompile(`^\s*<!--.*-->\s*$`)
-	reMdHeading    = regexp.MustCompile(`^ {0,3}#{1,6}\s+\S`)
-	reMdBadgeItem  = regexp.MustCompile(`\[?!\[[^\]]*\]\(https://(?:img\.shields\.io|badgen\.net|badge\.fury\.io|codecov\.io)/[^)\s]*\)(?:\]\([^)\s]*\))?`)
-	reMdStackFrame = regexp.MustCompile(`^\s+at \S.*[(:]\S*:\d+|^Traceback \(most recent call last\)|^\s+File ".*", line \d+`)
+	reMdHeaderLine = lazyre.New(`^[a-z-]+:\t.*$`)
+	reMdFence      = lazyre.New("^ {0,3}(`{3,}|~{3,})")
+	reMdComment    = lazyre.New(`^\s*<!--.*-->\s*$`)
+	reMdHeading    = lazyre.New(`^ {0,3}#{1,6}\s+\S`)
+	reMdBadgeItem  = lazyre.New(`\[?!\[[^\]]*\]\(https://(?:img\.shields\.io|badgen\.net|badge\.fury\.io|codecov\.io)/[^)\s]*\)(?:\]\([^)\s]*\))?`)
+	reMdStackFrame = lazyre.New(`^\s+at \S.*[(:]\S*:\d+|^Traceback \(most recent call last\)|^\s+File ".*", line \d+`)
 )
 
 // isGhMarkdownView reports a non-TTY `gh issue view` or `gh release view`:

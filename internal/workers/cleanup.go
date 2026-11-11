@@ -8,8 +8,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // A worker's session is persisted so a later turn can resume it (T1), which
@@ -99,7 +100,7 @@ func (l cliLauncher) CleanupSession(spec Spec, sessionID string) error {
 // Claude writes and the thread id Codex writes, and rejects anything with a
 // path separator, a parent reference, a tilde or a glob metacharacter, so a
 // validated id can only ever name a leaf inside a known root.
-var sessionIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
+var sessionIDPattern = lazyre.New(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
 
 // validSessionID reports whether id is safe to put in a path. A "." or ".."
 // anywhere, a separator, or a glob character fails the pattern; this is the one

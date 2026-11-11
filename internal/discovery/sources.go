@@ -12,8 +12,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // maxOutput bounds what a source reads from a CLI or file.
@@ -144,7 +145,7 @@ func (g GrokCLI) Discover(ctx context.Context) ([]Model, error) {
 	return parseGrokList(out)
 }
 
-var grokLine = regexp.MustCompile(`^\s*[*-]\s+(\S+)`)
+var grokLine = lazyre.New(`^\s*[*-]\s+(\S+)`)
 
 // parseGrokList reads the "Available models:" block: lines like
 // "  * grok-4.6 (default)" and "  - grok-4.5".
@@ -178,8 +179,11 @@ func parseGrokList(data []byte) ([]Model, error) {
 // public list is added only when DOWNSHIFT_DISCOVERY_OPENROUTER=1, so the
 // default run makes no new network call. Failed sources preserve their cache;
 // discovery does not imply included credit.
+//
+// KiroFromKiroCrew comes after KiroCLI so KiroCrew is discovered first, then
+// Kiro IDE mirrors it (same AWS/Kiro account, same models).
 func Defaults() []Source {
-	sources := []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}, KiroCLI{}, OpenCodeCLI{}}
+	sources := []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}, KiroCLI{}, KiroFromKiroCrew{}, OpenCodeCLI{}}
 	if openRouterEnabled() {
 		sources = append(sources, OpenRouterAPI{})
 	}

@@ -1,21 +1,21 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-// Package discover scans a harness's own transcripts for shell commands the
+// Package missedsavings scans a harness's own transcripts for shell commands the
 // compactor would have changed but that ran bare. Transcripts hold task text,
 // so everything is read line by line in memory and only fixed codes, command
 // families, binary names and counts leave the package: never argv, paths or
 // arguments.
-package discover
+package missedsavings
 
 import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Kind is what the compact policy makes of one recorded command.
@@ -46,10 +46,10 @@ var probeExe = filepath.Join(os.TempDir(), "downshift")
 
 // wrappedRe finds a command already routed through the compactor, whatever
 // the quoting of the binary path or the name it was called by.
-var wrappedRe = regexp.MustCompile(`(^|[\s/'"])downshift'?\s+(compact|compactor|exec)(\s|$)`)
+var wrappedRe = lazyre.New(`(^|[\s/'"])downshift'?\s+(compact|compactor|exec)(\s|$)`)
 
 // binaryRe bounds what a report may print as a binary name.
-var binaryRe = regexp.MustCompile(`^[A-Za-z0-9._+-]{1,32}$`)
+var binaryRe = lazyre.New(`^[A-Za-z0-9._+-]{1,32}$`)
 
 // Classify asks the shipped execwrap policy what it does with command.
 func Classify(command string) Class {

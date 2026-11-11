@@ -7,9 +7,10 @@ package clispec
 // compactor.
 var dailyCommands = []Command{
 	{Name: "setup", Summary: "Wire the hooks into every harness found (backup, diff, --undo)", Flags: f("--tui", "--no-tui", "--dry-run", "--undo", "--yes|-y", "--no-session-policy", "--you-should-know", "--no-plugin", "--no-mods", "--no-mcp", "--no-skills", "--no-steering", "--no-policy", "--keep-binaries", "--workers", "--allow-unsafe-binary", "!--mcp")},
+	{Name: "update", Summary: "Install the latest release, then refresh every harness (asks first)", Flags: f("--check", "--yes|-y", "--version")},
 	{Name: "uninstall", Summary: "Restore harness hook configurations and remove wrappers", Flags: f("--dry-run", "--yes|-y", "--purge")},
 	{Name: "accept", Summary: "Record developer acceptance for code delivered by subagents", Flags: f("--session", "--used", "--discarded")},
-	{Name: "loop", Summary: "Run an engineering loop with sensor verification and cascade auto-upgrade", Flags: f("--task", "--sensor", "--iterations", "--timeout", "--session", "--model", "--batch", "--continue-on-error", "--json")},
+	{Name: "loop", Summary: "Run an engineering loop with sensor verification and cascade auto-upgrade", Flags: f("--task", "--sensor", "--iterations", "--timeout", "--session", "--model", "--batch", "--continue-on-error", "--json"), Experimental: true},
 	{Name: "doctor", Summary: "Checklist: binary, hooks per harness, state, with a fix per failure", Flags: f("--verbose", "--json", "--quiet", "--check-latest", "--harness", "--self-test")},
 	{Name: "stats", Summary: "Decisions and the tiers spawns ran on", Flags: f("--days", "--by-harness", "--detail", "--export")},
 	{Name: "report", Summary: "Measured: routed spawns, tokens per completed task, rework per verdict", Flags: f("--days", "--json", "--text", "--markdown", "--daily", "--history", "--by")},
@@ -21,7 +22,7 @@ var dailyCommands = []Command{
 	{Name: "config", Summary: "Every effective setting with its value and source", Flags: f("--json")},
 	{Name: "enable", Summary: "Print shell aliases for transparent compaction"},
 	{Name: "shell-init", Summary: "Deprecated alias of enable", AliasOf: "enable", Legacy: true},
-	{Name: "compact", Summary: "Cut a test, build or status command's output to its PASS/FAIL summary", Flags: f("--session", "--allowlisted", "--discard-stderr", "--exit-zero")},
+	{Name: "compact", Summary: "Cut a test, build or status command's output to its PASS/FAIL summary", Flags: f("--session", "--harness", "--allowlisted", "--discard-stderr", "--exit-zero")},
 	{Name: "compactor", Summary: "Product name of compact", AliasOf: "compact", Legacy: true},
 	{Name: "exec", Summary: "Old name of compact", AliasOf: "compact", Legacy: true},
 	{Name: "retrieve", Summary: "Print the full output the compactor kept for an id", Flags: f("--grep", "--head", "--tail", "--lines")},

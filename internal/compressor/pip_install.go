@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // pip install output compressor.
@@ -18,17 +19,17 @@ import (
 
 var (
 	// "Successfully installed flask-3.0.0 jinja2-3.1.2 werkzeug-3.0.1"
-	rePipInstalled = regexp.MustCompile(`(?m)^Successfully installed (.+)$`)
+	rePipInstalled = lazyre.New(`(?m)^Successfully installed (.+)$`)
 	// "Requirement already satisfied: flask in ..." (no-op install)
-	rePipAlreadySatisfied = regexp.MustCompile(`(?m)^Requirement already satisfied:`)
+	rePipAlreadySatisfied = lazyre.New(`(?m)^Requirement already satisfied:`)
 	// Progress / resolution noise to strip (used only for detection intent).
-	rePipCollecting  = regexp.MustCompile(`(?m)^Collecting `)
-	rePipDownloading = regexp.MustCompile(`(?m)^\s*Downloading `)
+	rePipCollecting  = lazyre.New(`(?m)^Collecting `)
+	rePipDownloading = lazyre.New(`(?m)^\s*Downloading `)
 
 	// Findings (fail-open). pip reports failures with ERROR:, a warning with
 	// WARNING:, a traceback, or a non-resolvable dependency message; the
 	// summary would drop any of them.
-	rePipError = regexp.MustCompile(`(?im)(?:^ERROR:|^WARNING:|Could not find a version|No matching distribution|ResolutionImpossible|Traceback \(most recent call last\))`)
+	rePipError = lazyre.New(`(?im)(?:^ERROR:|^WARNING:|Could not find a version|No matching distribution|ResolutionImpossible|Traceback \(most recent call last\))`)
 )
 
 // pipHasFindings reports output the summary must not replace.

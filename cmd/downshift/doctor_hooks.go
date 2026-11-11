@@ -39,6 +39,10 @@ type doctorWiring struct {
 	// entry there duplicates the policy hook in File.
 	Registry string
 	Hooks    []doctorHook
+	// FeatureFlags and Activate: what the harness needs before its hooks run
+	// (setup.Target.FeatureFlags, setup.Target.Activate).
+	FeatureFlags []setup.FeatureFlag
+	Activate     string
 }
 
 func doctorWiringFor(harness string) (doctorWiring, bool) {
@@ -46,7 +50,8 @@ func doctorWiringFor(harness string) (doctorWiring, bool) {
 		if t.Name != harness || t.File == "" {
 			continue
 		}
-		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, Registry: t.Registry}
+		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, Registry: t.Registry,
+			FeatureFlags: t.FeatureFlags, Activate: t.Activate}
 		for i, h := range t.Hooks {
 			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Wrapper: h.Wrapper, Rewrites: h.Rewrites, Required: i == 0})
 		}
@@ -152,7 +157,8 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	checkInstalledPluginHooks(add, env.Home, h, viaPlugin) // reads the plugin's own hooks.json
 	checkHookOverlap(add, env.Verbose, w, file, raw, viaPlugin, execOn)
 	// With the plugin carrying the hooks, found is empty: no hook binary to check.
-	checkEvidence(add, env, nc, file, found, pathBin, events)
+	checkFeatureFlags(add, env.Home, w)
+	checkEvidence(add, env, nc, file, found, pathBin, events, activationFix(env.Home, w))
 	checkCrewRegistry(add, env, h, w)
 	checkHarnessLimitations(add, h)
 }

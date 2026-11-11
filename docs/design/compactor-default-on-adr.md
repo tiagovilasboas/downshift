@@ -91,7 +91,7 @@ can name one argv in forms none of those strings show (`-m 'wip'`,
 `-m w"i"p`), and the harness then sees only the rewritten string, so while any
 shell deny or ask rule holds a quote, or the rules cannot be read, the quoted
 path is not taken and the command runs as typed (skip `quoted_rule`, decided in
-`internal/shellwrap`; the adapter only lists its rules). Chains and compound shapes keep the strict safe-byte gate. The skip
+`internal/shellwrap`; the adapter only lists its rules). Chains and compound shapes lex only the command they wrap with this path; every part they keep as written stays on the strict safe-byte gate. The skip
 log classifies a command by the first byte still refused, so a closed quote is
 no longer counted as a `quote` skip. Known gap: an argv word that holds the
 text ` compact --session=` makes `WithSession` leave the whole command untagged,

@@ -20,6 +20,9 @@ var notCompactedLabel = map[string]string{
 	"small_output":        "output already short",
 	"nonzero_exit":        "command failed, output kept whole",
 	"refused":             "not allowlisted, did not run",
+	"too_large":           "over the hold limit, raw output not kept",
+	"stderr_output":       "stderr with a terminal on stdin, streamed",
+	"hold_timeout":        "held past the hold bound, streamed",
 	"not_recorded":        "reason not recorded",
 }
 
@@ -68,11 +71,11 @@ func printCompactionDetailMarkdown(w io.Writer, d accounting.CompactionDetail) {
 		fmt.Fprintf(w, "### %s: %d commands, %d compacted\n\n", h.Harness, h.Commands, h.Compacted)
 		if len(h.Families) > 0 {
 			fmt.Fprint(w, "**By family** (largest output first; tokens are bytes / 4, an estimate)\n\n")
-			fmt.Fprintln(w, "| family | commands | compacted | output tokens | tokens avoided |")
-			fmt.Fprintln(w, "|---|--:|--:|--:|--:|")
+			fmt.Fprintln(w, "| family | commands | compacted | output tokens | tokens avoided | cut |")
+			fmt.Fprintln(w, "|---|--:|--:|--:|--:|--:|")
 			for _, f := range firstFamilies(h.Families) {
-				fmt.Fprintf(w, "| %s | %d | %d | %s | %s |\n", f.Family, f.Commands, f.Compacted,
-					telemetry.ShortTokens(f.RawTokens), telemetry.ShortTokens(f.AvoidedTokens))
+				fmt.Fprintf(w, "| %s | %d | %d | %s | %s | %s |\n", f.Family, f.Commands, f.Compacted,
+					telemetry.ShortTokens(f.RawTokens), telemetry.ShortTokens(f.AvoidedTokens), cutPct(f))
 			}
 			if more := len(h.Families) - detailFamilies; more > 0 {
 				fmt.Fprintf(w, "\n_%d more families in `--json`._\n", more)
@@ -106,10 +109,10 @@ func printCompactionDetailText(w io.Writer, d accounting.CompactionDetail) {
 	for _, h := range d.Harnesses {
 		fmt.Fprintf(w, "   %s: %d commands, %d compacted\n", h.Harness, h.Commands, h.Compacted)
 		if len(h.Families) > 0 {
-			fmt.Fprintf(w, "      %-18s %8s %9s %13s %14s\n", "family", "commands", "compacted", "output tokens", "tokens avoided")
+			fmt.Fprintf(w, "      %-18s %8s %9s %13s %14s %5s\n", "family", "commands", "compacted", "output tokens", "tokens avoided", "cut")
 			for _, f := range firstFamilies(h.Families) {
-				fmt.Fprintf(w, "      %-18s %8d %9d %13s %14s\n", f.Family, f.Commands, f.Compacted,
-					telemetry.ShortTokens(f.RawTokens), telemetry.ShortTokens(f.AvoidedTokens))
+				fmt.Fprintf(w, "      %-18s %8d %9d %13s %14s %5s\n", f.Family, f.Commands, f.Compacted,
+					telemetry.ShortTokens(f.RawTokens), telemetry.ShortTokens(f.AvoidedTokens), cutPct(f))
 			}
 			if more := len(h.Families) - detailFamilies; more > 0 {
 				fmt.Fprintf(w, "      %d more families in --json\n", more)
@@ -137,4 +140,13 @@ func firstFamilies(fs []accounting.FamilyCompaction) []accounting.FamilyCompacti
 		return fs[:detailFamilies]
 	}
 	return fs
+}
+
+// cutPct is the share of a family's output the Compactor kept out, or "-"
+// when no output was measured.
+func cutPct(f accounting.FamilyCompaction) string {
+	if f.RawTokens <= 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%.0f%%", 100*float64(f.AvoidedTokens)/float64(f.RawTokens))
 }

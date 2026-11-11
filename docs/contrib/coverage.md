@@ -56,7 +56,6 @@ file or from `AGENTS.md`.
 | `internal/contextopt` | Shell | Config for compaction and headroom |
 | `internal/core` | Routing | `Route`, `Check` (R1-R9), `PlanSession`, `HarnessCapabilities` |
 | `internal/cursorbridge` | Adapters | Cursor native session bridge |
-| `internal/discover` | Shell | `downshift discover`: transcript scan for commands that ran bare (counts and families only) |
 | `internal/discovery` | Routing | `models discover/list/check/pull` |
 | `internal/docscheck` | Quality | CI gates for markdown layout and package inventory |
 | `internal/execwrap` | Shell | Allowlist policy, family classification, compactor runner |
@@ -66,10 +65,13 @@ file or from `AGENTS.md`.
 | `internal/hookctx` | Adapters | Hook deadline context |
 | `internal/hookport` | Telemetry | Honor and usage ports |
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |
-| `internal/clispec` | CLI | Command registry as data (names, summaries, flags, hidden, deprecated) and the `DOWNSHIFT_*` variables the code reads; read by help, `docs-manifest` and the docs guards |
+| `internal/clispec` | CLI | Command registry as data (names, summaries, flags, hidden, deprecated, experimental) and the `DOWNSHIFT_*` variables the code reads; read by help, `docs-manifest` and the docs guards |
 | `internal/installer` | Setup | Tests for the root `install.sh` (offline, with fake curl and gh); no production code |
+| `internal/selfupdate` | Setup | `downshift update`: release tag from the releases page, archive download (https only), sha256 against `checksums.txt`, binary extraction and in-place swap (Windows moves the running `.exe` aside); never writes harness files |
+| `internal/lazyre` | — | Regular expression compiled on first use, so package init stays cheap on every start; `CompileAll` for tests (startup guard: `internal/archtest/startup_test.go`) |
 | `internal/limits` | Adapters | Centralized harness limitations registry |
 | `internal/loop` | Loop | Autonomous engineering loop runner (Plan -> Implement -> Sensor -> Cascade -> Accept) |
+| `internal/missedsavings` | Shell | `downshift discover`: transcript scan for commands that ran bare (counts and families only). Was `internal/discover`, renamed so it no longer reads like `internal/discovery` |
 | `internal/models` | Routing | `models` subcommand helpers |
 | `internal/outcome` | Quality | Offline eval runner |
 | `internal/operatorexport` | Telemetry | Operator export (roadmap P3.2): counts and token totals only, built from the `report` aggregation; `Check` is the allowlist sensor that fails on any string field or value it does not allow |
@@ -80,6 +82,7 @@ file or from `AGENTS.md`.
 | `internal/playbook` | Delegation | Named working rules a delegated worker receives (General plus an area set): shipped markdown, the person's files under the state dir, name folding, `Block` for the MCP server. No routing, no enforcement; imports only `paths` |
 | `internal/plan` | Delegation | `downshift plan`: validates the parts the lead LLM wrote (agent, points, dependencies), fills tier, playbook, wave and route, renders markdown or JSON. No LLM call, no state read (the command passes the gateway switch in); imports `agenttier` and `playbook` |
 | `internal/policyfile` | Routing | Project tier floor; registers via hook |
+| `internal/postrun` | Shell | Post-run compaction: a finished tool's result (shell output, search matches and file lists) compacted where the harness can replace it (`ReplacesToolOutput`); reuses `execwrap.CompactCaptured` and the balanced cut. Harness-free; adapters parse and answer through `hookport.ToolOutput` |
 | `internal/quota` | Routing | File I/O for quota; registers hooks |
 | `internal/quotamodel` | Routing | Pure quota types, no I/O |
 | `internal/routing` | Routing | Routing v2 domain (`docs/design/routing-v2.md` section 7); imports only `core`, `paths`, `routing/*` (archtest) |

@@ -5,8 +5,9 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatTurbo is a clean `turbo run` transcript.
@@ -19,11 +20,11 @@ const FormatTurbo Format = "turbo"
 // has no known shape here, so it keeps the run raw; so does a warning, an error
 // or a failed task.
 var (
-	reTurboTasks  = regexp.MustCompile(`(?m)^\s*Tasks:\s+(\d+) successful, (\d+) total\s*$`)
-	reTurboCached = regexp.MustCompile(`(?m)^\s*Cached:\s+(\d+) cached, (\d+) total\s*$`)
-	reTurboTime   = regexp.MustCompile(`(?m)^\s*Time:\s+(\S+)\s*(?:>>> FULL TURBO)?\s*$`)
+	reTurboTasks  = lazyre.New(`(?m)^\s*Tasks:\s+(\d+) successful, (\d+) total\s*$`)
+	reTurboCached = lazyre.New(`(?m)^\s*Cached:\s+(\d+) cached, (\d+) total\s*$`)
+	reTurboTime   = lazyre.New(`(?m)^\s*Time:\s+(\S+)\s*(?:>>> FULL TURBO)?\s*$`)
 
-	reTurboNoise = regexp.MustCompile(`^(?:` +
+	reTurboNoise = lazyre.New(`^(?:` +
 		`• .*|turbo \d+\.\d+\.\d+|` +
 		`\s*(?:Tasks|Cached|Time):\s+.*|\s*Failed:.*|` +
 		`\S+:\S+: (?:cache (?:miss, executing|hit, replaying logs|bypass, force executing) \w+|)|` +

@@ -12,6 +12,8 @@ import (
 	"os/exec"
 	"os/signal"
 	"syscall"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/compressor"
 )
 
 // Exit codes a POSIX shell uses when it cannot run a program.
@@ -62,6 +64,16 @@ type Options struct {
 	// raw output was kept, and returns what to print instead: the delta from
 	// the previous read of the same window, or the view (desktop_delta.go).
 	Desktop func(view []byte) []byte
+	// Balanced lets an output larger than BalanceThreshold be cut with loss
+	// once its raw output is stored by Keep or KeepFailed (balance.go). With
+	// Keep set it also lets stdout past the hold limit be spooled and cut to
+	// its head and tail (gate_spool.go).
+	Balanced bool
+	// BalanceThreshold, in bytes, replaces BalanceThreshold when positive;
+	// BalanceLimits replaces the line caps of the cut (a zero field keeps its
+	// default). The caller reads both from its config; execwrap reads none.
+	BalanceThreshold int
+	BalanceLimits    compressor.BalanceLimits
 	// Signals, when set, replaces signal.Notify as the source of signals to
 	// forward (tests).
 	Signals <-chan os.Signal
@@ -105,12 +117,14 @@ var ObserveUncompactedHook func(argv []string, sample []byte, family Family)
 // Run executes argv directly (no shell) with the caller's stdin, and exits
 // with the program's own status. Only the allowlisted families run (anything
 // else is refused with 126). Output keeps the order the program wrote it in.
-// With compaction on, stdout is held (see gate) and compacted only
-// when the program wrote nothing on stderr (except families in stderrIsReport,
-// whose reporter writes there) and exited 0, or exited non-zero in a family
-// CompressFailed supports, which keeps every failure; stayed under
-// compressor.MaxProcessableBytes and HoldBound (when configured), and the
-// compressor recognised the family's own format. Otherwise it is byte-identical.
+// With compaction on, both streams are held in write order (see gate) and
+// stdout is compacted only when the program exited 0, or exited non-zero in a
+// family CompressFailed supports, which keeps every failure; stayed under
+// HoldBound (when configured), and the compressor recognised the family's own
+// format. Stderr of a family outside stderrIsReport is never compacted: it
+// follows the compacted stdout whole. Output past
+// compressor.MaxProcessableBytes is cut to its head and tail when its raw
+// output is kept (gate_spool.go). Otherwise it is byte-identical.
 // Any internal error prints the raw output: output is never lost.
 func Run(argv []string, o Options) (res Result) {
 	if len(argv) == 0 {
@@ -139,6 +153,11 @@ func Run(argv []string, o Options) (res Result) {
 	g := newGate(o.Stdout, o.Stderr, o.Compact && readCompactible(res.Family, argv), argv, res.Family)
 	g.skipObservation = o.SkipObservation
 	g.desktop = o.Desktop
+	g.balanced = o.Balanced
+	g.bal = balanceConfig{threshold: o.BalanceThreshold, limits: o.BalanceLimits}
+	// With a terminal on stdin a program may prompt on stderr: holding that
+	// prompt would hide it, so the first stderr byte releases the output.
+	g.stderrReleases = !g.merge && interactiveStdin(o.Stdin)
 	// The ports run once, inside finish, on this goroutine; the id of the one
 	// that stored the output goes on the Result and the event.
 	var keptID string

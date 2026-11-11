@@ -87,10 +87,12 @@ var Targets = []Target{
 			// The opt-in exec wrapper rewrites an allowlisted Bash command (shellrewrite.go).
 			{Event: "PreToolUse", Matcher: "Bash", Args: "claude-code", Rewrites: RewritesShell},
 			{Event: "PostToolUse", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
-			// Bash output reaches the context sensor (observe only: bytes and
-			// the compressor's potential, never the text).
+			// Bash output reaches the context sensor (bytes and the
+			// compressor's potential, never the text) and the shared post-run
+			// compaction (internal/postrun), which may answer updatedToolOutput.
 			{Event: "PostToolUse", Matcher: "Bash", Args: "claude-code-post-tool-use"},
-			// Read, Grep and Glob feed only the main-session work count (mainwork).
+			// Read, Grep and Glob feed the main-session work count (mainwork);
+			// a large Grep or Glob result is also compacted after the run.
 			{Event: "PostToolUse", Matcher: "Read|Grep|Glob", Args: "claude-code-post-tool-use"},
 			{Event: "PostToolUseFailure", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
 			{Event: "SessionStart", Args: "claude-code-session-start"},
@@ -159,6 +161,17 @@ var Targets = []Target{
 		// exists it wins and the managed block is not read.
 		Steering: &Steering{Path: ".codex/AGENTS.md", Content: HarnessSteering, Managed: true},
 		Mcp:      &Mcp{Kind: McpTOMLBlock, File: ".codex/config.toml"},
+		// Codex feature registry (codex-rs/features): "hooks" (legacy alias
+		// "codex_hooks") is on by default in current releases and was off in
+		// earlier ones; "multi_agent_v2" is off by default.
+		FeatureFlags: []FeatureFlag{
+			{File: ".codex/config.toml", Table: "features", Key: "hooks", Aliases: []string{"codex_hooks"},
+				Default: true, DefaultNote: "earlier Codex releases default it off", AllHooks: true,
+				Purpose: "Codex runs no hook"},
+			{File: ".codex/config.toml", Table: "features", Key: "multi_agent_v2",
+				Purpose: "subagent spawn routing needs it"},
+		},
+		Activate: "run /hooks in Codex and trust the Downshift hooks, then open a new Codex session",
 	},
 	{
 		// Kiro IDE (VS Code extension). Distinct from KiroCrew (the daemon):

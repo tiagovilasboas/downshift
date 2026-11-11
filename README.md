@@ -6,9 +6,9 @@
 
 # Downshift
 
-### Less command noise. Smarter subagent routing.
+### Cut the token waste in Claude Code, Codex and other coding agents.
 
-Downshift is an open-source CLI for AI coding agents. It helps reduce LLM token usage through command output compaction and applies subagent model routing within your policy. Single Go binary.
+AI coding agents spend much of their context on test logs, build output and status dumps, and every subagent runs on your main model unless something sets another. That burns tokens and fills the context window. Downshift is an open-source CLI that compacts supported command output before the agent reads it, with failures and exit codes kept: 67.0% fewer bytes on a 113-fixture benchmark. It also applies the model and effort chosen for each subagent, within the policy you declare. Single Go binary.
 
 Works with coding harnesses including Claude Code and Codex CLI; integration capabilities and available models vary by harness and session.
 
@@ -27,7 +27,7 @@ Install a compatible release binary, choose your harness, review the proposed co
 
 Release archives target macOS and Linux on arm64 and amd64, and Windows on amd64. Asset availability varies by release; check the release page for your platform and verification files. The shell installer in the guide is for macOS and Linux.
 
-[Releases](https://github.com/tiagovilasboas/downshift-ai/releases) · [Installation guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/install.md) · [Quickstart](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/quickstart.md) · [Configuration](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/config.md) · [Undo setup](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/cli.md#downshift-setup) · [Uninstall](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/cli.md#downshift-uninstall)
+[Releases](https://github.com/tiagovilasboas/downshift-ai/releases) · [Installation guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/install.md) · [Quickstart](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/quickstart.md) · [Configuration](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/config.md) · [Update](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/cli.md#downshift-update) · [Undo setup](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/cli.md#downshift-setup) · [Uninstall](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/cli.md#downshift-uninstall)
 
 ```bash
 # macOS & Linux (arm64 / amd64)
@@ -36,6 +36,9 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/in
 # In your repository:
 downshift setup
 downshift doctor
+
+# Later, on any OS: install the next release and refresh every harness
+downshift update
 ```
 
 [![Interactive setup detects harnesses, lets you choose components and review changes, writes after confirmation, then the user verifies the setup](docs/brand/readme-media/setup-flow.svg)](docs/brand/readme-media/setup-flow.png)
@@ -129,16 +132,17 @@ In your coding harness chat, describe your task and type:
 
 ## Works with your coding harness
 
-Downshift was built with Claude Code and supports other harnesses at different stages of verification.
+Downshift was built with Claude Code and supports other harnesses at different stages of verification. **Supported** means `doctor` verified the hook in a real session; **Beta** means the hook ran in a real session and is written up, but `doctor` has not verified it; **Experimental** means the effect is unconfirmed or seen once. Criteria and evidence: [support tiers](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/harness-matrix.md#support-tiers).
 
-| Harness | Status | Routing evidence |
+| Harness | Tier | Routing evidence |
 | --- | --- | --- |
-| Claude Code | Completed | Rewrite observed on a real child. |
-| Codex | Functional | Rewrite emitted; honor inferred, not directly observed. |
-| OpenCode | Beta | Routing and child usage observed on OpenCode 2.2.5. |
+| Claude Code | Supported | Rewrite observed on a real child; `doctor` reads it from real sessions. |
+| Codex | Beta | Rewrite emitted; honor inferred, not directly observed. Needs the hooks feature flag and `/hooks` trust; `doctor` reads the flag and names the fix. |
+| OpenCode | Beta | Routing and child usage observed on OpenCode 2.2.5 through the bridge plugin. |
+| KiroCrew | Beta | Policy block and retry observed; no in-place rewrite. |
+| Kiro IDE | Beta | Hook payload captured live; observation-only, no rewrite. |
 | Cursor | Experimental | Rewrite emitted; executor honor unconfirmed. |
 | Antigravity | Experimental | One child observed on one build. |
-| KiroCrew | Experimental | Policy mode, without in-place model rewrite. |
 
 Models available to one harness or session are not assumed to be available to another. See the [full harness matrix](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/harness-matrix.md) for integration details, evidence and limits.
 
@@ -146,13 +150,24 @@ Models available to one harness or session are not assumed to be available to an
 
 | Measurement | Result | Scope |
 | --- | --- | --- |
-| Lossless output compaction | **60.3% fewer bytes** | 62 lossless fixtures in a synthetic corpus. |
-| Output compaction with CCR | **67.1% fewer bytes** | 110-fixture synthetic corpus (53.0% with CCR off), command output and agent-desktop reads; displayed repetitions may be folded and raw output is recoverable. |
+| Lossless output compaction | **59.9% fewer bytes** | 64 lossless fixtures in a synthetic corpus. |
+| Output compaction with CCR | **67.0% fewer bytes** | 113-fixture synthetic corpus (53.1% with CCR off), command output and agent-desktop reads; displayed repetitions may be folded and raw output is recoverable. |
+| Balanced compaction, large outputs | **76.3% fewer bytes** | 4 real outputs of this repository over 16 KB (`go test -v`, `git show`, `git log -p`, `grep -rn`); 35.0% with the lossless compressor alone. Cut lines stay retrievable with `downshift retrieve`. |
 | Subagent routing | **24.1% fewer tokens per accepted run** | Controlled 46-run Claude Code study on mechanical tasks, conducted before decision O8. |
 
 These are separate measurements in different units and workloads. The synthetic corpus totals include only fixtures the compactor processed, excluding preserved fixtures. The routing result is historical evidence; it does not establish the effect of the implementation after O8. Savings in unconstrained everyday use have not been established. Token estimates based on bytes are not an invoice or a measurement of plan limits.
 
 [Compaction benchmark](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/bench.md) · [Routing study](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/evidence/four-arm-mechanical-2026-10-21.md) · [Evidence guide](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/guides/evidence.md)
+
+## Research behind the design
+
+Downshift's design starts from Anthropic's published work on orchestration. A strong lead plans and checks, cheaper workers do bounded work, and every extra agent has to earn its tokens.
+
+- [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (2025): an Opus lead with Sonnet subagents beat a single Opus agent by 90.2% on research, at about 15× the tokens of a chat. The same post notes that coding parallelizes less than research.
+- [Patterns and problems in emerging multiagent systems](https://www.anthropic.com/research/multiagent-systems) (2026): a coordinating swarm found 266 vulnerabilities to the independent agents' 21, largely by searching more ground; inside the same directories, tokens per finding were comparable.
+- [Riemann zeta research with 60 subagents](https://www.anthropic.com/research/riemann-zeta) (2026): of 60 subagents, 2 developed the key ideas, 30 tried and failed, and 13 validated the arguments.
+
+How each finding maps to a design principle, and what it does not show: [True north](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/true-north.md) · [Reconciliation](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)
 
 ## Built for inspection and control
 
@@ -175,6 +190,20 @@ These are separate measurements in different units and workloads. The synthetic 
 | `downshift mcp serve` | Run local stdio MCP server (13 native tools) |
 
 [Safety](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/safety.md) · [Telemetry](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/features/telemetry.md) · [Known limitations](https://github.com/tiagovilasboas/downshift-ai/blob/main/docs/reference/known-limitations.md)
+
+## FAQ
+
+**How do I reduce token usage in Claude Code, Codex or Cursor?** Install Downshift and run `downshift setup`. Supported command output is compacted before it reaches the context window, and each subagent runs on the model chosen for it, bounded by your policy. On Claude Code the rewrite is automatic; elsewhere the agent runs `downshift compact -- <command>`. Check your numbers with `downshift session` and `downshift report`.
+
+**Do Claude Code subagents burn my usage limit faster?** They can. Each subagent starts with a fresh context and sends its own requests, which count toward the same usage limits as your main conversation, and it runs on your main model unless something sets another. Put routine subagents on a smaller model: `downshift policy init` writes an `explore` profile that sends Explore to the small tier. [Guide](https://downshift-ai.vercel.app/guides/claude-code-subagents-usage-limit/)
+
+**Does Downshift save my Claude Code usage limit?** Not measured yet. Downshift reports the tokens that ran below your session model and the bytes compaction removed. How a plan converts tokens into its 5-hour and weekly limits is not published, so no limit saving is claimed.
+
+**Does subagent routing break prompt caching?** No. The choice applies to whole subagent spawns, not to turns of your main session, which keeps one model for the whole conversation.
+
+**How is this different from `/compact`?** `/compact` summarizes conversation history already in the context window. Downshift shrinks command output before it enters. They are complementary.
+
+**How is this different from `CLAUDE_CODE_SUBAGENT_MODEL`?** That variable sets one default model for every subagent nothing else sets. Downshift applies the model chosen for each spawn within a policy you declare, keeps the requested model when in doubt, records where tokens ran, and also works in Codex, Cursor and OpenCode.
 
 ## Documentation and community
 

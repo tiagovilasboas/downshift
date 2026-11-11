@@ -8,32 +8,13 @@ import (
 	"strings"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/frame"
+	"github.com/tiagovilasboas/downshift-ai/internal/console/shared/theme"
 )
 
 // EquivalentCommand renders the non-interactive command for a selection.
 // Flag mapping belongs to the caller, which passes it as toArgs.
 func EquivalentCommand(s Selection, toArgs func(Selection) []string) string {
 	return strings.TrimSpace("downshift setup " + strings.Join(toArgs(s), " "))
-}
-
-// total is the number of steps shown: the optional question adds one.
-func (m Model) total() int {
-	if m.hasChoice() {
-		return 5
-	}
-	return 4
-}
-
-// ordinal is the 1-based position of the current step as shown. The question
-// sits after the components; review and confirm move down by one with it.
-func (m Model) ordinal() int {
-	switch {
-	case m.step == stepChoice:
-		return 3
-	case m.hasChoice() && m.step >= stepReview:
-		return int(m.step) + 2
-	}
-	return int(m.step) + 1
 }
 
 func (m Model) header() string {
@@ -55,8 +36,16 @@ func (m Model) screen(body string, keys []frame.Key) string {
 	return b.String()
 }
 
-// View draws the current step.
+// View draws the current step. Once the wizard is over it is the one line
+// left in the scrollback: the choice confirmed, or nothing when cancelled
+// (the caller says so).
 func (m Model) View() string {
+	switch {
+	case m.cancelled:
+		return ""
+	case m.done:
+		return m.doneLine()
+	}
 	switch m.step {
 	case stepHarnesses:
 		return m.viewPick(m.harnesses, "cancel")
@@ -64,8 +53,21 @@ func (m Model) View() string {
 		return m.viewPick(m.components, "back")
 	case stepChoice:
 		return m.viewChoice()
+	case stepPreset:
+		return m.viewPreset()
 	case stepReview:
 		return m.viewReview()
 	}
 	return m.header() + "\n\n" + m.confirm.View()
+}
+
+// doneLine recaps the confirmed choice in one line.
+func (m Model) doneLine() string {
+	sel := m.Selection()
+	what := strings.Join(sel.Components, ", ")
+	if p := m.chosenPreset(); p != nil && !p.Custom {
+		what = p.Label + ": " + what
+	}
+	return m.th.OK.Render(theme.SymOK) + " " + m.th.Bold.Render("Setting up") + " " +
+		strings.Join(sel.Harnesses, ", ") + m.th.Muted.Render(" · "+what) + "\n"
 }

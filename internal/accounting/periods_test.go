@@ -153,7 +153,7 @@ func TestBuildPeriods_JSONShapeHasNoMoney(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `[{"period":"2026-11-05","harnesses":[{"harness":"codex","compaction_tokens":100,"routing_below_tokens":0}]}]`
+	want := `[{"period":"2026-11-05","harnesses":[{"harness":"codex","compaction_tokens":100,"routing_below_tokens":0,"compactor_commands":1,"compactor_compacted":1}]}]`
 	if string(b) != want {
 		t.Errorf("json = %s\nwant   %s", b, want)
 	}
@@ -161,5 +161,31 @@ func TestBuildPeriods_JSONShapeHasNoMoney(t *testing.T) {
 		if strings.Contains(string(b), bad) {
 			t.Errorf("json mentions %q", bad)
 		}
+	}
+}
+
+// A run whose raw output was read back with retrieve counts what it still
+// saved, the same figure report and the panel use (NetSavedBytes).
+func TestBuildPeriods_SubtractsRetrievedBytes(t *testing.T) {
+	ev := execAt("2026-11-05T10:00:00Z", "claude-code", 1000, 200)
+	ev.RetrievedBytes = 400
+	gone := execAt("2026-11-05T11:00:00Z", "claude-code", 1000, 200)
+	gone.RetrievedBytes = 1000 // read back whole: nothing left saved
+	rows := BuildPeriods(nil, []execwrap.Event{ev, gone}, PeriodOptions{Per: PerDay, Now: time.Date(2026, 11, 6, 0, 0, 0, 0, time.UTC)})
+	if len(rows) != 1 || len(rows[0].Harnesses) != 1 || rows[0].Harnesses[0].CompactionTokens != 100 {
+		t.Fatalf("rows = %+v, want 400 net bytes = 100 tokens", rows)
+	}
+}
+
+// A day with runs and nothing compacted reads apart from a day with no runs.
+func TestBuildPeriods_CountsRunsAndCompacted(t *testing.T) {
+	kept := execAt("2026-11-05T10:00:00Z", "claude-code", 900, 100)
+	short := execwrap.Event{TS: "2026-11-05T11:00:00Z", Harness: "claude-code", RawBytes: 20, EmittedBytes: 20}
+	rows := BuildPeriods(nil, []execwrap.Event{kept, short}, PeriodOptions{Per: PerDay, Now: time.Date(2026, 11, 6, 0, 0, 0, 0, time.UTC)})
+	if len(rows) != 1 || len(rows[0].Harnesses) != 1 {
+		t.Fatalf("rows = %+v", rows)
+	}
+	if h := rows[0].Harnesses[0]; h.Commands != 2 || h.Compacted != 1 || h.CompactionTokens != 200 {
+		t.Errorf("cell = %+v, want 2 runs, 1 compacted, 200 tokens", h)
 	}
 }

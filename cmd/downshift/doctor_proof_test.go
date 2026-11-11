@@ -21,7 +21,7 @@ func TestDoctor_HistoricalSessionCannotProveCurrentHost(t *testing.T) {
 		if age != 0 {
 			events = []telemetry.Event{{Timestamp: f.started.Add(-age).Format(time.RFC3339Nano), SessionID: "recorded-session", Verdict: "OK", Outcome: "allow"}}
 		}
-		checkLastEvent(func(_, _, d, _ string) { detail = d }, f.env, "codex", events)
+		checkLastEvent(func(_, _, d, _ string) { detail = d }, f.env, "codex", events, "")
 		if !strings.Contains(detail, "session not verified") {
 			t.Fatalf("age %s: historical event claimed current host proof: %q", age, detail)
 		}
@@ -72,11 +72,12 @@ func TestDoctor_QuotaSourceStaleness(t *testing.T) {
 		expiredAgo time.Duration // storeQuota observes one minute before expiry
 		want       string
 		wantFix    bool
+		effect     string // what the gate does, per core.StaleQuotaHold
 	}{
-		{"fresh", -time.Minute, doctorOK, false},
-		{"exactly at the limit", 14 * time.Minute, doctorOK, false},
-		{"just past the limit", 15 * time.Minute, doctorWarn, true},
-		{"nine days", 9 * 24 * time.Hour, doctorWarn, true},
+		{"fresh", -time.Minute, doctorOK, false, ""},
+		{"exactly at the limit", 14 * time.Minute, doctorOK, false, ""},
+		{"just past the limit", 15 * time.Minute, doctorWarn, true, "holds model rewrites"},
+		{"nine days", 9 * 24 * time.Hour, doctorWarn, true, "ignores it"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newDoctorFixture(t)
@@ -86,6 +87,12 @@ func TestDoctor_QuotaSourceStaleness(t *testing.T) {
 			wantStatus(t, c, tc.want)
 			if tc.wantFix && (!strings.Contains(c.Detail, "freshness limit") || !strings.Contains(c.Detail, "15m") || !strings.Contains(c.Fix, "interactive terminal") || !strings.Contains(c.Fix, "claude -p")) {
 				t.Errorf("stale detail/fix should state age, limit and why the statusline never refreshed: %q / %q", c.Detail, c.Fix)
+			}
+			if tc.effect != "" && !strings.Contains(c.Detail, tc.effect) {
+				t.Errorf("stale detail must match the gate (%q): %q", tc.effect, c.Detail)
+			}
+			if strings.Contains(c.Detail, "runs on a stale reading") {
+				t.Errorf("the gate never routes on a stale reading: %q", c.Detail)
 			}
 		})
 	}

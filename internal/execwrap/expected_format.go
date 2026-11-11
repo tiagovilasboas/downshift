@@ -163,10 +163,13 @@ var commandFormats = map[Family]compressor.Format{
 // but the go command writes module downloads ("go: downloading ...") and
 // linker notes ("# pkg.test" then "ld: warning: ...") on stderr while a clean
 // run goes on; the go test fold keeps every line it cannot account for, so
-// those notes stay and the package lines still fold. make is left out on
-// purpose: a target can run for as long as a server does, and holding its
-// stderr would hide what it logs. Every other family keeps the rule that any
-// stderr byte releases the output untouched.
+// those notes stay and the package lines still fold. Every other family (make
+// included) holds its stderr apart, in write order with stdout: the compressor
+// reads stdout only, and the held stderr follows the compacted stdout whole,
+// on the stderr writer, or is replayed in order when the output stays raw.
+// With a terminal on stdin the first stderr byte still releases the output, so
+// a prompt is never hidden (gate_stdin.go); HoldBound still releases a run
+// that holds too long.
 var stderrIsReport = map[Family]bool{
 	FamilyJest:      true,
 	FamilyVitest:    true,

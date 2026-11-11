@@ -6,9 +6,9 @@
 
 # Downshift
 
-### Menos ruído nos comandos. Roteamento de subagentes com sua política.
+### Corte o desperdício de tokens no Claude Code, no Codex e em outros agentes de programação.
 
-Downshift é uma CLI open source para agentes de programação com IA. Ajuda a reduzir o consumo de tokens de LLM ao compactar a saída de comandos e aplica roteamento de modelos por subagente dentro da sua política. Um único binário Go.
+Agentes de programação com IA gastam boa parte do contexto com logs de teste, saída de build e status, e cada subagente roda no seu modelo principal, a menos que algo defina outro. Isso queima tokens e enche a janela de contexto. Downshift é uma CLI open source que compacta a saída dos comandos suportados antes que o agente a leia, mantendo falhas e códigos de saída: 67,0% menos bytes num benchmark de 113 fixtures. Também aplica o modelo e o esforço escolhidos para cada subagente, dentro da política que você declara. Um único binário Go.
 
 Funciona com harnesses de programação, incluindo Claude Code e Codex CLI; as capacidades de integração e os modelos disponíveis variam por harness e sessão.
 
@@ -36,6 +36,9 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/in
 # No seu repositório:
 downshift setup
 downshift doctor
+
+# Depois, em qualquer sistema: instala a próxima release e atualiza cada harness
+downshift update
 ```
 
 [![O assistente interativo detecta harnesses, permite escolher componentes e revisar alterações, grava após a confirmação e depois o usuário verifica a configuração](../brand/readme-media/setup-flow.svg)](../brand/readme-media/setup-flow.png)
@@ -128,16 +131,17 @@ No chat do seu harness de programação, descreva sua tarefa e digite:
 
 ## Funciona com seu harness de programação
 
-O Downshift foi criado com Claude Code e oferece suporte a outros harnesses em diferentes estágios de verificação.
+O Downshift foi criado com Claude Code e oferece suporte a outros harnesses em diferentes estágios de verificação. **Suportado** significa que o `doctor` verificou o hook em uma sessão real; **Beta** significa que o hook rodou em uma sessão real e está documentado, mas o `doctor` ainda não o verificou; **Experimental** significa que o efeito não foi confirmado ou foi visto uma vez. Critérios e evidências: [níveis de suporte](../reference/harness-matrix.md#support-tiers).
 
-| Harness | Status | Evidência de roteamento |
+| Harness | Nível | Evidência de roteamento |
 | --- | --- | --- |
-| Claude Code | Concluído | Reescrita observada em um subagente real. |
-| Codex | Funcional | Reescrita emitida; aplicação inferida, sem observação direta. |
-| OpenCode | Beta | Roteamento e uso do subagente observados no OpenCode 2.2.5. |
+| Claude Code | Suportado | Reescrita observada em um subagente real; o `doctor` a lê de sessões reais. |
+| Codex | Beta | Reescrita emitida; aplicação inferida, sem observação direta. Precisa da flag de hooks e da confiança via `/hooks`; o `doctor` lê a flag e indica a correção. |
+| OpenCode | Beta | Roteamento e uso do subagente observados no OpenCode 2.2.5 pelo plugin ponte. |
+| KiroCrew | Beta | Bloqueio por política e nova tentativa observados; sem reescrita de modelo no lugar. |
+| Kiro IDE | Beta | Payload do hook capturado ao vivo; só observação, sem reescrita. |
 | Cursor | Experimental | Reescrita emitida; aplicação pelo executor não confirmada. |
 | Antigravity | Experimental | Um subagente observado em uma versão. |
-| KiroCrew | Experimental | Modo de política, sem reescrita de modelo no lugar. |
 
 Os modelos disponíveis para um harness ou sessão não são considerados disponíveis automaticamente em outro. Consulte a [matriz completa de harnesses](../reference/harness-matrix.md) para detalhes de integração, evidências e limites.
 
@@ -145,13 +149,24 @@ Os modelos disponíveis para um harness ou sessão não são considerados dispon
 
 | Medição | Resultado | Escopo |
 | --- | --- | --- |
-| Compactação de saída sem perda | **60,3% menos bytes** | 62 fixtures sem perda em um corpus sintético. |
-| Compactação de saída com CCR | **67,1% menos bytes** | Corpus sintético de 110 fixtures (53,0% com CCR desligado), saída de comandos e leituras do agent-desktop; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
+| Compactação de saída sem perda | **59,9% menos bytes** | 64 fixtures sem perda em um corpus sintético. |
+| Compactação de saída com CCR | **67,0% menos bytes** | Corpus sintético de 113 fixtures (53,1% com CCR desligado), saída de comandos e leituras do agent-desktop; repetições exibidas podem ser agrupadas e a saída bruta pode ser recuperada. |
+| Compactação balanced, saídas grandes | **76,3% menos bytes** | 4 saídas reais deste repositório acima de 16 KB (`go test -v`, `git show`, `git log -p`, `grep -rn`); 35,0% só com o compressor sem perda. As linhas cortadas voltam com `downshift retrieve`. |
 | Roteamento de subagentes | **24,1% menos tokens por execução aceita** | Estudo controlado com 46 execuções no Claude Code para tarefas mecânicas, realizado antes da decisão O8. |
 
 São medições separadas, com unidades e cargas de trabalho diferentes. Os totais do corpus sintético incluem apenas fixtures processadas pelo compactor e excluem fixtures preservadas. O resultado de roteamento é evidência histórica; ele não estabelece o efeito da implementação após O8. A economia no uso cotidiano sem restrições ainda não foi estabelecida. Estimativas de tokens baseadas em bytes não são uma fatura nem uma medida dos limites do plano.
 
 [Benchmark de compactação](../reference/bench.md) · [Estudo de roteamento](../evidence/four-arm-mechanical-2026-10-21.md) · [Guia de evidências](../guides/evidence.md)
+
+## A pesquisa por trás do design
+
+O design do Downshift parte dos trabalhos publicados pela Anthropic sobre orquestração. Um líder forte planeja e confere, workers mais baratos fazem trabalho delimitado, e cada agente a mais precisa pagar os tokens que gasta.
+
+- [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (2025): um líder Opus com subagentes Sonnet superou um único agente Opus em 90,2% em pesquisa, com cerca de 15× os tokens de um chat. O mesmo texto observa que programação se paraleliza menos que pesquisa.
+- [Patterns and problems in emerging multiagent systems](https://www.anthropic.com/research/multiagent-systems) (2026): um enxame coordenado encontrou 266 vulnerabilidades contra 21 dos agentes independentes, em boa parte por cobrir mais terreno; nos mesmos diretórios, os tokens por achado foram comparáveis.
+- [Riemann zeta research with 60 subagents](https://www.anthropic.com/research/riemann-zeta) (2026): de 60 subagentes, 2 desenvolveram as ideias centrais, 30 tentaram e falharam, e 13 validaram os argumentos.
+
+Como cada achado vira um princípio de design, e o que ele não mostra: [True north](../true-north.md) · [Reconciliação](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md)
 
 ## Feito para inspeção e controle
 
@@ -174,6 +189,20 @@ São medições separadas, com unidades e cargas de trabalho diferentes. Os tota
 - Workers com escrita exigem ativação explícita e usam worktrees separados. O Downshift não mescla suas branches nem oferece uma etapa de aprovação para deploys e outras ações de risco.
 
 [Segurança](../features/safety.md) · [Telemetria](../features/telemetry.md) · [Limitações conhecidas](../reference/known-limitations.md)
+
+## Perguntas frequentes
+
+**Como reduzir o consumo de tokens no Claude Code, no Codex ou no Cursor?** Instale o Downshift e rode `downshift setup`. A saída dos comandos suportados é compactada antes de entrar na janela de contexto, e cada subagente roda no modelo escolhido para ele, dentro da sua política. No Claude Code a reescrita é automática; nos outros, o agente roda `downshift compact -- <comando>`. Confira seus números com `downshift session` e `downshift report`.
+
+**Subagentes do Claude Code gastam meu limite de uso mais rápido?** Podem gastar. Cada subagente começa com um contexto novo e faz as próprias requisições, que contam no mesmo limite da conversa principal, e roda no seu modelo principal, a menos que algo defina outro. Coloque os subagentes de rotina num modelo menor: `downshift policy init` grava um perfil `explore` que manda o Explore para o tier pequeno. [Guia](https://downshift-ai.vercel.app/pt-br/guias/subagentes-gastam-limite-claude-code/)
+
+**O Downshift economiza meu limite de uso do Claude Code?** Ainda não foi medido. O Downshift mostra os tokens que rodaram abaixo do modelo da sessão e os bytes que a compactação removeu. Como um plano converte tokens nos limites de 5 horas e semanal não é público, então não afirmamos economia de limite.
+
+**O roteamento de subagentes quebra o cache de prompt?** Não. A escolha vale para o subagente inteiro, não para turnos da sessão principal, que mantém um único modelo durante toda a conversa.
+
+**Qual a diferença para o `/compact`?** O `/compact` resume o histórico que já está na janela de contexto. O Downshift encolhe a saída dos comandos antes que ela entre. Os dois se complementam.
+
+**Qual a diferença para o `CLAUDE_CODE_SUBAGENT_MODEL`?** Essa variável define um modelo padrão para todo subagente que nada mais configura. O Downshift aplica o modelo escolhido para cada subagente dentro de uma política declarada, mantém o modelo pedido na dúvida, registra onde os tokens rodaram e também funciona no Codex, no Cursor e no OpenCode.
 
 ## Documentação e comunidade
 

@@ -27,7 +27,8 @@ clean     git_log     gitlog_default_real.txt
 clean     git_diff    gitdiff_unstaged_change.txt
 clean     git_remote  remote_hook_pass_clean.txt
 preserve  git_remote  remote_up_to_date.txt
-preserve  git_diff    gitdiff_danger_word.txt
+clean     git_diff    gitdiff_danger_word.txt
+preserve  git_diff    gitdiff_stray_warning.txt
 clean     progress       progress_clean.txt
 preserve  progress       progress_shrinking.txt
 preserve  progress       progress_danger.txt
@@ -43,9 +44,11 @@ preserve  turbo          turbo_output_line.txt
 clean     nx             nx_clean.txt
 preserve  nx             nx_output_line.txt
 clean     lockfile_diff  lockfile_diff_clean.txt
-preserve  lockfile_diff  lockfile_diff_danger.txt
+clean     lockfile_diff  lockfile_diff_danger.txt
+preserve  lockfile_diff  lockfile_diff_stray_error.txt
 clean     git_show    gitshow_head.txt
-preserve  git_show    gitshow_danger_word.txt
+clean     git_show    gitshow_danger_word.txt
+preserve  git_show    gitshow_context_secret.txt
 clean     git_status  gitstatus_ansi.txt
 preserve  git_status  gitstatus_clean_ahead.txt
 preserve  git_status  gitstatus_clean_behind.txt

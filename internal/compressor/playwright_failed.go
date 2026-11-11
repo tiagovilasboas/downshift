@@ -5,9 +5,10 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Playwright failed runs, read from the list reporter. A run is split at its
@@ -25,13 +26,13 @@ const playwrightSpan = `\(\d+(?:\.\d+)?(?:ms|s|m)\)`
 
 var (
 	// rePlaywrightFailBlock opens the first failure block.
-	rePlaywrightFailBlock = regexp.MustCompile(`^ {2}1\) \S.* ─{3,}$`)
-	rePlaywrightBlockHead = regexp.MustCompile(`^ {2}(\d+)\) \S.* ─{3,}$`)
+	rePlaywrightFailBlock = lazyre.New(`^ {2}1\) \S.* ─{3,}$`)
+	rePlaywrightBlockHead = lazyre.New(`^ {2}(\d+)\) \S.* ─{3,}$`)
 	// rePlaywrightFailedTest and rePlaywrightSkippedTest are the lines kept in place.
-	rePlaywrightFailedTest  = regexp.MustCompile(`^\s*✘\s+\d+\s+\S.* ` + playwrightSpan + `$`)
-	rePlaywrightSkippedTest = regexp.MustCompile(`^\s*-\s+\d+\s+\S.*$`)
+	rePlaywrightFailedTest  = lazyre.New(`^\s*✘\s+\d+\s+\S.* ` + playwrightSpan + `$`)
+	rePlaywrightSkippedTest = lazyre.New(`^\s*-\s+\d+\s+\S.*$`)
 	// rePlaywrightCount reads the summary: "  4 failed", "  1 flaky".
-	rePlaywrightCount = regexp.MustCompile(`^ {2}(\d+) (failed|flaky|skipped|did not run|interrupted|passed)(?: .*)?$`)
+	rePlaywrightCount = lazyre.New(`^ {2}(\d+) (failed|flaky|skipped|did not run|interrupted|passed)(?: .*)?$`)
 )
 
 // compactFailedPlaywright cuts the passing noise of a failed playwright run

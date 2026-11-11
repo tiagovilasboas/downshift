@@ -40,6 +40,17 @@ func (c HarnessCapabilities) CategoryOf(tool string) ToolCategory {
 	return CategoryOther
 }
 
+// ReplacesOutputOf reports whether a hook answer can replace the result of a
+// tool of category cat on this harness (ReplacesToolOutput).
+func (c HarnessCapabilities) ReplacesOutputOf(cat ToolCategory) bool {
+	for _, r := range c.ReplacesToolOutput {
+		if r == cat {
+			return true
+		}
+	}
+	return false
+}
+
 // IsMechanical reports whether the category is read, search or shell work.
 func (c ToolCategory) IsMechanical() bool {
 	for _, m := range MechanicalCategories {

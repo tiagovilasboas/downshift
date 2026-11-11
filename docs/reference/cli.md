@@ -43,6 +43,21 @@ downshift setup --dry-run    # Preview changes
 downshift setup --undo       # Restore previous configuration
 ```
 
+### `downshift update`
+
+Install the latest release over this binary, then refresh every harness.
+
+```bash
+downshift update [--check] [--yes] [--version vX.Y.Z]
+```
+
+**Flags:**
+- `--check` — Say whether a newer release exists; change nothing
+- `--yes`, `-y` — Pass `--yes` to setup: write the harness files without asking
+- `--version vX.Y.Z` — Install this release instead of the latest
+
+Steps: resolve the tag from the GitHub releases page (no API call), download the archive for this platform, check its sha256 against `checksums.txt` and, with the `gh` CLI, its build provenance, replace the binary in place (on Windows the running file is moved to `downshift.exe.old`, removed on the next update), then run the new binary's `setup` and `doctor`. A current binary skips the download; setup still runs. Every download is https only.
+
 ### `downshift uninstall`
 
 Restore the harness hook configurations setup changed and remove the wrappers it generated.
@@ -224,7 +239,7 @@ downshift report clear [--dry-run] [--yes]
 
 **Flags:**
 - `--days=N` — Window in days (default: 30, the same window as the Agents panel)
-- `--daily` — One row per calendar day of the window (local time zone, today included), with per harness the tokens the Compactor kept out of the context (`saved`) and the billable tokens that ran below the session model (`below`). Tokens only, never summed across columns or harnesses
+- `--daily` — One row per calendar day of the window (local time zone, today included), with per harness the Compactor runs (`runs`, `compacted`), the tokens it kept out of the context (`saved`, net of what `retrieve` read back) and the billable tokens that ran below the session model (`below`). Tokens only, never summed across columns or harnesses
 - `--history` — The whole retained history instead of a window, by week (Monday start, the default) or by day with `--by=day`. Cannot be combined with `--days` or `--daily`
 - `--json` — Output JSON instead of text
 - `--text` — Plain text columns
@@ -252,8 +267,12 @@ the `held_after_failure` row. `--json` carries the rows as `rework_by_verdict`, 
 `reworked_correlation_ids`: the `correlation_id` of every decision of that verdict that was followed by
 rework, so the misrouted spawns can be found in the event log.
 
-The report opens with **COMPACTION SAVINGS PER HARNESS**, in tokens only, per harness and never
-summed, before the routed table. Then it ends with more sections. They carry no money and no `$`. There is no cross-harness total line.
+The report opens with **COMPACTION SAVINGS PER HARNESS**, per harness and never summed, before the
+routed table. Each harness carries what the agents pane shows for a session, here for the whole window:
+tokens saved, the share of raw output cut (bytes), runs and compacted, hook runs against direct calls,
+bytes read back with `retrieve` (already subtracted), the spawns whose model or effort changed or that
+were held, and the share of subagent billable tokens that ran below the session model. `--json` carries
+these rows as `summary_by_harness`. Then it ends with more sections. They carry no money and no `$`. There is no cross-harness total line.
 
 - **Why spawns changed**, per harness: the spawns in the window counted by routing verdict
   (`kept`, `profile`, `rule`, `hint_down`, `class`, `class_up`, `default`, `agent_default`, `guard_floor`, `held_unknown`, `refused_config`)
@@ -340,6 +359,10 @@ downshift compactor -- <command> [args...]
 ```
 
 **Aliases:** `compact`, `exec`
+
+`--harness=<name>` before the `--` names the harness the run belongs to in the report, for a harness whose
+shell exports no session variable. The hook rewrite and the steering `downshift setup` writes add it; an
+unknown name is ignored and the harness is read from the environment.
 
 **Examples:**
 ```bash
@@ -720,7 +743,10 @@ working; it prints a one-line notice (silent for `dci hook <harness>`) and exits
 
 ### `downshift help`
 
-Show the common commands, or every command with `--all` (`-a`).
+Show the common commands, or every command with `--all` (`-a`). The default list holds the daily commands
+only. Commands marked experimental in `internal/clispec` (`context`, `learning`, `loop`) and the maintainer
+tools (`eval-outcome`, `probe`) appear only under `--all`; they stay callable and `docs-manifest` flags them
+`"experimental": true`.
 
 ```bash
 downshift help [--all]
@@ -768,6 +794,8 @@ Maintainer tool: `downshift probe <event>` records a hook payload's field names 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DOWNSHIFT_EXEC` | Enable/disable compaction | `1` |
+| `DOWNSHIFT_BALANCED` | `0` keeps every compacted output lossless. On (the default), an output over 16 KB whose raw output CCR stored is cut to its head, tail and failure lines (a diff to its headers and first hunk lines, a search to its first matches per file); the marker names the `downshift retrieve` id. Output over the 2 MB hold limit is spooled to a temporary file and printed as its head, tail and retrieve id. Overrides `"balanced"` in the config file; the threshold and line caps are the config keys `balanced_threshold_kb`, `balanced_log_head`, `balanced_log_tail`, `balanced_hunk_lines`, `balanced_diff_lines`, `balanced_matches_per_file`, `balanced_match_lines` ([ccr.md](../guides/ccr.md)) | `1` |
+| `DOWNSHIFT_POST_COMPACT` | `0` turns off post-run compaction: on a harness whose hook can replace a tool's result after it ran (Claude Code), a shell output the pre-run rewrite did not wrap (a pipe, a redirect, a long command) and a large Grep or Glob result are compacted before the model reads them, with the raw text kept by CCR. Read results are never changed. Off whenever `DOWNSHIFT_EXEC=0` or `"exec": false` | `1` |
 | `DOWNSHIFT_DESKTOP_DELTA` | `0` sends every agent-desktop read as the whole compact view, never a delta from the previous read ([agent-desktop](../guides/agent-desktop.md)) | `1` |
 | `DOWNSHIFT_LEARNING` | Enable/disable learning | `1` |
 | `DOWNSHIFT_STATE_DIR` | State directory | `~/.downshift` |

@@ -4,13 +4,13 @@
 package discovery
 
 import (
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/catalog"
 	"github.com/tiagovilasboas/downshift-ai/internal/core"
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Catalog is what discovery needs from the catalog: metadata for an id (Order)
@@ -174,7 +174,7 @@ func newer(a, b Model) bool {
 	return compareNumbers(a.ID, b.ID) > 0
 }
 
-var digits = regexp.MustCompile(`\d+`)
+var digits = lazyre.New(`\d+`)
 
 // compareNumbers compares the numeric runs of two ids left to right
 // ("claude-sonnet-4.6" > "claude-sonnet-4.5"), then falls back to string order.

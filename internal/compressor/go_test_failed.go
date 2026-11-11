@@ -5,28 +5,29 @@ package compressor
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
 	// reGoFailedRunMarker is a RUN/PAUSE/CONT/NAME header of one test.
-	reGoFailedRunMarker = regexp.MustCompile(`^=== (?:RUN|PAUSE|CONT|NAME)\s+(\S+)$`)
+	reGoFailedRunMarker = lazyre.New(`^=== (?:RUN|PAUSE|CONT|NAME)\s+(\S+)$`)
 	// reGoFailedPass is the outcome line of a passed test or subtest.
-	reGoFailedPass = regexp.MustCompile(`^(\s*)--- PASS: (\S+) \([^()]*\)$`)
+	reGoFailedPass = lazyre.New(`^(\s*)--- PASS: (\S+) \([^()]*\)$`)
 	// reGoFailedFail is the outcome line of a failed test or subtest.
-	reGoFailedFail = regexp.MustCompile(`^\s*--- FAIL: (\S+) \([^()]*\)$`)
+	reGoFailedFail = lazyre.New(`^\s*--- FAIL: (\S+) \([^()]*\)$`)
 	// reGoFailedOK is a passing package line without coverage data. A line
 	// with "coverage:" is kept, since the percentage is information.
-	reGoFailedOK = regexp.MustCompile(`^ok\s+\S+\s+(?:\(cached\)|[0-9.]+s)$`)
+	reGoFailedOK = lazyre.New(`^ok\s+\S+\s+(?:\(cached\)|[0-9.]+s)$`)
 	// reGoFailedSignal marks output that really is a failed go test run.
-	reGoFailedSignal = regexp.MustCompile(`(?m)^(?:\s*--- FAIL:|FAIL(?:\s|$)|\s*panic:|fatal error:|WARNING: DATA RACE)|\[(?:build|setup) failed\]`)
+	reGoFailedSignal = lazyre.New(`(?m)^(?:\s*--- FAIL:|FAIL(?:\s|$)|\s*panic:|fatal error:|WARNING: DATA RACE)|\[(?:build|setup) failed\]`)
 	// reGoFailedJSON is a `go test -json` event line.
-	reGoFailedJSON = regexp.MustCompile(`(?m)^\{"`)
+	reGoFailedJSON = lazyre.New(`(?m)^\{"`)
 	// reGoStdlibFunc matches stack frame function names originating in stdlib runtime or testing.
-	reGoStdlibFunc = regexp.MustCompile(`^(?:testing\.|runtime\.|created by (?:testing|runtime)\.)`)
+	reGoStdlibFunc = lazyre.New(`^(?:testing\.|runtime\.|created by (?:testing|runtime)\.)`)
 	// reGoStdlibPath matches stack frame source paths originating in stdlib runtime or testing.
-	reGoStdlibPath = regexp.MustCompile(`^\t.*(?:/src/testing/|/src/runtime/|/testing/testing\.go:|/runtime/panic\.go:|/runtime/[a-zA-Z0-9_]+\.(?:go|s):)`)
+	reGoStdlibPath = lazyre.New(`^\t.*(?:/src/testing/|/src/runtime/|/testing/testing\.go:|/runtime/panic\.go:|/runtime/[a-zA-Z0-9_]+\.(?:go|s):)`)
 )
 
 // compactFailedGoTest drops passing noise, folds internal stdlib panic frames,

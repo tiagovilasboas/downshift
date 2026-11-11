@@ -148,58 +148,6 @@ Kiro IDE adapter must operate in **observation-only mode**:
 2. `internal/adapters/kiro/kiro.go`: Observation-only mode, no rewrite attempt
 3. `docs/reference/harness-matrix.md`: Updated status and capability grid
 
-## Open Source Projects Analysis (2026-10-29)
-
-REA of existing model routing projects reveals how others approach this problem:
-
-### Projects with Full Rewrite (Claude Code)
-
-| Project | Language | Approach |
-|---------|----------|----------|
-| [nedjamez/claude-code-model-router](https://github.com/nedjamez/claude-code-model-router) | Python | Regex keyword matching for opus/sonnet/haiku |
-| [leftspace89/jevsubrouter](https://github.com/leftspace89/jevsubrouter) | Node.js | External API (TypeSafe) for classification |
-| [wannabefro/claude-tier-router](https://github.com/wannabefro/claude-tier-router) | Node.js | Policy-driven defaults |
-
-All use `hookSpecificOutput.updatedInput` to rewrite the model field. This is **only possible on Claude Code**.
-
-### Projects for Kiro (No Rewrite)
-
-| Project | Approach |
-|---------|----------|
-| [TeiNam/kiro-with-harness](https://github.com/TeiNam/kiro-with-harness) | **Design-time agent definitions** with fixed models per role |
-| [NachoFLizaur/oh-my-kiro](https://github.com/NachoFLizaur/oh-my-kiro) | Multi-agent orchestration (Phantom/Revenant/Wraith) |
-| [davide-desio-eleva/kirograph](https://github.com/davide-desio-eleva/kirograph) | Knowledge graph, not routing |
-
-**Key insight from kiro-with-harness:** Model routing is achieved via **steering + agent definitions**, not runtime hooks:
-
-```markdown
-| Tier | Model | Agents |
-|------|-------|--------|
-| Deep reasoning | claude-opus-5.5 | orchestrator, architect, security-reviewer |
-| Balanced | claude-sonnet-5.5 | code-reviewer, refactor-cleaner |
-| Cost-optimized | claude-haiku-5.5 | translator-docs, article-writer |
-```
-
-The orchestrator agent chooses which specialized agent to invoke based on the task. Each agent has its model fixed in its definition file.
-
-### Implications for Downshift
-
-| Harness | Can Rewrite | Implementation |
-|---------|-------------|----------------|
-| Claude Code | ✅ Yes | `updatedInput` in PreToolUse |
-| Codex | ✅ Yes | Same as Claude Code (requires `permissionDecision`) |
-| Kiro IDE | ❌ No | Observation + steering advisory |
-| Kiro CLI V3 | ❌ No | Same as IDE |
-| KiroCrew | ❌ No | Policy mode (block only) |
-
-### Recommended Approach for Kiro
-
-Since Kiro cannot rewrite models at runtime, Downshift should:
-
-1. **Telemetry:** Record what model SHOULD have been used (already implemented)
-2. **Steering Advisory:** Inject guidance via hook `agent` action
-3. **Dashboard:** Show "missed savings" opportunities
-
 ## Future Work
 
 If Kiro adds `updatedInput` support (or a model field to `invoke_sub_agent`), the adapter can be upgraded. Monitor issues #6637 and #4180.

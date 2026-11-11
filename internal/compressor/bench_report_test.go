@@ -209,6 +209,7 @@ func renderBench(rows []benchRow) string {
 	fmt.Fprintf(&b, "- Lossless families (%d fixtures) have **%.1f%% fewer bytes** while keeping every failure line, exit code and stack trace.\n", lossless.files, lossless.saving())
 	b.WriteString("- Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.\n")
 	b.WriteString("- Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).\n")
+	b.WriteString(balancedSection(balancedRows()))
 	return b.String()
 }
 

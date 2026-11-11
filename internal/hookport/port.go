@@ -34,6 +34,12 @@ type Port struct {
 	// EndLine wraps the child-end line in this harness's hook wire output.
 	// Nil means the harness has no way to show it.
 	EndLine func(line string) any
+	// ParseToolOutput and ReplaceToolOutput carry a finished tool call to the
+	// shared post-run compaction and its answer back to the harness. Both nil
+	// means the adapter exposes none; the runner then answers as before. They
+	// are used only when the harness declares ReplacesToolOutput.
+	ParseToolOutput   ParseToolOutputFunc
+	ReplaceToolOutput ReplaceToolOutputFunc
 }
 
 // UsageOutFunc is UsageFunc that may also return the hook's stdout. A nil

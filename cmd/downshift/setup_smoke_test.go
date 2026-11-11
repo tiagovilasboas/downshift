@@ -13,7 +13,7 @@ import (
 	"github.com/tiagovilasboas/downshift-ai/internal/telemetry"
 )
 
-var smokeHarnesses = []string{"claude-code", "cursor", "codex", "antigravity", "kirocrew", "opencode"}
+var smokeHarnesses = []string{"claude-code", "cursor", "codex", "antigravity", "kiro", "kirocrew", "opencode"}
 
 func TestSmokeCheckAllHarnesses(t *testing.T) {
 	for _, h := range smokeHarnesses {

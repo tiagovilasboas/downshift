@@ -82,6 +82,9 @@
           "name": "--session"
         },
         {
+          "name": "--harness"
+        },
+        {
           "name": "--allowlisted"
         },
         {
@@ -109,11 +112,13 @@
     },
     {
       "name": "context",
-      "summary": "Context optimisation status, providers and compression (experimental)"
+      "summary": "Context optimisation status, providers and compression (experimental)",
+      "experimental": true
     },
     {
       "name": "context compress",
       "summary": "Compress tool output read from stdin (experimental)",
+      "experimental": true,
       "flags": [
         {
           "name": "--exit"
@@ -132,6 +137,7 @@
     {
       "name": "context enable",
       "summary": "Enable the native compactor, or record a companion provider",
+      "experimental": true,
       "flags": [
         {
           "name": "--exec"
@@ -212,6 +218,7 @@
     {
       "name": "eval-outcome",
       "summary": "Outcome eval: executable checks, small vs frontier pass rate",
+      "experimental": true,
       "flags": [
         {
           "name": "--verify"
@@ -306,11 +313,13 @@
     },
     {
       "name": "learning",
-      "summary": "Compressor learning status"
+      "summary": "Compressor learning status",
+      "experimental": true
     },
     {
       "name": "loop",
       "summary": "Run an engineering loop with sensor verification and cascade auto-upgrade",
+      "experimental": true,
       "flags": [
         {
           "name": "--task"
@@ -426,7 +435,8 @@
     },
     {
       "name": "probe",
-      "summary": "Record a payload's field names (never prompts or paths) in probe.jsonl"
+      "summary": "Record a payload's field names (never prompts or paths) in probe.jsonl",
+      "experimental": true
     },
     {
       "name": "quota",
@@ -667,6 +677,22 @@
       ]
     },
     {
+      "name": "update",
+      "summary": "Install the latest release, then refresh every harness (asks first)",
+      "flags": [
+        {
+          "name": "--check"
+        },
+        {
+          "name": "--yes",
+          "short": "-y"
+        },
+        {
+          "name": "--version"
+        }
+      ]
+    },
+    {
       "name": "usage",
       "summary": "Post-spawn usage observation: records tokens"
     },
@@ -691,6 +717,7 @@
     }
   ],
   "env_vars": [
+    "DOWNSHIFT_BALANCED",
     "DOWNSHIFT_BUDGET_TOKENS",
     "DOWNSHIFT_CCR",
     "DOWNSHIFT_CCR_FAILURES",
@@ -715,6 +742,7 @@
     "DOWNSHIFT_MAX_PARALLEL",
     "DOWNSHIFT_MINILM",
     "DOWNSHIFT_PLAIN",
+    "DOWNSHIFT_POST_COMPACT",
     "DOWNSHIFT_QUIET",
     "DOWNSHIFT_QUOTA_FILE",
     "DOWNSHIFT_QUOTA_MODE",
@@ -781,7 +809,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "claude-code": {
       "CanRewriteModel": true,
@@ -832,7 +861,12 @@
       "MaxParallel": 0,
       "WorkerAgent": "claude",
       "WorkerReadOnlyVerified": true,
-      "SessionWideTranscript": true
+      "SessionWideTranscript": true,
+      "ReplacesToolOutput": [
+        "shell",
+        "search",
+        "read"
+      ]
     },
     "codex": {
       "CanRewriteModel": true,
@@ -867,7 +901,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "codex",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "cursor": {
       "CanRewriteModel": true,
@@ -907,7 +942,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "kiro": {
       "CanRewriteModel": false,
@@ -942,7 +978,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "kirocrew": {
       "CanRewriteModel": false,
@@ -977,7 +1014,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     },
     "opencode": {
       "CanRewriteModel": true,
@@ -1014,7 +1052,8 @@
       "MaxParallel": 0,
       "WorkerAgent": "",
       "WorkerReadOnlyVerified": false,
-      "SessionWideTranscript": false
+      "SessionWideTranscript": false,
+      "ReplacesToolOutput": null
     }
   }
 }

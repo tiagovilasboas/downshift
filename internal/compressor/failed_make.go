@@ -5,12 +5,13 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // reMakeFailure is the line make prints when a recipe fails: the failing
 // target, its exit status, and the "Stop" that ends the run.
-var reMakeFailure = regexp.MustCompile(`(?m)^make(?:\[\d+\])?: \*\*\* .*(?:Error \d+|Stop\.?)\s*$`)
+var reMakeFailure = lazyre.New(`(?m)^make(?:\[\d+\])?: \*\*\* .*(?:Error \d+|Stop\.?)\s*$`)
 
 // plainMakeFailedText accepts a failed make transcript only as written: no
 // CRLF or missing final newline, and a make failure line in it. Without that

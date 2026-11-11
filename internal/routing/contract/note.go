@@ -3,7 +3,10 @@
 
 package contract
 
-import "regexp"
+import (
+	"regexp"
+	"sync"
+)
 
 // Verdict says which precedence step decided (design section 2 precedence and
 // routing note; REA section 2 verdicts). Exactly one per decision.
@@ -118,19 +121,19 @@ func (c Channel) Valid() bool { return member(c, Channels()) }
 // identPattern bounds the names a policy may declare, so a rule id or profile
 // name in a Note can never carry prose, a path or a prompt. routing/policy
 // refuses any other name at load (design section 2: config errors at load).
-var identPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,63}$`)
+var identPattern = sync.OnceValue(func() *regexp.Regexp { return regexp.MustCompile(`^[a-z0-9][a-z0-9_.-]{0,63}$`) })
 
 // RuleID is the id of a declared rule. Valid names match ^[a-z0-9][a-z0-9_.-]{0,63}$.
 type RuleID string
 
 // Valid reports whether id is a well-formed rule id.
-func (id RuleID) Valid() bool { return identPattern.MatchString(string(id)) }
+func (id RuleID) Valid() bool { return identPattern().MatchString(string(id)) }
 
 // ProfileName is the name of a declared profile; same shape as RuleID.
 type ProfileName string
 
 // Valid reports whether p is a well-formed profile name.
-func (p ProfileName) Valid() bool { return identPattern.MatchString(string(p)) }
+func (p ProfileName) Valid() bool { return identPattern().MatchString(string(p)) }
 
 // Note is the routing note of one decision, for telemetry and status
 // surfaces (design section 2 "Routing note"; REA section 2 routing note,

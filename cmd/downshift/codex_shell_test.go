@@ -46,7 +46,7 @@ func runCodexHook(t *testing.T, payload string) (int, string) {
 }
 
 func TestCodexShellRewrite_ThroughSharedRunner(t *testing.T) {
-	want := "'" + testExe + "' compact --session=" + testSession + " -- git status --short"
+	want := "'" + testExe + "' compact --harness=codex --session=" + testSession + " -- git status --short"
 	rc, out := runCodexHook(t, codexBashPayload(t, "Bash", "git status --short"))
 	if rc != 0 {
 		t.Fatalf("rc = %d", rc)
@@ -58,7 +58,9 @@ func TestCodexShellRewrite_ThroughSharedRunner(t *testing.T) {
 		t.Fatalf("stdout %q: %v", out, err)
 	}
 	h := resp.HookSpecificOutput
-	if string(h["hookEventName"]) != `"PreToolUse"` || string(h["permissionDecision"]) != `"allow"` {
+	// Codex rejects unknown fields and applies updatedInput only with
+	// permissionDecision "allow" (internal/adapters/codex/wire_conformance_test.go).
+	if string(h["hookEventName"]) != `"PreToolUse"` || string(h["permissionDecision"]) != `"allow"` || len(h) != 3 {
 		t.Fatalf("wrong envelope: %s", out)
 	}
 	var ti map[string]any

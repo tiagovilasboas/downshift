@@ -34,6 +34,18 @@ const (
 	// PassthroughRefused: the command was not allowlisted and did not run
 	// (exit 126).
 	PassthroughRefused = "refused"
+	// PassthroughTooLarge: the output passed the hold limit
+	// (compressor.MaxProcessableBytes) and streamed raw, because its raw
+	// output could not be kept for retrieve (CCR or balanced off, a spool
+	// that could not be written or stored, or one past SpoolLimit).
+	PassthroughTooLarge = "too_large"
+	// PassthroughStderr: the program wrote on stderr while a terminal was on
+	// stdin, in a family whose stderr is not part of its report, and the
+	// output streamed raw so a prompt is never hidden.
+	PassthroughStderr = "stderr_output"
+	// PassthroughHoldTimeout: the output was held longer than HoldBound and
+	// streamed raw.
+	PassthroughHoldTimeout = "hold_timeout"
 )
 
 // Event is one `downshift exec` run. It carries the family, byte counts, the
@@ -52,7 +64,8 @@ type Event struct {
 	Folded bool `json:"folded,omitempty"`
 	// Passthrough is one of the Passthrough* reasons when Compacted is false,
 	// and empty when Compacted is true. Empty on a not-compacted row also means
-	// the reason was not recorded (output streamed before the gate decided).
+	// the reason was not recorded: a row written before too_large,
+	// stderr_output and hold_timeout existed, or a run with compaction off.
 	Passthrough string `json:"passthrough,omitempty"`
 	// PassthroughDetail refines Passthrough "unrecognized_output" with one of
 	// the Detail* codes (danger_word, ansi, cr, ...). Optional: rows written

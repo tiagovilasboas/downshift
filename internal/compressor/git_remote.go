@@ -6,9 +6,10 @@ package compressor
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // FormatGitRemote is the output of a git operation that runs hooks or talks
@@ -19,18 +20,18 @@ const FormatGitRemote Format = "git_remote"
 
 var (
 	// Object-transfer progress and the pack statistics printed after it.
-	reGitRemoteProgress = regexp.MustCompile(`^(?:(?:Enumerating|Counting|Compressing|Writing|Receiving|Unpacking|Resolving) (?:objects|deltas):.*` +
+	reGitRemoteProgress = lazyre.New(`^(?:(?:Enumerating|Counting|Compressing|Writing|Receiving|Unpacking|Resolving) (?:objects|deltas):.*` +
 		`|Delta compression using up to \d+ threads.*` +
 		`|Total \d+ \(delta \d+\), reused .*)$`)
 	// The pure frame lines of the banner box and the rules a hook runner draws
 	// around its steps: a corner followed only by box drawing characters, a
 	// rule, or an empty box side. A line with text inside is not a frame.
-	reGitRemoteBanner = regexp.MustCompile(`^\s*(?:[╭╰┌└][─━═╮╯┐┘\s]*|[─━═]{4,}\s*|│\s*)$`)
+	reGitRemoteBanner = lazyre.New(`^\s*(?:[╭╰┌└][─━═╮╯┐┘\s]*|[─━═]{4,}\s*|│\s*)$`)
 	// A box side with text after it: the hook runner's title box on a clean
 	// run, but on a failing run it can carry the failure itself ("│ FAIL: ..."),
 	// so it is cut only on a zero exit, and never when it carries a warning or
 	// a danger word (a hook can warn and still pass).
-	reGitRemoteBoxText = regexp.MustCompile(`^\s*│.*$`)
+	reGitRemoteBoxText = lazyre.New(`^\s*│.*$`)
 )
 
 // CompressGitRemote cuts only noise from a remote run and keeps every other

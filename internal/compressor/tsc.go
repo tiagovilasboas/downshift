@@ -5,12 +5,13 @@ package compressor
 
 import (
 	"bytes"
-	"regexp"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 var (
-	reTSCPass  = regexp.MustCompile(`(?m)Found 0 errors`)
-	reTSCError = regexp.MustCompile(`(?m)(?:error\s+TS\d+:|Found\s+[1-9]\d*\s+errors?)`)
+	reTSCPass  = lazyre.New(`(?m)Found 0 errors`)
+	reTSCError = lazyre.New(`(?m)(?:error\s+TS\d+:|Found\s+[1-9]\d*\s+errors?)`)
 )
 
 var (
@@ -18,9 +19,9 @@ var (
 	// A project path must end in tsconfig*.json, so no free-text word (error,
 	// panic, FAIL) can ride along in a path. Any other line, including an
 	// injected danger word or an ANSI-wrapped line, makes the transcript raw.
-	reTSCPlainLine = regexp.MustCompile(`^(?:|\[\d{2}:\d{2}:\d{2}\] (?:Projects in this build: ?|Building project(?: '/?(?:[\w@.-]+/)*tsconfig(?:\.(?:app|node|build|base|spec))?\.json')?\.\.\.|Found 0 errors\. Watching for file changes\.)|    \* (?:[\w@.-]+/)*tsconfig(?:\.(?:app|node|build|base|spec))?\.json)$`)
+	reTSCPlainLine = lazyre.New(`^(?:|\[\d{2}:\d{2}:\d{2}\] (?:Projects in this build: ?|Building project(?: '/?(?:[\w@.-]+/)*tsconfig(?:\.(?:app|node|build|base|spec))?\.json')?\.\.\.|Found 0 errors\. Watching for file changes\.)|    \* (?:[\w@.-]+/)*tsconfig(?:\.(?:app|node|build|base|spec))?\.json)$`)
 	// reTSCSuccessLine is the 0-errors summary a clean run must end with.
-	reTSCSuccessLine = regexp.MustCompile(`^\[\d{2}:\d{2}:\d{2}\] Found 0 errors\. Watching for file changes\.$`)
+	reTSCSuccessLine = lazyre.New(`^\[\d{2}:\d{2}:\d{2}\] Found 0 errors\. Watching for file changes\.$`)
 )
 
 func isTSC(input []byte) bool {

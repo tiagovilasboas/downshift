@@ -31,7 +31,7 @@ func TestDecide_GrammarRefusesAdversarialLines(t *testing.T) {
 		{"command substitution", "go test $(pwd)", ReasonUnsafeChar},
 		{"backticks", "go test `pwd`", ReasonUnsafeChar},
 		{"stdout redirect", "go test ./... > out.txt", ReasonUnsafeChar},
-		{"devnull before a pipe", "go test ./... 2>/dev/null | tail -5", ReasonUnsafeChar},
+		{"devnull before a merge and a pipe", "go test ./... 2>/dev/null 2>&1 | tail -5", ReasonUnsafeChar},
 		{"stdin redirect", "go test ./... < in.txt", ReasonUnsafeChar},
 		{"subshell", "(go test ./...)", ReasonUnsafeChar},
 		{"brace group", "{ go test ./...; }", ReasonUnsafeChar},

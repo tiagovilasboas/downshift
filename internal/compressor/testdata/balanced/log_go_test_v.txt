@@ -1,0 +1,2293 @@
+=== RUN   TestAllowlistExamplesAreAllAccepted
+--- PASS: TestAllowlistExamplesAreAllAccepted (0.00s)
+=== RUN   TestAllowlistSummaryIsOneShortLine
+--- PASS: TestAllowlistSummaryIsOneShortLine (0.00s)
+=== RUN   TestBalanceNeedsStoredRaw
+--- PASS: TestBalanceNeedsStoredRaw (0.00s)
+=== RUN   TestBalanceSkipsSmallAndRefused
+--- PASS: TestBalanceSkipsSmallAndRefused (0.00s)
+=== RUN   TestBalanceReplacesTheLosslessMarker
+--- PASS: TestBalanceReplacesTheLosslessMarker (0.00s)
+=== RUN   TestRun_ChildGetsDepthGuard
+--- PASS: TestRun_ChildGetsDepthGuard (0.00s)
+=== RUN   TestDecide_ShellSplitsWrappedCommandIntoOriginalWords
+--- PASS: TestDecide_ShellSplitsWrappedCommandIntoOriginalWords (0.00s)
+=== RUN   TestFamilyInventoryMatchesFamilyOf
+--- PASS: TestFamilyInventoryMatchesFamilyOf (0.00s)
+=== RUN   TestFamilyInventoryBehaviourMatchesExpectedFormat
+--- PASS: TestFamilyInventoryBehaviourMatchesExpectedFormat (0.00s)
+=== RUN   TestGateFinish_FoldedFlag
+=== RUN   TestGateFinish_FoldedFlag/lossless_compact
+=== RUN   TestGateFinish_FoldedFlag/lossless_wins_over_keep
+=== RUN   TestGateFinish_FoldedFlag/fold_path
+=== RUN   TestGateFinish_FoldedFlag/fold_refused
+--- PASS: TestGateFinish_FoldedFlag (0.00s)
+    --- PASS: TestGateFinish_FoldedFlag/lossless_compact (0.00s)
+    --- PASS: TestGateFinish_FoldedFlag/lossless_wins_over_keep (0.00s)
+    --- PASS: TestGateFinish_FoldedFlag/fold_path (0.00s)
+    --- PASS: TestGateFinish_FoldedFlag/fold_refused (0.00s)
+=== RUN   TestEventFrom_Folded
+--- PASS: TestEventFrom_Folded (0.00s)
+=== RUN   TestSummarizeEvents_SplitsFolded
+--- PASS: TestSummarizeEvents_SplitsFolded (0.00s)
+=== RUN   TestRun_HoldIsBounded
+--- PASS: TestRun_HoldIsBounded (0.00s)
+=== RUN   TestRun_BatchCommandHoldsBufferUntilExit
+--- PASS: TestRun_BatchCommandHoldsBufferUntilExit (0.00s)
+=== RUN   TestRun_BatchCommandNonZeroExitStaysRaw
+--- PASS: TestRun_BatchCommandNonZeroExitStaysRaw (0.00s)
+=== RUN   TestRun_KeepFailedStoresOnlyFailures
+=== RUN   TestRun_KeepFailedStoresOnlyFailures/failure_is_stored
+=== RUN   TestRun_KeepFailedStoresOnlyFailures/success_is_not_stored
+=== RUN   TestRun_KeepFailedStoresOnlyFailures/full_Keep_wins_over_KeepFailed
+--- PASS: TestRun_KeepFailedStoresOnlyFailures (0.00s)
+    --- PASS: TestRun_KeepFailedStoresOnlyFailures/failure_is_stored (0.00s)
+    --- PASS: TestRun_KeepFailedStoresOnlyFailures/success_is_not_stored (0.00s)
+    --- PASS: TestRun_KeepFailedStoresOnlyFailures/full_Keep_wins_over_KeepFailed (0.00s)
+=== RUN   TestKeepUncompacted_FoldsOnlyWhenStored
+--- PASS: TestKeepUncompacted_FoldsOnlyWhenStored (0.00s)
+=== RUN   TestKeepUncompacted_Refuses
+=== RUN   TestKeepUncompacted_Refuses/nil_keep
+=== RUN   TestKeepUncompacted_Refuses/failed_run
+=== RUN   TestKeepUncompacted_Refuses/wrote_stderr
+=== RUN   TestKeepUncompacted_Refuses/not_compactible
+=== RUN   TestKeepUncompacted_Refuses/nothing_to_fold
+=== RUN   TestKeepUncompacted_Refuses/find_under_100_lines_preserved
+=== RUN   TestKeepUncompacted_Refuses/ls_under_100_lines_preserved
+=== RUN   TestKeepUncompacted_Refuses/store_refused
+=== RUN   TestKeepUncompacted_Refuses/store_panics
+--- PASS: TestKeepUncompacted_Refuses (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/nil_keep (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/failed_run (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/wrote_stderr (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/not_compactible (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/nothing_to_fold (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/find_under_100_lines_preserved (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/ls_under_100_lines_preserved (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/store_refused (0.00s)
+    --- PASS: TestKeepUncompacted_Refuses/store_panics (0.00s)
+=== RUN   TestKeepRaw_FoldsSummaryAfterStore
+--- PASS: TestKeepRaw_FoldsSummaryAfterStore (0.00s)
+=== RUN   TestKeepRaw_SkipsStoreWhenIDMarkerWouldExceedRaw
+--- PASS: TestKeepRaw_SkipsStoreWhenIDMarkerWouldExceedRaw (0.00s)
+=== RUN   TestRun_Keep
+=== RUN   TestRun_Keep/compacted_run_keeps_raw_and_marker_carries_the_id
+=== RUN   TestRun_Keep/failed_run_compacted_by_the_failure_compressor_counts
+=== RUN   TestRun_Keep/keep_false_keeps_the_old_marker
+=== RUN   TestRun_Keep/keep_panics_keeps_the_old_marker_and_the_exit_code
+=== RUN   TestRun_Keep/nil_keep_matches_today
+--- PASS: TestRun_Keep (0.00s)
+    --- PASS: TestRun_Keep/compacted_run_keeps_raw_and_marker_carries_the_id (0.00s)
+    --- PASS: TestRun_Keep/failed_run_compacted_by_the_failure_compressor_counts (0.00s)
+    --- PASS: TestRun_Keep/keep_false_keeps_the_old_marker (0.00s)
+    --- PASS: TestRun_Keep/keep_panics_keeps_the_old_marker_and_the_exit_code (0.00s)
+    --- PASS: TestRun_Keep/nil_keep_matches_today (0.00s)
+=== RUN   TestRun_KeepNotCalledOnPassthrough
+=== RUN   TestRun_KeepNotCalledOnPassthrough/small_output
+=== RUN   TestRun_KeepNotCalledOnPassthrough/compaction_off
+=== RUN   TestRun_KeepNotCalledOnPassthrough/non-zero_exit_stays_raw_on_stderr
+--- PASS: TestRun_KeepNotCalledOnPassthrough (0.00s)
+    --- PASS: TestRun_KeepNotCalledOnPassthrough/small_output (0.00s)
+    --- PASS: TestRun_KeepNotCalledOnPassthrough/compaction_off (0.00s)
+    --- PASS: TestRun_KeepNotCalledOnPassthrough/non-zero_exit_stays_raw_on_stderr (0.00s)
+=== RUN   TestMetacharKind
+--- PASS: TestMetacharKind (0.00s)
+=== RUN   TestMetacharKindsCoverEveryCode
+--- PASS: TestMetacharKindsCoverEveryCode (0.00s)
+=== RUN   TestSkipKindLogHoldsNoCommandText
+--- PASS: TestSkipKindLogHoldsNoCommandText (0.00s)
+=== RUN   TestMetrics_AppendSummarize
+--- PASS: TestMetrics_AppendSummarize (0.00s)
+=== RUN   TestMetrics_RecordIsPromptFree
+--- PASS: TestMetrics_RecordIsPromptFree (0.00s)
+=== RUN   TestMetrics_MissingFileIsEmpty
+--- PASS: TestMetrics_MissingFileIsEmpty (0.00s)
+=== RUN   TestMetrics_ClientOmitempty
+=== RUN   TestMetrics_ClientOmitempty/present
+=== RUN   TestMetrics_ClientOmitempty/absent_when_empty
+--- PASS: TestMetrics_ClientOmitempty (0.00s)
+    --- PASS: TestMetrics_ClientOmitempty/present (0.00s)
+    --- PASS: TestMetrics_ClientOmitempty/absent_when_empty (0.00s)
+=== RUN   TestSummarize_PassthroughAndFailureSplit
+--- PASS: TestSummarize_PassthroughAndFailureSplit (0.00s)
+=== RUN   TestSummarize_NewFieldsAreOmittedWhenEmpty
+--- PASS: TestSummarize_NewFieldsAreOmittedWhenEmpty (0.00s)
+=== RUN   TestSummarizeSession_PassthroughSplit
+--- PASS: TestSummarizeSession_PassthroughSplit (0.00s)
+=== RUN   TestDetailFromReason
+--- PASS: TestDetailFromReason (0.00s)
+=== RUN   TestCompactOutputDetail
+=== RUN   TestCompactOutputDetail/danger_word
+=== RUN   TestCompactOutputDetail/ansi_escape
+=== RUN   TestCompactOutputDetail/carriage_return
+=== RUN   TestCompactOutputDetail/no_final_newline
+=== RUN   TestCompactOutputDetail/unknown_shape
+=== RUN   TestCompactOutputDetail/no_compressor
+=== RUN   TestCompactOutputDetail/empty_output_has_none
+--- PASS: TestCompactOutputDetail (0.00s)
+    --- PASS: TestCompactOutputDetail/danger_word (0.00s)
+    --- PASS: TestCompactOutputDetail/ansi_escape (0.00s)
+    --- PASS: TestCompactOutputDetail/carriage_return (0.00s)
+    --- PASS: TestCompactOutputDetail/no_final_newline (0.00s)
+    --- PASS: TestCompactOutputDetail/unknown_shape (0.00s)
+    --- PASS: TestCompactOutputDetail/no_compressor (0.00s)
+    --- PASS: TestCompactOutputDetail/empty_output_has_none (0.00s)
+=== RUN   TestCompactOutputNonzeroExitHasNoDetail
+--- PASS: TestCompactOutputNonzeroExitHasNoDetail (0.00s)
+=== RUN   TestEventCarriesPassthroughDetail
+--- PASS: TestEventCarriesPassthroughDetail (0.00s)
+=== RUN   TestDetailCodesAreClosedSet
+--- PASS: TestDetailCodesAreClosedSet (0.00s)
+=== RUN   TestRun_PassthroughReason
+=== RUN   TestRun_PassthroughReason/compacted_run_has_no_reason
+=== RUN   TestRun_PassthroughReason/empty_output_is_small
+=== RUN   TestRun_PassthroughReason/summary_not_shorter_than_raw_is_small
+=== RUN   TestRun_PassthroughReason/failing_run_is_nonzero_exit
+=== RUN   TestRun_PassthroughReason/unrecognised_shape_is_unrecognized_output
+=== RUN   TestRun_PassthroughReason/family_without_a_compressor_is_unrecognized_output
+=== RUN   TestRun_PassthroughReason/not_allowlisted_is_refused
+--- PASS: TestRun_PassthroughReason (0.00s)
+    --- PASS: TestRun_PassthroughReason/compacted_run_has_no_reason (0.00s)
+    --- PASS: TestRun_PassthroughReason/empty_output_is_small (0.00s)
+    --- PASS: TestRun_PassthroughReason/summary_not_shorter_than_raw_is_small (0.00s)
+    --- PASS: TestRun_PassthroughReason/failing_run_is_nonzero_exit (0.00s)
+    --- PASS: TestRun_PassthroughReason/unrecognised_shape_is_unrecognized_output (0.00s)
+    --- PASS: TestRun_PassthroughReason/family_without_a_compressor_is_unrecognized_output (0.00s)
+    --- PASS: TestRun_PassthroughReason/not_allowlisted_is_refused (0.00s)
+=== RUN   TestDecide_Chains
+=== RUN   TestDecide_Chains/gofmt_then_go_test
+=== RUN   TestDecide_Chains/diff,_gofmt,_go_test
+=== RUN   TestDecide_Chains/gofmt_then_go_test_with_tail
+=== RUN   TestDecide_Chains/grep_pipe_stays_whole
+=== RUN   TestDecide_Chains/and_list
+=== RUN   TestDecide_Chains/mixed_separators
+=== RUN   TestDecide_Chains/no_space_before_semicolon
+=== RUN   TestDecide_Chains/kept_segment_byte-identical
+=== RUN   TestDecide_Chains/not_allowlisted_after
+=== RUN   TestDecide_Chains/cd_option_kept
+=== RUN   TestDecide_Chains/compound_not_allowlisted_kept
+=== RUN   TestDecide_Chains/nothing_allowlisted
+=== RUN   TestDecide_Chains/or_list
+=== RUN   TestDecide_Chains/background
+=== RUN   TestDecide_Chains/triple_ampersand
+=== RUN   TestDecide_Chains/quoted_separator
+=== RUN   TestDecide_Chains/double_quoted_separator_in_a_chain
+=== RUN   TestDecide_Chains/subshell
+=== RUN   TestDecide_Chains/substitution
+=== RUN   TestDecide_Chains/backtick
+=== RUN   TestDecide_Chains/heredoc
+=== RUN   TestDecide_Chains/redirect
+=== RUN   TestDecide_Chains/glob
+=== RUN   TestDecide_Chains/newline
+=== RUN   TestDecide_Chains/empty_segment
+=== RUN   TestDecide_Chains/trailing_semicolon
+=== RUN   TestDecide_Chains/leading_and
+=== RUN   TestDecide_Chains/already_wrapped_segment
+=== RUN   TestDecide_Chains/already_wrapped_quoted
+=== RUN   TestDecide_Chains/git_global_option
+=== RUN   TestDecide_Chains/too_long
+--- PASS: TestDecide_Chains (0.00s)
+    --- PASS: TestDecide_Chains/gofmt_then_go_test (0.00s)
+    --- PASS: TestDecide_Chains/diff,_gofmt,_go_test (0.00s)
+    --- PASS: TestDecide_Chains/gofmt_then_go_test_with_tail (0.00s)
+    --- PASS: TestDecide_Chains/grep_pipe_stays_whole (0.00s)
+    --- PASS: TestDecide_Chains/and_list (0.00s)
+    --- PASS: TestDecide_Chains/mixed_separators (0.00s)
+    --- PASS: TestDecide_Chains/no_space_before_semicolon (0.00s)
+    --- PASS: TestDecide_Chains/kept_segment_byte-identical (0.00s)
+    --- PASS: TestDecide_Chains/not_allowlisted_after (0.00s)
+    --- PASS: TestDecide_Chains/cd_option_kept (0.00s)
+    --- PASS: TestDecide_Chains/compound_not_allowlisted_kept (0.00s)
+    --- PASS: TestDecide_Chains/nothing_allowlisted (0.00s)
+    --- PASS: TestDecide_Chains/or_list (0.00s)
+    --- PASS: TestDecide_Chains/background (0.00s)
+    --- PASS: TestDecide_Chains/triple_ampersand (0.00s)
+    --- PASS: TestDecide_Chains/quoted_separator (0.00s)
+    --- PASS: TestDecide_Chains/double_quoted_separator_in_a_chain (0.00s)
+    --- PASS: TestDecide_Chains/subshell (0.00s)
+    --- PASS: TestDecide_Chains/substitution (0.00s)
+    --- PASS: TestDecide_Chains/backtick (0.00s)
+    --- PASS: TestDecide_Chains/heredoc (0.00s)
+    --- PASS: TestDecide_Chains/redirect (0.00s)
+    --- PASS: TestDecide_Chains/glob (0.00s)
+    --- PASS: TestDecide_Chains/newline (0.00s)
+    --- PASS: TestDecide_Chains/empty_segment (0.00s)
+    --- PASS: TestDecide_Chains/trailing_semicolon (0.00s)
+    --- PASS: TestDecide_Chains/leading_and (0.00s)
+    --- PASS: TestDecide_Chains/already_wrapped_segment (0.00s)
+    --- PASS: TestDecide_Chains/already_wrapped_quoted (0.00s)
+    --- PASS: TestDecide_Chains/git_global_option (0.00s)
+    --- PASS: TestDecide_Chains/too_long (0.00s)
+=== RUN   TestDecide_ChainIdempotent
+--- PASS: TestDecide_ChainIdempotent (0.00s)
+=== RUN   TestWithSession_Chain
+--- PASS: TestWithSession_Chain (0.00s)
+=== RUN   TestDecide_CompoundShapes
+=== RUN   TestDecide_CompoundShapes/cd_then_go_test
+=== RUN   TestDecide_CompoundShapes/cd_absolute
+=== RUN   TestDecide_CompoundShapes/pipe_tail
+=== RUN   TestDecide_CompoundShapes/pipe_head_-n
+=== RUN   TestDecide_CompoundShapes/pipe_tail_-nN
+=== RUN   TestDecide_CompoundShapes/stderr_dup_and_tail
+=== RUN   TestDecide_CompoundShapes/cd,_stderr_dup_and_tail
+=== RUN   TestDecide_CompoundShapes/extra_spaces_normalised
+=== RUN   TestDecide_CompoundShapes/stderr_merge_alone
+=== RUN   TestDecide_CompoundShapes/cd_and_stderr_merge
+=== RUN   TestDecide_CompoundShapes/stderr_merge,_extra_spaces
+=== RUN   TestDecide_CompoundShapes/cd_then_not_allowlisted
+=== RUN   TestDecide_CompoundShapes/stderr_merge_after_not_allowlisted
+=== RUN   TestDecide_CompoundShapes/stderr_to_devnull_before_a_pipe
+=== RUN   TestDecide_CompoundShapes/stderr_merge_then_devnull
+=== RUN   TestDecide_CompoundShapes/stderr_merge_twice
+=== RUN   TestDecide_CompoundShapes/stdout_to_stderr
+=== RUN   TestDecide_CompoundShapes/stderr_merge_then_file
+=== RUN   TestDecide_CompoundShapes/stderr_merge_glued
+=== RUN   TestDecide_CompoundShapes/stderr_merge_then_pipe_to_grep
+=== RUN   TestDecide_CompoundShapes/stderr_merge_in_front_of_pipe_to_grep
+=== RUN   TestDecide_CompoundShapes/cd_and_stderr_merge_then_devnull
+=== RUN   TestDecide_CompoundShapes/pipe_after_not_allowlisted
+=== RUN   TestDecide_CompoundShapes/or_list
+=== RUN   TestDecide_CompoundShapes/cd_tilde
+=== RUN   TestDecide_CompoundShapes/cd_variable
+=== RUN   TestDecide_CompoundShapes/cd_quoted
+=== RUN   TestDecide_CompoundShapes/pipe_to_grep
+=== RUN   TestDecide_CompoundShapes/two_pipes
+=== RUN   TestDecide_CompoundShapes/tail_follow
+=== RUN   TestDecide_CompoundShapes/tail_plus
+=== RUN   TestDecide_CompoundShapes/tail_with_file
+=== RUN   TestDecide_CompoundShapes/tail_count_too_long
+=== RUN   TestDecide_CompoundShapes/redirect_to_file
+=== RUN   TestDecide_CompoundShapes/stdout_dup
+=== RUN   TestDecide_CompoundShapes/substitution_in_core
+=== RUN   TestDecide_CompoundShapes/already_wrapped
+=== RUN   TestDecide_CompoundShapes/background
+=== RUN   TestDecide_CompoundShapes/no_spaces_around_pipe
+=== RUN   TestDecide_CompoundShapes/git_global_option
+--- PASS: TestDecide_CompoundShapes (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd_then_go_test (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd_absolute (0.00s)
+    --- PASS: TestDecide_CompoundShapes/pipe_tail (0.00s)
+    --- PASS: TestDecide_CompoundShapes/pipe_head_-n (0.00s)
+    --- PASS: TestDecide_CompoundShapes/pipe_tail_-nN (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_dup_and_tail (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd,_stderr_dup_and_tail (0.00s)
+    --- PASS: TestDecide_CompoundShapes/extra_spaces_normalised (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge_alone (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd_and_stderr_merge (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge,_extra_spaces (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd_then_not_allowlisted (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge_after_not_allowlisted (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_to_devnull_before_a_pipe (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge_then_devnull (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge_twice (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stdout_to_stderr (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge_then_file (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge_glued (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge_then_pipe_to_grep (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stderr_merge_in_front_of_pipe_to_grep (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd_and_stderr_merge_then_devnull (0.00s)
+    --- PASS: TestDecide_CompoundShapes/pipe_after_not_allowlisted (0.00s)
+    --- PASS: TestDecide_CompoundShapes/or_list (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd_tilde (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd_variable (0.00s)
+    --- PASS: TestDecide_CompoundShapes/cd_quoted (0.00s)
+    --- PASS: TestDecide_CompoundShapes/pipe_to_grep (0.00s)
+    --- PASS: TestDecide_CompoundShapes/two_pipes (0.00s)
+    --- PASS: TestDecide_CompoundShapes/tail_follow (0.00s)
+    --- PASS: TestDecide_CompoundShapes/tail_plus (0.00s)
+    --- PASS: TestDecide_CompoundShapes/tail_with_file (0.00s)
+    --- PASS: TestDecide_CompoundShapes/tail_count_too_long (0.00s)
+    --- PASS: TestDecide_CompoundShapes/redirect_to_file (0.00s)
+    --- PASS: TestDecide_CompoundShapes/stdout_dup (0.00s)
+    --- PASS: TestDecide_CompoundShapes/substitution_in_core (0.00s)
+    --- PASS: TestDecide_CompoundShapes/already_wrapped (0.00s)
+    --- PASS: TestDecide_CompoundShapes/background (0.00s)
+    --- PASS: TestDecide_CompoundShapes/no_spaces_around_pipe (0.00s)
+    --- PASS: TestDecide_CompoundShapes/git_global_option (0.00s)
+=== RUN   TestWithSession_Compound
+--- PASS: TestWithSession_Compound (0.00s)
+=== RUN   TestDecide_StderrMergeInChain
+--- PASS: TestDecide_StderrMergeInChain (0.00s)
+=== RUN   TestDecide_StderrMergeKeepsArgvForRules
+--- PASS: TestDecide_StderrMergeKeepsArgvForRules (0.00s)
+=== RUN   TestDecideContainerExec
+=== RUN   TestDecideContainerExec/compose_exec_phpunit
+=== RUN   TestDecideContainerExec/compose_exec_artisan_test
+=== RUN   TestDecideContainerExec/compose_exec_no_-T
+=== RUN   TestDecideContainerExec/docker-compose_exec
+=== RUN   TestDecideContainerExec/docker_exec_npm_test
+=== RUN   TestDecideContainerExec/docker_exec_-i_go_test
+=== RUN   TestDecideContainerExec/short_user_and_workdir
+=== RUN   TestDecideContainerExec/long_flags
+=== RUN   TestDecideContainerExec/env_-e
+=== RUN   TestDecideContainerExec/compound_cd_prefix
+=== RUN   TestDecideContainerExec/compound_tail_suffix
+=== RUN   TestDecideContainerExec/inner_bash_not_allowlisted
+=== RUN   TestDecideContainerExec/inner_artisan_migrate
+=== RUN   TestDecideContainerExec/nested_docker
+=== RUN   TestDecideContainerExec/tty_-it_refused
+=== RUN   TestDecideContainerExec/tty_-t_refused
+=== RUN   TestDecideContainerExec/detach_refused
+=== RUN   TestDecideContainerExec/unknown_compose_flag
+=== RUN   TestDecideContainerExec/unknown_long_flag
+=== RUN   TestDecideContainerExec/option_value_is_a_flag
+=== RUN   TestDecideContainerExec/no_service
+=== RUN   TestDecideContainerExec/no_inner_command
+=== RUN   TestDecideContainerExec/env_without_equals
+=== RUN   TestDecideContainerExec/quoted_env_value_with_expansion
+=== RUN   TestDecideContainerExec/docker_run_unchanged
+=== RUN   TestDecideContainerExec/compose_up_unchanged
+=== RUN   TestDecideContainerExec/compose_ps_unchanged
+--- PASS: TestDecideContainerExec (0.00s)
+    --- PASS: TestDecideContainerExec/compose_exec_phpunit (0.00s)
+    --- PASS: TestDecideContainerExec/compose_exec_artisan_test (0.00s)
+    --- PASS: TestDecideContainerExec/compose_exec_no_-T (0.00s)
+    --- PASS: TestDecideContainerExec/docker-compose_exec (0.00s)
+    --- PASS: TestDecideContainerExec/docker_exec_npm_test (0.00s)
+    --- PASS: TestDecideContainerExec/docker_exec_-i_go_test (0.00s)
+    --- PASS: TestDecideContainerExec/short_user_and_workdir (0.00s)
+    --- PASS: TestDecideContainerExec/long_flags (0.00s)
+    --- PASS: TestDecideContainerExec/env_-e (0.00s)
+    --- PASS: TestDecideContainerExec/compound_cd_prefix (0.00s)
+    --- PASS: TestDecideContainerExec/compound_tail_suffix (0.00s)
+    --- PASS: TestDecideContainerExec/inner_bash_not_allowlisted (0.00s)
+    --- PASS: TestDecideContainerExec/inner_artisan_migrate (0.00s)
+    --- PASS: TestDecideContainerExec/nested_docker (0.00s)
+    --- PASS: TestDecideContainerExec/tty_-it_refused (0.00s)
+    --- PASS: TestDecideContainerExec/tty_-t_refused (0.00s)
+    --- PASS: TestDecideContainerExec/detach_refused (0.00s)
+    --- PASS: TestDecideContainerExec/unknown_compose_flag (0.00s)
+    --- PASS: TestDecideContainerExec/unknown_long_flag (0.00s)
+    --- PASS: TestDecideContainerExec/option_value_is_a_flag (0.00s)
+    --- PASS: TestDecideContainerExec/no_service (0.00s)
+    --- PASS: TestDecideContainerExec/no_inner_command (0.00s)
+    --- PASS: TestDecideContainerExec/env_without_equals (0.00s)
+    --- PASS: TestDecideContainerExec/quoted_env_value_with_expansion (0.00s)
+    --- PASS: TestDecideContainerExec/docker_run_unchanged (0.00s)
+    --- PASS: TestDecideContainerExec/compose_up_unchanged (0.00s)
+    --- PASS: TestDecideContainerExec/compose_ps_unchanged (0.00s)
+=== RUN   TestFamilyOf_DenoAndZig
+--- PASS: TestFamilyOf_DenoAndZig (0.00s)
+=== RUN   TestDesktopFamily
+--- PASS: TestDesktopFamily (0.00s)
+=== RUN   TestDesktopScope
+--- PASS: TestDesktopScope (0.00s)
+=== RUN   TestDecide_EnvAssignments
+=== RUN   TestDecide_EnvAssignments/one_assignment
+=== RUN   TestDecide_EnvAssignments/two_assignments
+=== RUN   TestDecide_EnvAssignments/assignment_with_equals_in_value
+=== RUN   TestDecide_EnvAssignments/empty_value
+=== RUN   TestDecide_EnvAssignments/git_with_assignment
+=== RUN   TestDecide_EnvAssignments/piped_tail
+=== RUN   TestDecide_EnvAssignments/value_with_dollar
+=== RUN   TestDecide_EnvAssignments/value_with_double_quotes
+=== RUN   TestDecide_EnvAssignments/value_with_backtick
+=== RUN   TestDecide_EnvAssignments/not_allowlisted
+=== RUN   TestDecide_EnvAssignments/sudo_after_assignment
+=== RUN   TestDecide_EnvAssignments/assignment_only
+=== RUN   TestDecide_EnvAssignments/name_starts_with_digit
+=== RUN   TestDecide_EnvAssignments/reserved_downshift_name
+=== RUN   TestDecide_EnvAssignments/reserved_git_name
+=== RUN   TestDecide_EnvAssignments/reserved_PATH
+=== RUN   TestDecide_EnvAssignments/already_wrapped_after_assignment
+--- PASS: TestDecide_EnvAssignments (0.00s)
+    --- PASS: TestDecide_EnvAssignments/one_assignment (0.00s)
+    --- PASS: TestDecide_EnvAssignments/two_assignments (0.00s)
+    --- PASS: TestDecide_EnvAssignments/assignment_with_equals_in_value (0.00s)
+    --- PASS: TestDecide_EnvAssignments/empty_value (0.00s)
+    --- PASS: TestDecide_EnvAssignments/git_with_assignment (0.00s)
+    --- PASS: TestDecide_EnvAssignments/piped_tail (0.00s)
+    --- PASS: TestDecide_EnvAssignments/value_with_dollar (0.00s)
+    --- PASS: TestDecide_EnvAssignments/value_with_double_quotes (0.00s)
+    --- PASS: TestDecide_EnvAssignments/value_with_backtick (0.00s)
+    --- PASS: TestDecide_EnvAssignments/not_allowlisted (0.00s)
+    --- PASS: TestDecide_EnvAssignments/sudo_after_assignment (0.00s)
+    --- PASS: TestDecide_EnvAssignments/assignment_only (0.00s)
+    --- PASS: TestDecide_EnvAssignments/name_starts_with_digit (0.00s)
+    --- PASS: TestDecide_EnvAssignments/reserved_downshift_name (0.00s)
+    --- PASS: TestDecide_EnvAssignments/reserved_git_name (0.00s)
+    --- PASS: TestDecide_EnvAssignments/reserved_PATH (0.00s)
+    --- PASS: TestDecide_EnvAssignments/already_wrapped_after_assignment (0.00s)
+=== RUN   TestDecide_EnvAssignmentsRunThroughShell
+--- PASS: TestDecide_EnvAssignmentsRunThroughShell (0.00s)
+=== RUN   TestFamilyOfFetch
+--- PASS: TestFamilyOfFetch (0.00s)
+=== RUN   TestFamilyOfFetchRefusals
+--- PASS: TestFamilyOfFetchRefusals (0.00s)
+=== RUN   TestDecideFetchWrapsOnlyThePlainForm
+--- PASS: TestDecideFetchWrapsOnlyThePlainForm (0.00s)
+=== RUN   TestEnvAndPrintenvAreNotFamilies
+--- PASS: TestEnvAndPrintenvAreNotFamilies (0.00s)
+=== RUN   TestFetchHint
+--- PASS: TestFetchHint (0.00s)
+=== RUN   TestFetchFamiliesRefuseRawStore
+--- PASS: TestFetchFamiliesRefuseRawStore (0.00s)
+=== RUN   TestFamilyOfGlab
+--- PASS: TestFamilyOfGlab (0.00s)
+=== RUN   TestFamilyOfGlabRefusals
+--- PASS: TestFamilyOfGlabRefusals (0.00s)
+=== RUN   TestDecideWrapsReadOnlyGlab
+--- PASS: TestDecideWrapsReadOnlyGlab (0.00s)
+=== RUN   TestGateKeeper_GlabGetsNoStore
+--- PASS: TestGateKeeper_GlabGetsNoStore (0.00s)
+=== RUN   TestGlabFamilyCompactsAsGlabFormat
+--- PASS: TestGlabFamilyCompactsAsGlabFormat (0.00s)
+=== RUN   TestDecide_GrammarRefusesAdversarialLines
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/pipe_to_grep
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/background
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/lone_ampersand_in_a_chain
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/command_substitution
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/backticks
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/stdout_redirect
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/devnull_before_a_pipe
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/stdin_redirect
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/subshell
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/brace_group
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/mid_pipe
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/tail_from_a_line
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/tail_six_digits
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/head_byte_count
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/cd_tilde
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/cd_tilde_path
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/cd_quoted_dir
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/cd_variable
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/glob
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/comment
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/newline
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/heredoc
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/heredoc_after_allowlisted
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/guarded_rm_in_a_chain
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/guarded_rm_after_and
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/guarded_mysql_in_a_chain
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/already_wrapped_bare
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/already_wrapped_quoted_path
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/already_wrapped_with_session
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/over_512_bytes,_simple
+=== RUN   TestDecide_GrammarRefusesAdversarialLines/over_512_bytes,_chain
+--- PASS: TestDecide_GrammarRefusesAdversarialLines (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/pipe_to_grep (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/background (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/lone_ampersand_in_a_chain (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/command_substitution (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/backticks (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/stdout_redirect (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/devnull_before_a_pipe (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/stdin_redirect (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/subshell (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/brace_group (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/mid_pipe (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/tail_from_a_line (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/tail_six_digits (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/head_byte_count (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/cd_tilde (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/cd_tilde_path (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/cd_quoted_dir (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/cd_variable (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/glob (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/comment (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/newline (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/heredoc (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/heredoc_after_allowlisted (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/guarded_rm_in_a_chain (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/guarded_rm_after_and (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/guarded_mysql_in_a_chain (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/already_wrapped_bare (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/already_wrapped_quoted_path (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/already_wrapped_with_session (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/over_512_bytes,_simple (0.00s)
+    --- PASS: TestDecide_GrammarRefusesAdversarialLines/over_512_bytes,_chain (0.00s)
+=== RUN   TestDecide_GrammarWrapsTheProvenShapes
+=== RUN   TestDecide_GrammarWrapsTheProvenShapes/false_then_go_test
+=== RUN   TestDecide_GrammarWrapsTheProvenShapes/failing_go_test_piped_to_tail
+=== RUN   TestDecide_GrammarWrapsTheProvenShapes/cd,_then_piped_to_tail
+=== RUN   TestDecide_GrammarWrapsTheProvenShapes/exactly_512_bytes
+--- PASS: TestDecide_GrammarWrapsTheProvenShapes (0.00s)
+    --- PASS: TestDecide_GrammarWrapsTheProvenShapes/false_then_go_test (0.00s)
+    --- PASS: TestDecide_GrammarWrapsTheProvenShapes/failing_go_test_piped_to_tail (0.00s)
+    --- PASS: TestDecide_GrammarWrapsTheProvenShapes/cd,_then_piped_to_tail (0.00s)
+    --- PASS: TestDecide_GrammarWrapsTheProvenShapes/exactly_512_bytes (0.00s)
+=== RUN   TestGrammarExit_ShortCircuitMatchesOriginal
+--- PASS: TestGrammarExit_ShortCircuitMatchesOriginal (0.00s)
+=== RUN   TestGrammarExit_FailingPipelineWithoutPipefail
+--- PASS: TestGrammarExit_FailingPipelineWithoutPipefail (0.00s)
+=== RUN   TestGrammarExit_FailingPipelineWithPipefail
+--- PASS: TestGrammarExit_FailingPipelineWithPipefail (0.00s)
+=== RUN   TestPsqlOnlyPlainReadsAreFamilies
+--- PASS: TestPsqlOnlyPlainReadsAreFamilies (0.00s)
+=== RUN   TestPsqlStatementsWithSpaces
+--- PASS: TestPsqlStatementsWithSpaces (0.00s)
+=== RUN   TestGcloudOnlyReadVerbsAreFamilies
+--- PASS: TestGcloudOnlyReadVerbsAreFamilies (0.00s)
+=== RUN   TestAstGrepNeverUpdatesFiles
+--- PASS: TestAstGrepNeverUpdatesFiles (0.00s)
+=== RUN   TestChainRefusesInfraSegments
+--- PASS: TestChainRefusesInfraSegments (0.00s)
+=== RUN   TestPsqlRefusesEnvPrefix
+--- PASS: TestPsqlRefusesEnvPrefix (0.00s)
+=== RUN   TestRedisUnknownFlagFailsClosed
+--- PASS: TestRedisUnknownFlagFailsClosed (0.00s)
+=== RUN   TestRedisReadsStillClassify
+--- PASS: TestRedisReadsStillClassify (0.00s)
+=== RUN   TestDBClientRefusesEnvPrefix
+--- PASS: TestDBClientRefusesEnvPrefix (0.00s)
+=== RUN   TestEnvPrefixStillWrapsOtherFamilies
+--- PASS: TestEnvPrefixStillWrapsOtherFamilies (0.00s)
+=== RUN   TestGuardedCommandNeverRewrittenThroughARunner
+--- PASS: TestGuardedCommandNeverRewrittenThroughARunner (0.00s)
+=== RUN   TestGuardedCommandNeverRewrittenInAChain
+--- PASS: TestGuardedCommandNeverRewrittenInAChain (0.00s)
+=== RUN   TestLegitRunnersAndChainsStillRewrite
+--- PASS: TestLegitRunnersAndChainsStillRewrite (0.00s)
+=== RUN   TestRmRecursiveNeverWraps
+--- PASS: TestRmRecursiveNeverWraps (0.00s)
+=== RUN   TestRmRecursiveNeverRewrittenByTheHook
+--- PASS: TestRmRecursiveNeverRewrittenByTheHook (0.00s)
+=== RUN   TestMySQLReadOnlyGuard
+--- PASS: TestMySQLReadOnlyGuard (0.00s)
+=== RUN   TestRedisReadOnlyGuard
+--- PASS: TestRedisReadOnlyGuard (0.00s)
+=== RUN   TestFamilyOf_JSQuality
+--- PASS: TestFamilyOf_JSQuality (0.00s)
+=== RUN   TestListingFamilyTable
+--- PASS: TestListingFamilyTable (0.00s)
+=== RUN   TestListingDecideWrapsOnlyPlainForms
+--- PASS: TestListingDecideWrapsOnlyPlainForms (0.00s)
+=== RUN   TestFamilyOf_Mobile
+--- PASS: TestFamilyOf_Mobile (0.00s)
+=== RUN   TestFamilyOf_PythonQualityAndDjango
+--- PASS: TestFamilyOf_PythonQualityAndDjango (0.00s)
+=== RUN   TestDecideQuotedAccepts
+=== RUN   TestDecideQuotedAccepts/double-quoted_grep_pattern
+=== RUN   TestDecideQuotedAccepts/single-quoted_find_glob
+=== RUN   TestDecideQuotedAccepts/commit_message_is_the_git_commit_family
+=== RUN   TestDecideQuotedAccepts/glob_inside_double_quotes
+=== RUN   TestDecideQuotedAccepts/single_quote_keeps_$_and_backtick_literal
+=== RUN   TestDecideQuotedAccepts/adjacent_quotes_join_one_word
+=== RUN   TestDecideQuotedAccepts/empty_quoted_word
+=== RUN   TestDecideQuotedAccepts/trailing_2>/dev/null
+=== RUN   TestDecideQuotedAccepts/trailing_||_true
+=== RUN   TestDecideQuotedAccepts/both_trailing_forms
+=== RUN   TestDecideQuotedAccepts/plain_assignment_stays_bare
+=== RUN   TestDecideQuotedAccepts/utf-8_inside_quotes
+--- PASS: TestDecideQuotedAccepts (0.00s)
+    --- PASS: TestDecideQuotedAccepts/double-quoted_grep_pattern (0.00s)
+    --- PASS: TestDecideQuotedAccepts/single-quoted_find_glob (0.00s)
+    --- PASS: TestDecideQuotedAccepts/commit_message_is_the_git_commit_family (0.00s)
+    --- PASS: TestDecideQuotedAccepts/glob_inside_double_quotes (0.00s)
+    --- PASS: TestDecideQuotedAccepts/single_quote_keeps_$_and_backtick_literal (0.00s)
+    --- PASS: TestDecideQuotedAccepts/adjacent_quotes_join_one_word (0.00s)
+    --- PASS: TestDecideQuotedAccepts/empty_quoted_word (0.00s)
+    --- PASS: TestDecideQuotedAccepts/trailing_2>/dev/null (0.00s)
+    --- PASS: TestDecideQuotedAccepts/trailing_||_true (0.00s)
+    --- PASS: TestDecideQuotedAccepts/both_trailing_forms (0.00s)
+    --- PASS: TestDecideQuotedAccepts/plain_assignment_stays_bare (0.00s)
+    --- PASS: TestDecideQuotedAccepts/utf-8_inside_quotes (0.00s)
+=== RUN   TestDecideQuotedRefuses
+--- PASS: TestDecideQuotedRefuses (0.00s)
+=== RUN   TestDecideQuotedKeepsUnsafeReason
+--- PASS: TestDecideQuotedKeepsUnsafeReason (0.00s)
+=== RUN   TestDecideQuotedPermissionTexts
+--- PASS: TestDecideQuotedPermissionTexts (0.00s)
+=== RUN   TestReadOnlyStaysStrictForQuotedForms
+--- PASS: TestReadOnlyStaysStrictForQuotedForms (0.00s)
+=== RUN   TestWithSessionQuotedRewrite
+--- PASS: TestWithSessionQuotedRewrite (0.00s)
+=== RUN   TestMetacharClassAfterQuotes
+--- PASS: TestMetacharClassAfterQuotes (0.00s)
+=== RUN   TestQuotedLexerRefusesZshForms
+--- PASS: TestQuotedLexerRefusesZshForms (0.00s)
+=== RUN   TestWithSessionTailFlagForms
+--- PASS: TestWithSessionTailFlagForms (0.00s)
+=== RUN   TestFamilyOf_FileReads
+--- PASS: TestFamilyOf_FileReads (0.00s)
+=== RUN   TestDecide_FileReadMetacharactersRefused
+--- PASS: TestDecide_FileReadMetacharactersRefused (0.00s)
+=== RUN   TestSecretPath
+--- PASS: TestSecretPath (0.00s)
+=== RUN   TestReadCompactible_RegularFilesOnly
+--- PASS: TestReadCompactible_RegularFilesOnly (0.00s)
+=== RUN   TestFileReadHint
+--- PASS: TestFileReadHint (0.00s)
+=== RUN   TestReadCompactible_RefusesLinks
+--- PASS: TestReadCompactible_RefusesLinks (0.00s)
+=== RUN   TestReadOnly
+=== RUN   TestReadOnly/git_status
+=== RUN   TestReadOnly/__git_status_--short__
+=== RUN   TestReadOnly/git_log_--oneline_-n_5
+=== RUN   TestReadOnly/git_diff_--stat
+=== RUN   TestReadOnly/git_show_HEAD
+=== RUN   TestReadOnly/git_branch
+=== RUN   TestReadOnly/git_branch_-a_-v
+=== RUN   TestReadOnly/git_branch_--show-current
+=== RUN   TestReadOnly/git_rev-parse_HEAD
+=== RUN   TestReadOnly/git_ls-files
+=== RUN   TestReadOnly/git_remote_-v
+=== RUN   TestReadOnly/git_stash_list
+=== RUN   TestReadOnly/gh_pr_view_12
+=== RUN   TestReadOnly/gh_pr_list
+=== RUN   TestReadOnly/gh_pr_checks_12
+=== RUN   TestReadOnly/gh_issue_list
+=== RUN   TestReadOnly/gh_run_view_99
+=== RUN   TestReadOnly/gh_repo_view
+=== RUN   TestReadOnly/go_version
+=== RUN   TestReadOnly/go_env_GOPATH
+=== RUN   TestReadOnly/go_list_./...
+=== RUN   TestReadOnly/go_doc_fmt.Println
+=== RUN   TestReadOnly/mise_list
+=== RUN   TestReadOnly/asdf_current
+=== RUN   TestReadOnly/direnv_status
+=== RUN   TestReadOnly/ls_-la_internal
+=== RUN   TestReadOnly/go_version_;_perl_/tmp/x.pl
+=== RUN   TestReadOnly/git_status_&&_rm_-rf_x
+=== RUN   TestReadOnly/git_status_||_true
+=== RUN   TestReadOnly/git_status_|_cat
+=== RUN   TestReadOnly/git_status_&
+=== RUN   TestReadOnly/git_status_$(id)
+=== RUN   TestReadOnly/git_status_`id`
+=== RUN   TestReadOnly/git_status_>_out
+=== RUN   TestReadOnly/git_status_<_in
+=== RUN   TestReadOnly/git_status_perl_x
+=== RUN   TestReadOnly/git_status_x
+=== RUN   TestReadOnly/cd_sub_&&_git_status
+=== RUN   TestReadOnly/GIT_EXTERNAL_DIFF=/tmp/x_git_diff
+=== RUN   TestReadOnly/make_check
+=== RUN   TestReadOnly/go_test_./...
+=== RUN   TestReadOnly/go_run_.
+=== RUN   TestReadOnly/go_build_./...
+=== RUN   TestReadOnly/go_generate_./...
+=== RUN   TestReadOnly/uv_run_pytest
+=== RUN   TestReadOnly/npm_test
+=== RUN   TestReadOnly/pytest
+=== RUN   TestReadOnly/cargo_test
+=== RUN   TestReadOnly/git_pull
+=== RUN   TestReadOnly/git_commit_-m_x
+=== RUN   TestReadOnly/git_branch_-D_main
+=== RUN   TestReadOnly/git_branch_new
+=== RUN   TestReadOnly/git_stash
+=== RUN   TestReadOnly/git_stash_pop
+=== RUN   TestReadOnly/git_remote_add_x_y
+=== RUN   TestReadOnly/git_diff_--output=/tmp/x
+=== RUN   TestReadOnly/git_diff_--ext-diff
+=== RUN   TestReadOnly/git_log_--textconv
+=== RUN   TestReadOnly/git_checkout_main
+=== RUN   TestReadOnly/gh_pr_merge_12
+=== RUN   TestReadOnly/gh_pr_checkout_12
+=== RUN   TestReadOnly/gh_issue_close_3
+=== RUN   TestReadOnly/gh_run_rerun_99
+=== RUN   TestReadOnly/gh_api_repos/x/y
+=== RUN   TestReadOnly/gh_auth_status
+=== RUN   TestReadOnly/gh_repo_delete_x
+=== RUN   TestReadOnly/go_env_-w_GOFLAGS=-x
+=== RUN   TestReadOnly/go_env_-u_GOFLAGS
+=== RUN   TestReadOnly/go_list_-toolexec=/tmp/x_./...
+=== RUN   TestReadOnly/go_list_--toolexec_/tmp/x_./...
+=== RUN   TestReadOnly/go_list_-mod=mod_./...
+=== RUN   TestReadOnly/mise_use_node@20
+=== RUN   TestReadOnly/mise_install
+=== RUN   TestReadOnly/asdf_global_node_20
+=== RUN   TestReadOnly/direnv_allow
+=== RUN   TestReadOnly/aws_s3_cp_a_b
+=== RUN   TestReadOnly/kubectl_get_pods
+=== RUN   TestReadOnly/go_tool_compile_-o_x.o_m.go
+=== RUN   TestReadOnly/go_tool_mytool
+=== RUN   TestReadOnly/go_tool_pprof_-http=:8080_x
+=== RUN   TestReadOnly/go_doc_-http
+=== RUN   TestReadOnly/go_doc_--http=:6060
+=== RUN   TestReadOnly/git_stash_list_--output=/tmp/x
+=== RUN   TestReadOnly/git_stash_list_-p_--ext-diff
+=== RUN   TestReadOnly/git_stash_list_-p
+=== RUN   TestReadOnly/gh_repo_view_--web
+=== RUN   TestReadOnly/gh_pr_view_1_-w
+=== RUN   TestReadOnly/gh_search_repos_x_--web
+=== RUN   TestReadOnly/gh_search_repos_x
+=== RUN   TestReadOnly/#00
+=== RUN   TestReadOnly/git
+=== RUN   TestReadOnly/downshift_compact_--_git_status
+--- PASS: TestReadOnly (0.00s)
+    --- PASS: TestReadOnly/git_status (0.00s)
+    --- PASS: TestReadOnly/__git_status_--short__ (0.00s)
+    --- PASS: TestReadOnly/git_log_--oneline_-n_5 (0.00s)
+    --- PASS: TestReadOnly/git_diff_--stat (0.00s)
+    --- PASS: TestReadOnly/git_show_HEAD (0.00s)
+    --- PASS: TestReadOnly/git_branch (0.00s)
+    --- PASS: TestReadOnly/git_branch_-a_-v (0.00s)
+    --- PASS: TestReadOnly/git_branch_--show-current (0.00s)
+    --- PASS: TestReadOnly/git_rev-parse_HEAD (0.00s)
+    --- PASS: TestReadOnly/git_ls-files (0.00s)
+    --- PASS: TestReadOnly/git_remote_-v (0.00s)
+    --- PASS: TestReadOnly/git_stash_list (0.00s)
+    --- PASS: TestReadOnly/gh_pr_view_12 (0.00s)
+    --- PASS: TestReadOnly/gh_pr_list (0.00s)
+    --- PASS: TestReadOnly/gh_pr_checks_12 (0.00s)
+    --- PASS: TestReadOnly/gh_issue_list (0.00s)
+    --- PASS: TestReadOnly/gh_run_view_99 (0.00s)
+    --- PASS: TestReadOnly/gh_repo_view (0.00s)
+    --- PASS: TestReadOnly/go_version (0.00s)
+    --- PASS: TestReadOnly/go_env_GOPATH (0.00s)
+    --- PASS: TestReadOnly/go_list_./... (0.00s)
+    --- PASS: TestReadOnly/go_doc_fmt.Println (0.00s)
+    --- PASS: TestReadOnly/mise_list (0.00s)
+    --- PASS: TestReadOnly/asdf_current (0.00s)
+    --- PASS: TestReadOnly/direnv_status (0.00s)
+    --- PASS: TestReadOnly/ls_-la_internal (0.00s)
+    --- PASS: TestReadOnly/go_version_;_perl_/tmp/x.pl (0.00s)
+    --- PASS: TestReadOnly/git_status_&&_rm_-rf_x (0.00s)
+    --- PASS: TestReadOnly/git_status_||_true (0.00s)
+    --- PASS: TestReadOnly/git_status_|_cat (0.00s)
+    --- PASS: TestReadOnly/git_status_& (0.00s)
+    --- PASS: TestReadOnly/git_status_$(id) (0.00s)
+    --- PASS: TestReadOnly/git_status_`id` (0.00s)
+    --- PASS: TestReadOnly/git_status_>_out (0.00s)
+    --- PASS: TestReadOnly/git_status_<_in (0.00s)
+    --- PASS: TestReadOnly/git_status_perl_x (0.00s)
+    --- PASS: TestReadOnly/git_status_x (0.00s)
+    --- PASS: TestReadOnly/cd_sub_&&_git_status (0.00s)
+    --- PASS: TestReadOnly/GIT_EXTERNAL_DIFF=/tmp/x_git_diff (0.00s)
+    --- PASS: TestReadOnly/make_check (0.00s)
+    --- PASS: TestReadOnly/go_test_./... (0.00s)
+    --- PASS: TestReadOnly/go_run_. (0.00s)
+    --- PASS: TestReadOnly/go_build_./... (0.00s)
+    --- PASS: TestReadOnly/go_generate_./... (0.00s)
+    --- PASS: TestReadOnly/uv_run_pytest (0.00s)
+    --- PASS: TestReadOnly/npm_test (0.00s)
+    --- PASS: TestReadOnly/pytest (0.00s)
+    --- PASS: TestReadOnly/cargo_test (0.00s)
+    --- PASS: TestReadOnly/git_pull (0.00s)
+    --- PASS: TestReadOnly/git_commit_-m_x (0.00s)
+    --- PASS: TestReadOnly/git_branch_-D_main (0.00s)
+    --- PASS: TestReadOnly/git_branch_new (0.00s)
+    --- PASS: TestReadOnly/git_stash (0.00s)
+    --- PASS: TestReadOnly/git_stash_pop (0.00s)
+    --- PASS: TestReadOnly/git_remote_add_x_y (0.00s)
+    --- PASS: TestReadOnly/git_diff_--output=/tmp/x (0.00s)
+    --- PASS: TestReadOnly/git_diff_--ext-diff (0.00s)
+    --- PASS: TestReadOnly/git_log_--textconv (0.00s)
+    --- PASS: TestReadOnly/git_checkout_main (0.00s)
+    --- PASS: TestReadOnly/gh_pr_merge_12 (0.00s)
+    --- PASS: TestReadOnly/gh_pr_checkout_12 (0.00s)
+    --- PASS: TestReadOnly/gh_issue_close_3 (0.00s)
+    --- PASS: TestReadOnly/gh_run_rerun_99 (0.00s)
+    --- PASS: TestReadOnly/gh_api_repos/x/y (0.00s)
+    --- PASS: TestReadOnly/gh_auth_status (0.00s)
+    --- PASS: TestReadOnly/gh_repo_delete_x (0.00s)
+    --- PASS: TestReadOnly/go_env_-w_GOFLAGS=-x (0.00s)
+    --- PASS: TestReadOnly/go_env_-u_GOFLAGS (0.00s)
+    --- PASS: TestReadOnly/go_list_-toolexec=/tmp/x_./... (0.00s)
+    --- PASS: TestReadOnly/go_list_--toolexec_/tmp/x_./... (0.00s)
+    --- PASS: TestReadOnly/go_list_-mod=mod_./... (0.00s)
+    --- PASS: TestReadOnly/mise_use_node@20 (0.00s)
+    --- PASS: TestReadOnly/mise_install (0.00s)
+    --- PASS: TestReadOnly/asdf_global_node_20 (0.00s)
+    --- PASS: TestReadOnly/direnv_allow (0.00s)
+    --- PASS: TestReadOnly/aws_s3_cp_a_b (0.00s)
+    --- PASS: TestReadOnly/kubectl_get_pods (0.00s)
+    --- PASS: TestReadOnly/go_tool_compile_-o_x.o_m.go (0.00s)
+    --- PASS: TestReadOnly/go_tool_mytool (0.00s)
+    --- PASS: TestReadOnly/go_tool_pprof_-http=:8080_x (0.00s)
+    --- PASS: TestReadOnly/go_doc_-http (0.00s)
+    --- PASS: TestReadOnly/go_doc_--http=:6060 (0.00s)
+    --- PASS: TestReadOnly/git_stash_list_--output=/tmp/x (0.00s)
+    --- PASS: TestReadOnly/git_stash_list_-p_--ext-diff (0.00s)
+    --- PASS: TestReadOnly/git_stash_list_-p (0.00s)
+    --- PASS: TestReadOnly/gh_repo_view_--web (0.00s)
+    --- PASS: TestReadOnly/gh_pr_view_1_-w (0.00s)
+    --- PASS: TestReadOnly/gh_search_repos_x_--web (0.00s)
+    --- PASS: TestReadOnly/gh_search_repos_x (0.00s)
+    --- PASS: TestReadOnly/#00 (0.00s)
+    --- PASS: TestReadOnly/git (0.00s)
+    --- PASS: TestReadOnly/downshift_compact_--_git_status (0.00s)
+=== RUN   TestDecide_RefusesFormsThatNeverExit
+=== RUN   TestDecide_RefusesFormsThatNeverExit/docker_logs_api
+=== RUN   TestDecide_RefusesFormsThatNeverExit/docker_logs_-f_api
+=== RUN   TestDecide_RefusesFormsThatNeverExit/docker_logs_--follow_api
+=== RUN   TestDecide_RefusesFormsThatNeverExit/docker_logs_-tf_api
+=== RUN   TestDecide_RefusesFormsThatNeverExit/docker_logs_--follow=true_api
+=== RUN   TestDecide_RefusesFormsThatNeverExit/kubectl_logs_api_--tail=50
+=== RUN   TestDecide_RefusesFormsThatNeverExit/kubectl_logs_-f_api
+=== RUN   TestDecide_RefusesFormsThatNeverExit/kubectl_logs_api_--follow
+=== RUN   TestDecide_RefusesFormsThatNeverExit/journalctl_-u_nginx_-n_50
+=== RUN   TestDecide_RefusesFormsThatNeverExit/journalctl_-f
+=== RUN   TestDecide_RefusesFormsThatNeverExit/journalctl_-fu_nginx
+=== RUN   TestDecide_RefusesFormsThatNeverExit/journalctl_--follow_-u_nginx
+=== RUN   TestDecide_RefusesFormsThatNeverExit/aws_logs_tail_/aws/lambda/fn_--since_1h
+=== RUN   TestDecide_RefusesFormsThatNeverExit/aws_logs_tail_/aws/lambda/fn_--follow
+=== RUN   TestDecide_RefusesFormsThatNeverExit/logcli_query_q1
+=== RUN   TestDecide_RefusesFormsThatNeverExit/logcli_query_--tail_q1
+=== RUN   TestDecide_RefusesFormsThatNeverExit/logcli_query_-t_q1
+=== RUN   TestDecide_RefusesFormsThatNeverExit/jest
+=== RUN   TestDecide_RefusesFormsThatNeverExit/jest_-w_4
+=== RUN   TestDecide_RefusesFormsThatNeverExit/jest_--watchAll=false
+=== RUN   TestDecide_RefusesFormsThatNeverExit/jest_--watch
+=== RUN   TestDecide_RefusesFormsThatNeverExit/jest_--watchAll
+=== RUN   TestDecide_RefusesFormsThatNeverExit/npx_jest_--watchAll
+=== RUN   TestDecide_RefusesFormsThatNeverExit/vitest_run
+=== RUN   TestDecide_RefusesFormsThatNeverExit/npx_vitest_run_src
+=== RUN   TestDecide_RefusesFormsThatNeverExit/vitest_watch
+=== RUN   TestDecide_RefusesFormsThatNeverExit/vitest_dev
+=== RUN   TestDecide_RefusesFormsThatNeverExit/npx_vitest_watch
+=== RUN   TestDecide_RefusesFormsThatNeverExit/vitest_--watch
+=== RUN   TestDecide_RefusesFormsThatNeverExit/vitest_-w
+=== RUN   TestDecide_RefusesFormsThatNeverExit/tsc_--noEmit
+=== RUN   TestDecide_RefusesFormsThatNeverExit/tsc_--watch
+=== RUN   TestDecide_RefusesFormsThatNeverExit/tsc_-w
+=== RUN   TestDecide_RefusesFormsThatNeverExit/npx_tsc_-b_--watch
+=== RUN   TestDecide_RefusesFormsThatNeverExit/vite_build
+=== RUN   TestDecide_RefusesFormsThatNeverExit/vite_preview
+=== RUN   TestDecide_RefusesFormsThatNeverExit/npx_vite_preview_--port_4000
+=== RUN   TestDecide_RefusesFormsThatNeverExit/flutter_test
+=== RUN   TestDecide_RefusesFormsThatNeverExit/flutter_run
+=== RUN   TestDecide_RefusesFormsThatNeverExit/flutter_run_-d_chrome
+--- PASS: TestDecide_RefusesFormsThatNeverExit (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/docker_logs_api (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/docker_logs_-f_api (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/docker_logs_--follow_api (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/docker_logs_-tf_api (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/docker_logs_--follow=true_api (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/kubectl_logs_api_--tail=50 (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/kubectl_logs_-f_api (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/kubectl_logs_api_--follow (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/journalctl_-u_nginx_-n_50 (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/journalctl_-f (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/journalctl_-fu_nginx (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/journalctl_--follow_-u_nginx (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/aws_logs_tail_/aws/lambda/fn_--since_1h (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/aws_logs_tail_/aws/lambda/fn_--follow (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/logcli_query_q1 (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/logcli_query_--tail_q1 (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/logcli_query_-t_q1 (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/jest (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/jest_-w_4 (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/jest_--watchAll=false (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/jest_--watch (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/jest_--watchAll (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/npx_jest_--watchAll (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/vitest_run (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/npx_vitest_run_src (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/vitest_watch (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/vitest_dev (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/npx_vitest_watch (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/vitest_--watch (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/vitest_-w (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/tsc_--noEmit (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/tsc_--watch (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/tsc_-w (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/npx_tsc_-b_--watch (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/vite_build (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/vite_preview (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/npx_vite_preview_--port_4000 (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/flutter_test (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/flutter_run (0.00s)
+    --- PASS: TestDecide_RefusesFormsThatNeverExit/flutter_run_-d_chrome (0.00s)
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec_spec/models/invoice_spec.rb
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec_--init
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec_-o_report.txt
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec_--out=report.txt
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_app/_--format_clang
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-a
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-A_app/
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-aF
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--auto-correct
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--autocorrect-all
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-o_out.txt
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--out=out.txt
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--auto-gen-config
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--format_json
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-f_json
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--format=simple
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test_--no-build_-c_Release
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test_--diag_log.txt
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test_-d_log.txt
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test_--results-directory_out
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan_analyse_src_--level=8
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/vendor/bin/phpstan_analyze
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan_analyse_--generate-baseline
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan_analyse_--watch
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan_clear-result-cache
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_-t_api_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--no-cache_-f_Dockerfile.dev_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--push_-t_api_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_-o_out_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--output=type=local,dest=out_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--secret_id=npm,src=.npmrc_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_https://example.com/org/repo.tar.gz
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_github.com/user/repo
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_git@gitlab.com:x/y
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_-t_api_git@gitlab.com:x/y.git#main
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_./repo.git
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--iidfile_id.txt_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--iidfile=id.txt_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--metadata-file_meta.json_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--metadata-file=meta.json_.
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_rm_api
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_rmi_api
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_run_api
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_ps
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_ps_-a
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_images
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_images_-a
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods_-n_prod
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods_-w
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods_--watch
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods_--watch-only
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_delete_pod_api
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_apply_-f_x.yaml
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/git_stash_list
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/cargo_clippy
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/cargo_clippy_--all-targets_--_-D_warnings
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/cargo_clippy_--fix
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/cargo_clippy_--fix_--allow-dirty
+=== RUN   TestFamilyOf_WiredFamiliesAcceptAndRefuse/terraform_apply
+--- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec_spec/models/invoice_spec.rb (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec_--init (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec_-o_report.txt (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rspec_--out=report.txt (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_app/_--format_clang (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-a (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-A_app/ (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-aF (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--auto-correct (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--autocorrect-all (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-o_out.txt (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--out=out.txt (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--auto-gen-config (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--format_json (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_-f_json (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/rubocop_--format=simple (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test_--no-build_-c_Release (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test_--diag_log.txt (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test_-d_log.txt (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/dotnet_test_--results-directory_out (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan_analyse_src_--level=8 (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/vendor/bin/phpstan_analyze (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan_analyse_--generate-baseline (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan_analyse_--watch (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/phpstan_clear-result-cache (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_-t_api_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--no-cache_-f_Dockerfile.dev_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--push_-t_api_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_-o_out_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--output=type=local,dest=out_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--secret_id=npm,src=.npmrc_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_https://example.com/org/repo.tar.gz (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_github.com/user/repo (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_git@gitlab.com:x/y (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_-t_api_git@gitlab.com:x/y.git#main (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_./repo.git (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--iidfile_id.txt_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--iidfile=id.txt_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--metadata-file_meta.json_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_build_--metadata-file=meta.json_. (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_rm_api (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_rmi_api (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_run_api (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_ps (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_ps_-a (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_images (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/docker_images_-a (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods_-n_prod (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods_-w (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods_--watch (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_get_pods_--watch-only (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_delete_pod_api (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/kubectl_apply_-f_x.yaml (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/git_stash_list (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/cargo_clippy (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/cargo_clippy_--all-targets_--_-D_warnings (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/cargo_clippy_--fix (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/cargo_clippy_--fix_--allow-dirty (0.00s)
+    --- PASS: TestFamilyOf_WiredFamiliesAcceptAndRefuse/terraform_apply (0.00s)
+=== RUN   TestFamilyOf_ContainerExecInheritsRefusals
+--- PASS: TestFamilyOf_ContainerExecInheritsRefusals (0.00s)
+=== RUN   TestWiredFamiliesHaveFormats
+--- PASS: TestWiredFamiliesHaveFormats (0.00s)
+=== RUN   TestFamilyOf_RipgrepAndGitGrep
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--line-number_foo_internal_cmd
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-ni_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-in_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-ne_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-e_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--regexp=foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--regexp_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--glob=*.go_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-g_*.go_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-t_go_-T_md_-m_3_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--type=go_--max-count_3_foo_.
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-nSsHwxFuL_foo_.
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--hidden_--no-ignore_--follow_--no-heading_--with-filename_foo_.
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-nc_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--count_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-nl_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--files-with-matches_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-e_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-nr_bar_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-r_bar_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--replace=bar_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--pre_cat_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--pre=cat_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--pre-glob=*.gz_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-nz_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--search-zip_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-A_2_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-B_2_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-C_2_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--context=2_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--files-without-match_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-no_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-nv_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--json_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--heading_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-np_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--pretty_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--vimgrep_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n0_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--null_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--color=always_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-nU_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--multiline_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--passthru_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--stats_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--debug_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-nh_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_foo_-
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_foo_--_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-en_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--regexp
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--line-number=1_foo_.
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_-g
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_internal_cmd
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_--hidden_--no-ignore_--follow_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_-uL_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_-g_*.go_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_--glob=*.go_-t_go_-T_md
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_-n_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_-e_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_--pre_cat
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_-0
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_--_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_--files_-
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/rg_-n_--files_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_--line-number_foo_--_internal_cmd
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-niwFEI_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-ne_foo_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-e_foo_--_internal
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-e_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--ignore-case_--word-regexp_--fixed-strings_--extended-regexp_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-nh_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-nc_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-nl_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-nL_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-no_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-nv_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-np_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-nW_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-A_2_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-B_2_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-C_2_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-nz_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-O_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-nOcat_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--open-files-in-pager=cat_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--open-files-in-pager_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--cached_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--no-index_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--threads_2_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--count_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-en_foo
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-e
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_foo_-
+=== RUN   TestFamilyOf_RipgrepAndGitGrep/git_-C_x_grep_-n_foo
+--- PASS: TestFamilyOf_RipgrepAndGitGrep (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--line-number_foo_internal_cmd (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-ni_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-in_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-ne_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-e_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--regexp=foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--regexp_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--glob=*.go_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-g_*.go_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-t_go_-T_md_-m_3_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--type=go_--max-count_3_foo_. (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-nSsHwxFuL_foo_. (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--hidden_--no-ignore_--follow_--no-heading_--with-filename_foo_. (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-nc_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--count_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-nl_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--files-with-matches_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-e_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-nr_bar_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-r_bar_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--replace=bar_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--pre_cat_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--pre=cat_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--pre-glob=*.gz_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-nz_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--search-zip_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-A_2_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-B_2_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-C_2_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--context=2_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--files-without-match_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-no_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-nv_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--json_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--heading_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-np_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--pretty_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--vimgrep_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n0_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--null_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--color=always_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-nU_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--multiline_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--passthru_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--stats_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--debug_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-nh_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_foo_- (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_foo_--_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-en_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--regexp (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--line-number=1_foo_. (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_-g (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_internal_cmd (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_--hidden_--no-ignore_--follow_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_-uL_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_-g_*.go_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_--glob=*.go_-t_go_-T_md (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_-n_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_-e_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_--pre_cat (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_-0 (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_--_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_--files_- (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/rg_-n_--files_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_--line-number_foo_--_internal_cmd (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-niwFEI_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-ne_foo_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-e_foo_--_internal (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-e_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--ignore-case_--word-regexp_--fixed-strings_--extended-regexp_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-- (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-nh_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-nc_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-nl_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-nL_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-no_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-nv_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-np_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-nW_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-A_2_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-B_2_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-C_2_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-nz_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-O_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-nOcat_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--open-files-in-pager=cat_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--open-files-in-pager_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--cached_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--no-index_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--threads_2_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_--count_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-en_foo (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_-e (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_grep_-n_foo_- (0.00s)
+    --- PASS: TestFamilyOf_RipgrepAndGitGrep/git_-C_x_grep_-n_foo (0.00s)
+=== RUN   TestFamilyOf_SearchBreadth
+--- PASS: TestFamilyOf_SearchBreadth (0.00s)
+=== RUN   TestCommandPlanSearchFormats
+--- PASS: TestCommandPlanSearchFormats (0.00s)
+=== RUN   TestDecideShapes
+=== RUN   TestDecideShapes/pnpm_exec_playwright
+=== RUN   TestDecideShapes/pnpm_exec_playwright_flags
+=== RUN   TestDecideShapes/yarn_playwright
+=== RUN   TestDecideShapes/yarn_jest
+=== RUN   TestDecideShapes/yarn_jest_flags
+=== RUN   TestDecideShapes/pnpm_exec_jest
+=== RUN   TestDecideShapes/pnpm_exec_npx_jest
+=== RUN   TestDecideShapes/pnpm_exec_vitest
+=== RUN   TestDecideShapes/yarn_vitest
+=== RUN   TestDecideShapes/pnpm_exec_tsc
+=== RUN   TestDecideShapes/yarn_tsc
+=== RUN   TestDecideShapes/pnpm_exec_next_build
+=== RUN   TestDecideShapes/yarn_cypress_run
+=== RUN   TestDecideShapes/pnpm_exec_eslint
+=== RUN   TestDecideShapes/php_phpunit
+=== RUN   TestDecideShapes/php_dot-slash_phpunit
+=== RUN   TestDecideShapes/node_modules_dot-slash_vitest
+=== RUN   TestDecideShapes/node_modules_vitest
+=== RUN   TestDecideShapes/node_modules_jest
+=== RUN   TestDecideShapes/node_modules_tsc
+=== RUN   TestDecideShapes/node_modules_playwright
+=== RUN   TestDecideShapes/node_modules_eslint
+=== RUN   TestDecideShapes/node_modules_prettier_check
+=== RUN   TestDecideShapes/venv_dot-slash_pytest
+=== RUN   TestDecideShapes/venv_pytest
+=== RUN   TestDecideShapes/venv_ruff_check
+=== RUN   TestDecideShapes/venv_python_-m_pytest
+=== RUN   TestDecideShapes/playwright_with_redirect_stays_a_chain_segment
+=== RUN   TestDecideShapes/node_modules_vitest_watch
+=== RUN   TestDecideShapes/node_modules_vitest_-w
+=== RUN   TestDecideShapes/node_modules_vite_preview
+=== RUN   TestDecideShapes/node_modules_prettier_write
+=== RUN   TestDecideShapes/node_modules_package_manager
+=== RUN   TestDecideShapes/node_modules_rm
+=== RUN   TestDecideShapes/node_modules_nested_path
+=== RUN   TestDecideShapes/venv_pip
+=== RUN   TestDecideShapes/venv_uv_run
+=== RUN   TestDecideShapes/pnpm_exec_playwright_install
+=== RUN   TestDecideShapes/pnpm_exec_prettier_write
+=== RUN   TestDecideShapes/pnpm_exec_git_push
+=== RUN   TestDecideShapes/pnpm_exec_git_status
+=== RUN   TestDecideShapes/pnpm_exec_rm
+=== RUN   TestDecideShapes/pnpm_exec_bare
+=== RUN   TestDecideShapes/yarn_nested_yarn
+=== RUN   TestDecideShapes/pnpm_exec_nested_pnpm
+=== RUN   TestDecideShapes/yarn_bare
+=== RUN   TestDecideShapes/yarn_git_push
+=== RUN   TestDecideShapes/php_paratest
+=== RUN   TestDecideShapes/php_other_script
+=== RUN   TestDecideShapes/composer_test
+--- PASS: TestDecideShapes (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_playwright (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_playwright_flags (0.00s)
+    --- PASS: TestDecideShapes/yarn_playwright (0.00s)
+    --- PASS: TestDecideShapes/yarn_jest (0.00s)
+    --- PASS: TestDecideShapes/yarn_jest_flags (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_jest (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_npx_jest (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_vitest (0.00s)
+    --- PASS: TestDecideShapes/yarn_vitest (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_tsc (0.00s)
+    --- PASS: TestDecideShapes/yarn_tsc (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_next_build (0.00s)
+    --- PASS: TestDecideShapes/yarn_cypress_run (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_eslint (0.00s)
+    --- PASS: TestDecideShapes/php_phpunit (0.00s)
+    --- PASS: TestDecideShapes/php_dot-slash_phpunit (0.00s)
+    --- PASS: TestDecideShapes/node_modules_dot-slash_vitest (0.00s)
+    --- PASS: TestDecideShapes/node_modules_vitest (0.00s)
+    --- PASS: TestDecideShapes/node_modules_jest (0.00s)
+    --- PASS: TestDecideShapes/node_modules_tsc (0.00s)
+    --- PASS: TestDecideShapes/node_modules_playwright (0.00s)
+    --- PASS: TestDecideShapes/node_modules_eslint (0.00s)
+    --- PASS: TestDecideShapes/node_modules_prettier_check (0.00s)
+    --- PASS: TestDecideShapes/venv_dot-slash_pytest (0.00s)
+    --- PASS: TestDecideShapes/venv_pytest (0.00s)
+    --- PASS: TestDecideShapes/venv_ruff_check (0.00s)
+    --- PASS: TestDecideShapes/venv_python_-m_pytest (0.00s)
+    --- PASS: TestDecideShapes/playwright_with_redirect_stays_a_chain_segment (0.00s)
+    --- PASS: TestDecideShapes/node_modules_vitest_watch (0.00s)
+    --- PASS: TestDecideShapes/node_modules_vitest_-w (0.00s)
+    --- PASS: TestDecideShapes/node_modules_vite_preview (0.00s)
+    --- PASS: TestDecideShapes/node_modules_prettier_write (0.00s)
+    --- PASS: TestDecideShapes/node_modules_package_manager (0.00s)
+    --- PASS: TestDecideShapes/node_modules_rm (0.00s)
+    --- PASS: TestDecideShapes/node_modules_nested_path (0.00s)
+    --- PASS: TestDecideShapes/venv_pip (0.00s)
+    --- PASS: TestDecideShapes/venv_uv_run (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_playwright_install (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_prettier_write (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_git_push (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_git_status (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_rm (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_bare (0.00s)
+    --- PASS: TestDecideShapes/yarn_nested_yarn (0.00s)
+    --- PASS: TestDecideShapes/pnpm_exec_nested_pnpm (0.00s)
+    --- PASS: TestDecideShapes/yarn_bare (0.00s)
+    --- PASS: TestDecideShapes/yarn_git_push (0.00s)
+    --- PASS: TestDecideShapes/php_paratest (0.00s)
+    --- PASS: TestDecideShapes/php_other_script (0.00s)
+    --- PASS: TestDecideShapes/composer_test (0.00s)
+=== RUN   TestFamilyOf_StackSecurityRefused
+--- PASS: TestFamilyOf_StackSecurityRefused (0.00s)
+=== RUN   TestFamilyOf_StackSecurityAccepted
+--- PASS: TestFamilyOf_StackSecurityAccepted (0.00s)
+=== RUN   TestIsEnvAssignment_StackReserved
+--- PASS: TestIsEnvAssignment_StackReserved (0.00s)
+=== RUN   TestDecide
+=== RUN   TestDecide/go_test
+=== RUN   TestDecide/go_test_flags
+=== RUN   TestDecide/git_status
+=== RUN   TestDecide/surrounding_space
+=== RUN   TestDecide/collapsed_spaces
+=== RUN   TestDecide/pytest_bare
+=== RUN   TestDecide/pytest_with_args
+=== RUN   TestDecide/vitest_bare
+=== RUN   TestDecide/vitest_run
+=== RUN   TestDecide/npx_vitest
+=== RUN   TestDecide/npx_vitest_run
+=== RUN   TestDecide/jest_bare
+=== RUN   TestDecide/jest_run
+=== RUN   TestDecide/npx_jest
+=== RUN   TestDecide/cypress_run
+=== RUN   TestDecide/npx_cypress_run
+=== RUN   TestDecide/next_build
+=== RUN   TestDecide/npx_next_build
+=== RUN   TestDecide/phpunit
+=== RUN   TestDecide/vendor_phpunit
+=== RUN   TestDecide/flutter_test
+=== RUN   TestDecide/flutter_test_args
+=== RUN   TestDecide/dart_test
+=== RUN   TestDecide/flutter_analyze
+=== RUN   TestDecide/dart_run
+=== RUN   TestDecide/flutter_pub_get
+=== RUN   TestDecide/flutter_doctor
+=== RUN   TestDecide/flutter_build
+=== RUN   TestDecide/dart_analyze
+=== RUN   TestDecide/dart_pub
+=== RUN   TestDecide/mvn_test
+=== RUN   TestDecide/mvn_clean_verify
+=== RUN   TestDecide/mvn_package_flags
+=== RUN   TestDecide/mvnw_install
+=== RUN   TestDecide/./mvnw_test
+=== RUN   TestDecide/mvn_option_first
+=== RUN   TestDecide/mvn_plugin_goal
+=== RUN   TestDecide/mvn_deploy
+=== RUN   TestDecide/mvn_clean_deploy
+=== RUN   TestDecide/mvn_settings_file
+=== RUN   TestDecide/mvn_clean_install
+=== RUN   TestDecide/mvn_-f_install
+=== RUN   TestDecide/mvn_-s_value
+=== RUN   TestDecide/mvn_--file
+=== RUN   TestDecide/mvn_-P_profile
+=== RUN   TestDecide/mvn_-D_path
+=== RUN   TestDecide/bare_mvn
+=== RUN   TestDecide/gradle_build
+=== RUN   TestDecide/gradlew_test
+=== RUN   TestDecide/gradlew_qualified
+=== RUN   TestDecide/gradlew_flag_first
+=== RUN   TestDecide/gradle_exclude
+=== RUN   TestDecide/gradle_several_tasks
+=== RUN   TestDecide/gradle_clean_publish
+=== RUN   TestDecide/gradle_exclude_then_publish
+=== RUN   TestDecide/gradle_build_then_publish
+=== RUN   TestDecide/gradle_only_exclude
+=== RUN   TestDecide/gradle_testPublish
+=== RUN   TestDecide/gradle_testDeploy
+=== RUN   TestDecide/gradle_qualified_testPublish
+=== RUN   TestDecide/gradle_testDebugUnitTest
+=== RUN   TestDecide/gradle_testDebugPublish
+=== RUN   TestDecide/gradle_assembleReleaseDeploy
+=== RUN   TestDecide/gradle_lintDebugUpload
+=== RUN   TestDecide/gradle_no_task
+=== RUN   TestDecide/gradle_version
+=== RUN   TestDecide/gradle_other_task
+=== RUN   TestDecide/gradle_dependencies
+=== RUN   TestDecide/gradle_option_with_value
+=== RUN   TestDecide/git_log
+=== RUN   TestDecide/git_diff
+=== RUN   TestDecide/git_show
+=== RUN   TestDecide/git_branch
+=== RUN   TestDecide/git_fetch
+=== RUN   TestDecide/git_pull
+=== RUN   TestDecide/git_push
+=== RUN   TestDecide/git_commit
+=== RUN   TestDecide/git_add
+=== RUN   TestDecide/git_stash
+=== RUN   TestDecide/git_remote
+=== RUN   TestDecide/git_tag
+=== RUN   TestDecide/git_config_read
+=== RUN   TestDecide/git_config_write
+=== RUN   TestDecide/git_other_subcommand
+=== RUN   TestDecide/git_bare
+=== RUN   TestDecide/git_version_option
+=== RUN   TestDecide/npm_test
+=== RUN   TestDecide/npm_run_test
+=== RUN   TestDecide/npm_t
+=== RUN   TestDecide/npm_run_build
+=== RUN   TestDecide/pnpm_test
+=== RUN   TestDecide/pnpm_build
+=== RUN   TestDecide/yarn_test
+=== RUN   TestDecide/yarn_build
+=== RUN   TestDecide/bun_test
+=== RUN   TestDecide/bun_build
+=== RUN   TestDecide/phpstan
+=== RUN   TestDecide/vendor_phpstan
+=== RUN   TestDecide/psalm
+=== RUN   TestDecide/vendor_psalm
+=== RUN   TestDecide/composer_validate
+=== RUN   TestDecide/composer_show
+=== RUN   TestDecide/composer_audit
+=== RUN   TestDecide/composer_install_not_allowed
+=== RUN   TestDecide/artisan_test
+=== RUN   TestDecide/artisan_route_list
+=== RUN   TestDecide/artisan_migrate_not_allowed
+=== RUN   TestDecide/eslint
+=== RUN   TestDecide/npx_eslint
+=== RUN   TestDecide/prettier_check
+=== RUN   TestDecide/prettier_write_not_allowed
+=== RUN   TestDecide/biome_check
+=== RUN   TestDecide/biome_lint
+=== RUN   TestDecide/kubectl_get_pods
+=== RUN   TestDecide/kubectl_get_all
+=== RUN   TestDecide/kubectl_describe_pod
+=== RUN   TestDecide/kubectl_logs
+=== RUN   TestDecide/kubectl_delete_not_allowed
+=== RUN   TestDecide/kubectl_apply_not_allowed
+=== RUN   TestDecide/helm_list
+=== RUN   TestDecide/helm_status
+=== RUN   TestDecide/helm_install_not_allowed
+=== RUN   TestDecide/terraform_plan
+=== RUN   TestDecide/terraform_fmt_check
+=== RUN   TestDecide/terraform_fmt_no_check_not_allowed
+=== RUN   TestDecide/terraform_apply_not_allowed
+=== RUN   TestDecide/az_aks_list
+=== RUN   TestDecide/az_storage_account_show
+=== RUN   TestDecide/az_aks_delete_not_allowed
+=== RUN   TestDecide/aws_ec2_describe-instances
+=== RUN   TestDecide/aws_s3_ls
+=== RUN   TestDecide/aws_s3_ls_bucket
+=== RUN   TestDecide/aws_s3_cp
+=== RUN   TestDecide/aws_logs_tail
+=== RUN   TestDecide/aws_ecs_list-clusters
+=== RUN   TestDecide/aws_lambda_get-function
+=== RUN   TestDecide/aws_ec2_terminate-instances_not_allowed
+=== RUN   TestDecide/aws_s3_rm_not_allowed
+=== RUN   TestDecide/docker_ps
+=== RUN   TestDecide/docker_ps_all
+=== RUN   TestDecide/docker_logs
+=== RUN   TestDecide/docker_images
+=== RUN   TestDecide/docker_build
+=== RUN   TestDecide/docker_rm_not_allowed
+=== RUN   TestDecide/docker_run_not_allowed
+=== RUN   TestDecide/go_build
+=== RUN   TestDecide/bare_go
+=== RUN   TestDecide/path_to_git
+=== RUN   TestDecide/git_global_option_first
+=== RUN   TestDecide/git_config_injection
+=== RUN   TestDecide/git_exec_path
+=== RUN   TestDecide/git_dir_override
+=== RUN   TestDecide/git_env_assignment
+=== RUN   TestDecide/git_after_sudo
+=== RUN   TestDecide/sudo
+=== RUN   TestDecide/env_assignment
+=== RUN   TestDecide/empty
+=== RUN   TestDecide/blank
+=== RUN   TestDecide/already_wrapped
+=== RUN   TestDecide/wrapped_twice
+=== RUN   TestDecide/pipe
+=== RUN   TestDecide/or_list
+=== RUN   TestDecide/background_list
+=== RUN   TestDecide/background
+=== RUN   TestDecide/redirect_out
+=== RUN   TestDecide/redirect_in
+=== RUN   TestDecide/dollar
+=== RUN   TestDecide/backtick
+=== RUN   TestDecide/subshell
+=== RUN   TestDecide/parens
+=== RUN   TestDecide/newline
+=== RUN   TestDecide/carriage_return
+=== RUN   TestDecide/trailing_newline
+=== RUN   TestDecide/tab
+=== RUN   TestDecide/double_quote_with_expansion
+=== RUN   TestDecide/unclosed_single_quote
+=== RUN   TestDecide/glob_star
+=== RUN   TestDecide/glob_question
+=== RUN   TestDecide/glob_bracket
+=== RUN   TestDecide/brace
+=== RUN   TestDecide/tilde
+=== RUN   TestDecide/backslash
+=== RUN   TestDecide/comment
+=== RUN   TestDecide/bang
+=== RUN   TestDecide/caret
+=== RUN   TestDecide/non_ascii
+--- PASS: TestDecide (0.00s)
+    --- PASS: TestDecide/go_test (0.00s)
+    --- PASS: TestDecide/go_test_flags (0.00s)
+    --- PASS: TestDecide/git_status (0.00s)
+    --- PASS: TestDecide/surrounding_space (0.00s)
+    --- PASS: TestDecide/collapsed_spaces (0.00s)
+    --- PASS: TestDecide/pytest_bare (0.00s)
+    --- PASS: TestDecide/pytest_with_args (0.00s)
+    --- PASS: TestDecide/vitest_bare (0.00s)
+    --- PASS: TestDecide/vitest_run (0.00s)
+    --- PASS: TestDecide/npx_vitest (0.00s)
+    --- PASS: TestDecide/npx_vitest_run (0.00s)
+    --- PASS: TestDecide/jest_bare (0.00s)
+    --- PASS: TestDecide/jest_run (0.00s)
+    --- PASS: TestDecide/npx_jest (0.00s)
+    --- PASS: TestDecide/cypress_run (0.00s)
+    --- PASS: TestDecide/npx_cypress_run (0.00s)
+    --- PASS: TestDecide/next_build (0.00s)
+    --- PASS: TestDecide/npx_next_build (0.00s)
+    --- PASS: TestDecide/phpunit (0.00s)
+    --- PASS: TestDecide/vendor_phpunit (0.00s)
+    --- PASS: TestDecide/flutter_test (0.00s)
+    --- PASS: TestDecide/flutter_test_args (0.00s)
+    --- PASS: TestDecide/dart_test (0.00s)
+    --- PASS: TestDecide/flutter_analyze (0.00s)
+    --- PASS: TestDecide/dart_run (0.00s)
+    --- PASS: TestDecide/flutter_pub_get (0.00s)
+    --- PASS: TestDecide/flutter_doctor (0.00s)
+    --- PASS: TestDecide/flutter_build (0.00s)
+    --- PASS: TestDecide/dart_analyze (0.00s)
+    --- PASS: TestDecide/dart_pub (0.00s)
+    --- PASS: TestDecide/mvn_test (0.00s)
+    --- PASS: TestDecide/mvn_clean_verify (0.00s)
+    --- PASS: TestDecide/mvn_package_flags (0.00s)
+    --- PASS: TestDecide/mvnw_install (0.00s)
+    --- PASS: TestDecide/./mvnw_test (0.00s)
+    --- PASS: TestDecide/mvn_option_first (0.00s)
+    --- PASS: TestDecide/mvn_plugin_goal (0.00s)
+    --- PASS: TestDecide/mvn_deploy (0.00s)
+    --- PASS: TestDecide/mvn_clean_deploy (0.00s)
+    --- PASS: TestDecide/mvn_settings_file (0.00s)
+    --- PASS: TestDecide/mvn_clean_install (0.00s)
+    --- PASS: TestDecide/mvn_-f_install (0.00s)
+    --- PASS: TestDecide/mvn_-s_value (0.00s)
+    --- PASS: TestDecide/mvn_--file (0.00s)
+    --- PASS: TestDecide/mvn_-P_profile (0.00s)
+    --- PASS: TestDecide/mvn_-D_path (0.00s)
+    --- PASS: TestDecide/bare_mvn (0.00s)
+    --- PASS: TestDecide/gradle_build (0.00s)
+    --- PASS: TestDecide/gradlew_test (0.00s)
+    --- PASS: TestDecide/gradlew_qualified (0.00s)
+    --- PASS: TestDecide/gradlew_flag_first (0.00s)
+    --- PASS: TestDecide/gradle_exclude (0.00s)
+    --- PASS: TestDecide/gradle_several_tasks (0.00s)
+    --- PASS: TestDecide/gradle_clean_publish (0.00s)
+    --- PASS: TestDecide/gradle_exclude_then_publish (0.00s)
+    --- PASS: TestDecide/gradle_build_then_publish (0.00s)
+    --- PASS: TestDecide/gradle_only_exclude (0.00s)
+    --- PASS: TestDecide/gradle_testPublish (0.00s)
+    --- PASS: TestDecide/gradle_testDeploy (0.00s)
+    --- PASS: TestDecide/gradle_qualified_testPublish (0.00s)
+    --- PASS: TestDecide/gradle_testDebugUnitTest (0.00s)
+    --- PASS: TestDecide/gradle_testDebugPublish (0.00s)
+    --- PASS: TestDecide/gradle_assembleReleaseDeploy (0.00s)
+    --- PASS: TestDecide/gradle_lintDebugUpload (0.00s)
+    --- PASS: TestDecide/gradle_no_task (0.00s)
+    --- PASS: TestDecide/gradle_version (0.00s)
+    --- PASS: TestDecide/gradle_other_task (0.00s)
+    --- PASS: TestDecide/gradle_dependencies (0.00s)
+    --- PASS: TestDecide/gradle_option_with_value (0.00s)
+    --- PASS: TestDecide/git_log (0.00s)
+    --- PASS: TestDecide/git_diff (0.00s)
+    --- PASS: TestDecide/git_show (0.00s)
+    --- PASS: TestDecide/git_branch (0.00s)
+    --- PASS: TestDecide/git_fetch (0.00s)
+    --- PASS: TestDecide/git_pull (0.00s)
+    --- PASS: TestDecide/git_push (0.00s)
+    --- PASS: TestDecide/git_commit (0.00s)
+    --- PASS: TestDecide/git_add (0.00s)
+    --- PASS: TestDecide/git_stash (0.00s)
+    --- PASS: TestDecide/git_remote (0.00s)
+    --- PASS: TestDecide/git_tag (0.00s)
+    --- PASS: TestDecide/git_config_read (0.00s)
+    --- PASS: TestDecide/git_config_write (0.00s)
+    --- PASS: TestDecide/git_other_subcommand (0.00s)
+    --- PASS: TestDecide/git_bare (0.00s)
+    --- PASS: TestDecide/git_version_option (0.00s)
+    --- PASS: TestDecide/npm_test (0.00s)
+    --- PASS: TestDecide/npm_run_test (0.00s)
+    --- PASS: TestDecide/npm_t (0.00s)
+    --- PASS: TestDecide/npm_run_build (0.00s)
+    --- PASS: TestDecide/pnpm_test (0.00s)
+    --- PASS: TestDecide/pnpm_build (0.00s)
+    --- PASS: TestDecide/yarn_test (0.00s)
+    --- PASS: TestDecide/yarn_build (0.00s)
+    --- PASS: TestDecide/bun_test (0.00s)
+    --- PASS: TestDecide/bun_build (0.00s)
+    --- PASS: TestDecide/phpstan (0.00s)
+    --- PASS: TestDecide/vendor_phpstan (0.00s)
+    --- PASS: TestDecide/psalm (0.00s)
+    --- PASS: TestDecide/vendor_psalm (0.00s)
+    --- PASS: TestDecide/composer_validate (0.00s)
+    --- PASS: TestDecide/composer_show (0.00s)
+    --- PASS: TestDecide/composer_audit (0.00s)
+    --- PASS: TestDecide/composer_install_not_allowed (0.00s)
+    --- PASS: TestDecide/artisan_test (0.00s)
+    --- PASS: TestDecide/artisan_route_list (0.00s)
+    --- PASS: TestDecide/artisan_migrate_not_allowed (0.00s)
+    --- PASS: TestDecide/eslint (0.00s)
+    --- PASS: TestDecide/npx_eslint (0.00s)
+    --- PASS: TestDecide/prettier_check (0.00s)
+    --- PASS: TestDecide/prettier_write_not_allowed (0.00s)
+    --- PASS: TestDecide/biome_check (0.00s)
+    --- PASS: TestDecide/biome_lint (0.00s)
+    --- PASS: TestDecide/kubectl_get_pods (0.00s)
+    --- PASS: TestDecide/kubectl_get_all (0.00s)
+    --- PASS: TestDecide/kubectl_describe_pod (0.00s)
+    --- PASS: TestDecide/kubectl_logs (0.00s)
+    --- PASS: TestDecide/kubectl_delete_not_allowed (0.00s)
+    --- PASS: TestDecide/kubectl_apply_not_allowed (0.00s)
+    --- PASS: TestDecide/helm_list (0.00s)
+    --- PASS: TestDecide/helm_status (0.00s)
+    --- PASS: TestDecide/helm_install_not_allowed (0.00s)
+    --- PASS: TestDecide/terraform_plan (0.00s)
+    --- PASS: TestDecide/terraform_fmt_check (0.00s)
+    --- PASS: TestDecide/terraform_fmt_no_check_not_allowed (0.00s)
+    --- PASS: TestDecide/terraform_apply_not_allowed (0.00s)
+    --- PASS: TestDecide/az_aks_list (0.00s)
+    --- PASS: TestDecide/az_storage_account_show (0.00s)
+    --- PASS: TestDecide/az_aks_delete_not_allowed (0.00s)
+    --- PASS: TestDecide/aws_ec2_describe-instances (0.00s)
+    --- PASS: TestDecide/aws_s3_ls (0.00s)
+    --- PASS: TestDecide/aws_s3_ls_bucket (0.00s)
+    --- PASS: TestDecide/aws_s3_cp (0.00s)
+    --- PASS: TestDecide/aws_logs_tail (0.00s)
+    --- PASS: TestDecide/aws_ecs_list-clusters (0.00s)
+    --- PASS: TestDecide/aws_lambda_get-function (0.00s)
+    --- PASS: TestDecide/aws_ec2_terminate-instances_not_allowed (0.00s)
+    --- PASS: TestDecide/aws_s3_rm_not_allowed (0.00s)
+    --- PASS: TestDecide/docker_ps (0.00s)
+    --- PASS: TestDecide/docker_ps_all (0.00s)
+    --- PASS: TestDecide/docker_logs (0.00s)
+    --- PASS: TestDecide/docker_images (0.00s)
+    --- PASS: TestDecide/docker_build (0.00s)
+    --- PASS: TestDecide/docker_rm_not_allowed (0.00s)
+    --- PASS: TestDecide/docker_run_not_allowed (0.00s)
+    --- PASS: TestDecide/go_build (0.00s)
+    --- PASS: TestDecide/bare_go (0.00s)
+    --- PASS: TestDecide/path_to_git (0.00s)
+    --- PASS: TestDecide/git_global_option_first (0.00s)
+    --- PASS: TestDecide/git_config_injection (0.00s)
+    --- PASS: TestDecide/git_exec_path (0.00s)
+    --- PASS: TestDecide/git_dir_override (0.00s)
+    --- PASS: TestDecide/git_env_assignment (0.00s)
+    --- PASS: TestDecide/git_after_sudo (0.00s)
+    --- PASS: TestDecide/sudo (0.00s)
+    --- PASS: TestDecide/env_assignment (0.00s)
+    --- PASS: TestDecide/empty (0.00s)
+    --- PASS: TestDecide/blank (0.00s)
+    --- PASS: TestDecide/already_wrapped (0.00s)
+    --- PASS: TestDecide/wrapped_twice (0.00s)
+    --- PASS: TestDecide/pipe (0.00s)
+    --- PASS: TestDecide/or_list (0.00s)
+    --- PASS: TestDecide/background_list (0.00s)
+    --- PASS: TestDecide/background (0.00s)
+    --- PASS: TestDecide/redirect_out (0.00s)
+    --- PASS: TestDecide/redirect_in (0.00s)
+    --- PASS: TestDecide/dollar (0.00s)
+    --- PASS: TestDecide/backtick (0.00s)
+    --- PASS: TestDecide/subshell (0.00s)
+    --- PASS: TestDecide/parens (0.00s)
+    --- PASS: TestDecide/newline (0.00s)
+    --- PASS: TestDecide/carriage_return (0.00s)
+    --- PASS: TestDecide/trailing_newline (0.00s)
+    --- PASS: TestDecide/tab (0.00s)
+    --- PASS: TestDecide/double_quote_with_expansion (0.00s)
+    --- PASS: TestDecide/unclosed_single_quote (0.00s)
+    --- PASS: TestDecide/glob_star (0.00s)
+    --- PASS: TestDecide/glob_question (0.00s)
+    --- PASS: TestDecide/glob_bracket (0.00s)
+    --- PASS: TestDecide/brace (0.00s)
+    --- PASS: TestDecide/tilde (0.00s)
+    --- PASS: TestDecide/backslash (0.00s)
+    --- PASS: TestDecide/comment (0.00s)
+    --- PASS: TestDecide/bang (0.00s)
+    --- PASS: TestDecide/caret (0.00s)
+    --- PASS: TestDecide/non_ascii (0.00s)
+=== RUN   TestDecide_TooLong
+--- PASS: TestDecide_TooLong (0.00s)
+=== RUN   TestDecide_Idempotent
+--- PASS: TestDecide_Idempotent (0.00s)
+=== RUN   TestDecide_BadExecutable
+--- PASS: TestDecide_BadExecutable (0.00s)
+=== RUN   TestSplitSingleWord
+=== RUN   TestSplitSingleWord/quoted_command
+=== RUN   TestSplitSingleWord/extra_spaces
+=== RUN   TestSplitSingleWord/already_split
+=== RUN   TestSplitSingleWord/single_word
+=== RUN   TestSplitSingleWord/empty
+=== RUN   TestSplitSingleWord/spaces_only
+=== RUN   TestSplitSingleWord/tab_inside
+=== RUN   TestSplitSingleWord/newline_inside
+=== RUN   TestSplitSingleWord/double_quote
+=== RUN   TestSplitSingleWord/dollar
+=== RUN   TestSplitSingleWord/pipe
+=== RUN   TestSplitSingleWord/semicolon
+=== RUN   TestSplitSingleWord/glob
+=== RUN   TestSplitSingleWord/redirect
+--- PASS: TestSplitSingleWord (0.00s)
+    --- PASS: TestSplitSingleWord/quoted_command (0.00s)
+    --- PASS: TestSplitSingleWord/extra_spaces (0.00s)
+    --- PASS: TestSplitSingleWord/already_split (0.00s)
+    --- PASS: TestSplitSingleWord/single_word (0.00s)
+    --- PASS: TestSplitSingleWord/empty (0.00s)
+    --- PASS: TestSplitSingleWord/spaces_only (0.00s)
+    --- PASS: TestSplitSingleWord/tab_inside (0.00s)
+    --- PASS: TestSplitSingleWord/newline_inside (0.00s)
+    --- PASS: TestSplitSingleWord/double_quote (0.00s)
+    --- PASS: TestSplitSingleWord/dollar (0.00s)
+    --- PASS: TestSplitSingleWord/pipe (0.00s)
+    --- PASS: TestSplitSingleWord/semicolon (0.00s)
+    --- PASS: TestSplitSingleWord/glob (0.00s)
+    --- PASS: TestSplitSingleWord/redirect (0.00s)
+=== RUN   TestFamilyOf_WebAssets
+--- PASS: TestFamilyOf_WebAssets (0.00s)
+=== RUN   TestRun_SignalReachesGrandchildren
+--- PASS: TestRun_SignalReachesGrandchildren (0.00s)
+=== RUN   TestHelperKilledWrapper
+    procgroup_test.go:63: helper process only
+--- SKIP: TestHelperKilledWrapper (0.00s)
+=== RUN   TestRun_WrapperKilledLeavesNoChild
+--- PASS: TestRun_WrapperKilledLeavesNoChild (0.00s)
+=== RUN   TestQA_CoverageFiguresSurviveCompaction
+--- PASS: TestQA_CoverageFiguresSurviveCompaction (0.00s)
+=== RUN   TestQA_OutputWithoutFinalNewlineStaysRaw
+--- PASS: TestQA_OutputWithoutFinalNewlineStaysRaw (0.00s)
+=== RUN   TestQA_StdoutStderrOrderPreserved
+--- PASS: TestQA_StdoutStderrOrderPreserved (0.00s)
+=== RUN   TestQuotedLexAndRewriteMatchShell
+--- PASS: TestQuotedLexAndRewriteMatchShell (0.00s)
+=== RUN   TestRegistryEveryFamilyHasFormatAndCorpus
+--- PASS: TestRegistryEveryFamilyHasFormatAndCorpus (0.00s)
+=== RUN   TestRegistryExpectedFormatNamesAFamily
+--- PASS: TestRegistryExpectedFormatNamesAFamily (0.00s)
+=== RUN   TestApplyRetrievals
+=== RUN   TestApplyRetrievals/nothing_read_back
+=== RUN   TestApplyRetrievals/partial_read_back
+=== RUN   TestApplyRetrievals/read_back_larger_than_the_saving
+=== RUN   TestApplyRetrievals/exactly_the_saving
+=== RUN   TestApplyRetrievals/unknown_id_changes_nothing
+=== RUN   TestApplyRetrievals/run_without_a_kept_id
+=== RUN   TestApplyRetrievals/same_output_twice,_one_read
+=== RUN   TestApplyRetrievals/two_ids_stay_apart
+=== RUN   TestApplyRetrievals/run_that_saved_nothing
+--- PASS: TestApplyRetrievals (0.00s)
+    --- PASS: TestApplyRetrievals/nothing_read_back (0.00s)
+    --- PASS: TestApplyRetrievals/partial_read_back (0.00s)
+    --- PASS: TestApplyRetrievals/read_back_larger_than_the_saving (0.00s)
+    --- PASS: TestApplyRetrievals/exactly_the_saving (0.00s)
+    --- PASS: TestApplyRetrievals/unknown_id_changes_nothing (0.00s)
+    --- PASS: TestApplyRetrievals/run_without_a_kept_id (0.00s)
+    --- PASS: TestApplyRetrievals/same_output_twice,_one_read (0.00s)
+    --- PASS: TestApplyRetrievals/two_ids_stay_apart (0.00s)
+    --- PASS: TestApplyRetrievals/run_that_saved_nothing (0.00s)
+=== RUN   TestRecordRetrievalRoundTrip
+--- PASS: TestRecordRetrievalRoundTrip (0.00s)
+=== RUN   TestRetrievalsReadFromRotatedGeneration
+--- PASS: TestRetrievalsReadFromRotatedGeneration (0.00s)
+=== RUN   TestSummarizeSessionCountsOnlyItsOwnRetrievals
+--- PASS: TestSummarizeSessionCountsOnlyItsOwnRetrievals (0.00s)
+=== RUN   TestOldLogsWithoutRetrievalsAreUnchanged
+--- PASS: TestOldLogsWithoutRetrievalsAreUnchanged (0.00s)
+=== RUN   TestRunReportsKeptID
+--- PASS: TestRunReportsKeptID (0.00s)
+=== RUN   TestAppendRotatesAtCap
+--- PASS: TestAppendRotatesAtCap (0.00s)
+=== RUN   TestAppendBelowCapKeepsFile
+--- PASS: TestAppendBelowCapKeepsFile (0.00s)
+=== RUN   TestReadersSpanRotation
+--- PASS: TestReadersSpanRotation (0.00s)
+=== RUN   TestSkipReadersSpanRotation
+--- PASS: TestSkipReadersSpanRotation (0.00s)
+=== RUN   TestConcurrentAppendsAcrossRotationKeepLinesWhole
+--- PASS: TestConcurrentAppendsAcrossRotationKeepLinesWhole (0.00s)
+=== RUN   TestRun_BazelWritesOnStderrAndStillCompacts
+--- PASS: TestRun_BazelWritesOnStderrAndStillCompacts (0.00s)
+=== RUN   TestRun_BazelFailureAndWarningStayRaw
+--- PASS: TestRun_BazelFailureAndWarningStayRaw (0.00s)
+=== RUN   TestRun_BigCleanTestOutputCompacts
+=== RUN   TestRun_BigCleanTestOutputCompacts/go_test_-v_./...
+=== RUN   TestRun_BigCleanTestOutputCompacts/go_test_-json
+=== RUN   TestRun_BigCleanTestOutputCompacts/yarn_test
+=== RUN   TestRun_BigCleanTestOutputCompacts/pnpm_test
+--- PASS: TestRun_BigCleanTestOutputCompacts (0.00s)
+    --- PASS: TestRun_BigCleanTestOutputCompacts/go_test_-v_./... (0.00s)
+    --- PASS: TestRun_BigCleanTestOutputCompacts/go_test_-json (0.00s)
+    --- PASS: TestRun_BigCleanTestOutputCompacts/yarn_test (0.00s)
+    --- PASS: TestRun_BigCleanTestOutputCompacts/pnpm_test (0.00s)
+=== RUN   TestRun_CompactsColouredCleanRun
+--- PASS: TestRun_CompactsColouredCleanRun (0.00s)
+=== RUN   TestRun_KeepsTerminalRenderingRaw
+--- PASS: TestRun_KeepsTerminalRenderingRaw (0.00s)
+=== RUN   TestRun_DenoAndZigCleanCompactsWarningAndFailureStayRaw
+--- PASS: TestRun_DenoAndZigCleanCompactsWarningAndFailureStayRaw (0.00s)
+=== RUN   TestRun_AgentDesktopViewThenDelta
+--- PASS: TestRun_AgentDesktopViewThenDelta (0.00s)
+=== RUN   TestRun_AgentDesktopNoDeltaWithoutKeptRaw
+--- PASS: TestRun_AgentDesktopNoDeltaWithoutKeptRaw (0.00s)
+=== RUN   TestRun_AgentDesktopErrorStaysRaw
+--- PASS: TestRun_AgentDesktopErrorStaysRaw (0.00s)
+=== RUN   TestRun_ExitCodesAndCompaction
+=== RUN   TestRun_ExitCodesAndCompaction/passing_go_test_compacts
+=== RUN   TestRun_ExitCodesAndCompaction/kill_switch_keeps_raw
+=== RUN   TestRun_ExitCodesAndCompaction/failing_go_test_stays_raw
+=== RUN   TestRun_ExitCodesAndCompaction/exit_0_with_a_stderr_note_compacts_and_keeps_the_note
+=== RUN   TestRun_ExitCodesAndCompaction/clean_git_status_compacts
+=== RUN   TestRun_ExitCodesAndCompaction/dirty_git_status_compacts
+=== RUN   TestRun_ExitCodesAndCompaction/git_log_is_compacted_to_one_line_per_commit
+=== RUN   TestRun_ExitCodesAndCompaction/git_log_in_an_unknown_shape_stays_raw
+=== RUN   TestRun_ExitCodesAndCompaction/git_push_progress_on_stderr_stays_raw
+=== RUN   TestRun_ExitCodesAndCompaction/git_status_output_under_a_go_test_argv_is_not_compacted
+=== RUN   TestRun_ExitCodesAndCompaction/stdout_and_stderr_stay_separate
+--- PASS: TestRun_ExitCodesAndCompaction (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/passing_go_test_compacts (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/kill_switch_keeps_raw (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/failing_go_test_stays_raw (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/exit_0_with_a_stderr_note_compacts_and_keeps_the_note (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/clean_git_status_compacts (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/dirty_git_status_compacts (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/git_log_is_compacted_to_one_line_per_commit (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/git_log_in_an_unknown_shape_stays_raw (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/git_push_progress_on_stderr_stays_raw (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/git_status_output_under_a_go_test_argv_is_not_compacted (0.00s)
+    --- PASS: TestRun_ExitCodesAndCompaction/stdout_and_stderr_stay_separate (0.00s)
+=== RUN   TestRun_JestCompactionAndFailOpen
+=== RUN   TestRun_JestCompactionAndFailOpen/passing_Jest_compacts
+=== RUN   TestRun_JestCompactionAndFailOpen/failing_Jest_stays_raw
+--- PASS: TestRun_JestCompactionAndFailOpen (0.00s)
+    --- PASS: TestRun_JestCompactionAndFailOpen/passing_Jest_compacts (0.00s)
+    --- PASS: TestRun_JestCompactionAndFailOpen/failing_Jest_stays_raw (0.00s)
+=== RUN   TestRun_FailedCargoTestCompactsMergedStreams
+--- PASS: TestRun_FailedCargoTestCompactsMergedStreams (0.00s)
+=== RUN   TestRun_FailedCargoTestKillSwitchAndCompileErrorStayRaw
+--- PASS: TestRun_FailedCargoTestKillSwitchAndCompileErrorStayRaw (0.00s)
+=== RUN   TestRun_FailedVitestCompactsAndKeepsExitCode
+=== RUN   TestRun_FailedVitestCompactsAndKeepsExitCode/report_on_stderr,_as_vitest_prints_it
+=== RUN   TestRun_FailedVitestCompactsAndKeepsExitCode/the_whole_report_on_stdout
+=== RUN   TestRun_FailedVitestCompactsAndKeepsExitCode/kill_switch_keeps_the_run_raw
+=== RUN   TestRun_FailedVitestCompactsAndKeepsExitCode/a_line_the_grammar_does_not_know_is_kept,_the_run_still_compacts
+--- PASS: TestRun_FailedVitestCompactsAndKeepsExitCode (0.00s)
+    --- PASS: TestRun_FailedVitestCompactsAndKeepsExitCode/report_on_stderr,_as_vitest_prints_it (0.00s)
+    --- PASS: TestRun_FailedVitestCompactsAndKeepsExitCode/the_whole_report_on_stdout (0.00s)
+    --- PASS: TestRun_FailedVitestCompactsAndKeepsExitCode/kill_switch_keeps_the_run_raw (0.00s)
+    --- PASS: TestRun_FailedVitestCompactsAndKeepsExitCode/a_line_the_grammar_does_not_know_is_kept,_the_run_still_compacts (0.00s)
+=== RUN   TestRun_FailedPlaywrightCompactsOnlyWithoutStderr
+--- PASS: TestRun_FailedPlaywrightCompactsOnlyWithoutStderr (0.00s)
+=== RUN   TestRun_FailedPytestCompactsOnlyWithoutStderr
+--- PASS: TestRun_FailedPytestCompactsOnlyWithoutStderr (0.00s)
+=== RUN   TestRun_FailedGoTestCompactsAndKeepsExitCode
+--- PASS: TestRun_FailedGoTestCompactsAndKeepsExitCode (0.00s)
+=== RUN   TestRun_FailedGoTestKillSwitchAndStderrStayRaw
+--- PASS: TestRun_FailedGoTestKillSwitchAndStderrStayRaw (0.00s)
+=== RUN   TestRun_FailedRunOfOtherFamiliesStaysRaw
+--- PASS: TestRun_FailedRunOfOtherFamiliesStaysRaw (0.00s)
+=== RUN   TestRun_FailingRunsOfPassThroughFamiliesStayWhole
+=== RUN   TestRun_FailingRunsOfPassThroughFamiliesStayWhole/yarn_test_fail.txt
+--- PASS: TestRun_FailingRunsOfPassThroughFamiliesStayWhole (0.00s)
+    --- PASS: TestRun_FailingRunsOfPassThroughFamiliesStayWhole/yarn_test_fail.txt (0.00s)
+=== RUN   TestRun_SmallFailingPnpmRunStaysWhole
+--- PASS: TestRun_SmallFailingPnpmRunStaysWhole (0.00s)
+=== RUN   TestRun_GoTestStderrNotes
+=== RUN   TestRun_GoTestStderrNotes/a_module_download_note_compacts_and_stays
+=== RUN   TestRun_GoTestStderrNotes/a_linker_warning_keeps_the_run_raw
+=== RUN   TestRun_GoTestStderrNotes/a_panic_on_stderr_with_exit_0_keeps_the_run_raw
+--- PASS: TestRun_GoTestStderrNotes (0.00s)
+    --- PASS: TestRun_GoTestStderrNotes/a_module_download_note_compacts_and_stays (0.00s)
+    --- PASS: TestRun_GoTestStderrNotes/a_linker_warning_keeps_the_run_raw (0.00s)
+    --- PASS: TestRun_GoTestStderrNotes/a_panic_on_stderr_with_exit_0_keeps_the_run_raw (0.00s)
+=== RUN   TestRun_FailedMakeCutsPassingGoTestsOnly
+=== RUN   TestRun_FailedMakeCutsPassingGoTestsOnly/stderr_releases_the_run_whole
+--- PASS: TestRun_FailedMakeCutsPassingGoTestsOnly (0.00s)
+    --- PASS: TestRun_FailedMakeCutsPassingGoTestsOnly/stderr_releases_the_run_whole (0.00s)
+=== RUN   TestRun_CurlCapsAndRedactsAndNeverStores
+--- PASS: TestRun_CurlCapsAndRedactsAndNeverStores (0.00s)
+=== RUN   TestGateKeeper_FetchFamiliesGetNoStore
+--- PASS: TestGateKeeper_FetchFamiliesGetNoStore (0.00s)
+=== RUN   TestRun_GenericChainCompactsUnknownCleanOutput
+--- PASS: TestRun_GenericChainCompactsUnknownCleanOutput (0.00s)
+=== RUN   TestRun_GenericChainKeepsDangerRawWithExitCode
+--- PASS: TestRun_GenericChainKeepsDangerRawWithExitCode (0.00s)
+=== RUN   TestRun_GenericChainKeepsNonZeroExitRaw
+--- PASS: TestRun_GenericChainKeepsNonZeroExitRaw (0.00s)
+=== RUN   TestRun_GenericChainSkipsGitFamilies
+--- PASS: TestRun_GenericChainSkipsGitFamilies (0.00s)
+=== RUN   TestRun_GenericChainFoldsLongFrameRun
+--- PASS: TestRun_GenericChainFoldsLongFrameRun (0.00s)
+=== RUN   TestRun_GenericChainKeepsFrameRunRawWithErrorMessage
+--- PASS: TestRun_GenericChainKeepsFrameRunRawWithErrorMessage (0.00s)
+=== RUN   TestRun_GhCompactionAndFailOpen
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_run_view_--log_compacts_on_success
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_run_view_--log_failure_stays_raw_and_red
+=== RUN   TestRun_GhCompactionAndFailOpen/unexpected_shape_under_gh_run_is_not_compacted
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_run_kill_switch_keeps_raw
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_run_list_compacts_on_success
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_run_list_failure_stays_raw_and_red
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_pr_view_compacts_on_success
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_pr_view_failure_stays_raw_and_red
+=== RUN   TestRun_GhCompactionAndFailOpen/unexpected_shape_under_gh_pr_is_not_compacted
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_pr_kill_switch_keeps_raw
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_pr_checks_compacts_on_success
+=== RUN   TestRun_GhCompactionAndFailOpen/gh_pr_checks_failure_stays_raw_and_red
+--- PASS: TestRun_GhCompactionAndFailOpen (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_run_view_--log_compacts_on_success (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_run_view_--log_failure_stays_raw_and_red (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/unexpected_shape_under_gh_run_is_not_compacted (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_run_kill_switch_keeps_raw (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_run_list_compacts_on_success (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_run_list_failure_stays_raw_and_red (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_pr_view_compacts_on_success (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_pr_view_failure_stays_raw_and_red (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/unexpected_shape_under_gh_pr_is_not_compacted (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_pr_kill_switch_keeps_raw (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_pr_checks_compacts_on_success (0.00s)
+    --- PASS: TestRun_GhCompactionAndFailOpen/gh_pr_checks_failure_stays_raw_and_red (0.00s)
+=== RUN   TestRun_GitCommitCutsHookBanners
+=== RUN   TestRun_GitCommitCutsHookBanners/clean_commit_keeps_the_summary_and_the_commit_line
+=== RUN   TestRun_GitCommitCutsHookBanners/a_failing_hook_keeps_the_whole_output
+--- PASS: TestRun_GitCommitCutsHookBanners (0.00s)
+    --- PASS: TestRun_GitCommitCutsHookBanners/clean_commit_keeps_the_summary_and_the_commit_line (0.00s)
+    --- PASS: TestRun_GitCommitCutsHookBanners/a_failing_hook_keeps_the_whole_output (0.00s)
+=== RUN   TestRun_GoTestOverTwoSecondsCompacts
+--- PASS: TestRun_GoTestOverTwoSecondsCompacts (0.00s)
+=== RUN   TestRun_GoTestOverTwoSecondsIncrementalCompacts
+--- PASS: TestRun_GoTestOverTwoSecondsIncrementalCompacts (0.00s)
+=== RUN   TestRun_GoTestOverTwoSecondsFailStaysRaw
+--- PASS: TestRun_GoTestOverTwoSecondsFailStaysRaw (0.00s)
+=== RUN   TestRun_GitPushFoldsTheHookTestRun
+--- PASS: TestRun_GitPushFoldsTheHookTestRun (0.00s)
+=== RUN   TestRun_GitPushFailureStaysRaw
+--- PASS: TestRun_GitPushFailureStaysRaw (0.00s)
+=== RUN   TestRun_GitPushRejectedKeepsErrorsCutsNoise
+--- PASS: TestRun_GitPushRejectedKeepsErrorsCutsNoise (0.00s)
+=== RUN   TestRun_MakeFoldsTheTestRun
+--- PASS: TestRun_MakeFoldsTheTestRun (0.00s)
+=== RUN   TestRun_MakeStderrStillReleases
+--- PASS: TestRun_MakeStderrStillReleases (0.00s)
+=== RUN   TestRun_CypressPassingRunCompacts
+--- PASS: TestRun_CypressPassingRunCompacts (0.00s)
+=== RUN   TestRun_NextBuildAndPHPUnitCompact
+=== RUN   TestRun_NextBuildAndPHPUnitCompact/Next.js_build
+=== RUN   TestRun_NextBuildAndPHPUnitCompact/Gradle
+=== RUN   TestRun_NextBuildAndPHPUnitCompact/PHPUnit
+=== RUN   TestRun_NextBuildAndPHPUnitCompact/Flutter_test
+=== RUN   TestRun_NextBuildAndPHPUnitCompact/Dart_test
+=== RUN   TestRun_NextBuildAndPHPUnitCompact/Maven
+--- PASS: TestRun_NextBuildAndPHPUnitCompact (0.00s)
+    --- PASS: TestRun_NextBuildAndPHPUnitCompact/Next.js_build (0.00s)
+    --- PASS: TestRun_NextBuildAndPHPUnitCompact/Gradle (0.00s)
+    --- PASS: TestRun_NextBuildAndPHPUnitCompact/PHPUnit (0.00s)
+    --- PASS: TestRun_NextBuildAndPHPUnitCompact/Flutter_test (0.00s)
+    --- PASS: TestRun_NextBuildAndPHPUnitCompact/Dart_test (0.00s)
+    --- PASS: TestRun_NextBuildAndPHPUnitCompact/Maven (0.00s)
+=== RUN   TestRun_JSQualityCleanCompactsWarningAndFailureStayRaw
+--- PASS: TestRun_JSQualityCleanCompactsWarningAndFailureStayRaw (0.00s)
+=== RUN   TestRun_LsLongFormCompacts
+--- PASS: TestRun_LsLongFormCompacts (0.00s)
+=== RUN   TestRun_NonZeroExitStaysRaw
+=== RUN   TestRun_NonZeroExitStaysRaw/ls
+=== RUN   TestRun_NonZeroExitStaysRaw/find
+=== RUN   TestRun_NonZeroExitStaysRaw/grep
+--- PASS: TestRun_NonZeroExitStaysRaw (0.00s)
+    --- PASS: TestRun_NonZeroExitStaysRaw/ls (0.00s)
+    --- PASS: TestRun_NonZeroExitStaysRaw/find (0.00s)
+    --- PASS: TestRun_NonZeroExitStaysRaw/grep (0.00s)
+=== RUN   TestRun_FindCompactsCleanListingAsTree
+--- PASS: TestRun_FindCompactsCleanListingAsTree (0.00s)
+=== RUN   TestRun_GrepCompactsCleanMatchesByFile
+--- PASS: TestRun_GrepCompactsCleanMatchesByFile (0.00s)
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-exec
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-execdir
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-ok
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-okdir
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-delete
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-fprint
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-fprint0
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-fprintf
+=== RUN   TestRun_FindActionsAreRefusedAndNeverRun/-fls
+--- PASS: TestRun_FindActionsAreRefusedAndNeverRun (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-exec (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-execdir (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-ok (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-okdir (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-delete (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-fprint (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-fprint0 (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-fprintf (0.00s)
+    --- PASS: TestRun_FindActionsAreRefusedAndNeverRun/-fls (0.00s)
+=== RUN   TestRun_GitDiffOfLockfileIsSummarised
+--- PASS: TestRun_GitDiffOfLockfileIsSummarised (0.00s)
+=== RUN   TestRun_GitDiffOfLockfileWithDeprecationStaysAChangeDiff
+--- PASS: TestRun_GitDiffOfLockfileWithDeprecationStaysAChangeDiff (0.00s)
+=== RUN   TestRun_NpmAuditBelowLevelIsSummarised
+--- PASS: TestRun_NpmAuditBelowLevelIsSummarised (0.00s)
+=== RUN   TestRun_NpmAuditWithFindingsAndNonZeroExitStaysRaw
+--- PASS: TestRun_NpmAuditWithFindingsAndNonZeroExitStaysRaw (0.00s)
+=== RUN   TestRun_NpmInstallKeepsDeprecationRawAndSummarisesCleanRun
+--- PASS: TestRun_NpmInstallKeepsDeprecationRawAndSummarisesCleanRun (0.00s)
+=== RUN   TestRun_GhIssueViewMarkdownIsSlimmedAndErrorTextStaysRaw
+--- PASS: TestRun_GhIssueViewMarkdownIsSlimmedAndErrorTextStaysRaw (0.00s)
+=== RUN   TestRun_NxCleanRunCompactsAndTaskOutputOrFailureStaysRaw
+--- PASS: TestRun_NxCleanRunCompactsAndTaskOutputOrFailureStaysRaw (0.00s)
+=== RUN   TestRun_SkipObservationForSyntheticCommands
+--- PASS: TestRun_SkipObservationForSyntheticCommands (0.00s)
+=== RUN   TestRun_WaitsForObserveHookUnderDeadline
+--- PASS: TestRun_WaitsForObserveHookUnderDeadline (0.00s)
+=== RUN   TestRun_ContainerExecKeepsExitCode
+--- PASS: TestRun_ContainerExecKeepsExitCode (0.00s)
+=== RUN   TestRun_StdinInherited
+--- PASS: TestRun_StdinInherited (0.00s)
+=== RUN   TestRun_NonUTF8Passthrough
+--- PASS: TestRun_NonUTF8Passthrough (0.00s)
+=== RUN   TestRun_LargeOutputStreamsRaw
+--- PASS: TestRun_LargeOutputStreamsRaw (0.00s)
+=== RUN   TestRun_SignalForwarded
+--- PASS: TestRun_SignalForwarded (0.00s)
+=== RUN   TestRun_NpmInstallProgressFramesCollapse
+--- PASS: TestRun_NpmInstallProgressFramesCollapse (0.00s)
+=== RUN   TestRun_NpmInstallShrinkingFramesStayRaw
+--- PASS: TestRun_NpmInstallShrinkingFramesStayRaw (0.00s)
+=== RUN   TestRun_DjangoCleanCompactsWarningAndFailureStayRaw
+--- PASS: TestRun_DjangoCleanCompactsWarningAndFailureStayRaw (0.00s)
+=== RUN   TestRun_FileReadFoldsLongSourceAndKeepsShortOnes
+--- PASS: TestRun_FileReadFoldsLongSourceAndKeepsShortOnes (0.00s)
+=== RUN   TestRun_FileReadNeverCompactsOrStoresSecretOrIrregularFiles
+--- PASS: TestRun_FileReadNeverCompactsOrStoresSecretOrIrregularFiles (0.00s)
+=== RUN   TestRun_FileReadStoresRawThroughKeepOnlyWhenFolded
+--- PASS: TestRun_FileReadStoresRawThroughKeepOnlyWhenFolded (0.00s)
+=== RUN   TestRun_WcPassesThrough
+--- PASS: TestRun_WcPassesThrough (0.00s)
+=== RUN   TestRun_SearchBreadthForms
+=== RUN   TestRun_SearchBreadthForms/rg_without_-n
+=== RUN   TestRun_SearchBreadthForms/grep_-r_without_-n
+=== RUN   TestRun_SearchBreadthForms/rg_-l
+=== RUN   TestRun_SearchBreadthForms/grep_-rl
+=== RUN   TestRun_SearchBreadthForms/rg_-c
+=== RUN   TestRun_SearchBreadthForms/grep_-rc
+--- PASS: TestRun_SearchBreadthForms (0.00s)
+    --- PASS: TestRun_SearchBreadthForms/rg_without_-n (0.00s)
+    --- PASS: TestRun_SearchBreadthForms/grep_-r_without_-n (0.00s)
+    --- PASS: TestRun_SearchBreadthForms/rg_-l (0.00s)
+    --- PASS: TestRun_SearchBreadthForms/grep_-rl (0.00s)
+    --- PASS: TestRun_SearchBreadthForms/rg_-c (0.00s)
+    --- PASS: TestRun_SearchBreadthForms/grep_-rc (0.00s)
+=== RUN   TestRun_SearchRowsWithoutPathStayRaw
+--- PASS: TestRun_SearchRowsWithoutPathStayRaw (0.00s)
+=== RUN   TestRun_NotFound127
+--- PASS: TestRun_NotFound127 (0.00s)
+=== RUN   TestRun_RefusesNonAllowlisted
+--- PASS: TestRun_RefusesNonAllowlisted (0.00s)
+=== RUN   TestRun_NoArgv
+--- PASS: TestRun_NoArgv (0.00s)
+=== RUN   TestRunRefusalNamesAllowlistAndTheDirectCommand
+--- PASS: TestRunRefusalNamesAllowlistAndTheDirectCommand (0.00s)
+=== RUN   TestRun_SearchFormsCompactLikeGrepAndFind
+=== RUN   TestRun_SearchFormsCompactLikeGrepAndFind/rg
+=== RUN   TestRun_SearchFormsCompactLikeGrepAndFind/rg-files
+=== RUN   TestRun_SearchFormsCompactLikeGrepAndFind/git-grep
+--- PASS: TestRun_SearchFormsCompactLikeGrepAndFind (0.00s)
+    --- PASS: TestRun_SearchFormsCompactLikeGrepAndFind/rg (0.00s)
+    --- PASS: TestRun_SearchFormsCompactLikeGrepAndFind/rg-files (0.00s)
+    --- PASS: TestRun_SearchFormsCompactLikeGrepAndFind/git-grep (0.00s)
+=== RUN   TestRun_PytestVitestExecution
+=== RUN   TestRun_PytestVitestExecution/passing_pytest_compacts
+=== RUN   TestRun_PytestVitestExecution/pytest_kill_switch_keeps_raw
+=== RUN   TestRun_PytestVitestExecution/failing_pytest_stays_raw
+=== RUN   TestRun_PytestVitestExecution/clean_pytest_with_stderr_stays_raw
+=== RUN   TestRun_PytestVitestExecution/passing_vitest_compacts
+=== RUN   TestRun_PytestVitestExecution/vitest_kill_switch_keeps_raw
+=== RUN   TestRun_PytestVitestExecution/failing_vitest_stays_raw
+=== RUN   TestRun_PytestVitestExecution/clean_vitest_with_a_stderr_warning_compacts_and_keeps_the_warning
+--- PASS: TestRun_PytestVitestExecution (0.00s)
+    --- PASS: TestRun_PytestVitestExecution/passing_pytest_compacts (0.00s)
+    --- PASS: TestRun_PytestVitestExecution/pytest_kill_switch_keeps_raw (0.00s)
+    --- PASS: TestRun_PytestVitestExecution/failing_pytest_stays_raw (0.00s)
+    --- PASS: TestRun_PytestVitestExecution/clean_pytest_with_stderr_stays_raw (0.00s)
+    --- PASS: TestRun_PytestVitestExecution/passing_vitest_compacts (0.00s)
+    --- PASS: TestRun_PytestVitestExecution/vitest_kill_switch_keeps_raw (0.00s)
+    --- PASS: TestRun_PytestVitestExecution/failing_vitest_stays_raw (0.00s)
+    --- PASS: TestRun_PytestVitestExecution/clean_vitest_with_a_stderr_warning_compacts_and_keeps_the_warning (0.00s)
+=== RUN   TestRun_PlaywrightCargoTscExecution
+=== RUN   TestRun_PlaywrightCargoTscExecution/passing_playwright_compacts
+=== RUN   TestRun_PlaywrightCargoTscExecution/playwright_kill_switch_keeps_raw
+=== RUN   TestRun_PlaywrightCargoTscExecution/failing_playwright_stays_raw
+=== RUN   TestRun_PlaywrightCargoTscExecution/clean_playwright_with_stderr_stays_raw
+=== RUN   TestRun_PlaywrightCargoTscExecution/passing_cargo_test_compacts
+=== RUN   TestRun_PlaywrightCargoTscExecution/cargo_test_kill_switch_keeps_raw
+=== RUN   TestRun_PlaywrightCargoTscExecution/failing_cargo_test_stays_raw
+=== RUN   TestRun_PlaywrightCargoTscExecution/clean_cargo_test_with_stderr_stays_raw
+=== RUN   TestRun_PlaywrightCargoTscExecution/passing_tsc_compacts
+=== RUN   TestRun_PlaywrightCargoTscExecution/tsc_kill_switch_keeps_raw
+=== RUN   TestRun_PlaywrightCargoTscExecution/failing_tsc_stays_raw
+=== RUN   TestRun_PlaywrightCargoTscExecution/clean_tsc_with_stderr_stays_raw
+--- PASS: TestRun_PlaywrightCargoTscExecution (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/passing_playwright_compacts (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/playwright_kill_switch_keeps_raw (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/failing_playwright_stays_raw (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/clean_playwright_with_stderr_stays_raw (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/passing_cargo_test_compacts (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/cargo_test_kill_switch_keeps_raw (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/failing_cargo_test_stays_raw (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/clean_cargo_test_with_stderr_stays_raw (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/passing_tsc_compacts (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/tsc_kill_switch_keeps_raw (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/failing_tsc_stays_raw (0.00s)
+    --- PASS: TestRun_PlaywrightCargoTscExecution/clean_tsc_with_stderr_stays_raw (0.00s)
+=== RUN   TestRun_NpmTestRunsVitestOrJest
+=== RUN   TestRun_NpmTestRunsVitestOrJest/passing_vitest
+=== RUN   TestRun_NpmTestRunsVitestOrJest/failing_vitest
+=== RUN   TestRun_NpmTestRunsVitestOrJest/passing_jest_on_pnpm
+=== RUN   TestRun_NpmTestRunsVitestOrJest/failing_jest_compacts,_keeping_every_failure
+=== RUN   TestRun_NpmTestRunsVitestOrJest/a_failure_whose_runner_cannot_be_told_stays_raw
+--- PASS: TestRun_NpmTestRunsVitestOrJest (0.00s)
+    --- PASS: TestRun_NpmTestRunsVitestOrJest/passing_vitest (0.00s)
+    --- PASS: TestRun_NpmTestRunsVitestOrJest/failing_vitest (0.00s)
+    --- PASS: TestRun_NpmTestRunsVitestOrJest/passing_jest_on_pnpm (0.00s)
+    --- PASS: TestRun_NpmTestRunsVitestOrJest/failing_jest_compacts,_keeping_every_failure (0.00s)
+    --- PASS: TestRun_NpmTestRunsVitestOrJest/a_failure_whose_runner_cannot_be_told_stays_raw (0.00s)
+=== RUN   TestRun_JestReportOnStderr
+=== RUN   TestRun_JestReportOnStderr/green_stderr_report_compacts
+=== RUN   TestRun_JestReportOnStderr/FAIL_on_stderr_with_exit_0_stays_raw
+=== RUN   TestRun_JestReportOnStderr/failing_run_stays_raw
+--- PASS: TestRun_JestReportOnStderr (0.00s)
+    --- PASS: TestRun_JestReportOnStderr/green_stderr_report_compacts (0.00s)
+    --- PASS: TestRun_JestReportOnStderr/FAIL_on_stderr_with_exit_0_stays_raw (0.00s)
+    --- PASS: TestRun_JestReportOnStderr/failing_run_stays_raw (0.00s)
+=== RUN   TestRun_JestMixedStreamsReplayRaw
+--- PASS: TestRun_JestMixedStreamsReplayRaw (0.00s)
+=== RUN   TestRun_OtherFamilyStderrStaysRaw
+--- PASS: TestRun_OtherFamilyStderrStaysRaw (0.00s)
+=== RUN   TestParseTailFlags
+--- PASS: TestParseTailFlags (0.00s)
+=== RUN   TestRunDiscardStderr
+--- PASS: TestRunDiscardStderr (0.00s)
+=== RUN   TestRunExitZeroKeepsRealCode
+--- PASS: TestRunExitZeroKeepsRealCode (0.00s)
+=== RUN   TestRunTailNotesOnlyWhenCompacted
+--- PASS: TestRunTailNotesOnlyWhenCompacted (0.00s)
+=== RUN   TestRun_TurboCleanRunCompactsAndTaskOutputOrFailureStaysRaw
+--- PASS: TestRun_TurboCleanRunCompactsAndTaskOutputOrFailureStaysRaw (0.00s)
+=== RUN   TestRun_VitestReadsRuntimeNotices
+--- PASS: TestRun_VitestReadsRuntimeNotices (0.00s)
+=== RUN   TestRun_VitestUnknownStderrStaysVerbatim
+--- PASS: TestRun_VitestUnknownStderrStaysVerbatim (0.00s)
+=== RUN   TestRun_VitestManyUnknownStderrLinesAreDroppedAndCounted
+--- PASS: TestRun_VitestManyUnknownStderrLinesAreDroppedAndCounted (0.00s)
+=== RUN   TestRun_WebAssetsCleanCompactsFailureStaysRaw
+--- PASS: TestRun_WebAssetsCleanCompactsFailureStaysRaw (0.00s)
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/rspec
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/dotnet_test
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/rubocop
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/rubocop#01
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/phpstan_analyse
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/docker_build_-t_api_.
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/docker_ps
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/docker_images
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/kubectl_get_pods
+=== RUN   TestRun_WiredFamiliesCompactCleanAndKeepFailures/git_stash_list
+--- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/rspec (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/dotnet_test (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/rubocop (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/rubocop#01 (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/phpstan_analyse (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/docker_build_-t_api_. (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/docker_ps (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/docker_images (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/kubectl_get_pods (0.00s)
+    --- PASS: TestRun_WiredFamiliesCompactCleanAndKeepFailures/git_stash_list (0.00s)
+=== RUN   TestWithSession
+=== RUN   TestWithSession/adds_the_flag
+=== RUN   TestWithSession/no_session_leaves_it
+=== RUN   TestWithSession/non-hex_session_leaves_it
+=== RUN   TestWithSession/already_has_one
+=== RUN   TestWithSession/not_wrapped
+--- PASS: TestWithSession (0.00s)
+    --- PASS: TestWithSession/adds_the_flag (0.00s)
+    --- PASS: TestWithSession/no_session_leaves_it (0.00s)
+    --- PASS: TestWithSession/non-hex_session_leaves_it (0.00s)
+    --- PASS: TestWithSession/already_has_one (0.00s)
+    --- PASS: TestWithSession/not_wrapped (0.00s)
+=== RUN   TestSummarizeSession_FiltersAndKeepsOldRecordsOut
+--- PASS: TestSummarizeSession_FiltersAndKeepsOldRecordsOut (0.00s)
+=== RUN   TestMetacharClass
+--- PASS: TestMetacharClass (0.00s)
+=== RUN   TestMetacharClassesCoverEveryReturn
+--- PASS: TestMetacharClassesCoverEveryReturn (0.00s)
+=== RUN   TestSkipDetail
+=== RUN   TestSkipDetail/pipe_after_go_test
+=== RUN   TestSkipDetail/env_prefix
+=== RUN   TestSkipDetail/unknown_family
+=== RUN   TestSkipDetail/other_reason_has_none
+=== RUN   TestSkipDetail/no_metachar
+--- PASS: TestSkipDetail (0.00s)
+    --- PASS: TestSkipDetail/pipe_after_go_test (0.00s)
+    --- PASS: TestSkipDetail/env_prefix (0.00s)
+    --- PASS: TestSkipDetail/unknown_family (0.00s)
+    --- PASS: TestSkipDetail/other_reason_has_none (0.00s)
+    --- PASS: TestSkipDetail/no_metachar (0.00s)
+=== RUN   TestSkipLogHoldsClassNotCommand
+--- PASS: TestSkipLogHoldsClassNotCommand (0.00s)
+=== RUN   TestSkipLogHoldsNoCommandText
+--- PASS: TestSkipLogHoldsNoCommandText (0.00s)
+=== RUN   TestSummarizeSkipsMissingFile
+--- PASS: TestSummarizeSkipsMissingFile (0.00s)
+=== RUN   FuzzDecide
+=== RUN   FuzzDecide/seed#0
+=== RUN   FuzzDecide/seed#1
+=== RUN   FuzzDecide/seed#2
+=== RUN   FuzzDecide/seed#3
+=== RUN   FuzzDecide/seed#4
+=== RUN   FuzzDecide/seed#5
+=== RUN   FuzzDecide/seed#6
+=== RUN   FuzzDecide/seed#7
+=== RUN   FuzzDecide/seed#8
+=== RUN   FuzzDecide/seed#9
+=== RUN   FuzzDecide/92d8b052b3f75a7a
+--- PASS: FuzzDecide (0.00s)
+    --- PASS: FuzzDecide/seed#0 (0.00s)
+    --- PASS: FuzzDecide/seed#1 (0.00s)
+    --- PASS: FuzzDecide/seed#2 (0.00s)
+    --- PASS: FuzzDecide/seed#3 (0.00s)
+    --- PASS: FuzzDecide/seed#4 (0.00s)
+    --- PASS: FuzzDecide/seed#5 (0.00s)
+    --- PASS: FuzzDecide/seed#6 (0.00s)
+    --- PASS: FuzzDecide/seed#7 (0.00s)
+    --- PASS: FuzzDecide/seed#8 (0.00s)
+    --- PASS: FuzzDecide/seed#9 (0.00s)
+    --- PASS: FuzzDecide/92d8b052b3f75a7a (0.00s)
+=== RUN   FuzzQuotedWords
+=== RUN   FuzzQuotedWords/seed#0
+=== RUN   FuzzQuotedWords/seed#1
+=== RUN   FuzzQuotedWords/seed#2
+=== RUN   FuzzQuotedWords/seed#3
+=== RUN   FuzzQuotedWords/seed#4
+=== RUN   FuzzQuotedWords/seed#5
+=== RUN   FuzzQuotedWords/seed#6
+=== RUN   FuzzQuotedWords/seed#7
+=== RUN   FuzzQuotedWords/seed#8
+=== RUN   FuzzQuotedWords/seed#9
+=== RUN   FuzzQuotedWords/seed#10
+--- PASS: FuzzQuotedWords (0.00s)
+    --- PASS: FuzzQuotedWords/seed#0 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#1 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#2 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#3 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#4 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#5 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#6 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#7 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#8 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#9 (0.00s)
+    --- PASS: FuzzQuotedWords/seed#10 (0.00s)
+PASS
+ok  	github.com/tiagovilasboas/downshift-ai/internal/execwrap	0.000s

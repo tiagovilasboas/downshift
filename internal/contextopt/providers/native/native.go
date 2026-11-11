@@ -53,7 +53,7 @@ func (p *Provider) SupportedHarnesses() []contextopt.HarnessSupport {
 			HarnessID: "claude-code",
 			Supported: true,
 			Method:    contextopt.MethodHook,
-			Notes:     "PostToolUse records CompressExit in observe mode when the native provider is enabled, using the tool exit code. The hook cannot replace tool output.",
+			Notes:     "PostToolUse records CompressExit in observe mode when the native provider is enabled, using the tool exit code. Claude Code would accept a replacement (updatedToolOutput); this hook does not send one.",
 		},
 		{
 			HarnessID: "cursor",
@@ -65,7 +65,7 @@ func (p *Provider) SupportedHarnesses() []contextopt.HarnessSupport {
 			HarnessID: "codex",
 			Supported: true,
 			Method:    contextopt.MethodAgentInstruction,
-			Notes:     "The hook does not rewrite tool output. Compression runs only when a caller invokes the compressor. Prompts are not compressed automatically.",
+			Notes:     "Codex PostToolUse cannot replace tool output. Compression runs only when a caller invokes the compressor. Prompts are not compressed automatically.",
 		},
 		{
 			HarnessID: "antigravity",
@@ -152,7 +152,7 @@ func (p *Provider) GetDiagnostics(ctx context.Context, targetDir string) (*conte
 		Version:            "built-in",
 		SupportedHarnesses: p.SupportedHarnesses(),
 		Recommendations: []string{
-			"The Claude Code PostToolUse hook cannot replace tool output. The model still receives the original tool result.",
+			"The native Claude Code PostToolUse hook does not replace tool output (Claude Code would accept updatedToolOutput). The model still receives the original tool result.",
 			"When the native provider is enabled, that hook records CompressExit in observe mode using the real exit code. It does not compress prompts.",
 			"Token counters stay unavailable. Byte counts are not a token or dollar measurement.",
 		},

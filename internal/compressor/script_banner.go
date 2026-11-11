@@ -4,8 +4,9 @@
 package compressor
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift-ai/internal/lazyre"
 )
 
 // Package-manager script banner. `npm test` and `pnpm test` print two lines
@@ -17,11 +18,11 @@ import (
 var (
 	// yarn 1 prints "yarn run v1.22.19" and "$ command" instead, and
 	// "Done in 2.1s." at the end.
-	reScriptBannerLine = regexp.MustCompile(`^(?:> \S.*|\$ \S.*|yarn run v\d+\.\d+\.\d+)$`)
-	reYarnDoneLine     = regexp.MustCompile(`^Done in \d+(?:\.\d+)?s\.$`)
+	reScriptBannerLine = lazyre.New(`^(?:> \S.*|\$ \S.*|yarn run v\d+\.\d+\.\d+)$`)
+	reYarnDoneLine     = lazyre.New(`^Done in \d+(?:\.\d+)?s\.$`)
 	// npm prints its own warnings around the banner ("npm warn ...", "npm
 	// WARN ..." before npm 7). They are information, so they are kept.
-	reNpmWarnLine = regexp.MustCompile(`^npm (?:warn|WARN) .+$`)
+	reNpmWarnLine = lazyre.New(`^npm (?:warn|WARN) .+$`)
 )
 
 // dropScriptBanner returns input without its leading script banner and the

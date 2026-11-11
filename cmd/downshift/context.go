@@ -116,7 +116,8 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 		fmt.Fprintf(w, "  Active Harnesses: %s\n", strings.Join(cfg.ActiveHarness, ", "))
 	}
 	if cfg.Provider == "native" {
-		fmt.Fprintln(w, "  Claude Code: measures only. A Claude Code hook cannot rewrite tool output already produced, so the PostToolUse path saves no tokens;")
+		fmt.Fprintln(w, "  Claude Code: measures only. The native PostToolUse hook leaves tool output as is, so it saves no tokens;")
+		fmt.Fprintln(w, "    Claude Code would accept a replacement (PostToolUse updatedToolOutput, built-in tools); Codex PostToolUse accepts none.")
 		fmt.Fprintln(w, "    Compact (below) shortens output by rewriting the command before it runs. Other compression needs the Headroom proxy (`headroom wrap claude`), which Downshift does not start.")
 	}
 	if compactOn(cfg) {

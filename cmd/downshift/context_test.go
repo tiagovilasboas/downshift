@@ -43,10 +43,14 @@ func TestRunContext_StatusEnabledByDefault(t *testing.T) {
 	if !strings.Contains(out.String(), "Active Provider: native") {
 		t.Errorf("expected active provider native in output:\n%s", out.String())
 	}
-	// The native provider cannot compress on Claude Code (a hook cannot rewrite
-	// tool output); the status must say so instead of implying a saving.
+	// The native provider does not compress on Claude Code (its hook leaves
+	// tool output as is); the status must say so instead of implying a saving,
+	// and must not claim that Claude Code forbids a replacement.
 	if !strings.Contains(out.String(), "Claude Code: measures only") || !strings.Contains(out.String(), "headroom wrap claude") {
 		t.Errorf("status must say the native provider only measures on Claude Code:\n%s", out.String())
+	}
+	if strings.Contains(out.String(), "cannot rewrite tool output") || !strings.Contains(out.String(), "updatedToolOutput") {
+		t.Errorf("status must say Claude Code accepts a replacement (updatedToolOutput):\n%s", out.String())
 	}
 
 	// Now disable

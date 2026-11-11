@@ -31,9 +31,9 @@ Numbers keep their qualifiers. Routing: up to about 12% cheaper on mechanical ta
 in one controlled trial (one operator, three runs per cell, Claude Code, 2026-10-15, list price;
 checks verify structure, not quality); no savings from natural use are
 attributable yet (docs/evidence/subagent-routing-ab-2026-10-15.md). Compaction:
-bytes on the current 110-fixture synthetic corpus (command output and
-agent-desktop reads): 67.1% fewer with CCR on, 53.0% with it off, 60.3% on the
-62 lossless fixtures (docs/reference/bench.md, `make bench`). Reports show
+bytes on the current 113-fixture synthetic corpus (command output and
+agent-desktop reads): 67.0% fewer with CCR on, 53.1% with it off, 59.9% on the
+64 lossless fixtures (docs/reference/bench.md, `make bench`). Reports show
 tokens, not dollars.
 
 Where next: install docs/guides/install.md; how it works
