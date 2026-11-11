@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-11
+
+Release notes: [docs/releases/v0.16.0.md](docs/releases/v0.16.0.md).
+
 ### Changed
 
 - The RSpec, dotnet test, Cypress and `go test -v` pass lines drop their duration when the raw output is kept, as Pytest and the others already did: `PASS rspec: 12 examples, 0 failures`, `Cypress: PASS (4 tests: 4 passing, 0 pending, 0 skipped)`. Zero exit only; any other shape stays whole. Bench with CCR on: 69.3% to 69.4% (59,774 to 59,719 bytes).
