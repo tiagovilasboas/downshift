@@ -73,7 +73,8 @@ var expectedFormats = map[Family][]compressor.Format{
 	FamilyKubectlGet:   {compressor.FormatKubectlPods},
 	FamilyGitStash:     {compressor.FormatGitStash},
 	// Another program's transcript with a go test run inside: `make check`.
-	// Only the clean package lines fold (compressor.FoldGoTestRuns); every
+	// Clean package lines and complete passing go test -v, pytest and vitest
+	// blocks fold (compressor.FoldTestRuns); every
 	// other line is kept. git commit, push, pull and fetch print the hooks git
 	// ran around their own lines, so they go through the remote compressor,
 	// which also cuts the hook runner's banner boxes and rules.

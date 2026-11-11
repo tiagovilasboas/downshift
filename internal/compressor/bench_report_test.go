@@ -216,11 +216,20 @@ func renderBench(rows []benchRow) string {
 }
 
 func TestBenchReport(t *testing.T) {
-	if os.Getenv("DOWNSHIFT_BENCH_WRITE") == "" {
-		t.Skip("report mode: set DOWNSHIFT_BENCH_WRITE=1 (make bench)")
-	}
 	rows := benchCorpus(t)
 	doc := renderBench(rows)
+	if os.Getenv("DOWNSHIFT_BENCH_WRITE") == "" {
+		// Freshness mode: the committed report must equal what make bench renders.
+		want, err := os.ReadFile(filepath.FromSlash(benchDoc))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// A Windows checkout may turn LF into CRLF; the report is LF.
+		if strings.ReplaceAll(string(want), "\r\n", "\n") != doc {
+			t.Fatalf("docs/reference/bench.md is stale: it differs from the report the compressors produce now (first difference near byte %d); run `make bench` and commit the result", firstDiff(string(want), doc))
+		}
+		return
+	}
 	fmt.Print(doc)
 	if err := os.WriteFile(filepath.FromSlash(benchDoc), []byte(doc), 0o644); err != nil {
 		t.Fatal(err)
@@ -237,4 +246,15 @@ func benchCompress(in []byte, f compressor.Format) compressor.Result {
 		return compressFor(in, f, 0)
 	}
 	return compressor.CompressExit(in, compressor.ModeSafe, 0)
+}
+
+// firstDiff is the index of the first byte where a and b differ.
+func firstDiff(a, b string) int {
+	n := min(len(a), len(b))
+	for i := 0; i < n; i++ {
+		if a[i] != b[i] {
+			return i
+		}
+	}
+	return n
 }

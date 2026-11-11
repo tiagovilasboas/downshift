@@ -377,7 +377,7 @@ only the output of failed runs), `downshift compact` stores the raw output under
 and its marker names the id: `downshift retrieve <id>`. Runs of 8 or
 more same-shape lines then fold, because every cut line can be read back with
 `downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]` or the
-MCP tool `retrieve`. On the bench corpus the total saving goes from 52.6% to 69.3%.
+MCP tool `retrieve`. On the bench corpus the total saving goes from 52.6% to 69.4%.
 Bytes later retrieved are subtracted from the savings figures, never below
 zero ([ccr.md](../guides/ccr.md)). The bench figures are with CCR off and on;
 on is the default. Limits, privacy and

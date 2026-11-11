@@ -100,7 +100,7 @@ func compressFor(in []byte, f compressor.Format, exitCode int) compressor.Result
 		if exitCode != 0 {
 			return compressor.Result{Output: in, OriginalBytes: len(in), ReducedBytes: len(in)}
 		}
-		return compressor.FoldGoTestRuns(in)
+		return compressor.FoldTestRuns(in)
 	}
 	if f == compressor.FormatGitRemote {
 		if exitCode != 0 {

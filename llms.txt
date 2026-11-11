@@ -32,7 +32,7 @@ in one controlled trial (one operator, three runs per cell, Claude Code, 2026-10
 checks verify structure, not quality); no savings from natural use are
 attributable yet (docs/evidence/subagent-routing-ab-2026-10-15.md). Compaction:
 bytes on the current 113-fixture synthetic corpus (command output and
-agent-desktop reads): 69.3% fewer with CCR on, 52.6% with it off, 59.3% on the
+agent-desktop reads): 69.4% fewer with CCR on, 52.6% with it off, 59.3% on the
 64 lossless fixtures (docs/reference/bench.md, `make bench`). Reports show
 tokens, not dollars.
 

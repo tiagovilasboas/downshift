@@ -80,7 +80,7 @@ func compactSafely(argv []string, data []byte, family Family, exitCode int) (out
 	case exitCode != 0:
 		r = compressor.CompressFailed(data, failedFormat(family, data))
 	case formatAccepted(family, compressor.FormatGoTestRuns):
-		r = compressor.FoldGoTestRuns(data)
+		r = compressor.FoldTestRuns(data)
 		if !r.Applied && genericFamilies[family] {
 			// No go test run to fold: the generic chain may still apply.
 			r = compressor.CompressExit(data, compressor.ModeSafe, 0)
