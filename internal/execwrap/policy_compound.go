@@ -22,8 +22,18 @@ import "strings"
 //
 // Only the allowlisted command is wrapped; the cd prefix and the pipe suffix
 // are kept as written, so the exit code is what it was: cd's on failure, the
-// pipe's last command otherwise. <dir> passes the same safe-byte gate as the
-// command, so it holds no expansion, quote, glob or tilde.
+// pipe's last command otherwise. <dir> and the pipe's command pass the
+// safe-byte gate, so they hold no expansion, quote, glob or tilde.
+//
+// The wrapped command may also hold quoted words and an exact trailing
+// 2>/dev/null, lexed by the quoted policy (policy_quoted.go), as in
+// `go test -run 'A|B' ./... 2>&1 | tail -20`. Two trailing forms are refused
+// there because the shape around them changes their meaning: `|| true`
+// (`a && b || true` applies it to the whole list) and 2>/dev/null before a
+// 2>&1 merge (the merge sends stderr back into the pipe). A shape whose
+// wrapped command went through the quoted policy carries
+// ReasonAllowlistedQuoted, so every guard on the quoted path (a deny or ask
+// rule that holds a quote) still applies.
 
 // ReasonAllowlistedCompound is the reason for a wrapped compound shape.
 const ReasonAllowlistedCompound = "allowlisted_compound"
@@ -53,17 +63,37 @@ func decideCompound(trimmed, exe string) Decision {
 		return Decision{Reason: ReasonUnsafeChar}
 	}
 	inner := decideSimple(rest, exe)
+	if inner.Reason == ReasonUnsafeChar {
+		inner = decideQuotedPart(rest, exe, strings.HasPrefix(suffix, stderrDup))
+	}
 	if !inner.Rewrite {
 		return inner
 	}
 	inner.Command = prefix + inner.Command + suffix
-	inner.Reason = ReasonAllowlistedCompound
+	if inner.Reason != ReasonAllowlistedQuoted {
+		inner.Reason = ReasonAllowlistedCompound
+	}
 	for _, s := range []string{cdSeg, pipeSeg} {
 		if s != "" {
 			inner.Segments = append(inner.Segments, s)
 		}
 	}
 	return inner
+}
+
+// decideQuotedPart is the quoted policy for the command a shape or a chain
+// wraps. It answers unsafe_character for anything it does not wrap, so a
+// quoted command that is not allowlisted is never kept as written in a chain,
+// and it refuses the trailing forms whose meaning the surrounding shape
+// changes: `|| true` always, 2>/dev/null when a 2>&1 merge follows.
+func decideQuotedPart(part, exe string, mergesStderr bool) Decision {
+	if strings.HasSuffix(part, orTrueTail) || (mergesStderr && strings.HasSuffix(part, devNullTail)) {
+		return Decision{Reason: ReasonUnsafeChar}
+	}
+	if d := decideQuoted(part, exe); d.Rewrite {
+		return d
+	}
+	return Decision{Reason: ReasonUnsafeChar}
 }
 
 // cdPrefix splits `cd <dir> && rest`. dir is one safe word that is not an

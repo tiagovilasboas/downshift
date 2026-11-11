@@ -7,6 +7,7 @@
 // below the session model are workload, not tokens saved.
 
 import type { CompactorFigures, DownshiftSnapshot } from '../../../../types'
+import { uncutNote } from '../../metrics/cut'
 import { directLine, routingLines, routingSummary } from '../../metrics/normalize'
 import { ACCENT, MUTED, WARN, bytes, tokens } from '../../../shared/ui/format'
 import { icon } from '../../../shared/ui/svg/icons'
@@ -39,8 +40,14 @@ export function compactorPanel(ui: GraphicUi, snapshot: DownshiftSnapshot, pct: 
   }
   return panel(ui, { title: 'COMPACTOR', color: WARN, icon: glyph }, [
     art(ui, bar(pxOf(columns - 4), BAR_HEIGHT, pct, 'green'), pct === undefined ? 'no raw bytes measured' : `${pct}% of the raw bytes cut`, true),
-    row(ui, 'Output cut', pct === undefined ? bytes(c.savedBytes) : `${bytes(c.savedBytes)} (${pct}%)`, ACCENT),
-    row(ui, 'Tokens saved', `~${tokens(c.estimatedTokens)}*`, WARN),
+    uncutNote(c) === undefined ? (
+      row(ui, 'Output cut', pct === undefined ? bytes(c.savedBytes) : `${bytes(c.savedBytes)} (${pct}%)`, ACCENT)
+    ) : (
+      <Text size="footnote" color={MUTED} wrap="wrap">
+        {uncutNote(c)}
+      </Text>
+    ),
+    row(ui, 'Tokens saved', `~${tokens(c.estimatedTokens)}*`, c.estimatedTokens > 0 ? WARN : MUTED),
     ...familyRows(ui, c.families, columns, isExpanded),
     ...directRows(ui, c),
     isExpanded && row(ui, 'Runs', `${c.commands} · ${c.compacted} compacted`),

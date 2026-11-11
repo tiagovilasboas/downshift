@@ -14,6 +14,7 @@ var testSpecs = []command.Spec{
 	{Args: []string{"report"}},
 	{Args: []string{"setup"}, Writes: true},
 	{Args: []string{"session"}, Terminal: true},
+	{Args: []string{"version"}, Plain: true},
 }
 
 func envOf(m map[string]string) func(string) string {
@@ -37,6 +38,7 @@ func TestDecide(t *testing.T) {
 		{"short o", tty([]string{"-o"}, nil), Decision{false, "flag:-o"}},
 		{"writing spec", tty([]string{"setup"}, nil), Decision{false, "command"}},
 		{"terminal spec", tty([]string{"session"}, nil), Decision{false, "command"}},
+		{"plain spec prints", tty([]string{"version"}, nil), Decision{false, "command"}},
 		{"unknown command", tty([]string{"nope"}, nil), Decision{false, "command"}},
 		{"spec plus extra arg", tty([]string{"report", "x"}, nil), Decision{false, "command"}},
 		{"stdin not tty", Facts{StdoutTTY: true}, Decision{false, "no-tty"}},

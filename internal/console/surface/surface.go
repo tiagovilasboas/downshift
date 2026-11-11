@@ -81,7 +81,7 @@ func machineFlag(args []string) string {
 func isReadOnlySpec(args []string, specs []command.Spec) bool {
 	for _, s := range specs {
 		if slices.Equal(s.Args, args) {
-			return !s.Writes && !s.Terminal
+			return !s.Writes && !s.Terminal && !s.Plain
 		}
 	}
 	return false
