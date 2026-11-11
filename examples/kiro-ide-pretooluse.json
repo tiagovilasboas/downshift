@@ -1,0 +1,18 @@
+{
+  "comment": "Example PreToolUse payload from Kiro IDE (invoke_sub_agent)",
+  "note": "The model field is ABSENT - Kiro decides the model internally",
+  "hook_event_name": "PreToolUse",
+  "cwd": "/Users/dev/my-project",
+  "session_id": "sess_abc123-def456-789",
+  "tool_name": "invoke_sub_agent",
+  "tool_input": {
+    "name": "context-gatherer",
+    "prompt": "Investigate the authentication flow in src/auth/ to understand how JWT tokens are validated",
+    "explanation": "Need to understand the current auth implementation before making changes",
+    "contextFiles": [
+      { "path": "/Users/dev/my-project/src/auth/jwt.ts" }
+    ],
+    "preset": null,
+    "specTask": null
+  }
+}
