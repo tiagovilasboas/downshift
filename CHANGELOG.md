@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`downshift update`** installs the latest release and refreshes every harness in one command, on macOS, Linux and Windows. It reads the tag from the releases page (no API call), downloads the archive for this platform, checks its sha256 against `checksums.txt` (and the build provenance when `gh` is installed), and replaces the binary in place; a failed check leaves the old binary untouched. Then the new binary runs `setup` (diff, then a question; `--yes` skips it) and `doctor`. A current binary skips the download and still runs setup. `--check` only reports, `--version vX.Y.Z` installs a named release. New package `internal/selfupdate`.
+
 ## [0.14.0] - 2026-11-10
 
 Release notes: [docs/releases/v0.14.0.md](docs/releases/v0.14.0.md).

@@ -67,6 +67,7 @@ file or from `AGENTS.md`.
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |
 | `internal/clispec` | CLI | Command registry as data (names, summaries, flags, hidden, deprecated, experimental) and the `DOWNSHIFT_*` variables the code reads; read by help, `docs-manifest` and the docs guards |
 | `internal/installer` | Setup | Tests for the root `install.sh` (offline, with fake curl and gh); no production code |
+| `internal/selfupdate` | Setup | `downshift update`: release tag from the releases page, archive download (https only), sha256 against `checksums.txt`, binary extraction and in-place swap (Windows moves the running `.exe` aside); never writes harness files |
 | `internal/lazyre` | — | Regular expression compiled on first use, so package init stays cheap on every start; `CompileAll` for tests (startup guard: `internal/archtest/startup_test.go`) |
 | `internal/limits` | Adapters | Centralized harness limitations registry |
 | `internal/loop` | Loop | Autonomous engineering loop runner (Plan -> Implement -> Sensor -> Cascade -> Accept) |

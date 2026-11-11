@@ -36,6 +36,9 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift-ai/main/in
 # No seu repositório:
 downshift setup
 downshift doctor
+
+# Depois, em qualquer sistema: instala a próxima release e atualiza cada harness
+downshift update
 ```
 
 [![O assistente interativo detecta harnesses, permite escolher componentes e revisar alterações, grava após a confirmação e depois o usuário verifica a configuração](../brand/readme-media/setup-flow.svg)](../brand/readme-media/setup-flow.png)
