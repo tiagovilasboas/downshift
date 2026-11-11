@@ -116,7 +116,10 @@ var ObserveUncompactedHook func(argv []string, sample []byte, family Family)
 
 // Run executes argv directly (no shell) with the caller's stdin, and exits
 // with the program's own status. Only the allowlisted families run (anything
-// else is refused with 126). Output keeps the order the program wrote it in.
+// else is refused with 126). Output keeps the order the program wrote it in
+// unless it is compacted: then a family in stderrIsReport has its stderr merged
+// into the compressor's input (the note lands inside the compacted stdout), and
+// any other family's stderr follows the compacted stdout.
 // With compaction on, both streams are held in write order (see gate) and
 // stdout is compacted only when the program exited 0, or exited non-zero in a
 // family CompressFailed supports, which keeps every failure; stayed under
