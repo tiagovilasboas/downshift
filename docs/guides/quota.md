@@ -102,6 +102,14 @@ publishes `rate_limits.five_hour/seven_day.used_percentage` and `resets_at`.
 rate limits may be absent before the first response. Missing fresh input does
 not renew a previous observation; it expires at its original deadline.
 
+Claude Code runs the statusline only in an interactive terminal session. The
+Claude Desktop Code tab and `claude -p` never run it, so a user who works only
+there never refreshes the reading. To refresh it, start one interactive session
+and let it answer once, for example `claude "ok"`. Until then the gate holds
+model rewrites for one hour after the reading expires, then treats it as absent
+and routes as if there were no quota reading; `downshift doctor` says which of
+the two applies.
+
 ### Routing summary on the same line
 
 The same command also prints a routing summary for the current session, after
