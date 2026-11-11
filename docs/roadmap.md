@@ -73,9 +73,15 @@ pillars P2 (multi-user exports) and P3 (routed-versus-control token comparison).
 | P1 | Confident upshift targets the smallest model that meets the tier, not the last id in the list (decision pending; `explicit_upshift` keeps the strongest) |
 | P1 | Session-start discovery hooks for harnesses that expose one (Codex, Cursor, Kiro); needs evidence per harness before `SessionFromCatalog` is enabled there |
 | ~~P1~~ | ~~Compactor: the notes `compact` appends after a compacted output (`2>/dev/null`, `\|\| true`) count in the "never longer than the raw output" check and in the emitted bytes~~ — done (2 pts, `internal/execwrap`) |
-| P1 | Compactor: a `downshift retrieve` of an id two sessions kept is charged to every session that kept it, and `retrieve` records no session (proven by a failing test). Decide first: carry the hashed session in the marker's retrieve hint (longer marker), attribute by time (a heuristic), or document the per-id behaviour (3 pts, `internal/execwrap` and `internal/accounting`) |
+| ~~P1~~ | ~~Compactor: a `downshift retrieve` of an id two sessions kept is charged to every session that kept it~~ — done (3 pts): the hint carries the hashed session (`downshift retrieve --session=<12 hex> <id>`) and a read is charged only to that session's runs |
 | ~~P2~~ | ~~Compactor: the post-run rows say "offered", and an offline `report` or `doctor` check joins each compacted row that kept an id to the Claude Code transcript and counts honored, not found and mismatch~~ — done (3 pts): a `doctor` row per harness (`post-run replacement`: honored, not found, mismatch, unverified over the latest 200 rows, warning only when a harness has checked rows and none honored) plus the report wording that calls post-run figures "offered". Honored = the kept id's retrieve hint in a transcript result of the emitted length or one byte less, each result used once. Rows without a kept id, or outside the transcript coverage, stay unverified; see [post-run compaction](design/post-run-compaction.md#honor-check) |
 | ~~P2~~ | ~~Compactor: with CCR off, a lossy cut says in its marker that no copy was kept~~ — done: the marker is shorter (`N to M bytes; downshift retrieve <id>`) and says `original not kept` when no copy was stored; with CCR on, the default, marker bytes over the bench corpus fall by 2,572 (2 pts) |
+| ~~P1~~ | ~~Compactor: a passing test run shows only its count line once the raw output is kept~~ — done (3 pts): bench with CCR 68.3% to 69.3%, `go test` 52.7% to 66.1% |
+| P1 | Compactor: compound commands (pipes, redirects, `$(...)`, chains led by a non-allowlisted program) reach the model whole when under 16 KB: about 96% of shell bytes arrive post-run, and 1,570 of 1,592 such runs in two days were left uncut (3.59 MB). The exec rows now name the program inside (`inner`, `kind`); decide per family from those bytes whether to wrap the producer segment, and build only for families that carry the bytes (3 pts to measure and decide, then 3–5 pts per shape; [CMP-COMPOUND](internal/gap-tasks.md#open-after-the-2026-11-11-compactor-review)) |
+| P2 | Compactor: pass lines that still carry a duration: RSpec, dotnet test, Cypress (`; 8 seconds`) and `go test -v` (`in 0.4s`, no parenthesis), when a copy is kept (2 pts, CMP-PASS-DURATION) |
+| P2 | Compactor: a test summary inside a `make` or script log (a pytest, jest or `go test -v` run among other lines) stays raw; only plain `go test` rows fold (3 pts, CMP-EMBEDDED-SUMMARY) |
+| P2 | Bench freshness: the cited-figure test reads the committed `docs/reference/bench.md` but never regenerates it, so a compressor change can leave it stale; CI should fail when `make bench` output differs (2 pts, CMP-BENCH-FRESH) |
+| P3 | Compactor: the marker (61 to 70 bytes) is most of a short summary (`go test` of 12 packages: 279 to 101 bytes, 70 of them the marker). Decide between a shorter marker for small outputs and leaving them raw below a floor, measured on the bench corpus (2 pts, CMP-MARKER-FLOOR) |
 | P2 | Promote routing v2 only with reviewed labels + shadow evidence |
 
 ---
@@ -97,6 +103,9 @@ pillars P2 (multi-user exports) and P3 (routed-versus-control token comparison).
 - Competing with OpenRouter on catalog breadth or hosted billing
 - LLM-in-the-loop routing on the production hot path
 - Storing prompts in telemetry or training on raw task text
+- Line or commit caps on `git diff` and `git log`: an edit needs every changed line, and the balanced cut with `downshift retrieve` already bounds the size
+- Compacting large lockfile or JSON reads through the Read tool: none in a 14-day sample of 300 transcripts (2026-11-11), and an edit needs the exact text
+- Injecting flags (`-json`, `--porcelain`) into the user's command: the command runs as written
 
 ---
 
