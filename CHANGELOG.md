@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **kiro-cli 3.x subagent spawns are recorded.** kiro-cli spawns through a `subagent` tool that names no model, which the KiroCrew adapter did not recognise, so those spawns left no row. They are now observed like Kiro IDE spawns: the decision is recorded with reason `observation-only`, the spawn is never blocked (there is no model to ask a respawn with), and `downshift setup` adds a `subagent` postToolUse matcher for the child end. Run `downshift setup` again to add it. The observation logic Kiro IDE and KiroCrew share now lives in `core.ObserveSpawn`.
+
 ## [0.16.0] - 2026-11-11
 
 Release notes: [docs/releases/v0.16.0.md](docs/releases/v0.16.0.md).

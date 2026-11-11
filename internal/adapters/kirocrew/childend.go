@@ -48,7 +48,9 @@ func ParseChildEnd(raw []byte) (hookport.ChildEnd, bool) {
 		return hookport.ChildEnd{}, false
 	}
 	// Match spawn_run, spawn_sub_agents and similar spawn tools from KiroCrew MCP.
-	if !strings.Contains(strings.ToLower(p.ToolName), "spawn") {
+	// kiro-cli 3.x spawns through "subagent" (observe.go).
+	name := strings.ToLower(p.ToolName)
+	if !strings.Contains(name, "spawn") && !strings.Contains(name, "subagent") {
 		return hookport.ChildEnd{}, false
 	}
 

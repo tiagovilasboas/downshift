@@ -22,7 +22,8 @@
 // does not have.
 //
 // Spawn detection: only the KiroCrew spawn tools listed in spawnToolNames are
-// routed. Any other tool (for example an image generator that takes model and
+// routed; the model-less kiro-cli "subagent" spawn is observed, never blocked
+// (observe.go). Any other tool (for example an image generator that takes model and
 // prompt) passes through silently. Within a spawn tool, a tool_input without a
 // model field or without task text is also passed through. A spawn_run with a
 // tasks[] array is a batch: each entry is routed on its own (see batch.go).
@@ -253,6 +254,10 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 	if ev.ToolName == spawnRunTool && hasTasksBatch(ti) {
 		return handleBatch(ev, ti, res)
+	}
+
+	if observedSpawnTools[ev.ToolName] {
+		return observeSpawn(ev, ti, res)
 	}
 
 	// Only spawn tools with both model and task text are routed. Everything
