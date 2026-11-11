@@ -29,12 +29,13 @@ const longestHintID = "--session=000000000000 000000000000"
 // fails the run: a panic, a false return or an out without a marker leaves out
 // unchanged.
 func keepRaw(keep func(raw []byte) (string, bool), raw, out []byte) []byte {
-	return keepRawFor(FamilyNone, keep, raw, out)
+	return keepRawFor(FamilyNone, 0, keep, raw, out)
 }
 
-// keepRawFor is keepRaw for a run of family. A family in noFoldStored keeps
-// its summary whole: its lines are not a log's repeats.
-func keepRawFor(family Family, keep func(raw []byte) (string, bool), raw, out []byte) (res []byte) {
+// keepRawFor is keepRaw for a run of family that exited with exitCode. A family
+// in noFoldStored keeps its summary whole: its lines are not a log's repeats.
+// A zero exit also gets the kept form of a pass summary (compressor.ShortenPass).
+func keepRawFor(family Family, exitCode int, keep func(raw []byte) (string, bool), raw, out []byte) (res []byte) {
 	res = out
 	defer func() {
 		if recover() != nil {
@@ -49,6 +50,10 @@ func keepRawFor(family Family, keep func(raw []byte) (string, bool), raw, out []
 		return out
 	}
 	summary := out[:i]
+	if exitCode == 0 {
+		// A passing run's count line sheds what the stored copy holds.
+		summary, _ = compressor.ShortenPass(summary)
+	}
 	if !noFoldStored[family] {
 		summary = foldStored(summary)
 	}

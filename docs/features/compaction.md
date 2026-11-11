@@ -85,6 +85,32 @@ test fixtures (vitest 3.2.7, 4.1.12 and 5.0.5, `@playwright/test` 1.64.1; 10 to
 bytes are the failures themselves. The Vitest transcripts of a file that cannot
 be imported cut two lines, about 0.1%.
 
+## Passing runs
+
+A run that exits 0 is a count line: what passed, and the skipped or no-test-files
+counts the output states (never a number it does not contain). Any line the
+compressor does not recognise, such as a warning, a deprecation notice or a hook
+banner, is kept verbatim.
+
+When the raw output is kept (CCR on, the default) the count line sheds what the
+stored copy holds, and the marker names the id to read it back:
+
+| Tool | Default (no copy kept) | Kept form |
+|------|------------------------|-----------|
+| `go test` | `Go test: PASS (12 packages ok, coverage min 59.2% max 100.0%) under example.com/acme/widget/`, then one row per package (`ok cmd/widget 71.4%`, `? cmd/x [no test files]`) | `Go test: PASS (12 packages ok, coverage min 59.2% max 100.0%)` |
+| Pytest, Cargo test, Playwright, Vitest, dart/flutter test | `Pytest: PASS (25 passed in 0.42s)` | `Pytest: PASS (25 passed)` |
+
+For `go test` the coverage figures are the one thing worth a choice. The kept form
+states the range (the lowest package is the one to act on) and drops the per-package
+figures: they are in the stored copy (`downshift retrieve <id> --grep coverage`). With
+no copy kept (`DOWNSHIFT_CCR=0`, `"ccr": false`, or a store that refused the output)
+nothing is cut: rows, prefix and timings stay, as before. A run with an unrecognised
+shape (rows that do not match the header counts, a row-shaped line among the other
+output) keeps the longer summary. A failing run is never shortened this way. A run
+of 4 or more packages with no coverage and no no-test packages is already one line
+(`Go test: PASS (12 packages ok)`); the marker is then most of the output, and there is
+nothing left to cut.
+
 ## Desktop reads (agent-desktop)
 
 `agent-desktop snapshot` and `agent-desktop find` print an accessibility tree as
@@ -351,7 +377,7 @@ only the output of failed runs), `downshift compact` stores the raw output under
 and its marker names the id: `downshift retrieve <id>`. Runs of 8 or
 more same-shape lines then fold, because every cut line can be read back with
 `downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]` or the
-MCP tool `retrieve`. On the bench corpus the total saving goes from 52.6% to 68.3%.
+MCP tool `retrieve`. On the bench corpus the total saving goes from 52.6% to 69.3%.
 Bytes later retrieved are subtracted from the savings figures, never below
 zero ([ccr.md](../guides/ccr.md)). The bench figures are with CCR off and on;
 on is the default. Limits, privacy and
