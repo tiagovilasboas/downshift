@@ -1,6 +1,6 @@
 module github.com/tiagovilasboas/downshift-ai
 
-go 1.27.3
+go 1.27.4
 
 tool github.com/evilmartians/lefthook/v2
 
