@@ -39,6 +39,7 @@ func postRunAnswer(port hookport.Port, raw []byte, prev any) (out any) {
 	res := postrun.Compact(caps, in, postrun.Options{
 		Keep:       keep,
 		Balanced:   loadBalanced().on,
+		Session:    telemetry.HashSessionID(in.Session),
 		PreWrapped: func(command string) bool { return shellwrap.WouldRewrite(port.ID, command) },
 	})
 	if res.Considered {

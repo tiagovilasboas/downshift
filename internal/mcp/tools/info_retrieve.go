@@ -18,7 +18,7 @@ import (
 )
 
 const retrieveSchema = `{"type":"object","properties":{` +
-	`"id":{"type":"string","description":"The id from the compactor marker: 12 lowercase hex characters."},` +
+	`"id":{"type":"string","description":"The id from the compactor marker: the LAST token of the hint, 12 lowercase hex characters. A leading --session=... part of the hint is not part of the id."},` +
 	`"grep":{"type":"string","description":"Keep only lines matching this RE2 pattern."},` +
 	`"head":{"type":"integer","minimum":0,"description":"Keep the first N lines."},` +
 	`"tail":{"type":"integer","minimum":0,"description":"Keep the last N lines."},` +
@@ -56,6 +56,9 @@ func runRetrieve(raw json.RawMessage) Result {
 		if err := dec.Decode(&a); err != nil {
 			return failure("arguments must be an object with id, grep, head, tail and lines")
 		}
+	}
+	if f := strings.Fields(a.ID); len(f) > 1 {
+		a.ID = f[len(f)-1] // a pasted "--session=<ref> <id>": the id is the last token
 	}
 	if !ccr.ValidID(a.ID) {
 		return failure("id must be 12 lowercase hex characters")

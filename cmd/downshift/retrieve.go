@@ -88,7 +88,7 @@ func retrieveRun(id, session string, q ccr.Query, stdout, stderr io.Writer) int 
 }
 
 func retrieveUsage(stderr io.Writer, msg string) int {
-	fmt.Fprintf(stderr, "downshift retrieve: %s\nusage: downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]\n", msg)
+	fmt.Fprintf(stderr, "downshift retrieve: %s\nusage: downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B] [--session=REF]\n", msg)
 	return 2
 }
 

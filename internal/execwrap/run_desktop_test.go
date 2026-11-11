@@ -79,6 +79,33 @@ func TestRun_AgentDesktopViewThenDelta(t *testing.T) {
 	}
 }
 
+// TestRun_AgentDesktopDeltaKeepsSessionHint: the marker with a session in it
+// is read back by reKeptMarker, so the delta read keeps the same hint.
+func TestRun_AgentDesktopDeltaKeepsSessionHint(t *testing.T) {
+	fakeBin(t, "agent-desktop", `cat "$AD_FIXTURE"`)
+	keep := func([]byte) (string, bool) { return "0123456789ab", true }
+	store := desktopview.Store{Dir: t.TempDir(), TTL: time.Minute, MaxBytes: 1 << 20}
+	key := DesktopScope("sess", []string{"agent-desktop", "snapshot", "--app", "Chat", "-i"})
+	o := Options{Keep: keep, Session: hashS2, Desktop: func(v []byte) []byte { return store.Apply(key, v) }}
+	hint := "; full output: downshift retrieve --session=aaaaaaaaaaaa 0123456789ab]\n"
+
+	_, out := desktopRun(t, desktopFixture, o)
+	if !strings.HasSuffix(out, hint) {
+		t.Fatalf("first read lacks the session hint:\n%.200s", out[max(0, len(out)-200):])
+	}
+	raw, _ := os.ReadFile(desktopFixture)
+	next := strings.ReplaceAll(string(raw), "s9x0lmz4", "s2nd7k1q")
+	next = strings.Replace(next, `"name":"Send now","ref_id":"@s2nd7k1q:e175","role":"button","states":["disabled"]`, `"name":"Send now","ref_id":"@s2nd7k1q:e175","role":"button"`, 1)
+	changed := filepath.Join(t.TempDir(), "next.txt")
+	if err := os.WriteFile(changed, []byte(next), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, out2 := desktopRun(t, changed, o)
+	if !strings.Contains(out2, "delta from snapshot") || !strings.HasSuffix(out2, hint) {
+		t.Fatalf("delta read lost the session hint:\n%s", out2)
+	}
+}
+
 // TestRun_AgentDesktopNoDeltaWithoutKeptRaw: with CCR off there is nothing
 // the agent can fall back on, so every read is the whole view.
 func TestRun_AgentDesktopNoDeltaWithoutKeptRaw(t *testing.T) {

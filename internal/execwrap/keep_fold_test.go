@@ -98,3 +98,29 @@ func TestKeepRaw_SkipsStoreWhenIDMarkerWouldExceedRaw(t *testing.T) {
 		t.Fatalf("emitted %d bytes >= raw %d bytes", len(got), len(raw))
 	}
 }
+
+// padRun sizes the folded run so the bare marker just fits.
+const padRun = 40
+
+// A session adds `--session=<ref> ` (22 bytes) to the marker. The guard sizes
+// the marker with a bare id, so the real output must be measured again: it
+// never ends up as long as, or longer than, the raw output.
+func TestKeepUncompacted_NeverLongerWithSessionHint(t *testing.T) {
+	var b strings.Builder
+	for i := 0; i < 101; i++ { // 101 lines of distinct shape (letters, not digits)
+		fmt.Fprintf(&b, "%c%c\n", 'a'+i/26, 'a'+i%26)
+	}
+	for i := 0; i < 8; i++ { // one run FoldRepeats cuts
+		fmt.Fprintf(&b, "%s%d\n", strings.Repeat("r", padRun), i)
+	}
+	raw := []byte(b.String())
+	bare := func([]byte) (string, bool) { return "0123456789ab", true }
+	withSession := func([]byte) (string, bool) { return "--session=aaaaaaaaaaaa 0123456789ab", true }
+	out, ok := keepUncompacted(bare, raw, 0, FamilyFind, false)
+	if !ok || len(out) >= len(raw) {
+		t.Fatalf("bare hint: ok=%v out=%d raw=%d, the window needs a fold that fits only without the session", ok, len(out), len(raw))
+	}
+	if out, ok := keepUncompacted(withSession, raw, 0, FamilyFind, false); ok || out != nil {
+		t.Fatalf("session hint: ok=%v out=%d raw=%d, want the raw output kept", ok, len(out), len(raw))
+	}
+}

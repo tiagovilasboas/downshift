@@ -229,6 +229,68 @@ func TestRetrievalWithoutSessionStaysPerID(t *testing.T) {
 	}
 }
 
+// Scoped and bare reads of one id both count: the scoped one on its session,
+// the bare one on the runs left with something to give back.
+func TestScopedAndBareRetrievalsOfOneID(t *testing.T) {
+	events := setState(t)
+	s1, s2 := keptRun(idA, 1000, 0), keptRun(idA, 1000, 0)
+	s1.Session, s2.Session = hashS1, hashS2
+	for _, ev := range []Event{s1, s2} {
+		if err := Append(events, ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+	RecordRetrieval(idA, hashS2, 700, time.Now())
+	RecordRetrieval(idA, "", 400, time.Now())
+	evs, err := ReadEvents(events)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Scoped first: s2 takes 700. The bare 400 goes to s1 (in log order, up to
+	// what it saved).
+	if evs[0].RetrievedBytes != 400 || evs[1].RetrievedBytes != 700 {
+		t.Fatalf("retrieved = %d and %d, want 400 and 700", evs[0].RetrievedBytes, evs[1].RetrievedBytes)
+	}
+}
+
+// A scoped read whose session has no run that kept the id is dropped; the
+// other session is not charged for it.
+func TestScopedRetrievalWithoutMatchingRunIsDropped(t *testing.T) {
+	events := setState(t)
+	s1 := keptRun(idA, 1000, 0)
+	s1.Session = hashS1
+	if err := Append(events, s1); err != nil {
+		t.Fatal(err)
+	}
+	RecordRetrieval(idA, hashS2, 500, time.Now())
+	RecordRetrieval(idB, hashS1, 500, time.Now()) // s1 did not keep idB
+	evs, _ := ReadEvents(events)
+	if evs[0].RetrievedBytes != 0 {
+		t.Fatalf("retrieved = %d, want 0", evs[0].RetrievedBytes)
+	}
+	if s, _ := SummarizeSession(events, hashS1); s.RetrievedBytes != 0 {
+		t.Fatalf("session summary retrieved = %d, want 0", s.RetrievedBytes)
+	}
+}
+
+// A scoped read larger than what the session's runs saved puts the remainder
+// on the last of them, as a bare read does.
+func TestScopedRetrievalRemainderGoesToLastRun(t *testing.T) {
+	events := setState(t)
+	a, b := keptRun(idA, 300, 0), keptRun(idA, 300, 0)
+	a.Session, b.Session = hashS1, hashS1
+	for _, ev := range []Event{a, b} {
+		if err := Append(events, ev); err != nil {
+			t.Fatal(err)
+		}
+	}
+	RecordRetrieval(idA, hashS1, 800, time.Now())
+	evs, _ := ReadEvents(events)
+	if evs[0].RetrievedBytes != 300 || evs[1].RetrievedBytes != 500 {
+		t.Fatalf("retrieved = %d and %d, want 300 and 500", evs[0].RetrievedBytes, evs[1].RetrievedBytes)
+	}
+}
+
 func TestSessionRef(t *testing.T) {
 	for in, want := range map[string]string{
 		hashS1: "111111111111", "abcdef012345": "abcdef012345",

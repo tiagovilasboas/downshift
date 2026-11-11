@@ -110,7 +110,7 @@ With CCR on, when `downshift compact -- <cmd>` compacts output:
 ## Retrieve
 
 ```bash
-downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]
+downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B] [--session=REF]
 downshift retrieve 3f9a1c2b7d40 --grep 'FAIL|panic' --tail 40
 downshift retrieve 3f9a1c2b7d40 --lines 120:180
 ```
@@ -191,8 +191,11 @@ What is session-scoped and what is per id:
 | MCP tool `retrieve` (it records no session) | every run that kept `<id>`, in log order |
 | Rows written before the `session` field | every run that kept `<id>`, in log order |
 
-The post-run hook that cuts a large tool result prints the hint without a session, so
-a read from that hint is per id.
+The post-run hook that cuts a large tool result carries the session in its hint the
+same way, when the harness gave it a valid one. The MCP `retrieve` tool takes the id
+as the last token of the hint (a pasted `--session=<ref> <id>` works) and records no
+session, so a read through it is per id. A marker that would end up as long as the
+raw output is not written: the run keeps the raw text.
 
 - `report`, `session`, the panel, the context summary and `stats` show the net saving.
   The compactor line adds `Read back with retrieve: N bytes` when there is any.

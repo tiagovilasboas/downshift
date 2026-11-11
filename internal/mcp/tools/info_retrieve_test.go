@@ -57,6 +57,24 @@ func TestRetrieveToolErrorsAreResults(t *testing.T) {
 	}
 }
 
+// A pasted hint ("--session=<ref> <id>") reads the id, the last token; the tool
+// still records no session.
+func TestRetrieveToolAcceptsPastedHint(t *testing.T) {
+	t.Setenv(paths.EnvStateDir, t.TempDir())
+	store, err := ccr.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	id, err := store.Put([]byte("one\ntwo\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := runRetrieve([]byte(`{"id":"--session=abababababab ` + id + `"}`))
+	if res.IsError || res.Text != "one\ntwo\n" {
+		t.Fatalf("result = %+v", res)
+	}
+}
+
 func TestRetrieveToolIsReadOnlyAndListed(t *testing.T) {
 	tl := toolByName(t, fullDeps(), "retrieve")
 	if !tl.ReadOnly || !tl.Idempotent {

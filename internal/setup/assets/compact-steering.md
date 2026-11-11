@@ -21,10 +21,11 @@ the first matches of each file of a search. The full output is stored, and the
 last line names it:
 
 ```
-[downshift compact: compacted 591441 to 33342 bytes; full output: downshift retrieve 85298d5a7eb4]
+[downshift compact: compacted 591441 to 33342 bytes; full output: downshift retrieve --session=4f2a9c01b3d7 85298d5a7eb4]
 ```
 
-Run `downshift retrieve <id>` when you need a line that was cut. Set
+Run the command the line shows, as printed (`--session=...` included when it
+is there), when you need a line that was cut. The id is its last word. Set
 `DOWNSHIFT_BALANCED=0` to keep large outputs whole.
 
 ## Allowlisted families

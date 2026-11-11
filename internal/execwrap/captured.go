@@ -61,8 +61,9 @@ type Captured struct {
 // and only once keep stored the raw output. A family whose output the wrapper
 // would not hold (a file read, wc of a path it cannot check from here) and a
 // family whose raw output must never be stored keep data whole. A panic
-// returns data unchanged.
-func CompactCaptured(argv []string, family Family, data []byte, exitCode int, keep func([]byte) (string, bool), balanced bool) (res Captured) {
+// returns data unchanged. session is the caller's hashed session ("" when
+// unknown): with it the marker's retrieve hint names the session (SessionRef).
+func CompactCaptured(argv []string, family Family, data []byte, exitCode int, keep func([]byte) (string, bool), balanced bool, session string) (res Captured) {
 	res = Captured{Output: data, Passthrough: PassthroughUnrecognized}
 	defer func() {
 		if recover() != nil {
@@ -80,7 +81,7 @@ func CompactCaptured(argv []string, family Family, data []byte, exitCode int, ke
 		keep = nil
 	}
 	var kept string
-	h := compactHeld(argv, data, family, exitCode, false, captureKept(keep, &kept, ""), nil, balanced, balanceConfig{})
+	h := compactHeld(argv, data, family, exitCode, false, captureKept(keep, &kept, session), nil, balanced, balanceConfig{})
 	res = Captured{Output: h.out, Compacted: h.compacted, Folded: h.folded, Passthrough: h.passthrough, Detail: h.detail}
 	if h.compacted {
 		res.KeptID = kept

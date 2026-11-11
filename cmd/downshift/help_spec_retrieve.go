@@ -8,7 +8,7 @@ var retrieveHelp = map[string]string{
 	"retrieve": `downshift retrieve — Print the full output the compactor kept for an id
 
 Usage:
-  downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]
+  downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B] [--session=REF]
 
 Flags:
   --grep RE     Keep only the lines matching this RE2 pattern

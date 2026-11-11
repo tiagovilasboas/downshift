@@ -391,7 +391,7 @@ downshift compactor --allowlisted -- docker run x    # exit 1
 Print the full output the compactor kept for an id.
 
 ```bash
-downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]
+downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B] [--session=REF]
 ```
 
 **Flags:**
