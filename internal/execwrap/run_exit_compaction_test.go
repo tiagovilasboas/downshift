@@ -85,6 +85,18 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 			wantCode: 0, wantClass: ExitClassZero, wantOut: "On branch main\nnothing to commit, working tree clean\n", wantFamily: FamilyGoTest,
 		},
 		{
+			name: "a failure that only wrote stderr keeps its code and its text", bin: "git",
+			script: "echo 'fatal: not a git repository' >&2; exit 128",
+			argv:   []string{"git", "status"}, compact: true,
+			wantCode: 128, wantClass: ExitClassNonZero, wantErr: "fatal: not a git repository\n", wantFamily: FamilyGitStatus,
+		},
+		{
+			name: "an exit code above 125 is the program's own", bin: "go",
+			script: "printf 'partial output\\n'; exit 200",
+			argv:   []string{"go", "test", "./..."}, compact: true,
+			wantCode: 200, wantClass: ExitClassNonZero, wantOut: "partial output\n", wantFamily: FamilyGoTest,
+		},
+		{
 			name: "stdout and stderr stay separate", bin: "go",
 			script: "echo out; echo err >&2",
 			argv:   []string{"go", "test"}, compact: true,

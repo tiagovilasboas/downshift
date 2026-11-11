@@ -182,8 +182,9 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    that the implementation is correct. [Verification guide](../guides/verification.md).
 9. **Telemetry and read-outs** `[D]`. `events.jsonl` holds routing metadata
    only (no prompts, tasks or paths). Appends do not fsync (a power loss can
-   drop the last events; a process crash cannot). `telemetry.TokenSavings` is the
-   single tokens-saved definition (work and cache apart, per agent type) shared
+   drop the last events; a process crash cannot). `telemetry.TokensSavedEstimate` is the
+   single tokens-saved figure (what the Compactor kept out of the context; routing
+   is counted apart) shared
    by `stats`, the session views and `dsmon`; none of
    them shows a dollar, and neither does `report`.
    `report` states the figures of routed spawns, counting "completed"
