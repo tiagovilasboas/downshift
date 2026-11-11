@@ -32,7 +32,8 @@ func TestDecide_CompoundShapes(t *testing.T) {
 
 		{"cd then not allowlisted", "cd x && sudo ls", false, "", nil, ReasonNotAllowlisted},
 		{"stderr merge after not allowlisted", "sudo ls 2>&1", false, "", nil, ReasonNotAllowlisted},
-		{"stderr to devnull before a pipe", "go test ./... 2>/dev/null | tail -5", false, "", nil, ReasonUnsafeChar},
+		{"stderr to devnull before a pipe", "go test ./... 2>/dev/null | tail -5", true, "'/opt/ds/downshift' compact --discard-stderr -- 'go' 'test' './...' | tail -5", []string{"tail -5"}, ReasonAllowlistedQuoted},
+		{"devnull then merge before a pipe", "go test ./... 2>/dev/null 2>&1 | tail -5", false, "", nil, ReasonUnsafeChar},
 		{"stderr merge then devnull", "go test ./... 2>&1 2>/dev/null", false, "", nil, ReasonUnsafeChar},
 		{"stderr merge twice", "go test ./... 2>&1 2>&1", false, "", nil, ReasonUnsafeChar},
 		{"stdout to stderr", "go test ./... 1>&2", false, "", nil, ReasonUnsafeChar},

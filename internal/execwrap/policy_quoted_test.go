@@ -53,7 +53,7 @@ func TestDecideQuotedAccepts(t *testing.T) {
 func TestDecideQuotedRefuses(t *testing.T) {
 	for _, command := range []string{
 		`grep -rn "$HOME" .`, "grep -rn \"`id`\" .", `grep -rn "a\b" .`, `grep -rn "hi!" .`,
-		`grep -rn "x .`, `grep -rn 'x .`, `grep -rn "x" . ; rm -rf /`, `grep -rn "x" . && rm x`,
+		`grep -rn "x .`, `grep -rn 'x .`, `grep -rn "x" . ; rm -rf /`, `grep -rn "x" . && echo "x"`,
 		`grep -rn "x" . | wc -l`, `grep -rn "x" . &`, `grep -rn "x" $(pwd)`, "grep -rn \"x\" `pwd`",
 		`grep -rn "x" . > out`, `grep -rn "x" . 2> err`, `grep -rn "x" . 2>/dev/null2`,
 		`grep -rn "x" . 1>/dev/null`, `grep -rn "x" . &>/dev/null`, `grep -rn "x" * `,
@@ -74,7 +74,7 @@ func TestDecideQuotedRefuses(t *testing.T) {
 // Every byte outside quotes stays in the safe set, so a metacharacter the
 // quoted path does not name keeps its unsafe_character answer.
 func TestDecideQuotedKeepsUnsafeReason(t *testing.T) {
-	for _, command := range []string{`grep -rn "x" . | wc -l`, `go test -run 'X' ; ls`, `grep "$X" .`} {
+	for _, command := range []string{`grep -rn "x" . | wc -l`, `go test -run 'X' ; echo 'y'`, `grep "$X" .`} {
 		if d := Decide(command, "/opt/ds/downshift"); d.Reason != ReasonUnsafeChar {
 			t.Errorf("Decide(%q).Reason = %q, want %q", command, d.Reason, ReasonUnsafeChar)
 		}
