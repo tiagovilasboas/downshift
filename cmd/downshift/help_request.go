@@ -131,7 +131,7 @@ func editDistance(a, b string) int {
 // helpTopics maps a command path ("stats", "models list") to its help text.
 // Every top-level command and every subcommand that has its own flags is an
 // entry; a subcommand without one is answered by its command's text.
-var helpTopics = mergeTopics(dailyHelp, modelsHelp, hookHelpTopics, maintainerHelp, experimentalHelp, policyHelp, playbookHelp, routeHelp, mcpHelp, gatewayHelp, retrieveHelp, discoverHelp)
+var helpTopics = mergeTopics(dailyHelp, updateHelp, modelsHelp, hookHelpTopics, maintainerHelp, experimentalHelp, policyHelp, playbookHelp, routeHelp, mcpHelp, gatewayHelp, retrieveHelp, discoverHelp)
 
 // mergeTopics joins the help groups into one table. Keys must not repeat across
 // groups; TestHelpTopicsAreUnique enforces that.

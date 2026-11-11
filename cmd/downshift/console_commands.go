@@ -14,6 +14,7 @@ var consoleCommands = []command.Spec{
 	{Args: []string{"setup", "--dry-run"}, Group: "setup", Summary: "Show the diff setup would write to each harness"},
 	{Args: []string{"setup"}, Group: "setup", Summary: "Wire the hooks into every harness found (asks first)", Writes: true, Terminal: true},
 	{Args: []string{"setup", "--undo"}, Group: "setup", Summary: "Restore the latest backup of each hook file", Writes: true, Terminal: true},
+	{Args: []string{"update"}, Group: "setup", Summary: "Install the latest release, then refresh every harness (asks first)", Writes: true, Terminal: true},
 	{Args: []string{"uninstall", "--dry-run"}, Group: "setup", Summary: "Show what uninstall would restore"},
 	{Args: []string{"uninstall"}, Group: "setup", Summary: "Restore hook configs and remove wrappers", Writes: true, Terminal: true},
 	{Args: []string{"doctor"}, Group: "health", Summary: "Checklist with a fix command per failure"},

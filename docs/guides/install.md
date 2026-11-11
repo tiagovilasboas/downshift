@@ -125,6 +125,15 @@ Whether the harness applied it is a separate fact; `downshift stats` separates
 
 **Step 6 — (Optional) Watch it live.** `downshift watch` redraws the current session's subagent tree (model, end status, tokens, why) every second, for every harness; `downshift session --tree` prints it once, and `/downshift:status` or `/downshift` shows it inside Claude Code. The older floating widget is still available: [dsmon — live monitor widget](#dsmon--live-monitor-widget).
 
+### Update to a new release
+
+```bash
+downshift update --check   # say whether a newer release exists; changes nothing
+downshift update           # install it, then refresh every harness
+```
+
+`downshift update` works the same on macOS, Linux and Windows. It downloads the archive for this platform from the latest release, checks its sha256 against `checksums.txt` (and the build provenance when the `gh` CLI is installed and signed in), and replaces the running binary in place, following a link on `PATH` to the real file. A failed check leaves the old binary untouched. It then runs the new binary's `downshift setup`, which shows the diff and asks before writing (`--yes` skips the question), and `downshift doctor`. When the binary is already current it skips the download and still runs setup, because a harness file can lag behind the binary. `--version vX.Y.Z` installs a named release. Open a new harness session afterwards so it loads the updated hooks.
+
 ### Manual setup (Claude Code)
 
 Use this instead of `setup` if you prefer to edit `~/.claude/settings.json` yourself. The PreToolUse matcher is `Agent|Task`. Claude Code's `Task` schema accepts only family names (`haiku`, `sonnet`, `opus`, `fable`) in `model`. Downshift writes the catalog's family name for you and leaves the spawn alone when a model has none.

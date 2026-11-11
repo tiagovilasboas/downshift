@@ -43,6 +43,21 @@ downshift setup --dry-run    # Preview changes
 downshift setup --undo       # Restore previous configuration
 ```
 
+### `downshift update`
+
+Install the latest release over this binary, then refresh every harness.
+
+```bash
+downshift update [--check] [--yes] [--version vX.Y.Z]
+```
+
+**Flags:**
+- `--check` — Say whether a newer release exists; change nothing
+- `--yes`, `-y` — Pass `--yes` to setup: write the harness files without asking
+- `--version vX.Y.Z` — Install this release instead of the latest
+
+Steps: resolve the tag from the GitHub releases page (no API call), download the archive for this platform, check its sha256 against `checksums.txt` and, with the `gh` CLI, its build provenance, replace the binary in place (on Windows the running file is moved to `downshift.exe.old`, removed on the next update), then run the new binary's `setup` and `doctor`. A current binary skips the download; setup still runs. Every download is https only.
+
 ### `downshift uninstall`
 
 Restore the harness hook configurations setup changed and remove the wrappers it generated.

@@ -677,6 +677,22 @@
       ]
     },
     {
+      "name": "update",
+      "summary": "Install the latest release, then refresh every harness (asks first)",
+      "flags": [
+        {
+          "name": "--check"
+        },
+        {
+          "name": "--yes",
+          "short": "-y"
+        },
+        {
+          "name": "--version"
+        }
+      ]
+    },
+    {
       "name": "usage",
       "summary": "Post-spawn usage observation: records tokens"
     },
