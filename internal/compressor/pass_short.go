@@ -96,7 +96,10 @@ func shortenGoPass(text string) (string, bool) {
 	case m[3] != "":
 		b.WriteString(", coverage min " + m[3] + "% max " + m[4] + "%")
 	case len(covers) > 0:
-		lo, hi, _ := goCoverRange(coverPkgs(covers))
+		lo, hi, ok := goCoverRange(coverPkgs(covers))
+		if !ok {
+			return text, false // a coverage figure it cannot read stays in the rows
+		}
 		b.WriteString(", coverage min " + lo + "% max " + hi + "%")
 	}
 	b.WriteString(")\n")

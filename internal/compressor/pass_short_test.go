@@ -132,6 +132,7 @@ func TestShortenPass_LeavesUnknownShapesWhole(t *testing.T) {
 		"cypress seconds":          "Cypress: PASS (25 tests: 24 passing; 8 seconds)\n",
 		"timing in a later line":   "Jest: PASS (38 passed across 4 suites)\nTime in 2s)\n",
 		"empty":                    "",
+		"unreadable coverage":      "Go test: PASS (2 packages ok) under some/long/import/path/prefix/\nok aaaaaaaa abc%\nok bbbbbbbb abc%\n",
 		"timing without a summary": "took 3 passed in 0.4s)\n",
 	} {
 		t.Run(name, func(t *testing.T) {
