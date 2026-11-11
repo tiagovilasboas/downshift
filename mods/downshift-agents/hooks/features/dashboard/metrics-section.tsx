@@ -41,7 +41,7 @@ export function compactorSection(ui: Ui, snapshot: DownshiftSnapshot, pct: numbe
         {uncutNote(c)}
       </Text>
     ),
-    kv(ui, 'Tokens saved', `~${tokens(c.estimatedTokens)}*`, WARN),
+    kv(ui, 'Tokens saved', `~${tokens(c.estimatedTokens)}*`, c.estimatedTokens > 0 ? WARN : MUTED),
     ...familiesBlock(ui, c.families, columns),
     ...directBlock(ui, c),
   ])

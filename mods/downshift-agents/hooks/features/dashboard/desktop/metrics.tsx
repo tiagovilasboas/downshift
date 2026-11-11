@@ -47,7 +47,7 @@ export function compactorPanel(ui: GraphicUi, snapshot: DownshiftSnapshot, pct: 
         {uncutNote(c)}
       </Text>
     ),
-    row(ui, 'Tokens saved', `~${tokens(c.estimatedTokens)}*`, WARN),
+    row(ui, 'Tokens saved', `~${tokens(c.estimatedTokens)}*`, c.estimatedTokens > 0 ? WARN : MUTED),
     ...familyRows(ui, c.families, columns, isExpanded),
     ...directRows(ui, c),
     isExpanded && row(ui, 'Runs', `${c.commands} · ${c.compacted} compacted`),
