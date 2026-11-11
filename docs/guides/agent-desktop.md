@@ -86,7 +86,7 @@ delta from snapshot s9x0lmz4 (same window, read 4s ago): 4 of 212 lines changed.
      e173 button "More actions" .btn.msg-action
 -    e175 button "Send now" [disabled]
 +    e175 button "Send now"
-[downshift compact: compacted 30899 to 868 bytes; full output: downshift retrieve 0123456789ab]
+[downshift compact: 30899 to 868 bytes; downshift retrieve 0123456789ab]
 ```
 
 A delta is sent only when all of these hold. Otherwise the whole view is printed:

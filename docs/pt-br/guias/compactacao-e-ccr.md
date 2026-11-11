@@ -118,7 +118,7 @@ Desde 6 de novembro de 2026, o CCR vem **ativado por padrão**.
 2. **Identificador Único:** O `<id>` é um hash criptográfico seguro do conteúdo armazenado (ex: `3f9a1c2b7d40`).
 3. **Marcador de Notificação:** O compactor inclui uma linha informativa ao final da saída compactada:
    ```text
-   [downshift compact: compacted 12450 to 1120 bytes; full output: downshift retrieve 3f9a1c2b7d40]
+   [downshift compact: 12450 to 1120 bytes; downshift retrieve 3f9a1c2b7d40]
    ```
 4. **Dobra de Repetições (*FoldRepeats*):** Sequências de 8 ou mais linhas com o mesmo padrão estrutural (como barras de progresso, leituras sucessivas de arquivos ou prints repetidos) são dobradas, preservando as 3 primeiras, as 2 últimas e uma linha informativa central `[... 45 similar lines folded]`. Essa dobra só acontece porque o arquivo bruto está salvo no CCR.
 

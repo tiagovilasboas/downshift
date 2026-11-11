@@ -27,7 +27,7 @@ use is small, and the review found where it leaks.
 | Process start, paid by every hook call and every wrapped command | 44 ms; 20 ms is the classifier's regexes, 6.6 ms the compressor's | `GODEBUG=inittrace=1` |
 | Claude Code `PostToolUse` accepts `updatedToolOutput`, which replaces the output of built-in tools (Bash, Read, Grep, Glob) | Downshift only measures there, and its docs and `doctor` say a hook cannot rewrite tool output | hooks reference, read 2026-11-10 |
 | Commands the hook leaves unwrapped (pipes, redirects, long commands) | never compacted: 7,769 skips in five days in the value roadmap's log | [value roadmap](value-roadmap.md) |
-| Published figures | 67.0% on a synthetic corpus; routing 24.1% from a study that predates decision O8 | README |
+| Published figures | 68.3% on a synthetic corpus; routing 24.1% from a study that predates decision O8 | README |
 | Size | 89k lines of Go, 88 packages, about 38 commands, 248 documentation files | repository |
 
 ## Already shipped on 2026-11-10

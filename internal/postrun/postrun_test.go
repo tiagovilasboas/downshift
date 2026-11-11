@@ -67,9 +67,9 @@ func TestCompact_Shell(t *testing.T) {
 func TestCompact_HintCarriesSession(t *testing.T) {
 	in := hookport.ToolOutput{Category: core.CategoryShell, Command: "./job.sh | tee job.log", Stdout: bigLog(), HasStdout: true, ExitCode: -1}
 	for _, tc := range []struct{ session, want string }{
-		{"", "full output: downshift retrieve 0123456789ab]"},
-		{"not-a-hash", "full output: downshift retrieve 0123456789ab]"},
-		{strings.Repeat("ab", 32), "full output: downshift retrieve --session=abababababab 0123456789ab]"},
+		{"", "downshift retrieve 0123456789ab]"},
+		{"not-a-hash", "downshift retrieve 0123456789ab]"},
+		{strings.Repeat("ab", 32), "downshift retrieve --session=abababababab 0123456789ab]"},
 	} {
 		res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true, Session: tc.session})
 		if !res.Replaced || res.KeptID != "0123456789ab" || !strings.Contains(res.Output.Stdout, tc.want) {

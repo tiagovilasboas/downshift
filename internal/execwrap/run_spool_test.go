@@ -42,7 +42,7 @@ func TestRun_SpooledViewCarriesSessionHint(t *testing.T) {
 	r := Run([]string{"git", "grep", "match"}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb,
 		Compact: true, Keep: store.keep, Balanced: true, Session: hashS2})
 	s := out.String()
-	for _, want := range []string{"bytes cut (downshift retrieve --session=aaaaaaaaaaaa 0123456789ab)", "full output: downshift retrieve --session=aaaaaaaaaaaa 0123456789ab]"} {
+	for _, want := range []string{"bytes cut (downshift retrieve --session=aaaaaaaaaaaa 0123456789ab)", "downshift retrieve --session=aaaaaaaaaaaa 0123456789ab]"} {
 		if !strings.Contains(s, want) {
 			t.Errorf("output lacks %q", want)
 		}
@@ -85,7 +85,7 @@ func TestRun_OverHoldLimitIsSpooledAndCut(t *testing.T) {
 			if out.Len() >= 64<<10 || !r.Compacted || !r.Folded || r.KeptID != "0123456789ab" || r.Passthrough != "" {
 				t.Fatalf("printed %d bytes, result %+v", out.Len(), r)
 			}
-			for _, want := range []string{"src/a.go:12:some match text here\n", "bytes cut (downshift retrieve 0123456789ab)", "full output: downshift retrieve 0123456789ab]"} {
+			for _, want := range []string{"src/a.go:12:some match text here\n", "bytes cut (downshift retrieve 0123456789ab)", "downshift retrieve 0123456789ab]"} {
 				if !strings.Contains(s, want) {
 					t.Errorf("output lacks %q:\n%.300s", want, s)
 				}

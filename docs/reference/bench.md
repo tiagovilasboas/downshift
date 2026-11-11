@@ -8,61 +8,61 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 
 | Family | Class | Fixtures | Raw bytes | Downshift bytes | Saving % | Raw tokens~ | Downshift tokens~ | with CCR bytes | with CCR saving % |
 |---|---|--:|--:|--:|--:|--:|--:|--:|--:|
-| agent_desktop | lossless | 3 | 61032 | 26302 | 56.9 | 15258 | 6575 | 26440 | 56.7 |
-| bazel | lossy | 2 | 911 | 322 | 64.7 | 227 | 80 | 414 | 54.6 |
-| cargo_build | lossy | 1 | 440 | 174 | 60.5 | 110 | 43 | 220 | 50.0 |
-| cargo_test | lossless | 3 | 3660 | 257 | 93.0 | 915 | 64 | 395 | 89.2 |
-| cypress | lossless | 1 | 910 | 153 | 83.2 | 227 | 38 | 199 | 78.1 |
-| docker_build | lossy | 1 | 388 | 187 | 51.8 | 97 | 46 | 233 | 39.9 |
-| docker_images | lossy | 1 | 248 | 124 | 50.0 | 62 | 31 | 170 | 31.5 |
-| docker_ps | lossy | 1 | 475 | 228 | 52.0 | 118 | 57 | 274 | 42.3 |
-| dotnet_build | lossy | 1 | 468 | 351 | 25.0 | 117 | 87 | 397 | 15.2 |
-| dotnet_test | lossless | 1 | 333 | 102 | 69.4 | 83 | 25 | 148 | 55.6 |
-| eslint | lossy | 3 | 2091 | 1053 | 49.6 | 522 | 263 | 1191 | 43.0 |
-| file_read | lossy | 1 | 11594 | 2413 | 79.2 | 2898 | 603 | 2459 | 78.8 |
-| flutter_test | lossless | 5 | 6624 | 513 | 92.3 | 1656 | 128 | 743 | 88.8 |
-| generic | lossy | 4 | 41608 | 33970 | 18.4 | 10402 | 8492 | 2865 | 93.1 |
-| gh_checks | lossless | 1 | 515 | 118 | 77.1 | 128 | 29 | 164 | 68.2 |
-| gh_pr | lossless | 2 | 1843 | 1756 | 4.7 | 460 | 439 | 1848 | -0.3 |
-| gh_run_list | lossless | 1 | 378 | 221 | 41.5 | 94 | 55 | 267 | 29.4 |
-| gh_run_log | lossy | 2 | 2451 | 637 | 74.0 | 612 | 159 | 729 | 70.3 |
-| git_diff | lossless | 3 | 810 | 822 | -1.5 | 202 | 205 | 960 | -18.5 |
-| git_log | lossy | 5 | 2265 | 610 | 73.1 | 566 | 152 | 840 | 62.9 |
-| git_show | lossless | 2 | 786 | 810 | -3.1 | 196 | 202 | 902 | -14.8 |
-| git_stash | lossy | 1 | 192 | 175 | 8.9 | 48 | 43 | 221 | -15.1 |
-| git_status | lossless | 5 | 1113 | 538 | 51.7 | 278 | 134 | 768 | 31.0 |
-| glab | lossy | 2 | 1673 | 1672 | 0.1 | 418 | 418 | 1764 | -5.4 |
-| go_build | lossy | 2 | 632 | 500 | 20.9 | 158 | 125 | 592 | 6.3 |
-| go_test | lossless | 13 | 13425 | 6050 | 54.9 | 3356 | 1512 | 6648 | 50.5 |
-| golangci_lint | lossy | 2 | 569 | 397 | 30.2 | 142 | 99 | 489 | 14.1 |
-| gradle | lossy | 4 | 1875 | 818 | 56.4 | 468 | 204 | 1002 | 46.6 |
-| grep_counts | lossy | 1 | 226 | 114 | 49.6 | 56 | 28 | 160 | 29.2 |
-| grep_rows | lossless | 1 | 1920 | 1298 | 32.4 | 480 | 324 | 998 | 48.0 |
-| http_fetch | lossy | 1 | 4980 | 1841 | 63.0 | 1245 | 460 | 1298 | 73.9 |
-| jest | lossless | 2 | 459 | 208 | 54.7 | 114 | 52 | 300 | 34.6 |
-| kubectl_pods | lossy | 1 | 229 | 182 | 20.5 | 57 | 45 | 228 | 0.4 |
-| lockfile_diff | lossy | 2 | 4998 | 657 | 86.9 | 1249 | 164 | 749 | 85.0 |
-| markdown | lossy | 2 | 1063 | 921 | 13.4 | 265 | 230 | 1013 | 4.7 |
-| maven | lossy | 3 | 6676 | 880 | 86.8 | 1669 | 220 | 1018 | 84.8 |
-| mypy | lossy | 2 | 710 | 373 | 47.5 | 177 | 93 | 465 | 34.5 |
-| next_build | lossless | 1 | 578 | 135 | 76.6 | 144 | 33 | 181 | 68.7 |
-| npm_audit | lossy | 1 | 1052 | 422 | 59.9 | 263 | 105 | 468 | 55.5 |
-| npm_install | lossless | 1 | 714 | 78 | 89.1 | 178 | 19 | 124 | 82.6 |
-| nx | lossless | 1 | 350 | 96 | 72.6 | 87 | 24 | 142 | 59.4 |
-| phpstan | lossless | 1 | 112 | 70 | 37.5 | 28 | 17 | 116 | -3.6 |
-| phpunit | lossless | 1 | 260 | 111 | 57.3 | 65 | 27 | 157 | 39.6 |
-| pip_install | lossless | 1 | 250 | 77 | 69.2 | 62 | 19 | 123 | 50.8 |
-| playwright | lossless | 2 | 906 | 167 | 81.6 | 226 | 41 | 259 | 71.4 |
-| progress | lossy | 1 | 2181 | 119 | 94.5 | 545 | 29 | 165 | 92.4 |
-| pytest | lossless | 2 | 1216 | 162 | 86.7 | 304 | 40 | 254 | 79.1 |
-| rspec | lossless | 1 | 443 | 91 | 79.5 | 110 | 22 | 137 | 69.1 |
-| rubocop | lossless | 2 | 685 | 492 | 28.2 | 171 | 123 | 584 | 14.7 |
-| ruff | lossy | 2 | 492 | 339 | 31.1 | 123 | 84 | 431 | 12.4 |
-| tsc | lossless | 3 | 946 | 204 | 78.4 | 236 | 51 | 342 | 63.8 |
-| turbo | lossless | 1 | 494 | 101 | 79.6 | 123 | 25 | 147 | 70.2 |
-| vitest | lossless | 4 | 3624 | 931 | 74.3 | 906 | 232 | 1115 | 69.2 |
-| uncompacted (CCR only) | lossy | 3 | 6150 | 6150 | 0.0 | 1537 | 1537 | 1221 | 80.1 |
-| TOTAL | - | 113 | 194873 | 91342 | 53.1 | 48718 | 22835 | 64316 | 67.0 |
+| agent_desktop | lossless | 3 | 61032 | 26329 | 56.9 | 15258 | 6582 | 26371 | 56.8 |
+| bazel | lossy | 2 | 911 | 340 | 62.7 | 227 | 85 | 368 | 59.6 |
+| cargo_build | lossy | 1 | 440 | 183 | 58.4 | 110 | 45 | 197 | 55.2 |
+| cargo_test | lossless | 3 | 3660 | 284 | 92.2 | 915 | 71 | 326 | 91.1 |
+| cypress | lossless | 1 | 910 | 162 | 82.2 | 227 | 40 | 176 | 80.7 |
+| docker_build | lossy | 1 | 388 | 196 | 49.5 | 97 | 49 | 210 | 45.9 |
+| docker_images | lossy | 1 | 248 | 133 | 46.4 | 62 | 33 | 147 | 40.7 |
+| docker_ps | lossy | 1 | 475 | 237 | 50.1 | 118 | 59 | 251 | 47.2 |
+| dotnet_build | lossy | 1 | 468 | 360 | 23.1 | 117 | 90 | 374 | 20.1 |
+| dotnet_test | lossless | 1 | 333 | 111 | 66.7 | 83 | 27 | 125 | 62.5 |
+| eslint | lossy | 3 | 2091 | 1080 | 48.4 | 522 | 270 | 1122 | 46.3 |
+| file_read | lossy | 1 | 11594 | 2422 | 79.1 | 2898 | 605 | 2436 | 79.0 |
+| flutter_test | lossless | 5 | 6624 | 558 | 91.6 | 1656 | 139 | 628 | 90.5 |
+| generic | lossy | 4 | 41608 | 34006 | 18.3 | 10402 | 8501 | 2773 | 93.3 |
+| gh_checks | lossless | 1 | 515 | 127 | 75.3 | 128 | 31 | 141 | 72.6 |
+| gh_pr | lossless | 2 | 1843 | 1774 | 3.7 | 460 | 443 | 1802 | 2.2 |
+| gh_run_list | lossless | 1 | 378 | 230 | 39.2 | 94 | 57 | 244 | 35.4 |
+| gh_run_log | lossy | 2 | 2451 | 655 | 73.3 | 612 | 163 | 683 | 72.1 |
+| git_diff | lossless | 3 | 810 | 849 | -4.8 | 202 | 212 | 891 | -10.0 |
+| git_log | lossy | 5 | 2265 | 655 | 71.1 | 566 | 163 | 725 | 68.0 |
+| git_show | lossless | 2 | 786 | 828 | -5.3 | 196 | 207 | 856 | -8.9 |
+| git_stash | lossy | 1 | 192 | 184 | 4.2 | 48 | 46 | 198 | -3.1 |
+| git_status | lossless | 5 | 1113 | 583 | 47.6 | 278 | 145 | 653 | 41.3 |
+| glab | lossy | 2 | 1673 | 1690 | -1.0 | 418 | 422 | 1718 | -2.7 |
+| go_build | lossy | 2 | 632 | 518 | 18.0 | 158 | 129 | 546 | 13.6 |
+| go_test | lossless | 13 | 13425 | 6167 | 54.1 | 3356 | 1541 | 6349 | 52.7 |
+| golangci_lint | lossy | 2 | 569 | 415 | 27.1 | 142 | 103 | 443 | 22.1 |
+| gradle | lossy | 4 | 1875 | 854 | 54.5 | 468 | 213 | 910 | 51.5 |
+| grep_counts | lossy | 1 | 226 | 123 | 45.6 | 56 | 30 | 137 | 39.4 |
+| grep_rows | lossless | 1 | 1920 | 1307 | 31.9 | 480 | 326 | 975 | 49.2 |
+| http_fetch | lossy | 1 | 4980 | 1850 | 62.9 | 1245 | 462 | 1275 | 74.4 |
+| jest | lossless | 2 | 459 | 226 | 50.8 | 114 | 56 | 254 | 44.7 |
+| kubectl_pods | lossy | 1 | 229 | 191 | 16.6 | 57 | 47 | 205 | 10.5 |
+| lockfile_diff | lossy | 2 | 4998 | 675 | 86.5 | 1249 | 168 | 703 | 85.9 |
+| markdown | lossy | 2 | 1063 | 939 | 11.7 | 265 | 234 | 967 | 9.0 |
+| maven | lossy | 3 | 6676 | 907 | 86.4 | 1669 | 226 | 949 | 85.8 |
+| mypy | lossy | 2 | 710 | 391 | 44.9 | 177 | 97 | 419 | 41.0 |
+| next_build | lossless | 1 | 578 | 144 | 75.1 | 144 | 36 | 158 | 72.7 |
+| npm_audit | lossy | 1 | 1052 | 431 | 59.0 | 263 | 107 | 445 | 57.7 |
+| npm_install | lossless | 1 | 714 | 87 | 87.8 | 178 | 21 | 101 | 85.9 |
+| nx | lossless | 1 | 350 | 105 | 70.0 | 87 | 26 | 119 | 66.0 |
+| phpstan | lossless | 1 | 112 | 79 | 29.5 | 28 | 19 | 93 | 17.0 |
+| phpunit | lossless | 1 | 260 | 120 | 53.8 | 65 | 30 | 134 | 48.5 |
+| pip_install | lossless | 1 | 250 | 86 | 65.6 | 62 | 21 | 100 | 60.0 |
+| playwright | lossless | 2 | 906 | 185 | 79.6 | 226 | 46 | 213 | 76.5 |
+| progress | lossy | 1 | 2181 | 128 | 94.1 | 545 | 32 | 142 | 93.5 |
+| pytest | lossless | 2 | 1216 | 180 | 85.2 | 304 | 45 | 208 | 82.9 |
+| rspec | lossless | 1 | 443 | 100 | 77.4 | 110 | 25 | 114 | 74.3 |
+| rubocop | lossless | 2 | 685 | 510 | 25.5 | 171 | 127 | 538 | 21.5 |
+| ruff | lossy | 2 | 492 | 357 | 27.4 | 123 | 89 | 385 | 21.7 |
+| tsc | lossless | 3 | 946 | 231 | 75.6 | 236 | 57 | 273 | 71.1 |
+| turbo | lossless | 1 | 494 | 110 | 77.7 | 123 | 27 | 124 | 74.9 |
+| vitest | lossless | 4 | 3624 | 967 | 73.3 | 906 | 241 | 1023 | 71.8 |
+| uncompacted (CCR only) | lossy | 3 | 6150 | 6150 | 0.0 | 1537 | 1537 | 1152 | 81.3 |
+| TOTAL | - | 113 | 194873 | 92359 | 52.6 | 48718 | 23089 | 61717 | 68.3 |
 
 ## Lossless and lossy split
 
@@ -70,16 +70,16 @@ Downshift and CCR bytes include the marker line the compactor appends at runtime
 
 | Class | Fixtures | Raw bytes | Downshift bytes | Saving % |
 |---|--:|--:|--:|--:|
-| lossless | 64 | 104386 | 41863 | 59.9 |
-| lossy | 49 | 90487 | 49479 | 45.3 |
+| lossless | 64 | 104386 | 42439 | 59.3 |
+| lossy | 49 | 90487 | 49920 | 44.8 |
 
 ## Relationship to live token savings
 
 The figures above measure raw byte reduction across a synthetic corpus of 113 compacted fixtures: command output and agent-desktop reads.
 
 - In live LLM sessions, compaction cuts verbose command outputs before they enter the prompt context, directly saving input tokens and subsequent prompt cache reads.
-- With CCR enabled, overall corpus reduction is **67.0% fewer bytes** (and **53.1%** with CCR disabled).
-- Lossless families (64 fixtures) have **59.9% fewer bytes** while keeping every failure line, exit code and stack trace.
+- With CCR enabled, overall corpus reduction is **68.3% fewer bytes** (and **52.6%** with CCR disabled).
+- Lossless families (64 fixtures) have **59.3% fewer bytes** while keeping every failure line, exit code and stack trace.
 - Compaction operates on tool output bytes, whereas model routing operates on subagent model pricing. These levers are orthogonal and multiply when combined.
 - Detailed empirical reconciliation: [anthropic-references-benchmark-reconciliation-2026-11-07.md](../evidence/anthropic-references-benchmark-reconciliation-2026-11-07.md).
 
@@ -89,8 +89,8 @@ Balanced compaction (on by default) cuts an output over 16 KB once CCR stored it
 
 | Fixture | Raw bytes | Lossless bytes | Lossless saving % | Balanced bytes | Balanced saving % |
 |---|--:|--:|--:|--:|--:|
-| diff_git_log_p | 57777 | 57777 | 0.0 | 23737 | 58.9 |
-| diff_git_show | 38009 | 36256 | 4.6 | 17723 | 53.4 |
-| log_go_test_v | 130408 | 18449 | 85.9 | 9269 | 92.9 |
-| matches_grep_rn | 98719 | 98719 | 0.0 | 26223 | 73.4 |
-| TOTAL | 324913 | 211201 | 35.0 | 76952 | 76.3 |
+| diff_git_log_p | 57777 | 57777 | 0.0 | 23714 | 59.0 |
+| diff_git_show | 38009 | 36265 | 4.6 | 17904 | 52.9 |
+| log_go_test_v | 130408 | 18458 | 85.8 | 9246 | 92.9 |
+| matches_grep_rn | 98719 | 98719 | 0.0 | 26200 | 73.5 |
+| TOTAL | 324913 | 211219 | 35.0 | 77064 | 76.3 |

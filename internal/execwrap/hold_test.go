@@ -80,7 +80,7 @@ func TestRun_BatchCommandHoldsBufferUntilExit(t *testing.T) {
 	if !strings.Contains(out.String(), "8 packages ok, 2 without tests") {
 		t.Fatalf("expected summary to count ok and no-test packages: %s", out.String())
 	}
-	if !strings.Contains(out.String(), "[downshift compact: compacted") {
+	if !strings.Contains(out.String(), "; original not kept]") {
 		t.Fatalf("expected compaction marker: %s", out.String())
 	}
 	if errb.Len() != 0 {

@@ -130,7 +130,7 @@ func TestRunExec_CCROnByDefault(t *testing.T) {
 				t.Fatalf("want 1 kept entry, got %d; out=%q", len(entries), out.String())
 			}
 			id := strings.TrimSuffix(entries[0].Name(), ".txt")
-			if !strings.Contains(out.String(), "full output: downshift retrieve "+id) {
+			if !strings.Contains(out.String(), "downshift retrieve "+id) {
 				t.Fatalf("marker does not name %s: %q", id, out.String())
 			}
 			evPath := filepath.Join(state, execwrap.EventsFileName)

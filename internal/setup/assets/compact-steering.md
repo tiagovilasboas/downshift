@@ -21,11 +21,13 @@ the first matches of each file of a search. The full output is stored, and the
 last line names it:
 
 ```
-[downshift compact: compacted 591441 to 33342 bytes; full output: downshift retrieve --session=4f2a9c01b3d7 85298d5a7eb4]
+[downshift compact: 591441 to 33342 bytes; downshift retrieve --session=4f2a9c01b3d7 85298d5a7eb4]
 ```
 
 Run the command the line shows, as printed (`--session=...` included when it
-is there), when you need a line that was cut. The id is its last word. Set
+is there), when you need a line that was cut. The id is its last word. A line
+ending `original not kept` means no copy exists: the cut is final, rerun the
+command to see more. Set
 `DOWNSHIFT_BALANCED=0` to keep large outputs whole.
 
 ## Allowlisted families

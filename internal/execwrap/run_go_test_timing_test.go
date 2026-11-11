@@ -32,7 +32,7 @@ func TestRun_GoTestOverTwoSecondsCompacts(t *testing.T) {
 	if !strings.Contains(out, "9 packages ok, 1 without tests") {
 		t.Fatalf("expected summary in output: %q", out)
 	}
-	if !strings.Contains(out, "[downshift compact: compacted") {
+	if !strings.Contains(out, "; original not kept]") {
 		t.Fatalf("missing compaction marker in output: %q", out)
 	}
 	if errb != "" {
@@ -62,7 +62,7 @@ func TestRun_GoTestOverTwoSecondsIncrementalCompacts(t *testing.T) {
 	if !strings.Contains(out, "5 packages ok, 1 without tests") {
 		t.Fatalf("expected summary in output: %q", out)
 	}
-	if !strings.Contains(out, "[downshift compact: compacted") {
+	if !strings.Contains(out, "; original not kept]") {
 		t.Fatalf("expected compaction marker: %q", out)
 	}
 	if errb != "" {

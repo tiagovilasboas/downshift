@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The retrieve hint in a compacted output names the session when one is known: `full output: downshift retrieve --session=<12 hex> <id>` (also on post-run markers and the spooled-output line). `downshift retrieve` accepts `--session=` and records it on its row, and a read is then charged only to the runs of that session that kept the id. Without a session the hint is unchanged. A read made through the MCP `retrieve` tool, and rows written before this change, stay per id; the tool takes the last word of a pasted hint as the id.
+- The compaction marker is shorter and says whether the cut is final. A kept copy reads `[downshift compact: N to M bytes; downshift retrieve <id>]` (23 bytes shorter: no `compacted ` or `full output: `); with no copy (CCR off, a clean run with `"ccr": false`, `curl`, `wget`, `glab`, or a failed store) it reads `[downshift compact: N to M bytes; original not kept]`, so the agent knows the cut cannot be undone. Corpus marker bytes with CCR on (the default) fall from 10,772 to 8,200 (about 643 tokens); with CCR off they rise from 5,429 to 6,446 (about 254 tokens, the cost of the note). Bench: 52.6% with CCR off (was 53.1%), 68.3% with CCR on (was 67.0%), 59.3% on lossless families (was 59.9%); `baseline.tsv` is re-accepted for that reason. Outputs of a few dozen bytes whose marker no longer fits pass through raw. The older spelling is still read, never printed. The docs no longer say CCR off keeps outputs lossless: only the balanced log, diff and search cut needs stored output; family summaries still cut.
+- The retrieve hint in a compacted output names the session when one is known: `downshift retrieve --session=<12 hex> <id>` (also on post-run markers and the spooled-output line). `downshift retrieve` accepts `--session=` and records it on its row, and a read is then charged only to the runs of that session that kept the id. Without a session the hint is unchanged. A read made through the MCP `retrieve` tool, and rows written before this change, stay per id; the tool takes the last word of a pasted hint as the id.
 
 ### Fixed
 
@@ -19,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A saved-bytes figure no longer loses savings to a retrieval made by another session that kept the same output.
 - The session hint cannot make a folded output longer than the raw one.
 - `docs/guides/ccr.md`, `docs/features/compaction.md` and `docs/design/architecture.md` quoted stale or wrong figures and claims (bench totals, retrievals not subtracted, `curl` and `wget` not allowlisted, a function that does not exist). The cited-figure test now covers the first two.
+
+### Added
+
+- **Post-run honor check in `downshift doctor`.** A `post-run replacement` row per harness counts, over the latest 200 compacted post-run rows, how many the harness used (honored), could not be found, mismatched in length, or could not be verified. Honored means a transcript result carries the row's kept id in its retrieve hint at the emitted length or one byte less, each result used once. Rows without a kept id, without a transcript reader, or outside the transcript coverage stay unverified, and a harness warns only when it has checked rows and none honored. On Claude Code the read is offline, in memory and bounded (60 files, 8 MiB each, 64 MiB, 3 s), one pass per line. The report note now calls post-run figures output offered to the model. New `postrun.ClassifyHonor` and `hookport.Port.ReadToolResults`.
 
 ## [0.15.0] - 2026-11-11
 

@@ -38,7 +38,9 @@ what is acted on first, and the marker names the id to read the rest back:
 A line longer than 300 bytes is cut; a line the log cut keeps for a failure word keeps
 its first 300 and its last 200 bytes, since an assertion often ends the line. File
 reads and agent-desktop reads are never cut this way. The cut is made only when it saves at least a quarter of the text, and
-never without stored raw output: with CCR off, outputs stay lossless.
+never without stored raw output: with CCR off, this log, diff and search cut does not run.
+Family summaries (`git log`, `docker ps`, lint and build reports, a long file read) still cut with CCR
+off; their marker then ends `original not kept`.
 `DOWNSHIFT_BALANCED=0` or `"balanced": false` in `context-optimization.json` turns it
 off; `downshift doctor` shows the mode, the threshold and the line caps in effect as
 `compactor mode`.
@@ -99,7 +101,7 @@ With CCR on, when `downshift compact -- <cmd>` compacts output:
 
 1. The raw output is stored at `~/.downshift/ccr/<id>.txt`.
 2. The marker line names the id:
-   `[downshift compact: compacted N to M bytes; full output: downshift retrieve <id>]`
+   `[downshift compact: N to M bytes; downshift retrieve <id>]`
    (with a session: `... downshift retrieve --session=<ref> <id>]`, see
    [Bytes read back are subtracted](#bytes-read-back-are-subtracted))
 3. Runs of 8 or more same-shape lines (digits ignored) fold to the first 3 and last 2
@@ -158,8 +160,8 @@ paths or text the command echoed.
 
 ## Measured effect
 
-`make bench` ([bench.md](../reference/bench.md)): total saving is 53.1% with CCR off and
-67.0% with CCR on, which is now the default; the generic family goes from 18.4% to 93.1%.
+`make bench` ([bench.md](../reference/bench.md)): total saving is 52.6% with CCR off and
+68.3% with CCR on, which is now the default; the generic family goes from 18.4% to 93.1%.
 
 The exec log records raw and emitted bytes after the fold, so savings include CCR.
 
@@ -174,13 +176,19 @@ to the runs that kept it and subtracted from their saving, never below zero.
 
 Two sessions that keep the same output share one id, so the id alone cannot say who
 read it. When a run has a session, its marker carries a short reference to it:
-`full output: downshift retrieve --session=<ref> <id>`, where `<ref>` is the first 12
+`downshift retrieve --session=<ref> <id>`, where `<ref>` is the first 12
 hex characters of the hashed session (the same hash the exec log carries). The
 `retrieve` command takes `--session=<ref>` (12 to 64 lowercase hex characters, else it
 is ignored) and records the 12-character reference in the row as `session`. A row with
 a session is charged only to runs of that session that kept the id. Without a session
 in the marker (a harness or a call that has none) the hint is just
 `downshift retrieve <id>`.
+
+When no copy of the raw output exists (CCR off, `"ccr": false` on a clean run, a family that
+never stores its output such as `curl` or `wget`, or a store that failed), a cut output ends
+`[downshift compact: N to M bytes; original not kept]`: the cut is final, so run the
+command again if you need what was cut. The older spelling
+`compacted N to M bytes; full output: downshift retrieve <id>` is still read, never printed.
 
 What is session-scoped and what is per id:
 
