@@ -37,6 +37,9 @@ func ShortenPass(summary []byte) ([]byte, bool) {
 	if !ok {
 		short, ok = trimPassTiming(text)
 	}
+	if !ok {
+		short, ok = trimFamilyTiming(text)
+	}
 	if !ok || len(short) >= len(text) {
 		return summary, false
 	}
