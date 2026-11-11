@@ -132,11 +132,41 @@ did not take. Revisit after a week of `report` rows with entry
 Glob shapes (they are not documented; the adapter only rewrites the fields the
 result carries).
 
+## Honor check
+
+The post-run hook writes its exec row before it can know whether the harness
+used the replaced output, so the figures on those rows are what was **offered**
+to the model, not what was saved. `downshift doctor` closes the gap offline
+where the harness keeps a transcript of what the model received.
+
+- **Shared computation.** `postrun.ClassifyHonor` takes the latest compacted
+  `post_tool_use` rows (kept CCR id, emitted bytes) and a
+  `hookport.ReadToolResultsFunc`, and returns counts only: *honored* (a
+  tool result in the transcript names the id and its text has the emitted
+  length, or one byte less, because a transcript drops a trailing newline),
+  *not found* (transcripts were read, none names the id), *mismatch* (results
+  name the id, none at that length) and *unverified* (no kept id, so no join
+  key, or no transcript to read). The id alone proves nothing: the pre-run
+  wrapper prints the same `downshift retrieve <id>` marker, so the length has
+  to agree too.
+- **Port.** The reader is the optional `Port.ReadToolResults`; a harness
+  without it classifies every row as unverified (layering rule 5; see the
+  harness matrix). Claude Code's reads `~/.claude/projects/**/*.jsonl`, most
+  recent 60 files first, the last 8 MiB of each, user `tool_result` text only.
+  It runs in memory, keeps no text, id or path, prints none, and any error
+  means unverified.
+- **Surface.** The `post-run replacement` row of `doctor` shows the counts
+  over the latest 200 rows and warns only when rows exist and none were
+  honored. `report` says its post-run rows are offered output.
+- **Limit.** A first check on one machine matched 9 of 11 rows; the rest are
+  *not found* or *mismatch*, not proof the model did not get them (a
+  transcript may be rotated away or hold the result in another shape).
+
 ## Not verified
 
-- A live Claude Code session honouring `updatedToolOutput` from this hook. The
-  shape follows the hooks reference; the end-to-end check here is the built
-  binary's answer, not the model's view.
+- A live Claude Code session honouring `updatedToolOutput` from this hook,
+  beyond the transcript join above. The shape follows the hooks reference; the
+  end-to-end check here is the built binary's answer.
 - The Grep and Glob output shapes beyond `content`, `filenames` and the counts:
   undocumented, read from the result as it arrives.
 - Whether `tool_input.command` in `PostToolUse` is the command as written or as

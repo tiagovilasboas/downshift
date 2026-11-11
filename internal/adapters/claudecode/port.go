@@ -28,5 +28,7 @@ func Port() hookport.Port {
 		// The finished tool's result, for the shared post-run compaction.
 		ParseToolOutput:   ParseToolOutput,
 		ReplaceToolOutput: ReplaceToolOutput,
+		// What the model received, from the session transcripts (honor check).
+		ReadToolResults: ReadToolResults,
 	}
 }

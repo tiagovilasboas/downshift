@@ -40,6 +40,11 @@ type Port struct {
 	// are used only when the harness declares ReplacesToolOutput.
 	ParseToolOutput   ParseToolOutputFunc
 	ReplaceToolOutput ReplaceToolOutputFunc
+	// ReadToolResults finds CCR ids in the tool results the model received,
+	// from the harness's own transcript, so `doctor` can tell whether a
+	// replaced output was used. Nil means the harness offers none: its post-run
+	// rows stay unverified.
+	ReadToolResults ReadToolResultsFunc
 }
 
 // UsageOutFunc is UsageFunc that may also return the hook's stdout. A nil

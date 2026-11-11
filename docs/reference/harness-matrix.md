@@ -895,6 +895,13 @@ reads a payload up to 16 MiB where the capability is declared (every other
 hook keeps the 1 MiB cap); a larger payload is not read, and its result stays
 whole.
 
+Whether the model used a replaced output is checked offline from the harness's
+transcript (`Port.ReadToolResults`, shared classification in
+`postrun.ClassifyHonor`, shown by `downshift doctor`; see the
+[honor check](../design/post-run-compaction.md#honor-check)). Claude Code reads
+`~/.claude/projects`. Every other harness has no reader: its post-run rows,
+where it has any, are classified as unverified, still computed, never failed.
+
 The persisted contract token `hook_cannot_replace_tool_output` in the context config
 is kept for existing configs; it describes the native context provider, which
 measures only, not the post-run compaction above.

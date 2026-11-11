@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The session hint cannot make a folded output longer than the raw one.
 - `docs/guides/ccr.md`, `docs/features/compaction.md` and `docs/design/architecture.md` quoted stale or wrong figures and claims (bench totals, retrievals not subtracted, `curl` and `wget` not allowlisted, a function that does not exist). The cited-figure test now covers the first two.
 
+### Added
+
+- **Post-run honor check in `downshift doctor`.** A `post-run replacement` row counts, over the latest 200 compacted post-run rows, how many the harness used (honored), could not be found, mismatched in length, or could not be verified (no kept id, or no transcript). On Claude Code it joins each row's CCR id and emitted length to the tool results in the session transcripts, offline, bounded and in memory; other harnesses classify every row as unverified. It warns only when rows exist and none could be honored. The report note now calls post-run figures output offered to the model. New `postrun.ClassifyHonor` and `hookport.Port.ReadToolResults`.
+
 ## [0.15.0] - 2026-11-11
 
 Release notes: [docs/releases/v0.15.0.md](docs/releases/v0.15.0.md).

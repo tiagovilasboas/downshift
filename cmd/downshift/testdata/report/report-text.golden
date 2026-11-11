@@ -6,7 +6,7 @@ COMPACTION SAVINGS PER HARNESS (all time; tokens kept out of the context, per ha
       read back                            -
       subagents: model · effort · held     3 · 0 · 0 (0 guardrail)
       subagent tokens on a cheaper model   unobserved
-   Per harness, never summed. Tokens saved are the Compactor's (saved bytes / 4, an estimate, net of what `retrieve` read back). Cheaper-model tokens still ran, below the session model: never added to tokens saved.
+   Per harness, never summed. Tokens saved are the Compactor's (saved bytes / 4, an estimate, net of what `retrieve` read back). Post-run rows are output offered to the model: `downshift doctor` shows how many it used. Cheaper-model tokens still ran, below the session model: never added to tokens saved.
    no events: antigravity, codex, cursor, kiro, kirocrew, opencode
 
 Current harness: claude-code

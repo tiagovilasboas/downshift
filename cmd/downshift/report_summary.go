@@ -132,7 +132,7 @@ var paneHeader = []string{
 
 // summaryNote says what the table covers and what it never does.
 const summaryNote = "Per harness, never summed. Tokens saved are the Compactor's (saved bytes / 4, an estimate, " +
-	"net of what `retrieve` read back). Cheaper-model tokens still ran, below the session model: never added to tokens saved."
+	"net of what `retrieve` read back). Post-run rows are output offered to the model: `downshift doctor` shows how many it used. Cheaper-model tokens still ran, below the session model: never added to tokens saved."
 
 func printSummaryMarkdown(w io.Writer, rows []paneRow) {
 	fmt.Fprint(w, "## Compaction savings per harness\n\nTokens kept out of the context by the Compactor, with the rest of what the agents pane shows, per harness.\n\n")
