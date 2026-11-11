@@ -38,6 +38,7 @@ type gate struct {
 	stderrReleases  bool         // a stderr byte releases (interactive stdin)
 	streaming       bool
 	reason          string // why the gate released: a Passthrough* reason
+	noteBytes       int    // tail notes a compacted output gets (run_tail.go)
 	spool           *spool // stdout past the hold limit, nil unless spooling
 	passed          int64  // stderr bytes passed through while spooling
 	timer           *time.Timer
@@ -170,6 +171,10 @@ func (g *gate) finish(exitCode int, family Family) (raw, emitted int64, compacte
 	h := compactHeld(g.argv, data, family, exitCode, g.nErr > 0, g.keeper(exitCode, family), g.desktop, g.balanced, g.bal)
 	out := h.out
 	compacted, folded, passthrough, g.detail = h.compacted, h.folded, h.passthrough, h.detail
+	if compacted && !folded && g.noteBytes > 0 && len(out)+g.noteBytes >= len(data) {
+		// The notes Run appends count against the never-longer-than-raw rule.
+		compacted, passthrough = false, PassthroughSmallOutput
+	}
 	if !compacted {
 		g.replay()
 		g.observe(data)

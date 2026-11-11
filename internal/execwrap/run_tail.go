@@ -6,6 +6,7 @@ package execwrap
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 // The runner's side of the two trailing forms the quoted rewrite accepts
@@ -39,18 +40,25 @@ func ShellExit(o Options, code int) int {
 	return code
 }
 
-// writeTailNotes ends a compacted output, after its Marker, with one line per
-// trailing form that changed what the reader sees: stderr discarded, or a real
-// non-zero exit returned as 0. Run calls it only when the output was
+// tailNotes is the text that ends a compacted output, after its Marker, with
+// one line per trailing form that changed what the reader sees: stderr
+// discarded, or a real non-zero exit returned as 0.
+func tailNotes(o Options, code int) string {
+	var b strings.Builder
+	if o.DiscardStderr {
+		b.WriteString("[downshift compact: stderr discarded (2>/dev/null)]\n")
+	}
+	if o.ExitZero && code != 0 {
+		fmt.Fprintf(&b, "[downshift compact: exit %d, returned 0 (|| true)]\n", code)
+	}
+	return b.String()
+}
+
+// writeTailNotes writes the notes. Run calls it only when the output was
 // compacted, so `git rev-parse HEAD 2>/dev/null` still prints just the hash.
 func writeTailNotes(w io.Writer, o Options, code int) {
 	if w == nil {
 		return
 	}
-	if o.DiscardStderr {
-		fmt.Fprintln(w, "[downshift compact: stderr discarded (2>/dev/null)]")
-	}
-	if o.ExitZero && code != 0 {
-		fmt.Fprintf(w, "[downshift compact: exit %d, returned 0 (|| true)]\n", code)
-	}
+	_, _ = io.WriteString(w, tailNotes(o, code))
 }

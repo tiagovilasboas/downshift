@@ -49,7 +49,7 @@ func TestCompactCaptured(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			stored = nil
-			got := CompactCaptured(c.argv, c.family, c.data, 0, c.keep, true)
+			got := CompactCaptured(c.argv, c.family, c.data, 0, c.keep, true, "")
 			if c.anyResult {
 				if len(stored) > 0 || got.KeptID != "" {
 					t.Errorf("raw output stored for %s", c.family)

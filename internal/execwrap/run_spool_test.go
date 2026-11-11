@@ -34,6 +34,24 @@ func (s *storeKeep) keep(raw []byte) (string, bool) {
 	return "0123456789ab", s.ok
 }
 
+// A spooled run with a session names it on both the cut line and the marker.
+func TestRun_SpooledViewCarriesSessionHint(t *testing.T) {
+	bigGrep(t, 100000, "")
+	store := &storeKeep{ok: true}
+	var out, errb bytes.Buffer
+	r := Run([]string{"git", "grep", "match"}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb,
+		Compact: true, Keep: store.keep, Balanced: true, Session: hashS2})
+	s := out.String()
+	for _, want := range []string{"bytes cut (downshift retrieve --session=aaaaaaaaaaaa 0123456789ab)", "full output: downshift retrieve --session=aaaaaaaaaaaa 0123456789ab]"} {
+		if !strings.Contains(s, want) {
+			t.Errorf("output lacks %q", want)
+		}
+	}
+	if r.KeptID != "0123456789ab" {
+		t.Errorf("KeptID = %q, want the bare id", r.KeptID)
+	}
+}
+
 // G1: output over the hold limit is spooled when CCR keeps every run and
 // balanced compaction is on. The run prints its head, the bytes cut with the
 // retrieve id, its tail and the marker; the keep port gets every byte; the

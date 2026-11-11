@@ -320,8 +320,8 @@ header line outside `key:\tvalue` or unclosed fence keeps the whole run raw.
 `gh pr view` keeps its own summary.
 
 Not built from the same roadmap phase: web-md (HTML to markdown) and toon (TOON
-encoding of JSON). `curl` and `wget` are not allowlisted (guarded programs),
-and `gh api` returns JSON that callers parse, so no allowlisted command emits
+encoding of JSON). Only the read-style `curl` and `wget` forms are wrapped (see
+[supported tools](../reference/supported-tools.md)), and `gh api` returns JSON that callers parse, so no allowlisted command emits
 either input.
 
 ## Relative paths
@@ -351,9 +351,10 @@ only the output of failed runs), `downshift compact` stores the raw output under
 and its marker names the id: `full output: downshift retrieve <id>`. Runs of 8 or
 more same-shape lines then fold, because every cut line can be read back with
 `downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]` or the
-MCP tool `retrieve`. On the bench corpus the total saving goes from 48.9% to 76.1%.
-Bytes later retrieved are not yet subtracted from the savings figures. The
-bench figures are with CCR off and on; on is the default. Limits, privacy and
+MCP tool `retrieve`. On the bench corpus the total saving goes from 53.1% to 67.0%.
+Bytes later retrieved are subtracted from the savings figures, never below
+zero ([ccr.md](../guides/ccr.md)). The bench figures are with CCR off and on;
+on is the default. Limits, privacy and
 retention are in [ccr.md](../guides/ccr.md).
 
 ## Benchmark

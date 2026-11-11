@@ -23,11 +23,12 @@ func runRetrieve(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("retrieve", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	var q ccr.Query
-	var lines string
+	var lines, session string
 	fs.StringVar(&q.Grep, "grep", "", "")
 	fs.IntVar(&q.Head, "head", 0, "")
 	fs.IntVar(&q.Tail, "tail", 0, "")
 	fs.StringVar(&lines, "lines", "", "")
+	fs.StringVar(&session, "session", "", "") // a malformed value is ignored (execwrap.SessionRef)
 	// Flags may come before or after the id.
 	var ids []string
 	rest := args
@@ -51,10 +52,10 @@ func runRetrieve(args []string, stdout, stderr io.Writer) int {
 	if q.From, q.To, err = parseLineRange(lines); err != nil {
 		return retrieveUsage(stderr, err.Error())
 	}
-	return retrieveRun(ids[0], q, stdout, stderr)
+	return retrieveRun(ids[0], session, q, stdout, stderr)
 }
 
-func retrieveRun(id string, q ccr.Query, stdout, stderr io.Writer) int {
+func retrieveRun(id, session string, q ccr.Query, stdout, stderr io.Writer) int {
 	if !ccr.ValidID(id) {
 		return retrieveUsage(stderr, "the id must be 12 lowercase hex characters")
 	}
@@ -82,12 +83,12 @@ func retrieveRun(id string, q ccr.Query, stdout, stderr io.Writer) int {
 		return retrieveUsage(stderr, err.Error())
 	}
 	_, _ = stdout.Write(out)
-	execwrap.RecordRetrieval(id, len(out), time.Now())
+	execwrap.RecordRetrieval(id, session, len(out), time.Now())
 	return 0
 }
 
 func retrieveUsage(stderr io.Writer, msg string) int {
-	fmt.Fprintf(stderr, "downshift retrieve: %s\nusage: downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]\n", msg)
+	fmt.Fprintf(stderr, "downshift retrieve: %s\nusage: downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B] [--session=REF]\n", msg)
 	return 2
 }
 

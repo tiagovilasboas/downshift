@@ -2,4 +2,4 @@ exit: 2
 --- stdout ---
 --- stderr ---
 downshift retrieve: exactly one id is required
-usage: downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B]
+usage: downshift retrieve <id> [--grep RE] [--head N] [--tail N] [--lines A:B] [--session=REF]

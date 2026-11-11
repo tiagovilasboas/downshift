@@ -5,10 +5,12 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/tiagovilasboas/downshift-ai/internal/ccr"
+	"github.com/tiagovilasboas/downshift-ai/internal/execwrap"
 	"github.com/tiagovilasboas/downshift-ai/internal/paths"
 )
 
@@ -50,6 +52,32 @@ func TestRetrieveReturnsExactLines(t *testing.T) {
 		if code != 0 || out != c.want || errb != "" {
 			t.Errorf("%s: code=%d out=%q err=%q, want %q", c.name, code, out, errb, c.want)
 		}
+	}
+}
+
+// --session is recorded as a 12-character reference; a malformed value is
+// ignored and the read still succeeds.
+func TestRetrieveRecordsSession(t *testing.T) {
+	id := keepForTest(t, "one\ntwo\n")
+	for _, args := range [][]string{
+		{"--session=" + strings.Repeat("ab", 32), id},
+		{id, "--session", "not-hex"},
+	} {
+		if code, _, errb := retrieve(args...); code != 0 || errb != "" {
+			t.Fatalf("%v: code=%d err=%q", args, code, errb)
+		}
+	}
+	path, err := paths.Join(execwrap.RetrievalsFileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(raw)), "\n")
+	if len(lines) != 2 || !strings.Contains(lines[0], `"session":"abababababab"`) || strings.Contains(lines[1], `"session"`) {
+		t.Fatalf("retrieval rows = %q", lines)
 	}
 }
 

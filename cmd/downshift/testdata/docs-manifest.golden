@@ -514,6 +514,9 @@
         },
         {
           "name": "--lines"
+        },
+        {
+          "name": "--session"
         }
       ]
     },

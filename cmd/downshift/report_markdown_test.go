@@ -93,7 +93,7 @@ func TestReport_ReadBackBytesAreSubtractedAndShown(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	execwrap.RecordRetrieval(id, 1000, time.Now())
+	execwrap.RecordRetrieval(id, "", 1000, time.Now())
 
 	md := runReportOut(t, "--days=0", "--markdown")
 	// 4000 + 2000 saved, 1000 read back: 5000 bytes, 1250 tokens.

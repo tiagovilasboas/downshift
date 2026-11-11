@@ -168,5 +168,5 @@ func ReadEvents(path string) ([]Event, error) {
 			out = append(out, ev)
 		}
 	})
-	return ApplyRetrievals(out, ReadRetrievals(path)), err
+	return applyLogged(out, path), err
 }

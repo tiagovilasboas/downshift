@@ -116,6 +116,12 @@ func benchCitations(f benchFigures) map[string][]string {
 		"docs/true-north.md": {
 			n + "-fixture synthetic corpus (" + f.Raw + "% raw, " + f.CCR + "% with CCR; " + f.Lossless + "% on lossless families",
 		},
+		"docs/guides/ccr.md": {
+			"total saving is " + f.Raw + "% with CCR off and " + f.CCR + "% with CCR on",
+		},
+		"docs/features/compaction.md": {
+			"the total saving goes from " + f.Raw + "% to " + f.CCR + "%",
+		},
 		"docs/guides/evidence.md": {
 			"On the " + n + "-fixture synthetic corpus",
 			"**" + f.CCR + "% byte reduction with CCR** (" + f.Raw + "% raw without CCR), reaching " + f.Lossless + "% on lossless families",

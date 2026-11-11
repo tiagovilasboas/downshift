@@ -99,6 +99,24 @@ func TestRun_FileReadNeverCompactsOrStoresSecretOrIrregularFiles(t *testing.T) {
 	}
 }
 
+// The kept-output hint names the session when the run has one, and is the plain
+// `retrieve <id>` otherwise. KeptID stays the bare CCR id.
+func TestRun_KeptHintCarriesSession(t *testing.T) {
+	long, _ := readSource(t, t.TempDir(), "long.go", 40)
+	for _, tc := range []struct{ session, want string }{
+		{"", "full output: downshift retrieve abc123abc123]"},
+		{"not-a-hash", "full output: downshift retrieve abc123abc123]"},
+		{hashS2, "full output: downshift retrieve --session=aaaaaaaaaaaa abc123abc123]"},
+	} {
+		var out, errb bytes.Buffer
+		r := Run([]string{"cat", long}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb, Compact: true,
+			Session: tc.session, Keep: func([]byte) (string, bool) { return "abc123abc123", true }})
+		if !r.Compacted || !strings.Contains(out.String(), tc.want) || r.KeptID != "abc123abc123" {
+			t.Errorf("session %q: compacted=%v kept=%q, want hint %q\n%.200s", tc.session, r.Compacted, r.KeptID, tc.want, out.String())
+		}
+	}
+}
+
 func TestRun_FileReadStoresRawThroughKeepOnlyWhenFolded(t *testing.T) {
 	dir := t.TempDir()
 	long, raw := readSource(t, dir, "long.go", 40)

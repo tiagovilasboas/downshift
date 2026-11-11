@@ -40,6 +40,9 @@ type Options struct {
 	Keep func(raw []byte) (id string, ok bool)
 	// Balanced allows the balanced cut (DOWNSHIFT_BALANCED).
 	Balanced bool
+	// Session is the hashed session of the call, empty when unknown. With it
+	// the marker's hint reads `downshift retrieve --session=<ref> <id>`.
+	Session string
 	// PreWrapped reports whether the harness's pre-run hook already wrapped
 	// this shell command in `downshift compact`, so its output was compacted
 	// there. Nil means no pre-run wrap is known.
@@ -102,13 +105,13 @@ func compactShell(in hookport.ToolOutput, o Options) Result {
 	family, argv := execwrap.SimpleFamily(in.Command)
 	res := Result{Considered: true, Family: family, ExitCode: exit, Output: in}
 	res.RawBytes = int64(len(in.Stdout) + len(in.Stderr))
-	out := execwrap.CompactCaptured(argv, family, []byte(in.Stdout), exit, o.Keep, o.Balanced)
+	out := execwrap.CompactCaptured(argv, family, []byte(in.Stdout), exit, o.Keep, o.Balanced, o.Session)
 	res.Compacted, res.Folded, res.Passthrough, res.Detail, res.KeptID = out.Compacted, out.Folded, out.Passthrough, out.Detail, out.KeptID
 	if out.Compacted {
 		res.Output.Stdout = string(out.Output)
 	}
 	if in.HasStderr && len(in.Stderr) > execwrap.BalanceThreshold {
-		errOut := execwrap.CompactCaptured(nil, execwrap.FamilyNone, []byte(in.Stderr), exit, o.Keep, o.Balanced)
+		errOut := execwrap.CompactCaptured(nil, execwrap.FamilyNone, []byte(in.Stderr), exit, o.Keep, o.Balanced, o.Session)
 		if errOut.Compacted {
 			res.Output.Stderr = string(errOut.Output)
 			res.Compacted, res.Folded, res.Passthrough, res.Detail = true, res.Folded || errOut.Folded, "", ""

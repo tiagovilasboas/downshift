@@ -99,7 +99,13 @@ func keepUncompacted(keep func(raw []byte) (string, bool), raw []byte, exitCode 
 	if !stored {
 		return nil, false
 	}
-	return append(append([]byte{}, summary...), MarkerWithID(len(raw), len(summary), id)...), true
+	// The guard above sized the marker with a bare id; a session adds to it, so
+	// measure the real output: it is never as long as the raw one.
+	withID := append(append([]byte{}, summary...), MarkerWithID(len(raw), len(summary), id)...)
+	if len(withID) >= len(raw) {
+		return nil, false
+	}
+	return withID, true
 }
 
 // keeper picks the storage port for a finished run: Keep for every run, else
