@@ -105,7 +105,10 @@ Every replaced answer kept every sibling field of `tool_response` unchanged.
 Each considered call wrote one `exec-events.jsonl` row with entry
 `post_tool_use`, the hashed session, the family (`other` for an unknown
 command, `search-tool` for Grep and Glob), raw and emitted bytes and the CCR id,
-so `downshift report` counts it.
+so `downshift report` counts it. A row of a command refused for a
+metacharacter also carries `inner` (the first allowlisted program among its
+segments, `execwrap.InnerFamily`) and `kind` (`execwrap.MetacharKind`), codes
+only, to measure which programs hide inside piped and chained commands.
 
 Hook time on one machine (10 calls each): a Bash call left alone 33 ms, the
 43 KB piped log 62 ms, the 157 KB Grep 106 ms (store write and redaction

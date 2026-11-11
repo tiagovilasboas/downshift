@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Post-run rows name the program inside a compound command.** A post-run row of a shell command the wrapper refuses for a metacharacter (a pipe, a redirect, a list, a substitution) now carries `inner`, the first allowlisted program found in its segments (`go-test` for `cd x && go test ./... | tail`), and `kind`, its shape (`pipe_other`, `redirect`, `subst`, ...). Both are fixed codes, never command text, and are absent on every other row. They measure where widening the wrapper would cut tokens; nothing is wrapped or compacted differently.
 - **Post-run honor check in `downshift doctor`.** A `post-run replacement` row per harness counts, over the latest 200 compacted post-run rows, how many the harness used (honored), could not be found, mismatched in length, or could not be verified. Honored means a transcript result carries the row's kept id in its retrieve hint at the emitted length or one byte less, each result used once. Rows without a kept id, without a transcript reader, or outside the transcript coverage stay unverified, and a harness warns only when it has checked rows and none honored. On Claude Code the read is offline, in memory and bounded (60 files, 8 MiB each, 64 MiB, 3 s), one pass per line. The report note now calls post-run figures output offered to the model. New `postrun.ClassifyHonor` and `hookport.Port.ReadToolResults`.
 
 ## [0.15.0] - 2026-11-11
