@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The retrieve hint in a compacted output names the session when one is known: `full output: downshift retrieve --session=<12 hex> <id>` (also on post-run markers and the spooled-output line). `downshift retrieve` accepts `--session=` and records it on its row, and a read is then charged only to the runs of that session that kept the id. Without a session the hint is unchanged. A read made through the MCP `retrieve` tool, and rows written before this change, stay per id; the tool takes the last word of a pasted hint as the id.
+
+### Fixed
+
+- The notes `compact` appends after a compacted output (`2>/dev/null`, `|| true`) now count in the "never longer than the raw output" check and in the emitted bytes, so a small output can no longer leave longer than the program printed it.
+- A saved-bytes figure no longer loses savings to a retrieval made by another session that kept the same output.
+- The session hint cannot make a folded output longer than the raw one.
+- `docs/guides/ccr.md`, `docs/features/compaction.md` and `docs/design/architecture.md` quoted stale or wrong figures and claims (bench totals, retrievals not subtracted, `curl` and `wget` not allowlisted, a function that does not exist). The cited-figure test now covers the first two.
+
 ## [0.15.0] - 2026-11-11
 
 Release notes: [docs/releases/v0.15.0.md](docs/releases/v0.15.0.md).
