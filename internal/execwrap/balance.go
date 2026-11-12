@@ -21,6 +21,14 @@ type balanceConfig struct {
 	limits    compressor.BalanceLimits
 }
 
+// limit is the size above which the balanced cut applies.
+func (c balanceConfig) limit() int {
+	if c.threshold <= 0 {
+		return BalanceThreshold
+	}
+	return c.threshold
+}
+
 // BalancedEnv turns balanced compaction off when "0" and on when "1",
 // over the "balanced" key of the config file.
 const BalancedEnv = "DOWNSHIFT_BALANCED"

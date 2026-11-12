@@ -44,7 +44,10 @@ Rules:
   search (`grep`, `rg`, `git grep`) with exit 0 or 1, which gets
   `execwrap.CutSearch` at any size instead: rows are grouped by file, with 25
   kept per file and 200 in all, kept rows cut at 80 bytes once one is
-  dropped, and a count per file of the rest (`compressor.CapSearchRows`). stdout is compacted; stderr is cut only
+  dropped, and a count per file of the rest (`compressor.CapSearchRows`). It cuts only
+  when nine lines in ten are search rows (so a search chained with a file read,
+  `grep -l` lists and `uniq -c` counts stay whole), never past an explicit
+  `head -n N` or `tail -n N` the output fits, and it skips a leading `cd`. stdout is compacted; stderr is cut only
   when it alone is over 16 KB.
 - **Search (M2).** A Grep or Glob result over 16 KB is cut once CCR stored it:
   matches keep the first 20 of each file and a count per file of the rest
