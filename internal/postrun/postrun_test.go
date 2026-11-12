@@ -168,7 +168,7 @@ func TestCompact_SearchLedCut(t *testing.T) {
 		fmt.Fprintf(&b, "internal/execwrap/compound_search.go:%d:\tif keep == nil {\n", i)
 	}
 	stdout := b.String()
-	in := hookport.ToolOutput{Category: core.CategoryShell, Command: "grep -rn keep internal | head -80", Stdout: stdout, HasStdout: true, ExitCode: -1}
+	in := hookport.ToolOutput{Category: core.CategoryShell, Command: "grep -rn keep internal | sort", Stdout: stdout, HasStdout: true, ExitCode: -1}
 	res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true})
 	if !res.Replaced || !res.Folded || res.KeptID != "0123456789ab" || !strings.Contains(res.Output.Stdout, "  … 35 more in internal/execwrap/compound_search.go\n") {
 		t.Fatalf("not cut: replaced %v folded %v id %q\n%s", res.Replaced, res.Folded, res.KeptID, res.Output.Stdout)
@@ -176,6 +176,16 @@ func TestCompact_SearchLedCut(t *testing.T) {
 	if res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: false}); res.Replaced {
 		t.Errorf("cut with the balanced cut off:\n%s", res.Output.Stdout)
 	}
+	in.Command = "grep -rn keep internal | head -80"
+	if res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true}); res.Replaced {
+		t.Errorf("cut within the head count the agent asked for:\n%s", res.Output.Stdout)
+	}
+	in.Command = "grep -rn keep internal && sed -n 1,60p rows.txt"
+	in.Stdout = stdout + strings.Repeat("plain file text line\n", 40)
+	if res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true}); res.Replaced {
+		t.Errorf("chained file text cut:\n%s", res.Output.Stdout)
+	}
+	in.Stdout = stdout
 	in.Command = "cat rows.txt | head -80"
 	if res := Compact(allCaps, in, Options{Keep: keepOK, Balanced: true}); res.Replaced {
 		t.Errorf("file text cut:\n%s", res.Output.Stdout)

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The search cut no longer cuts text that is not search rows.** In 0.17.0 a command led by `grep`, `rg` or `git grep` was cut whatever followed the search, so `grep -n x f && sed -n 1,60p f` or `grep x; cat f` lost file text the agent asked for, and a `grep -l` file list, a `uniq -c` count or Windows paths (`C:\…`) were grouped as one file and cut to 25 lines. The cut now runs only when at least nine lines in ten are search rows (`path:N:text`, `grep -C` context lines kept beside their match, Windows drive kept in the path). It respects an explicit `| head -n N` or `| tail -n N` that the output fits, and it looks past a leading `cd dir &&`. Re-measured over the same 14 days: 13 outputs cut, 22 KB saved. One later call needed a dropped row and can run `downshift retrieve`. The 0.17.0 figure (183 cuts, 210 KB) counted the wrong cuts above as savings.
+
+### Changed
+
+- **`rg` output under 16 KB is cut in `downshift compact` too**, on every harness, with the same rows per file and the raw output kept for `downshift retrieve`. `grep` and `git grep` already kept 20 matches per file there. A cut row now ends with ` …` instead of ` … (N more bytes)`.
+
 ## [0.17.0] - 2026-11-11
 
 ### Security
